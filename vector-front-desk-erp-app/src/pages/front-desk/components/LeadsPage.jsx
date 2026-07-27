@@ -452,57 +452,46 @@ export default function LeadsPage() {
 
                 {/* Notes */}
                 <div className="mt-2">
-                  <label className="block text-xs font-medium text-slate-500 mb-1">Note</label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-xs font-medium text-slate-500">Note</label>
+                    <button
+                      type="button"
+                      onClick={addExtraNote}
+                      className="flex items-center gap-1 text-blue-600 text-xs font-semibold cursor-pointer bg-transparent border-none hover:text-blue-800"
+                    >
+                      <i className="fa-solid fa-plus"></i> Add Note
+                    </button>
+                  </div>
                 {/* Dynamic extra notes container */}
-                <div id="lead-extra-notes-container" className="mt-2">
-                  {formData.extraNotes.map((note, index) => (
-                    <div key={index} style={{position:'relative',marginTop:'8px'}}>
-                      {noteAuthors[index] && (
-                        <span className="text-[10px] text-slate-400 mb-1 block">{noteAuthors[index]}</span>
-                      )}
-                      <textarea
-                        value={note}
-                        onChange={(e) => updateExtraNote(index, e.target.value)}
-                        rows="3"
-                        placeholder={`Additional note ${index + 1}…`}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white text-slate-700"
-                        style={{width:'100%',paddingRight:'32px'}}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeExtraNote(index)}
-                        title="Remove this note"
-                        style={{
-                          position:'absolute',
-                          top:'7px',
-                          right:'8px',
-                          background:'none',
-                          border:'none',
-                          cursor:'pointer',
-                          color:'#94a3b8',
-                          fontSize:'13px',
-                          lineHeight:'1',
-                          padding:'0'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = '#dc2626'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
-                      >
-                        <i className="fa-solid fa-xmark"></i>
-                      </button>
-                    </div>
-                  ))}
+                <div id="lead-extra-notes-container" className="space-y-3">
+                  {formData.extraNotes.length === 0 ? (
+                    <div className="text-xs text-slate-400 italic py-4">No notes added yet. Click "+ Add Note" to add.</div>
+                  ) : (
+                    formData.extraNotes.map((note, index) => (
+                      <div key={index} className="bg-white p-4 rounded-xl border border-slate-200">
+                        {noteAuthors[index] && (
+                          <span className="text-[10px] text-slate-400 mb-2 block">{noteAuthors[index]}</span>
+                        )}
+                        <textarea
+                          value={note}
+                          onChange={(e) => updateExtraNote(index, e.target.value)}
+                          rows="3"
+                          placeholder={`Additional note ${index + 1}…`}
+                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white text-slate-700"
+                        />
+                        <div className="flex justify-end mt-2">
+                          <button
+                            type="button"
+                            onClick={() => removeExtraNote(index)}
+                            className="text-red-500 hover:text-red-700 text-xs font-medium cursor-pointer bg-transparent border-none"
+                          >
+                            <i className="fa-solid fa-trash"></i> Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-
-                {/* Add Note button */}
-                <button
-                  type="button"
-                  onClick={addExtraNote}
-                  className="mt-2 flex items-center space-x-1 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-3 py-1.5 transition-colors cursor-pointer border-none"
-                  style={{background:'none',border:'none',padding:'0',marginTop:'8px',display:'inline-flex',alignItems:'center',gap:'5px',fontSize:'12px',fontWeight:'500',color:'#2563eb',cursor:'pointer'}}
-                >
-                  <i className="fa-solid fa-plus" style={{fontSize:'11px'}}></i>
-                  Add Note
-                </button>
                 </div>
             </div>
 
@@ -515,13 +504,6 @@ export default function LeadsPage() {
                   className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-5 py-2 rounded-lg font-medium text-xs transition-colors cursor-pointer"
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSubmit(new Event('submit'))}
-                  className="bg-blue-50 hover:bg-blue-100 text-blue-600 px-5 py-2 rounded-lg font-medium text-xs transition-colors border-none cursor-pointer"
-                >
-                  Save & New
                 </button>
                 <button
                   type="submit"

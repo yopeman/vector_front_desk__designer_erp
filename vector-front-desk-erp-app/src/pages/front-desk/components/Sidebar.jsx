@@ -39,9 +39,9 @@ export default function Sidebar({ onMenuClick }) {
       submenu: [
         { name: 'Leads', icon: 'fa-user-tag' },
         { name: 'Clients', icon: 'fa-user-check' },
+        { name: 'Site Visits', icon: 'fa-location-dot' },
         { name: 'Items', icon: 'fa-archive' },
         { name: 'Orders', icon: 'fa-box' },
-        { name: 'Site Visits', icon: 'fa-location-dot' }
       ] 
     },
     { 
