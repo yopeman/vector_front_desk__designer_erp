@@ -4,7 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import RoleRouter from './components/RoleRouter';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
-import FrontDeskPage from './pages/FrontDeskPage';
+import FrontDeskPage from './pages/front-desk/FrontDeskPage';
 import DesignerPage from './pages/DesignerPage';
 import ClientPage from './pages/ClientPage';
 import PendingPage from './pages/PendingPage';
