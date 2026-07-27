@@ -62,6 +62,14 @@ export default function ClientsPage() {
 
   useEffect(() => {
     fetchClients();
+    
+    // Check for lead upgrade data from sessionStorage
+    const upgradeLeadData = sessionStorage.getItem('upgradeLeadData');
+    if (upgradeLeadData) {
+      const lead = JSON.parse(upgradeLeadData);
+      handleEdit(lead);
+      sessionStorage.removeItem('upgradeLeadData');
+    }
   }, []);
 
   const fetchClients = async () => {
@@ -133,6 +141,11 @@ export default function ClientsPage() {
       }
       if (!submitData.paid_amount || submitData.paid_amount === '') {
         delete submitData.paid_amount;
+      }
+
+      // Filter out invalid type field (must be Corporate, Individual, or Government)
+      if (!submitData.type || !['Corporate', 'Individual', 'Government'].includes(submitData.type)) {
+        delete submitData.type;
       }
 
       if (submitData.interests) {
@@ -576,7 +589,7 @@ export default function ClientsPage() {
                           className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
                           title="Edit"
                         >
-                          <i className="fa-solid fa-pen-to-square"></i>
+                          <i className="fa-solid fa-pen-to-square"></i> Edit
                         </button>
                       </td>
                     </tr>

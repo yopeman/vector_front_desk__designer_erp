@@ -94,7 +94,7 @@ export default function FrontDeskPage() {
           ) : currentPage === 'leads' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Leads Page Loaded</h2>
-              <LeadsPage />
+              <LeadsPage onUpgradeToClient={() => setCurrentPage('clients')} />
             </div>
           ) : currentPage === 'clients' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

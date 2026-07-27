@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
-export default function LeadsPage() {
+export default function LeadsPage({ onUpgradeToClient }) {
   const [view, setView] = useState('dashboard'); // dashboard | form
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +111,15 @@ export default function LeadsPage() {
       const userMap = {};
       (users || []).forEach(u => { userMap[u.id] = u.username; });
       setNoteAuthors(userIds.map(uid => userMap[uid] || 'Unknown'));
+    }
+  };
+
+  const handleUpgradeToClient = (lead) => {
+    // Store lead data in sessionStorage for the ClientsPage to use
+    sessionStorage.setItem('upgradeLeadData', JSON.stringify(lead));
+    // Call the parent callback to switch to clients page
+    if (onUpgradeToClient) {
+      onUpgradeToClient();
     }
   };
 
@@ -326,7 +335,14 @@ export default function LeadsPage() {
                           className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
                           title="Edit"
                         >
-                          <i className="fa-solid fa-pen-to-square"></i>
+                          <i className="fa-solid fa-pen-to-square"></i> Edit
+                        </button>
+                        <button
+                          onClick={() => handleUpgradeToClient(lead)}
+                          className="text-green-600 hover:text-green-800 bg-transparent border-none cursor-pointer"
+                          title="Upgrade to Client"
+                        >
+                          <i className="fa-solid fa-arrow-up"></i> Upgrade
                         </button>
                       </td>
                     </tr>
