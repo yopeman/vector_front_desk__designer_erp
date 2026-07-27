@@ -134,7 +134,6 @@ CREATE TABLE IF NOT EXISTS site_visits (
     special_instructions TEXT,
     status              TEXT DEFAULT 'Pending' CHECK (status IN ('Pending', 'Scheduled', 'In Progress', 'Completed', 'Cancelled')),
     priority            TEXT DEFAULT 'Medium' CHECK (priority IN ('High', 'Medium', 'Low')),
-    notes               TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -315,7 +314,6 @@ CREATE TABLE IF NOT EXISTS payments (
     bank_wallet       TEXT,
     reference_number  TEXT,
     received_by       TEXT,
-    notes             TEXT,
     invoice_status    TEXT CHECK (invoice_status IN ('Unpaid', 'Paid', 'Partially Paid')),
     processing_status TEXT CHECK (processing_status IN ('Requires Payment Method', 'Requires Action', 'Processing', 'Requires Capture', 'Succeeded', 'Failed', 'Canceled')),
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -360,7 +358,6 @@ CREATE TABLE IF NOT EXISTS deliveries (
     status              TEXT DEFAULT 'Pending' CHECK (status IN ('Pending', 'In Transit', 'Delivered', 'Delayed')),
     received_by         TEXT,
     logged_by           TEXT,
-    notes               TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -385,7 +382,6 @@ CREATE TABLE IF NOT EXISTS installations (
     status              TEXT DEFAULT 'Scheduled' CHECK (status IN ('Scheduled', 'In Progress', 'Completed', 'Cancelled')),
     signed_off_by       TEXT,
     logged_by           TEXT,
-    notes               TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );

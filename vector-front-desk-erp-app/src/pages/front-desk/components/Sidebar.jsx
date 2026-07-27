@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function Sidebar() {
+export default function Sidebar({ onMenuClick }) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -9,6 +9,20 @@ export default function Sidebar() {
       ...prev,
       [menuName]: !prev[menuName]
     }));
+  };
+
+  const handleItemClick = (item) => {
+    if (item.submenu) {
+      toggleMenu(item.name);
+    } else if (onMenuClick) {
+      onMenuClick(item.name.toLowerCase());
+    }
+  };
+
+  const handleSubItemClick = (subItem) => {
+    if (onMenuClick) {
+      onMenuClick(subItem.name.toLowerCase());
+    }
   };
 
   const menuItems = [
@@ -197,7 +211,7 @@ export default function Sidebar() {
                     e.currentTarget.style.transform = 'scaleX(1) scaleY(1)';
                   }
                 }}
-                onClick={() => item.submenu && toggleMenu(item.name)}
+                onClick={(e) => handleItemClick(item, e)}
               >
                 <div className="menu-link" style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
                   <i className={`fa-solid ${item.icon}`} style={{ width: '16px', textAlign: 'center', fontSize: '13px' }}></i>
@@ -209,26 +223,37 @@ export default function Sidebar() {
               </div>
               
               {item.submenu && expandedMenus[item.name] && (
-                <ul className="submenu-list" style={{
-                  listStyle: 'none',
-                  paddingLeft: '45px',
-                  backgroundColor: 'rgba(0,0,0,0.12)',
-                  maxHeight: '400px',
-                  overflowY: 'auto'
-                }}>
+                <ul 
+                  className="submenu-list" 
+                  style={{
+                    listStyle: 'none',
+                    paddingLeft: '45px',
+                    backgroundColor: 'rgba(0,0,0,0.12)',
+                    maxHeight: '400px',
+                    overflowY: 'auto'
+                  }}
+                >
                   {item.submenu.map((subItem, subIndex) => (
-                    <li key={subIndex} className="submenu-item" style={{
-                      padding: '7px 0',
-                      color: '#4e6580',
-                      cursor: 'pointer',
-                      transition: 'color 0.18s',
-                      fontSize: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#93bbff'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#4e6580'}
+                    <li 
+                      key={subIndex} 
+                      className="submenu-item"
+                      style={{
+                        padding: '7px 0',
+                        color: '#4e6580',
+                        cursor: 'pointer',
+                        transition: 'color 0.18s',
+                        fontSize: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        position: 'relative',
+                        zIndex: 10
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#93bbff';
+                      }}
+                      onMouseLeave={(e) => e.currentTarget.style.color = '#4e6580'}
+                      onClick={() => handleSubItemClick(subItem)}
                     >
                       <i className={`fa-solid ${subItem.icon}`} style={{ 
                         width: '12px', 

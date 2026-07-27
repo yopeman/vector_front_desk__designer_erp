@@ -6,9 +6,11 @@ import KpiGrid7 from './components/KpiGrid7';
 import KpiGrid6 from './components/KpiGrid6';
 import MiddleGrid from './components/MiddleGrid';
 import BottomGrid from './components/BottomGrid';
+import LeadsPage from './components/LeadsPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState('dashboard');
 
   useEffect(() => {
     fetchDashboardData();
@@ -30,9 +32,15 @@ export default function FrontDeskPage() {
     }
   }
 
-  return (
+  const handleMenuClick = (page) => {
+    console.log('Menu clicked:', page, '- setting currentPage to:', page);
+    setCurrentPage(page);
+    console.log('currentPage set to:', page);
+  };
+
+    return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#eef2f7' }}>
-      <Sidebar />
+      <Sidebar onMenuClick={handleMenuClick} />
       
       <div className="main-content" style={{
         flex: 1,
@@ -63,7 +71,8 @@ export default function FrontDeskPage() {
           flexDirection: 'column',
           gap: '18px'
         }}>
-          {loading ? (
+          {console.log('Rendering page:', currentPage, 'loading:', loading)}
+          {loading && currentPage === 'dashboard' ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 20px' }}>
               <div style={{
                 width: '40px',
@@ -74,13 +83,22 @@ export default function FrontDeskPage() {
                 animation: 'spin 1s linear infinite'
               }}></div>
             </div>
-          ) : (
+          ) : currentPage === 'dashboard' ? (
             <>
               <KpiGrid7 />
               <KpiGrid6 />
               <MiddleGrid />
               <BottomGrid />
             </>
+          ) : currentPage === 'leads' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Leads Page Loaded</h2>
+              <LeadsPage />
+            </div>
+          ) : (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700' }}>Unknown page: {currentPage}</h2>
+            </div>
           )}
         </div>
       </div>
