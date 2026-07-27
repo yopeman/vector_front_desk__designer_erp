@@ -16,9 +16,9 @@ export default function LeadsPage() {
     address: '',
     phone: '',
     poc: '',
-    notes: '',
     extraNotes: []
   });
+  const [noteAuthors, setNoteAuthors] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
   useEffect(() => {
@@ -56,7 +56,6 @@ export default function LeadsPage() {
 
       delete submitData.poc;
       delete submitData.extraNotes;
-      delete submitData.notes;
 
       let clientId;
       if (editingId) {
@@ -69,7 +68,8 @@ export default function LeadsPage() {
       } else {
         const { data, error } = await supabase
           .from('clients')
-          .insert([submitData]);
+          .insert([submitData])
+          .select();
         if (error) throw error;
         clientId = data[0].id;
       }
@@ -89,23 +89,28 @@ export default function LeadsPage() {
       address: lead.address || '',
       phone: lead.phone || '',
       poc: lead.point_of_contact || '',
-      notes: '',
       extraNotes: []
     });
+    setNoteAuthors([]);
     setEditingId(lead.id);
     setView('form');
     const { data: notes } = await supabase
       .from('notes')
-      .select('content')
-      .eq('client_id', lead.id)
+      .select('content, user_id')
+      .eq('entity_type', 'clients')
+      .eq('entity_id', lead.id)
       .order('created_at', { ascending: true });
     const noteContents = (notes || []).map(n => n.content);
-    if (noteContents.length > 0) {
-      setFormData(prev => ({
-        ...prev,
-        notes: noteContents[0],
-        extraNotes: noteContents.slice(1)
-      }));
+    const userIds = (notes || []).map(n => n.user_id);
+    setFormData(prev => ({ ...prev, extraNotes: noteContents }));
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, username')
+        .in('id', userIds);
+      const userMap = {};
+      (users || []).forEach(u => { userMap[u.id] = u.username; });
+      setNoteAuthors(userIds.map(uid => userMap[uid] || 'Unknown'));
     }
   };
 
@@ -115,9 +120,9 @@ export default function LeadsPage() {
       address: '',
       phone: '',
       poc: '',
-      notes: '',
       extraNotes: []
     });
+    setNoteAuthors([]);
     setEditingId(null);
     setView('dashboard');
   };
@@ -145,15 +150,10 @@ export default function LeadsPage() {
   const saveClientNotes = async (clientId) => {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id;
-    await supabase.from('notes').delete().eq('client_id', clientId);
-    const allNotes = [];
-    if (formData.notes.trim()) {
-      allNotes.push(formData.notes.trim());
-    }
+    await supabase.from('notes').delete().eq('entity_type', 'clients').eq('entity_id', clientId);
     const extraNotes = formData.extraNotes.filter(note => note.trim());
-    const noteInserts = [...allNotes, ...extraNotes].map(note => ({
-      client_id: clientId,
-      entity_type: 'client',
+    const noteInserts = extraNotes.map(note => ({
+      entity_type: 'clients',
       entity_id: clientId,
       user_id: userId,
       content: note,
@@ -308,7 +308,6 @@ export default function LeadsPage() {
                     <th className="p-4">Address</th>
                     <th className="p-4">Phone Number</th>
                     <th className="p-4">Point Of Contact</th>
-                    <th className="p-4">Note</th>
                     <th className="p-4 text-center w-24">Actions</th>
                   </tr>
                 </thead>
@@ -321,8 +320,7 @@ export default function LeadsPage() {
                       <td className="p-4">{lead.address}</td>
                       <td className="p-4">{lead.phone}</td>
                       <td className="p-4">{lead.point_of_contact}</td>
-                      <td className="p-4">{lead.notes}</td>
-                      <td className="p-4 text-center">
+                       <td className="p-4 text-center">
                         <button
                           onClick={() => handleEdit(lead)}
                           className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
@@ -370,8 +368,7 @@ export default function LeadsPage() {
                 onClick={resetForm}
                 className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
               >
-                <i className="fa-solid fa-arrow-left"></i>
-                Back to List
+                <i className="fa-solid fa-xmark"></i>
               </button>
             </div>
 
@@ -453,21 +450,16 @@ export default function LeadsPage() {
                 />
               </div>
 
-              {/* Note */}
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1">Note</label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows="6"
-                  placeholder="Enter notes or remarks about this lead"
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white text-slate-700"
-                />
-
+                {/* Notes */}
+                <div className="mt-2">
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Note</label>
                 {/* Dynamic extra notes container */}
                 <div id="lead-extra-notes-container" className="mt-2">
                   {formData.extraNotes.map((note, index) => (
                     <div key={index} style={{position:'relative',marginTop:'8px'}}>
+                      {noteAuthors[index] && (
+                        <span className="text-[10px] text-slate-400 mb-1 block">{noteAuthors[index]}</span>
+                      )}
                       <textarea
                         value={note}
                         onChange={(e) => updateExtraNote(index, e.target.value)}
@@ -511,21 +503,11 @@ export default function LeadsPage() {
                   <i className="fa-solid fa-plus" style={{fontSize:'11px'}}></i>
                   Add Note
                 </button>
-              </div>
+                </div>
             </div>
 
             {/* Footer — Save actions */}
             <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-6">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="lead-save-another"
-                  className="rounded border-slate-300 text-blue-600"
-                />
-                <label htmlFor="lead-save-another" className="text-xs font-medium text-slate-600 select-none">
-                  Save and add another
-                </label>
-              </div>
               <div className="flex items-center space-x-3">
                 <button
                   type="button"
