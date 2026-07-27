@@ -8,6 +8,7 @@ import MiddleGrid from './components/MiddleGrid';
 import BottomGrid from './components/BottomGrid';
 import LeadsPage from './components/LeadsPage';
 import ClientsPage from './components/ClientsPage';
+import SiteVisitsPage from './components/SiteVisitsPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -100,6 +101,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Clients Page Loaded</h2>
               <ClientsPage />
+            </div>
+          ) : currentPage === 'site visits' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Site Visits Page Loaded</h2>
+              <SiteVisitsPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
