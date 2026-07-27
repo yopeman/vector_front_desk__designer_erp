@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/auth';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleRouter from './components/RoleRouter';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
 import FrontDeskPage from './pages/FrontDeskPage';
 import DesignerPage from './pages/DesignerPage';
 import ClientPage from './pages/ClientPage';
+import PendingPage from './pages/PendingPage';
 
 export default function App() {
   return (
@@ -14,31 +16,42 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Front Desk (default) — protected, any authenticated user */}
+          {/* Pending approval page */}
+          <Route
+            path="/pending"
+            element={
+              <ProtectedRoute>
+                <PendingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Root — RoleRouter checks role and redirects accordingly */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
+                <RoleRouter />
                 <FrontDeskPage />
               </ProtectedRoute>
             }
           />
 
-          {/* Admin — only admin role */}
+          {/* Admin — only renders when role is admin (RoleRouter handles redirect) */}
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute>
                 <AdminPage />
               </ProtectedRoute>
             }
           />
 
-          {/* Designers — only designer role */}
+          {/* Designers — only renders when role is designer */}
           <Route
             path="/designers"
             element={
-              <ProtectedRoute allowedRoles={['designer']}>
+              <ProtectedRoute>
                 <DesignerPage />
               </ProtectedRoute>
             }

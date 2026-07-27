@@ -3,25 +3,46 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 
 export default function LoginPage() {
+  const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const [successMsg, setSuccessMsg] = useState('');
+  const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     setLoading(true);
     try {
-      await signIn(email, password);
-      navigate('/');
+      if (mode === 'login') {
+        await signIn(email, password);
+        // Redirect is handled by the RoleRouter in App.jsx
+        navigate('/');
+      } else {
+        // Signup
+        await signUp(email, password, username);
+        setSuccessMsg(
+          'Account created successfully! An administrator will assign your role. You can sign in once approved.'
+        );
+        setMode('login');
+        setUsername('');
+      }
     } catch (err) {
-      setError(err.message || 'Invalid credentials');
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
+  }
+
+  function toggleMode() {
+    setMode(mode === 'login' ? 'signup' : 'login');
+    setError('');
+    setSuccessMsg('');
   }
 
   return (
@@ -41,9 +62,13 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <h2 className="text-lg font-bold text-gray-800 mb-1">Welcome back</h2>
+        <h2 className="text-lg font-bold text-gray-800 mb-1">
+          {mode === 'login' ? 'Welcome back' : 'Create Account'}
+        </h2>
         <p className="text-sm text-gray-400 mb-6">
-          Sign in to your account to continue
+          {mode === 'login'
+            ? 'Sign in to your account to continue'
+            : 'Register to get access after admin approval'}
         </p>
 
         {error && (
@@ -52,7 +77,29 @@ export default function LoginPage() {
           </div>
         )}
 
+        {successMsg && (
+          <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg p-3 mb-4">
+            {successMsg}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === 'signup' && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your full name"
+                required
+                className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1.5">
               Email
@@ -77,6 +124,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
+              minLength={6}
               className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
             />
           </div>
@@ -86,9 +134,24 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-sm rounded-lg hover:opacity-90 transition disabled:opacity-60"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading
+              ? 'Processing...'
+              : mode === 'login'
+              ? 'Sign In'
+              : 'Create Account'}
           </button>
         </form>
+
+        <div className="text-center mt-6">
+          <button
+            onClick={toggleMode}
+            className="text-sm text-blue-600 hover:underline font-medium"
+          >
+            {mode === 'login'
+              ? "Don't have an account? Sign up"
+              : 'Already have an account? Sign in'}
+          </button>
+        </div>
 
         <p className="text-center mt-6 text-[11px] text-gray-300">
           Internal use only &mdash; Vector ERP System

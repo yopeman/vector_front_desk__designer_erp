@@ -20,7 +20,7 @@
 * password_hash
 * email
 * phone
-* role
+* role: admin, designer, front desk officers, null
 * created_at
 * updated_at
 
