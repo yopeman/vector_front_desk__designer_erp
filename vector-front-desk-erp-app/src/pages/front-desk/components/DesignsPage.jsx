@@ -248,7 +248,7 @@ export default function DesignsPage() {
       priority: 'Medium',
       status: 'Pending',
       assigned_designer_id: '',
-      requested_by: profile?.username || '',
+      requested_by: `Front Desk Officer (${profile?.username})` || '',
       brief_dimensions: '',
       specifications: '',
       special_instructions: '',
@@ -275,7 +275,7 @@ export default function DesignsPage() {
           version_number: maxVersion + 1,
           description: '',
           sent_on: '',
-          sent_by: '',
+          sent_by: `Front Desk Officer (${profile?.username})` || '',
           status: 'Sent',
           comment: ''
         }
@@ -898,25 +898,15 @@ export default function DesignsPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-slate-500 mb-1">Sent By</label>
+                              <label className="block text-xs font-medium text-slate-500 mb-1">Comment</label>
                               <input
                                 type="text"
-                                value={version.sent_by}
-                                onChange={(e) => updateDesignVersion(index, 'sent_by', e.target.value)}
-                                placeholder="Enter sent by"
+                                value={version.comment}
+                                onChange={(e) => updateDesignVersion(index, 'comment', e.target.value)}
+                                placeholder="Enter comment"
                                 className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                               />
                             </div>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Comment</label>
-                            <input
-                              type="text"
-                              value={version.comment}
-                              onChange={(e) => updateDesignVersion(index, 'comment', e.target.value)}
-                              placeholder="Enter comment"
-                              className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                            />
                           </div>
                         </div>
                         <button
