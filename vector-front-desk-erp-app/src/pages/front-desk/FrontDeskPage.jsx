@@ -20,6 +20,7 @@ import DeliveryPage from './components/DeliveryPage';
 import InstallationPage from './components/InstallationPage';
 import FeedbackPage from './components/FeedbackPage';
 import ComplaintsPage from './components/ComplaintsPage';
+import WarrantyPage from './components/WarrantyPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -174,6 +175,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Complaints Page Loaded</h2>
               <ComplaintsPage />
+            </div>
+          ) : currentPage === 'warranty' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Warranty Page Loaded</h2>
+              <WarrantyPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
