@@ -268,75 +268,6 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
     }
   };
 
-  const handleUpgrade = async (invoice) => {
-    if (!confirm('Are you sure you want to convert this Proforma Invoice to a Sales Invoice?')) return;
-    try {
-      // Fetch invoice with items
-      const { data: proformaData, error: proformaError } = await supabase
-        .from('invoices')
-        .select('*, invoice_items(*)')
-        .eq('id', invoice.id)
-        .single();
-
-      if (proformaError) throw proformaError;
-
-      // Generate sales invoice number
-      const { data: lastInvoice } = await supabase
-        .from('invoices')
-        .select('invoice_no')
-        .ilike('invoice_no', 'INV%')
-        .order('invoice_no', { ascending: false })
-        .limit(1)
-        .single();
-
-      let nextNumber = 1;
-      if (lastInvoice?.invoice_no) {
-        const lastNum = parseInt(lastInvoice.invoice_no.split('-')[1]);
-        nextNumber = lastNum + 1;
-      }
-      const invoiceNo = `INV-${String(nextNumber).padStart(5, '0')}`;
-
-      // Insert sales invoice
-      const { data: salesInvoiceData, error: salesInvoiceError } = await supabase
-        .from('invoices')
-        .insert([{
-          order_id: proformaData.order_id,
-          invoice_no: invoiceNo,
-          invoice_type: 'Sales Invoice',
-          issue_date: new Date().toISOString().split('T')[0],
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          subtotal: proformaData.subtotal,
-          vat_amount: proformaData.vat_amount,
-          grand_total: proformaData.grand_total,
-          paid_amount: proformaData.paid_amount,
-          balance: proformaData.balance,
-          status: proformaData.status,
-          reference: proformaData.invoice_no
-        }])
-        .select()
-        .single();
-
-      if (salesInvoiceError) throw salesInvoiceError;
-
-      // Insert invoice items
-      for (const item of proformaData.invoice_items || []) {
-        await supabase.from('invoice_items').insert([{
-          invoice_id: salesInvoiceData.id,
-          item_id: item.item_id,
-          description: item.description,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total: item.total
-        }]);
-      }
-
-      alert(`Proforma Invoice upgraded to Sales Invoice successfully! Sales Invoice No: ${invoiceNo}`);
-      await fetchInvoices();
-    } catch (error) {
-      console.error('Error upgrading invoice:', error);
-      alert('Error upgrading invoice: ' + error.message);
-    }
-  };
 
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = 
@@ -466,20 +397,6 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                       title="Export"
                     >
                       <i className="fa-solid fa-download"></i> Export
-                    </button>
-                    <button
-                      onClick={() => handleUpgrade(invoice)}
-                      className="text-green-600 hover:text-green-800 bg-transparent border-none cursor-pointer mr-2"
-                      title="Upgrade to Sales Invoice"
-                    >
-                      <i className="fa-solid fa-arrow-up"></i> Upgrade
-                    </button>
-                    <button
-                      onClick={() => handleDelete(invoice.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>

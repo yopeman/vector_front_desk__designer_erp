@@ -252,79 +252,6 @@ export default function OrdersPage({ onNavigateToProforma }) {
     }
   };
 
-  const handleCreateInvoice = async (order, invoiceType) => {
-    try {
-      // Fetch order with items
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('*, order_items(*)')
-        .eq('id', order.id)
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Calculate totals
-      const subtotal = calculateOrderTotal(orderData.order_items || []);
-      const vatAmount = subtotal * 0.15; // Assuming 15% VAT
-      const grandTotal = subtotal + vatAmount;
-
-      // Generate invoice number
-      const prefix = invoiceType === 'Proforma' ? 'PROF' : 'INV';
-      const { data: lastInvoice } = await supabase
-        .from('invoices')
-        .select('invoice_no')
-        .ilike('invoice_no', `${prefix}%`)
-        .order('invoice_no', { ascending: false })
-        .limit(1)
-        .single();
-
-      let nextNumber = 1;
-      if (lastInvoice?.invoice_no) {
-        const lastNum = parseInt(lastInvoice.invoice_no.split('-')[1]);
-        nextNumber = lastNum + 1;
-      }
-      const invoiceNo = `${prefix}-${String(nextNumber).padStart(5, '0')}`;
-
-      // Insert invoice
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert([{
-          order_id: order.id,
-          invoice_no: invoiceNo,
-          invoice_type: invoiceType,
-          issue_date: new Date().toISOString().split('T')[0],
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          subtotal: subtotal,
-          vat_amount: vatAmount,
-          grand_total: grandTotal,
-          paid_amount: 0,
-          balance: grandTotal,
-          status: 'Unpaid'
-        }])
-        .select()
-        .single();
-
-      if (invoiceError) throw invoiceError;
-
-      // Insert invoice items
-      for (const item of orderData.order_items || []) {
-        await supabase.from('invoice_items').insert([{
-          invoice_id: invoiceData.id,
-          item_id: item.item_id,
-          description: item.description,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total: item.amount
-        }]);
-      }
-
-      alert(`${invoiceType} created successfully! Invoice No: ${invoiceNo}`);
-    } catch (error) {
-      console.error('Error creating invoice:', error);
-      alert('Error creating invoice: ' + error.message);
-    }
-  };
-
   const resetForm = () => {
     setFormData({
       client_id: '',
@@ -539,13 +466,6 @@ export default function OrdersPage({ onNavigateToProforma }) {
                       title="Proforma Invoice"
                     >
                       <i className="fa-solid fa-file-invoice"></i> Proforma
-                    </button>
-                    <button
-                      onClick={() => handleCreateInvoice(order, 'Sales Invoice')}
-                      className="text-purple-600 hover:text-purple-800 bg-transparent border-none cursor-pointer mr-2"
-                      title="Sales Invoice"
-                    >
-                      <i className="fa-solid fa-file-invoice-dollar"></i> Sales Invoice
                     </button>
                     <button
                       onClick={() => handleDelete(order.id)}

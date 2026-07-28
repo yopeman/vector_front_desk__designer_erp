@@ -209,19 +209,6 @@ export default function PaymentsPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this payment?')) return;
-
-    try {
-      const { error } = await supabase.from('payments').delete().eq('id', id);
-      if (error) throw error;
-      await fetchPayments();
-    } catch (error) {
-      console.error('Error deleting payment:', error);
-      alert('Error deleting payment: ' + error.message);
-    }
-  };
-
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = payment.invoice?.invoice_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          payment.client?.name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -308,15 +295,6 @@ export default function PaymentsPage() {
                       }`}>
                         {payment.invoice_status}
                       </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      <button
-                        onClick={() => handleDelete(payment.id)}
-                        className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                        title="Delete"
-                      >
-                        <i className="fa-solid fa-trash"></i>
-                      </button>
                     </td>
                   </tr>
                 ))

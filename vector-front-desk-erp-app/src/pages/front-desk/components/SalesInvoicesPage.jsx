@@ -28,21 +28,6 @@ export default function SalesInvoicesPage() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this sales invoice?')) return;
-    try {
-      const { error } = await supabase
-        .from('invoices')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      await fetchInvoices();
-    } catch (error) {
-      console.error('Error deleting sales invoice:', error);
-      alert('Error deleting sales invoice: ' + error.message);
-    }
-  };
-
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = 
       (invoice.invoice_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -150,15 +135,6 @@ export default function SalesInvoicesPage() {
                     }`}>
                       {invoice.status}
                     </span>
-                  </td>
-                  <td className="p-4 text-center">
-                    <button
-                      onClick={() => handleDelete(invoice.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
-                    </button>
                   </td>
                 </tr>
               ))
