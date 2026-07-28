@@ -261,7 +261,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
       // Save PDF
       doc.save(`Proforma_${invoiceData.invoice_no}.pdf`);
 
-      alert('Invoice exported successfully!');
+      // alert('Invoice exported successfully!');
     } catch (error) {
       console.error('Error exporting invoice:', error);
       alert('Error exporting invoice: ' + error.message);

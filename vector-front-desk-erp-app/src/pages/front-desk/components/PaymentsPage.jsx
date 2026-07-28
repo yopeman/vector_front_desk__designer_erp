@@ -9,6 +9,8 @@ export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState('');
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewPayment, setPreviewPayment] = useState(null);
   const [formData, setFormData] = useState({
     payment_date: new Date().toISOString().split('T')[0],
     amount_paid: '',
@@ -209,6 +211,23 @@ export default function PaymentsPage() {
     }
   };
 
+  const handleShow = async (payment) => {
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('*, invoice:invoices(*, order:orders(*, client:clients(*))), client:clients(*)')
+        .eq('id', payment.id)
+        .single();
+
+      if (error) throw error;
+      setPreviewPayment(data);
+      setShowPreviewModal(true);
+    } catch (error) {
+      console.error('Error fetching payment details:', error);
+      alert('Error fetching payment details: ' + error.message);
+    }
+  };
+
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = payment.invoice?.invoice_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          payment.client?.name?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -295,6 +314,15 @@ export default function PaymentsPage() {
                       }`}>
                         {payment.invoice_status}
                       </span>
+                    </td>
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => handleShow(payment)}
+                        className="text-purple-600 hover:text-purple-800 bg-transparent border-none cursor-pointer"
+                        title="Show"
+                      >
+                        <i className="fa-solid fa-eye"></i> Show
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -461,6 +489,96 @@ export default function PaymentsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && previewPayment && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-800">Payment Details</h2>
+              <button
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  setPreviewPayment(null);
+                }}
+                className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-6">
+                <h3 className="text-lg font-bold text-slate-800 mb-4">Payment Information</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-slate-500">Invoice No:</span>
+                    <span className="ml-2 font-medium">{previewPayment.invoice?.invoice_no || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Client:</span>
+                    <span className="ml-2 font-medium">{previewPayment.client?.name || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Payment Date:</span>
+                    <span className="ml-2 font-medium">{previewPayment.payment_date || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Payment Method:</span>
+                    <span className="ml-2 font-medium">{previewPayment.payment_method || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Bank/Wallet:</span>
+                    <span className="ml-2 font-medium">{previewPayment.bank_wallet || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Reference Number:</span>
+                    <span className="ml-2 font-medium">{previewPayment.reference_number || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Received By:</span>
+                    <span className="ml-2 font-medium">{previewPayment.received_by || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Processing Status:</span>
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                      previewPayment.processing_status === 'Succeeded' ? 'bg-green-100 text-green-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {previewPayment.processing_status}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-lg">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="font-semibold text-slate-600">Amount Paid:</span>
+                  <span className="text-slate-800 font-medium">{previewPayment.amount_paid || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="font-semibold text-slate-600">Gross Amount:</span>
+                  <span className="text-slate-800">{previewPayment.gross_amount || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="font-semibold text-slate-600">Unpaid Amount:</span>
+                  <span className="text-slate-800">{previewPayment.unpaid_amount || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold text-lg border-t pt-2">
+                  <span className="font-semibold text-slate-600">Invoice Status:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    previewPayment.invoice_status === 'Paid' ? 'bg-green-100 text-green-700' :
+                    previewPayment.invoice_status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {previewPayment.invoice_status}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
