@@ -45,7 +45,7 @@ export default function FrontDeskPage() {
 
     return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#eef2f7' }}>
-      <Sidebar onMenuClick={handleMenuClick} />
+      <Sidebar onMenuClick={handleMenuClick} currentPage={currentPage} />
       
       <div className="main-content" style={{
         flex: 1,

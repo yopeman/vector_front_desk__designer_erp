@@ -1,35 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function Sidebar({ onMenuClick }) {
+export default function Sidebar({ onMenuClick, currentPage }) {
   const [collapsed, setCollapsed] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
 
-  const toggleMenu = (menuName) => {
-    setExpandedMenus(prev => ({
-      ...prev,
-      [menuName]: !prev[menuName]
-    }));
-  };
-
-  const handleItemClick = (item) => {
-    if (item.submenu) {
-      toggleMenu(item.name);
-    } else if (onMenuClick) {
-      onMenuClick(item.name.toLowerCase());
-    }
-  };
-
-  const handleSubItemClick = (subItem) => {
-    if (onMenuClick) {
-      onMenuClick(subItem.name.toLowerCase());
-    }
-  };
-
+  // Determine which menu contains the current page
   const menuItems = [
     { 
       name: 'Dashboard', 
       icon: 'fa-house', 
-      active: true,
+      active: false,
       submenu: null 
     },
     { 
@@ -119,6 +99,52 @@ export default function Sidebar({ onMenuClick }) {
     }
   ];
 
+  // Find active menu and submenu based on currentPage
+  const getActiveMenu = () => {
+    for (const item of menuItems) {
+      if (item.name.toLowerCase() === currentPage) {
+        return { menu: item.name, submenu: null };
+      }
+      if (item.submenu) {
+        const subItem = item.submenu.find(sub => sub.name.toLowerCase() === currentPage);
+        if (subItem) {
+          return { menu: item.name, submenu: subItem.name };
+        }
+      }
+    }
+    return { menu: null, submenu: null };
+  };
+
+  const { menu: activeMenu, submenu: activeSubmenu } = getActiveMenu();
+
+  // Auto-expand menu if it contains the active submenu
+  useEffect(() => {
+    if (activeSubmenu && !expandedMenus[activeMenu]) {
+      setExpandedMenus(prev => ({ ...prev, [activeMenu]: true }));
+    }
+  }, [activeMenu, activeSubmenu]);
+
+  const toggleMenu = (menuName) => {
+    setExpandedMenus(prev => ({
+      ...prev,
+      [menuName]: !prev[menuName]
+    }));
+  };
+
+  const handleItemClick = (item) => {
+    if (item.submenu) {
+      toggleMenu(item.name);
+    } else if (onMenuClick) {
+      onMenuClick(item.name.toLowerCase());
+    }
+  };
+
+  const handleSubItemClick = (subItem) => {
+    if (onMenuClick) {
+      onMenuClick(subItem.name.toLowerCase());
+    }
+  };
+
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`} style={{
       width: collapsed ? '60px' : '240px',
@@ -185,16 +211,16 @@ export default function Sidebar({ onMenuClick }) {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   cursor: 'pointer',
-                  color: item.active ? '#93bbff' : '#7a93ae',
-                  borderLeft: item.active ? '3px solid #2563eb' : '3px solid transparent',
-                  backgroundColor: item.active ? 'rgba(37,99,235,0.15)' : 'transparent',
+                  color: activeMenu === item.name ? '#93bbff' : '#7a93ae',
+                  borderLeft: activeMenu === item.name ? '3px solid #2563eb' : '3px solid transparent',
+                  backgroundColor: activeMenu === item.name ? 'rgba(37,99,235,0.15)' : 'transparent',
                   margin: '1px 0',
                   fontSize: '12.5px',
                   transition: 'all 0.18s ease, transform 0.18s ease',
                   transformOrigin: 'left center'
                 }}
                 onMouseEnter={(e) => {
-                  if (!item.active) {
+                  if (activeMenu !== item.name) {
                     e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
                     e.currentTarget.style.color = '#c8d8e8';
                     e.currentTarget.style.borderLeftColor = 'rgba(37,99,235,0.4)';
@@ -202,7 +228,7 @@ export default function Sidebar({ onMenuClick }) {
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!item.active) {
+                  if (activeMenu !== item.name) {
                     e.currentTarget.style.backgroundColor = 'transparent';
                     e.currentTarget.style.color = '#7a93ae';
                     e.currentTarget.style.borderLeftColor = 'transparent';
@@ -237,7 +263,7 @@ export default function Sidebar({ onMenuClick }) {
                       className="submenu-item"
                       style={{
                         padding: '7px 0',
-                        color: '#4e6580',
+                        color: activeSubmenu === subItem.name ? '#93bbff' : '#4e6580',
                         cursor: 'pointer',
                         transition: 'color 0.18s',
                         fontSize: '12px',
@@ -245,12 +271,20 @@ export default function Sidebar({ onMenuClick }) {
                         alignItems: 'center',
                         gap: '8px',
                         position: 'relative',
-                        zIndex: 10
+                        zIndex: 10,
+                        borderLeft: activeSubmenu === subItem.name ? '2px solid #2563eb' : '2px solid transparent',
+                        paddingLeft: activeSubmenu === subItem.name ? '6px' : '0'
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.color = '#93bbff';
+                        if (activeSubmenu !== subItem.name) {
+                          e.currentTarget.style.color = '#93bbff';
+                        }
                       }}
-                      onMouseLeave={(e) => e.currentTarget.style.color = '#4e6580'}
+                      onMouseLeave={(e) => {
+                        if (activeSubmenu !== subItem.name) {
+                          e.currentTarget.style.color = '#4e6580';
+                        }
+                      }}
                       onClick={() => handleSubItemClick(subItem)}
                     >
                       <i className={`fa-solid ${subItem.icon}`} style={{ 
