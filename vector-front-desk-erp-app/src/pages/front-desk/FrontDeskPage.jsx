@@ -15,6 +15,9 @@ import DesignsPage from './components/DesignsPage';
 import ProformaInvoicesPage from './components/ProformaInvoicesPage';
 import SalesInvoicesPage from './components/SalesInvoicesPage';
 import PaymentsPage from './components/PaymentsPage';
+import JobOrdersPage from './components/JobOrdersPage';
+import DeliveryPage from './components/DeliveryPage';
+import InstallationPage from './components/InstallationPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -144,6 +147,21 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Payments Page Loaded</h2>
               <PaymentsPage />
+            </div>
+          ) : currentPage === 'job orders' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Job Orders Page Loaded</h2>
+              <JobOrdersPage />
+            </div>
+          ) : currentPage === 'delivery' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Delivery Page Loaded</h2>
+              <DeliveryPage />
+            </div>
+          ) : currentPage === 'installation' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Installation Page Loaded</h2>
+              <InstallationPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

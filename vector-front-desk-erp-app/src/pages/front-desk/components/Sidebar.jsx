@@ -48,7 +48,6 @@ export default function Sidebar({ onMenuClick, currentPage }) {
       active: false,
       submenu: [
         { name: 'Job Orders', icon: 'fa-clipboard-list' },
-        { name: 'Production Status', icon: 'fa-gears' }
       ] 
     },
     { 
