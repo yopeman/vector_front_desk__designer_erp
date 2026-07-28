@@ -68,9 +68,9 @@ export default function DailyFinanceReportPage() {
   };
 
   const calculateTotals = () => {
-    const totalSales = salesData.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-    const totalPayments = paymentsData.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-    const totalProforma = proformaData.reduce((sum, proforma) => sum + (proforma.total_amount || 0), 0);
+    const totalSales = salesData.reduce((sum, sale) => sum + (sale.grand_total || 0), 0);
+    const totalPayments = paymentsData.reduce((sum, payment) => sum + (payment.amount_paid || 0), 0);
+    const totalProforma = proformaData.reduce((sum, proforma) => sum + (proforma.grand_total || 0), 0);
     const totalOrders = ordersData.reduce((sum, order) => sum + (order.total_amount || 0), 0);
 
     return {
