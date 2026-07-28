@@ -21,6 +21,7 @@ import InstallationPage from './components/InstallationPage';
 import FeedbackPage from './components/FeedbackPage';
 import ComplaintsPage from './components/ComplaintsPage';
 import WarrantyPage from './components/WarrantyPage';
+import DailyFinanceReportPage from './components/DailyFinanceReportPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -180,6 +181,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Warranty Page Loaded</h2>
               <WarrantyPage />
+            </div>
+          ) : currentPage === 'daily finance report' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Daily Finance Report Page Loaded</h2>
+              <DailyFinanceReportPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

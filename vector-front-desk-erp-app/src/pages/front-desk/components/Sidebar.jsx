@@ -74,7 +74,7 @@ export default function Sidebar({ onMenuClick, currentPage }) {
       icon: 'fa-chart-bar', 
       active: false,
       submenu: [
-        { name: 'Daily Report', icon: 'fa-calendar-day' },
+        { name: 'Report', icon: 'fa-calendar-day' },
         { name: 'Daily Finance Report', icon: 'fa-coins' },
         { name: 'Weekly Finance Report', icon: 'fa-chart-line' }
       ] 
