@@ -62,8 +62,7 @@ export default function OrdersPage({ onNavigateToProforma }) {
     try {
       const { data, error } = await supabase
         .from('clients')
-        .select('id, name')
-        .eq('client_type', 'client')
+        .select('id, name, client_type')
         .order('name', { ascending: true });
 
       if (error) throw error;
@@ -513,7 +512,7 @@ export default function OrdersPage({ onNavigateToProforma }) {
                     >
                       <option value="">Select client</option>
                       {clients.map(client => (
-                        <option key={client.id} value={client.id}>{client.name}</option>
+                        <option key={client.id} value={client.id}>{client.name} ({client.client_type})</option>
                       ))}
                     </select>
                   </div>
