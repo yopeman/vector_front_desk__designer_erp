@@ -214,7 +214,6 @@ CREATE TABLE IF NOT EXISTS designs (
     brief_dimensions    TEXT,
     specifications      TEXT,
     special_instructions TEXT,
-    internal_notes      TEXT,
     attached_file_ids   UUID[] DEFAULT '{}',
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()

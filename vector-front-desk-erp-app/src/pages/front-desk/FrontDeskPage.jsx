@@ -11,6 +11,7 @@ import ClientsPage from './components/ClientsPage';
 import SiteVisitsPage from './components/SiteVisitsPage';
 import ItemsPage from './components/ItemsPage';
 import OrdersPage from './components/OrdersPage';
+import DesignsPage from './components/DesignsPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -118,6 +119,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Orders Page Loaded</h2>
               <OrdersPage />
+            </div>
+          ) : currentPage === 'designs' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Designs Page Loaded</h2>
+              <DesignsPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

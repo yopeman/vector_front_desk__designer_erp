@@ -45,6 +45,14 @@ export default function Sidebar({ onMenuClick }) {
       ] 
     },
     { 
+      name: 'Design', 
+      icon: 'fa-pen-to-square', 
+      active: false,
+      submenu: [
+        { name: 'Designs', icon: 'fa-file-code' },
+      ] 
+    },
+    { 
       name: 'Sales', 
       icon: 'fa-cart-shopping', 
       active: false,
@@ -54,16 +62,6 @@ export default function Sidebar({ onMenuClick }) {
         { name: 'Payment Page', icon: 'fa-credit-card' },
         { name: 'Payment Method', icon: 'fa-wallet' },
         { name: 'Payment Status', icon: 'fa-chart-pie' }
-      ] 
-    },
-    { 
-      name: 'Design', 
-      icon: 'fa-pen-to-square', 
-      active: false,
-      submenu: [
-        { name: 'Design Requests', icon: 'fa-file-code' },
-        { name: 'Design Status', icon: 'fa-spinner' },
-        { name: 'Customer Approval', icon: 'fa-check-double' }
       ] 
     },
     { 
