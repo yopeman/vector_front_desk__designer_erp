@@ -12,10 +12,13 @@ import SiteVisitsPage from './components/SiteVisitsPage';
 import ItemsPage from './components/ItemsPage';
 import OrdersPage from './components/OrdersPage';
 import DesignsPage from './components/DesignsPage';
+import ProformaInvoicesPage from './components/ProformaInvoicesPage';
+import SalesInvoicesPage from './components/SalesInvoicesPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [preselectedOrderId, setPreselectedOrderId] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -37,8 +40,9 @@ export default function FrontDeskPage() {
     }
   }
 
-  const handleMenuClick = (page) => {
+  const handleMenuClick = (page, orderId = null) => {
     console.log('Menu clicked:', page, '- setting currentPage to:', page);
+    setPreselectedOrderId(orderId);
     setCurrentPage(page);
     console.log('currentPage set to:', page);
   };
@@ -118,12 +122,22 @@ export default function FrontDeskPage() {
           ) : currentPage === 'orders' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Orders Page Loaded</h2>
-              <OrdersPage />
+              <OrdersPage onNavigateToProforma={(orderId) => handleMenuClick('proforma invoices', orderId)} />
             </div>
           ) : currentPage === 'designs' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Designs Page Loaded</h2>
               <DesignsPage />
+            </div>
+          ) : currentPage === 'proforma invoices' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Proforma Invoices Page Loaded</h2>
+              <ProformaInvoicesPage preselectedOrderId={preselectedOrderId} />
+            </div>
+          ) : currentPage === 'sales invoices' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Sales Invoices Page Loaded</h2>
+              <SalesInvoicesPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
