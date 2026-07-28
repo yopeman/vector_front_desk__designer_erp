@@ -38,8 +38,8 @@ export default function Sidebar({ onMenuClick, currentPage }) {
       active: false,
       submenu: [
         { name: 'Proforma Invoices', icon: 'fa-file-invoice' },
-        { name: 'Sales Invoices', icon: 'fa-file-invoice-dollar' },
         { name: 'Payments', icon: 'fa-credit-card' },
+        { name: 'Sales Invoices', icon: 'fa-file-invoice-dollar' },
       ] 
     },
     { 

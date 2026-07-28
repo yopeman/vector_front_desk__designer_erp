@@ -14,6 +14,7 @@ import OrdersPage from './components/OrdersPage';
 import DesignsPage from './components/DesignsPage';
 import ProformaInvoicesPage from './components/ProformaInvoicesPage';
 import SalesInvoicesPage from './components/SalesInvoicesPage';
+import PaymentsPage from './components/PaymentsPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -138,6 +139,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Sales Invoices Page Loaded</h2>
               <SalesInvoicesPage />
+            </div>
+          ) : currentPage === 'payments' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Payments Page Loaded</h2>
+              <PaymentsPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
