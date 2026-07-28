@@ -12,6 +12,7 @@ import SiteVisitsPage from './components/SiteVisitsPage';
 import ItemsPage from './components/ItemsPage';
 import OrdersPage from './components/OrdersPage';
 import DesignsPage from './components/DesignsPage';
+import DesignStatusPage from './components/DesignStatusPage';
 import ProformaInvoicesPage from './components/ProformaInvoicesPage';
 import SalesInvoicesPage from './components/SalesInvoicesPage';
 import PaymentsPage from './components/PaymentsPage';
@@ -23,6 +24,7 @@ import ComplaintsPage from './components/ComplaintsPage';
 import WarrantyPage from './components/WarrantyPage';
 import DailyFinanceReportPage from './components/DailyFinanceReportPage';
 import WeeklyFinanceReportPage from './components/WeeklyFinanceReportPage';
+import ReportPage from './components/ReportPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -138,6 +140,11 @@ export default function FrontDeskPage() {
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Designs Page Loaded</h2>
               <DesignsPage />
             </div>
+          ) : currentPage === 'design status' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Design Status Page Loaded</h2>
+              <DesignStatusPage />
+            </div>
           ) : currentPage === 'proforma invoices' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Proforma Invoices Page Loaded</h2>
@@ -192,6 +199,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Weekly Finance Report Page Loaded</h2>
               <WeeklyFinanceReportPage />
+            </div>
+          ) : currentPage === 'report' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Report Page Loaded</h2>
+              <ReportPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

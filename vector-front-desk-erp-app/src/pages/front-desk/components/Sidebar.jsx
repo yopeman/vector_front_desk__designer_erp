@@ -30,6 +30,7 @@ export default function Sidebar({ onMenuClick, currentPage }) {
       active: false,
       submenu: [
         { name: 'Designs', icon: 'fa-file-code' },
+        { name: 'Design Status', icon: 'fa-spinner' },
       ] 
     },
     { 
