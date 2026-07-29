@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import SelfUpdateForm from './client-portal/SelfUpdateForm';
 
 export default function ClientPage() {
   const { client_id } = useParams();
@@ -87,50 +88,8 @@ export default function ClientPage() {
       </header>
 
       <div className="max-w-5xl mx-auto p-6 space-y-8">
-        {/* Client Info */}
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <h2 className="text-base font-bold text-gray-800 mb-4">Client Information</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-            <div>
-              <p className="text-xs text-gray-500">Status</p>
-              <p className="font-semibold text-gray-800">{client.status}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Type</p>
-              <p className="font-semibold text-gray-800">{client.type || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">TIN</p>
-              <p className="font-semibold text-gray-800">{client.tin || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Email</p>
-              <p className="font-semibold text-gray-800">{client.email || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">City</p>
-              <p className="font-semibold text-gray-800">{client.city || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Subcity</p>
-              <p className="font-semibold text-gray-800">{client.subcity || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Industry</p>
-              <p className="font-semibold text-gray-800">{client.industry || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Credit Limit</p>
-              <p className="font-semibold text-gray-800">
-                ETB {Number(client.credit_limit || 0).toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Total Orders</p>
-              <p className="font-semibold text-gray-800">{client.total_orders || 0}</p>
-            </div>
-          </div>
-        </div>
+        {/* Self-update form (respects allow_self_update + client_type) */}
+        <SelfUpdateForm client={client} onUpdated={fetchClientData} />
 
         {/* Orders */}
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

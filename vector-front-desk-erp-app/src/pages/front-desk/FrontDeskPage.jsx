@@ -8,7 +8,7 @@ import MiddleGrid from './components/MiddleGrid';
 import BottomGrid from './components/BottomGrid';
 import useDashboardData from './components/useDashboardData';
 import LeadsPage from './components/LeadsPage';
-import ClientsPage from './components/ClientsPage';
+import ClientsPage from '../client-portal';
 import SiteVisitsPage from './components/SiteVisitsPage';
 import ItemsPage from './components/ItemsPage';
 import OrdersPage from './components/OrdersPage';
