@@ -29,11 +29,15 @@ export default function MessagesPage() {
   }, [selectedUser]);
 
   useEffect(() => {
-    if (selectedUser) {
-      const { data: { user } } = supabase.auth.getUser();
+    if (!selectedUser) return;
+
+    let channel;
+
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       const currentUserId = user?.id;
 
-      const channel = supabase
+      channel = supabase
         .channel('messages-channel')
         .on(
           'postgres_changes',
@@ -43,7 +47,7 @@ export default function MessagesPage() {
             table: 'messages',
             filter: `or(and(sender_id.eq.${currentUserId},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUserId}))`
           },
-          (payload) => {
+          async (payload) => {
             if (payload.eventType === 'INSERT') {
               fetchMessages(selectedUser.id);
               if (payload.new.sender_id !== currentUserId) {
@@ -57,11 +61,15 @@ export default function MessagesPage() {
           }
         )
         .subscribe();
+    };
 
-      return () => {
+    setupSubscription();
+
+    return () => {
+      if (channel) {
         supabase.removeChannel(channel);
-      };
-    }
+      }
+    };
   }, [selectedUser]);
 
   useEffect(() => {

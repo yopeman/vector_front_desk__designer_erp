@@ -11,6 +11,8 @@ export default function DesignsPage() {
   const [files, setFiles] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fileUrls, setFileUrls] = useState({});
+  const [versionFileUrls, setVersionFileUrls] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -82,6 +84,19 @@ export default function DesignsPage() {
       setUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+  };
+
+  const getFileUrl = async (filePath) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      return null;
     }
   };
 
@@ -184,6 +199,40 @@ export default function DesignsPage() {
   };
 
   const handleEdit = async (design) => {
+    // Fetch file info for design versions
+    let versionsWithFileInfo = design.design_versions || [];
+    const versionFileIds = versionsWithFileInfo
+      .filter(v => v.file_id)
+      .map(v => v.file_id);
+
+    if (versionFileIds.length > 0) {
+      const { data: versionFiles } = await supabase
+        .from('files')
+        .select('*')
+        .in('id', versionFileIds);
+
+      if (versionFiles) {
+        const fileMap = {};
+        versionFiles.forEach(f => { fileMap[f.id] = f; });
+
+        versionsWithFileInfo = versionsWithFileInfo.map(v => ({
+          ...v,
+          file_name: fileMap[v.file_id]?.name || v.file_name || '',
+          file_path: fileMap[v.file_id]?.path || ''
+        }));
+
+        // Generate signed URLs for version files
+        const urls = { ...versionFileUrls };
+        for (const file of versionFiles) {
+          if (file.path) {
+            const url = await getFileUrl(file.path);
+            if (url) urls[file.id] = url;
+          }
+        }
+        setVersionFileUrls(urls);
+      }
+    }
+
     setFormData({
       order_id: design.order_id || '',
       design_type: design.design_type || '',
@@ -198,7 +247,7 @@ export default function DesignsPage() {
       specifications: design.specifications || '',
       special_instructions: design.special_instructions || '',
       internal_notes: design.internal_notes || '',
-      design_versions: design.design_versions || []
+      design_versions: versionsWithFileInfo
     });
     setEditingId(design.id);
     
@@ -213,8 +262,19 @@ export default function DesignsPage() {
           description: file.description || '',
           file: null,
           file_id: file.id,
-          file_name: file.name
+          file_name: file.name,
+          file_path: file.path
         })));
+
+        // Generate signed URLs for documents
+        const urls = { ...fileUrls };
+        for (const file of files) {
+          if (file.path) {
+            const url = await getFileUrl(file.path);
+            if (url) urls[file.id] = url;
+          }
+        }
+        setFileUrls(urls);
       }
     } else {
       setDocuments([]);
@@ -321,11 +381,18 @@ export default function DesignsPage() {
 
       if (fileError) throw fileError;
 
-      // Update document state with file_id
-      const newDocs = [...documents];
-      newDocs[idx].file_id = fileData.id;
-      newDocs[idx].file_name = fileData.name;
-      setDocuments(newDocs);
+    // Update document state with file_id
+    const newDocs = [...documents];
+    newDocs[idx].file_id = fileData.id;
+    newDocs[idx].file_name = fileData.name;
+    newDocs[idx].file_path = fileData.path;
+    setDocuments(newDocs);
+
+    // Generate signed URL for the uploaded file
+    const url = await getFileUrl(fileData.path);
+    if (url) {
+      setFileUrls(prev => ({ ...prev, [fileData.id]: url }));
+    }
 
     } catch (error) {
       console.error('Error saving document:', error);
@@ -368,11 +435,18 @@ export default function DesignsPage() {
 
       if (fileError) throw fileError;
 
-      // Update version state with file_id
-      const updatedVersions = [...formData.design_versions];
-      updatedVersions[index].file_id = fileData.id;
-      updatedVersions[index].file_name = fileData.name;
-      setFormData({ ...formData, design_versions: updatedVersions });
+    // Update version state with file_id
+    const updatedVersions = [...formData.design_versions];
+    updatedVersions[index].file_id = fileData.id;
+    updatedVersions[index].file_name = fileData.name;
+    updatedVersions[index].file_path = fileData.path;
+    setFormData({ ...formData, design_versions: updatedVersions });
+
+    // Generate signed URL for the uploaded file
+    const url = await getFileUrl(fileData.path);
+    if (url) {
+      setVersionFileUrls(prev => ({ ...prev, [fileData.id]: url }));
+    }
 
     } catch (error) {
       console.error('Error saving design version file:', error);
@@ -748,10 +822,23 @@ export default function DesignsPage() {
                         </div>
                         {doc.file_id && (
                           <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg">
-                            <span className="text-xs text-green-700">
-                              <i className="fa-solid fa-check mr-1"></i>
-                              {doc.file_name || doc.file?.name || 'File saved'}
-                            </span>
+                            {fileUrls[doc.file_id] ? (
+                              <a
+                                href={fileUrls[doc.file_id]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 no-underline flex items-center gap-1"
+                              >
+                                <i className="fa-solid fa-check text-green-700 mr-1"></i>
+                                {doc.file_name || doc.file?.name || 'File saved'}
+                                <i className="fa-solid fa-external-link text-blue-400 text-[10px]"></i>
+                              </a>
+                            ) : (
+                              <span className="text-xs text-green-700">
+                                <i className="fa-solid fa-check mr-1"></i>
+                                {doc.file_name || doc.file?.name || 'File saved'}
+                              </span>
+                            )}
                             <button
                               type="button"
                               onClick={() => setDocuments(documents.filter((_, i) => i !== idx))}
@@ -825,10 +912,23 @@ export default function DesignsPage() {
                             </div>
                             {version.file_id && (
                               <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg mt-2">
-                                <span className="text-xs text-green-700">
-                                  <i className="fa-solid fa-check mr-1"></i>
-                                  {version.file_name || version.file?.name || 'File saved'}
-                                </span>
+                                {versionFileUrls[version.file_id] ? (
+                                  <a
+                                    href={versionFileUrls[version.file_id]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:text-blue-800 no-underline flex items-center gap-1"
+                                  >
+                                    <i className="fa-solid fa-check text-green-700 mr-1"></i>
+                                    {version.file_name || version.file?.name || 'File saved'}
+                                    <i className="fa-solid fa-external-link text-blue-400 text-[10px]"></i>
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-green-700">
+                                    <i className="fa-solid fa-check mr-1"></i>
+                                    {version.file_name || version.file?.name || 'File saved'}
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>

@@ -59,6 +59,20 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState(null);
   const [contactPersons, setContactPersons] = useState([]);
   const [documents, setDocuments] = useState([]);
+  const [docFileUrls, setDocFileUrls] = useState({});
+
+  const getFileUrl = async (filePath) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600);
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     fetchClients();
@@ -258,8 +272,19 @@ export default function ClientsPage() {
           description: file.description || '',
           file: null,
           file_id: file.id,
-          file_name: file.name
+          file_name: file.name,
+          file_path: file.path
         })));
+
+        // Generate signed URLs for documents
+        const urls = { ...docFileUrls };
+        for (const file of files) {
+          if (file.path) {
+            const url = await getFileUrl(file.path);
+            if (url) urls[file.id] = url;
+          }
+        }
+        setDocFileUrls(urls);
       }
     }
     setNoteAuthors([]);
@@ -424,7 +449,15 @@ export default function ClientsPage() {
       // Update document state with file_id
       const newDocs = [...documents];
       newDocs[idx].file_id = fileData.id;
+      newDocs[idx].file_name = fileData.name;
+      newDocs[idx].file_path = fileData.path;
       setDocuments(newDocs);
+
+      // Generate signed URL for the uploaded file
+      const url = await getFileUrl(fileData.path);
+      if (url) {
+        setDocFileUrls(prev => ({ ...prev, [fileData.id]: url }));
+      }
 
     } catch (error) {
       console.error('Error saving document:', error);
@@ -1025,10 +1058,23 @@ export default function ClientsPage() {
                         </div>
                         {doc.file_id && (
                           <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg">
-                            <span className="text-xs text-green-700">
-                              <i className="fa-solid fa-check mr-1"></i>
-                              {doc.file_name || doc.file?.name || 'File saved'}
-                            </span>
+                            {docFileUrls[doc.file_id] ? (
+                              <a
+                                href={docFileUrls[doc.file_id]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 no-underline flex items-center gap-1"
+                              >
+                                <i className="fa-solid fa-check text-green-700 mr-1"></i>
+                                {doc.file_name || doc.file?.name || 'File saved'}
+                                <i className="fa-solid fa-external-link text-blue-400 text-[10px]"></i>
+                              </a>
+                            ) : (
+                              <span className="text-xs text-green-700">
+                                <i className="fa-solid fa-check mr-1"></i>
+                                {doc.file_name || doc.file?.name || 'File saved'}
+                              </span>
+                            )}
                             <button
                               type="button"
                               onClick={() => setDocuments(documents.filter((_, i) => i !== idx))}
