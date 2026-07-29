@@ -53,7 +53,7 @@ export default function LoginPage() {
         <div className="text-center mb-8 bg-[#00ced1] rounded-xl py-5 px-4">
           <div className="inline-flex items-center gap-2 mb-2">
             <span className="text-3xl font-extrabold tracking-wider text-white uppercase">
-              ☰ V☰ctor
+              ☰ V☰CTOR
             </span>
           </div>
           <p className="text-[10px] text-white uppercase tracking-widest">
@@ -153,7 +153,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center mt-6 text-[11px] text-gray-300">
-          Internal use only &mdash; V☰ctor ERP System
+          Internal use only &mdash; V☰CTOR ERP System
         </p>
       </div>
     </div>

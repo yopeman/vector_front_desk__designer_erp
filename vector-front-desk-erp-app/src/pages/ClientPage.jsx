@@ -81,16 +81,22 @@ export default function ClientPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+      <header className="px-6 py-4" style={{ backgroundColor: '#00ced1' }}>
+          <div className="flex items-center gap-3 mb-2">
+            <div>
+              <h1 className="text-xl font-bold text-white text-center">V☰CTOR Advert & Manufacturing</h1>
+            </div>
+          </div>
+      </header>
+
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-xl font-bold text-gray-800 mt-2">{client.name}</h1>
+          <h2 className="text-lg font-semibold text-gray-700 mt-2">{client.name}</h2>
           <p className="text-sm text-gray-500">
             {client.company_name && `${client.company_name} · `}
             {client.city && `${client.city}`}
             {client.phone && ` · ${client.phone}`}
           </p>
         </div>
-      </header>
 
       <div className="max-w-5xl mx-auto p-6 space-y-8">
         {/* Self-update form (respects allow_self_update + client_type) */}

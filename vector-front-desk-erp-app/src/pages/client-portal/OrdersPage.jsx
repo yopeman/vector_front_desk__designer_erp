@@ -518,8 +518,8 @@ export default function OrdersPage({ clientId: propClientId }) {
 
       {/* Search and Filters */}
       <div className="bg-white p-4 rounded-xl border border-slate-200">
-        <div className="flex gap-4 items-center">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+          <div className="flex-1 w-full">
             <input
               type="text"
               placeholder="Search by order no..."
@@ -528,11 +528,11 @@ export default function OrdersPage({ clientId: propClientId }) {
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
             >
               <option value="All">All Status</option>
               <option value="New">New</option>
@@ -545,8 +545,8 @@ export default function OrdersPage({ clientId: propClientId }) {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      {/* Table - Desktop */}
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden thead lg:block hidden">
         <table className="w-full">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
@@ -601,10 +601,57 @@ export default function OrdersPage({ clientId: propClientId }) {
         </table>
       </div>
 
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-3">
+        {filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+            No orders found
+          </div>
+        ) : (
+          filteredOrders.map((order, index) => (
+            <div key={order.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm text-slate-800">{order.order_no || '-'}</h3>
+                  <p className="text-xs text-slate-500 mt-1">Date: {order.order_date || '-'}</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
+                  order.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                  order.status === 'In Production' ? 'bg-purple-100 text-purple-700' :
+                  order.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                  order.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                  'bg-yellow-100 text-yellow-700'
+                }`}>
+                  {order.status}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                <div>
+                  <span className="text-slate-400">Total:</span>
+                  <span className="ml-1 text-slate-600">{order.total_amount || 0} {order.currency || 'ETB'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400">Balance:</span>
+                  <span className="ml-1 text-slate-600">{order.balance || 0} {order.currency || 'ETB'}</span>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => handleViewDetails(order)}
+                  className="text-purple-600 hover:text-purple-800 bg-transparent border-none cursor-pointer text-xs font-medium"
+                >
+                  <i className="fa-solid fa-eye mr-1"></i> View Details
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
       {/* Order Detail Modal */}
       {showDetailModal && selectedOrder && (
-        <div className="fixed inset-0 bg-black/30 flex items-start justify-center z-50 p-4 pt-20">
-          <div className="bg-white rounded-xl border border-slate-200 w-full max-w-7xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/30 flex items-start justify-center z-50 p-4 pt-16">
+          <div className="bg-white rounded-xl border border-slate-200 w-full max-w-7xl max-h-[95vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-bold text-slate-800">Order Details</h2>
@@ -623,7 +670,7 @@ export default function OrdersPage({ clientId: propClientId }) {
             </div>
 
             {/* Tabs */}
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-3 flex gap-2 overflow-x-auto">
+            <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex gap-2 overflow-x-auto scrollbar-hide">
               {[
                 { id: 'items', label: 'Order Items', icon: 'fa-box' },
                 { id: 'designs', label: 'Designs', icon: 'fa-pen-ruler' },
@@ -638,7 +685,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                 <button
                   key={tab.id}
                   onClick={() => setDetailTab(tab.id)}
-                  className={`px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-2 whitespace-nowrap transition-colors border-none cursor-pointer ${
+                  className={`px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 whitespace-nowrap transition-colors border-none cursor-pointer ${
                     detailTab === tab.id
                       ? 'bg-blue-600 text-white'
                       : 'bg-white text-slate-600 hover:bg-slate-100'
@@ -657,34 +704,36 @@ export default function OrdersPage({ clientId: propClientId }) {
                   <h3 className="text-lg font-semibold text-slate-800 mb-4">Order Items</h3>
                   {selectedOrder.order_items && selectedOrder.order_items.length > 0 ? (
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                          <tr>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Item</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Description</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Quantity</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Unit</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Unit Price</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Discount %</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Tax %</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs">
-                          {selectedOrder.order_items.map((item, index) => (
-                            <tr key={index}>
-                              <td className="p-3">{item.item?.name || '-'}</td>
-                              <td className="p-3">{item.description || '-'}</td>
-                              <td className="p-3">{item.quantity || 0}</td>
-                              <td className="p-3">{item.unit || '-'}</td>
-                              <td className="p-3">{item.unit_price || 0}</td>
-                              <td className="p-3">{item.discount_percent || 0}%</td>
-                              <td className="p-3">{item.tax_percent || 0}%</td>
-                              <td className="p-3 font-medium">{item.amount || 0}</td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[600px]">
+                          <thead className="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Item</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Description</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Quantity</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Unit</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Unit Price</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Discount %</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Tax %</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Amount</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-xs">
+                            {selectedOrder.order_items.map((item, index) => (
+                              <tr key={index}>
+                                <td className="p-3">{item.item?.name || '-'}</td>
+                                <td className="p-3">{item.description || '-'}</td>
+                                <td className="p-3">{item.quantity || 0}</td>
+                                <td className="p-3">{item.unit || '-'}</td>
+                                <td className="p-3">{item.unit_price || 0}</td>
+                                <td className="p-3">{item.discount_percent || 0}%</td>
+                                <td className="p-3">{item.tax_percent || 0}%</td>
+                                <td className="p-3 font-medium">{item.amount || 0}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-slate-400 text-sm">No order items found</p>
@@ -701,15 +750,15 @@ export default function OrdersPage({ clientId: propClientId }) {
                       {orderDesigns.map(design => (
                         <div key={design.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                           <div className="bg-slate-50 border-b border-slate-200 p-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <span className="font-semibold text-slate-800">{design.design_type || '-'}</span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-semibold text-slate-800 text-sm">{design.design_type || '-'}</span>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
                                   design.priority === 'High' ? 'bg-red-100 text-red-700' :
                                   design.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
                                   'bg-green-100 text-green-700'
                                 }`}>{design.priority}</span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
                                   design.status === 'Completed' ? 'bg-green-100 text-green-700' :
                                   design.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
                                   'bg-slate-100 text-slate-700'
@@ -727,59 +776,61 @@ export default function OrdersPage({ clientId: propClientId }) {
                             <h4 className="text-sm font-semibold text-slate-700 mb-2">Design Versions</h4>
                             {designVersions[design.id] && designVersions[design.id].length > 0 ? (
                               <div className="bg-slate-50 rounded-lg overflow-hidden">
-                                <table className="w-full">
-                                  <thead className="bg-slate-100 border-b border-slate-200">
-                                    <tr>
-                                      <th className="p-2 text-left text-xs font-semibold text-slate-600">Version</th>
-                                      <th className="p-2 text-left text-xs font-semibold text-slate-600">Description</th>
-                                      <th className="p-2 text-left text-xs font-semibold text-slate-600">Sent On</th>
-                                      <th className="p-2 text-left text-xs font-semibold text-slate-600">Sent By</th>
-                                      <th className="p-2 text-left text-xs font-semibold text-slate-600">Status</th>
-                                      <th className="p-2 text-left text-xs font-semibold text-slate-600">Comment</th>
-                                      <th className="p-2 text-left text-xs font-semibold text-slate-600">File</th>
-                                      <th className="p-2 text-center text-xs font-semibold text-slate-600">Actions</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-200 text-xs">
-                                    {designVersions[design.id].map(version => (
-                                      <tr key={version.id}>
-                                        <td className="p-2 font-medium">v{version.version_number}</td>
-                                        <td className="p-2">{version.description || '-'}</td>
-                                        <td className="p-2">{version.sent_on ? new Date(version.sent_on).toLocaleDateString() : '-'}</td>
-                                        <td className="p-2">{version.sent_by || '-'}</td>
-                                        <td className="p-2">
-                                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            version.status === 'Approved' ? 'bg-green-100 text-green-700' :
-                                            version.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                            version.status === 'Reviewed' ? 'bg-blue-100 text-blue-700' :
-                                            'bg-slate-100 text-slate-700'
-                                          }`}>{version.status}</span>
-                                        </td>
-                                        <td className="p-2">{version.comment || '-'}</td>
-                                        <td className="p-2">
-                                          {version.file ? (
-                                            <button
-                                              onClick={() => handleOpenFile(version.file.path)}
-                                              className="text-blue-600 hover:text-blue-800 cursor-pointer"
-                                              title="Open file in new tab"
-                                            >
-                                              {version.file.name}
-                                            </button>
-                                          ) : '-'}
-                                        </td>
-                                        <td className="p-2 text-center">
-                                          <button
-                                            onClick={() => handleEditDesignVersion(version)}
-                                            className="text-purple-600 hover:text-purple-800 cursor-pointer"
-                                            title="Edit"
-                                          >
-                                            <i className="fa-solid fa-pen"></i>
-                                          </button>
-                                        </td>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full min-w-[700px]">
+                                    <thead className="bg-slate-100 border-b border-slate-200">
+                                      <tr>
+                                        <th className="p-2 text-left text-xs font-semibold text-slate-600">Version</th>
+                                        <th className="p-2 text-left text-xs font-semibold text-slate-600">Description</th>
+                                        <th className="p-2 text-left text-xs font-semibold text-slate-600">Sent On</th>
+                                        <th className="p-2 text-left text-xs font-semibold text-slate-600">Sent By</th>
+                                        <th className="p-2 text-left text-xs font-semibold text-slate-600">Status</th>
+                                        <th className="p-2 text-left text-xs font-semibold text-slate-600">Comment</th>
+                                        <th className="p-2 text-left text-xs font-semibold text-slate-600">File</th>
+                                        <th className="p-2 text-center text-xs font-semibold text-slate-600">Actions</th>
                                       </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200 text-xs">
+                                      {designVersions[design.id].map(version => (
+                                        <tr key={version.id}>
+                                          <td className="p-2 font-medium">v{version.version_number}</td>
+                                          <td className="p-2">{version.description || '-'}</td>
+                                          <td className="p-2">{version.sent_on ? new Date(version.sent_on).toLocaleDateString() : '-'}</td>
+                                          <td className="p-2">{version.sent_by || '-'}</td>
+                                          <td className="p-2">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                              version.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                              version.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                              version.status === 'Reviewed' ? 'bg-blue-100 text-blue-700' :
+                                              'bg-slate-100 text-slate-700'
+                                            }`}>{version.status}</span>
+                                          </td>
+                                          <td className="p-2">{version.comment || '-'}</td>
+                                          <td className="p-2">
+                                            {version.file ? (
+                                              <button
+                                                onClick={() => handleOpenFile(version.file.path)}
+                                                className="text-blue-600 hover:text-blue-800 cursor-pointer"
+                                                title="Open file in new tab"
+                                              >
+                                                {version.file.name}
+                                              </button>
+                                            ) : '-'}
+                                          </td>
+                                          <td className="p-2 text-center">
+                                            <button
+                                              onClick={() => handleEditDesignVersion(version)}
+                                              className="text-purple-600 hover:text-purple-800 cursor-pointer"
+                                              title="Edit"
+                                            >
+                                              <i className="fa-solid fa-pen"></i>
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
                               </div>
                             ) : (
                               <p className="text-slate-400 text-xs">No design versions found</p>
@@ -802,7 +853,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                     <div className="space-y-4">
                       {orderProformaInvoices.map(invoice => (
                         <div key={invoice.id} className="bg-white rounded-xl border border-slate-200 p-4">
-                          <div className="flex justify-between items-start mb-3">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
                             <div>
                               <h4 className="font-semibold text-slate-800">{invoice.invoice_no}</h4>
                               <p className="text-xs text-slate-500">Issue Date: {invoice.issue_date || '-'}</p>
@@ -817,26 +868,28 @@ export default function OrdersPage({ clientId: propClientId }) {
                             </div>
                           </div>
                           {invoice.invoice_items && invoice.invoice_items.length > 0 && (
-                            <table className="w-full mt-3">
-                              <thead className="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Item</th>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Qty</th>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Unit Price</th>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Total</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100 text-xs">
-                                {invoice.invoice_items.map((item, idx) => (
-                                  <tr key={idx}>
-                                    <td className="p-2">{item.item?.name || '-'}</td>
-                                    <td className="p-2">{item.quantity || 0}</td>
-                                    <td className="p-2">{item.unit_price || 0}</td>
-                                    <td className="p-2">{item.total || 0}</td>
+                            <div className="overflow-x-auto mt-3">
+                              <table className="w-full min-w-[400px]">
+                                <thead className="bg-slate-50 border-b border-slate-200">
+                                  <tr>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Item</th>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Qty</th>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Unit Price</th>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Total</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-xs">
+                                  {invoice.invoice_items.map((item, idx) => (
+                                    <tr key={idx}>
+                                      <td className="p-2">{item.item?.name || '-'}</td>
+                                      <td className="p-2">{item.quantity || 0}</td>
+                                      <td className="p-2">{item.unit_price || 0}</td>
+                                      <td className="p-2">{item.total || 0}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -853,28 +906,30 @@ export default function OrdersPage({ clientId: propClientId }) {
                   <h3 className="text-lg font-semibold text-slate-800 mb-4">Payments</h3>
                   {orderPayments.length > 0 ? (
                     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                          <tr>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Payment Date</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Amount</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Method</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Reference</th>
-                            <th className="p-3 text-left text-xs font-semibold text-slate-600">Invoice</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs">
-                          {orderPayments.map(payment => (
-                            <tr key={payment.id}>
-                              <td className="p-3">{payment.payment_date || '-'}</td>
-                              <td className="p-3 font-medium">{payment.amount_paid || 0}</td>
-                              <td className="p-3">{payment.payment_method || '-'}</td>
-                              <td className="p-3">{payment.reference_number || '-'}</td>
-                              <td className="p-3">{payment.invoice?.invoice_no || '-'}</td>
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[500px]">
+                          <thead className="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Payment Date</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Amount</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Method</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Reference</th>
+                              <th className="p-3 text-left text-xs font-semibold text-slate-600">Invoice</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-xs">
+                            {orderPayments.map(payment => (
+                              <tr key={payment.id}>
+                                <td className="p-3">{payment.payment_date || '-'}</td>
+                                <td className="p-3 font-medium">{payment.amount_paid || 0}</td>
+                                <td className="p-3">{payment.payment_method || '-'}</td>
+                                <td className="p-3">{payment.reference_number || '-'}</td>
+                                <td className="p-3">{payment.invoice?.invoice_no || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-slate-400 text-sm">No payments found</p>
@@ -890,7 +945,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                     <div className="space-y-4">
                       {orderSalesInvoices.map(invoice => (
                         <div key={invoice.id} className="bg-white rounded-xl border border-slate-200 p-4">
-                          <div className="flex justify-between items-start mb-3">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
                             <div>
                               <h4 className="font-semibold text-slate-800">{invoice.invoice_no}</h4>
                               <p className="text-xs text-slate-500">Issue Date: {invoice.issue_date || '-'}</p>
@@ -906,28 +961,30 @@ export default function OrdersPage({ clientId: propClientId }) {
                             </div>
                           </div>
                           {invoice.invoice_items && invoice.invoice_items.length > 0 && (
-                            <table className="w-full mt-3">
-                              <thead className="bg-slate-50 border-b border-slate-200">
-                                <tr>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Item</th>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Description</th>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Qty</th>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Unit Price</th>
-                                  <th className="p-2 text-left text-xs font-semibold text-slate-600">Total</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100 text-xs">
-                                {invoice.invoice_items.map((item, idx) => (
-                                  <tr key={idx}>
-                                    <td className="p-2">{item.item?.name || '-'}</td>
-                                    <td className="p-2">{item.description || '-'}</td>
-                                    <td className="p-2">{item.quantity || 0}</td>
-                                    <td className="p-2">{item.unit_price || 0}</td>
-                                    <td className="p-2">{item.total || 0}</td>
+                            <div className="overflow-x-auto mt-3">
+                              <table className="w-full min-w-[500px]">
+                                <thead className="bg-slate-50 border-b border-slate-200">
+                                  <tr>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Item</th>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Description</th>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Qty</th>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Unit Price</th>
+                                    <th className="p-2 text-left text-xs font-semibold text-slate-600">Total</th>
                                   </tr>
-                                ))}
-                              </tbody>
-                            </table>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 text-xs">
+                                  {invoice.invoice_items.map((item, idx) => (
+                                    <tr key={idx}>
+                                      <td className="p-2">{item.item?.name || '-'}</td>
+                                      <td className="p-2">{item.description || '-'}</td>
+                                      <td className="p-2">{item.quantity || 0}</td>
+                                      <td className="p-2">{item.unit_price || 0}</td>
+                                      <td className="p-2">{item.total || 0}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
                           )}
                         </div>
                       ))}
@@ -946,18 +1003,18 @@ export default function OrdersPage({ clientId: propClientId }) {
                     <div className="space-y-4">
                       {orderJobOrders.map(jobOrder => (
                         <div key={jobOrder.id} className="bg-white rounded-xl border border-slate-200 p-4">
-                          <div className="flex justify-between items-start mb-3">
+                          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
                             <div>
                               <h4 className="font-semibold text-slate-800">{jobOrder.job_no}</h4>
                               <p className="text-xs text-slate-500">Invoice: {jobOrder.invoice?.invoice_no || '-'}</p>
                             </div>
-                            <div className="flex gap-2">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            <div className="flex gap-2 flex-wrap">
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
                                 jobOrder.order_status === 'Completed' ? 'bg-green-100 text-green-700' :
                                 jobOrder.order_status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
                                 'bg-slate-100 text-slate-700'
                               }`}>{jobOrder.order_status}</span>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
                                 jobOrder.delivery_status === 'Delivered' ? 'bg-green-100 text-green-700' :
                                 'bg-slate-100 text-slate-700'
                               }`}>{jobOrder.delivery_status}</span>
@@ -1032,7 +1089,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                   {(editingFeedback || !orderFeedback.length) && (
                     <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
                       <form onSubmit={handleSaveFeedback}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-xs font-medium text-slate-500 mb-1">Overall Rating</label>
                             <select
@@ -1112,10 +1169,10 @@ export default function OrdersPage({ clientId: propClientId }) {
                             className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                           />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <button
                             type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium border-none cursor-pointer"
+                            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                           >
                             {editingFeedback ? 'Update' : 'Submit'} Feedback
                           </button>
@@ -1125,7 +1182,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                               setEditingFeedback(null);
                               setFeedbackForm({ overall_rating: '', product_quality: '', service_quality: '', delivery_timeliness: '', recommend: '', comments: '' });
                             }}
-                            className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border-none cursor-pointer"
+                            className="flex-1 sm:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -1180,7 +1237,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                   {(editingComplaint || !orderComplaints.length) && (
                     <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
                       <form onSubmit={handleSaveComplaint}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-xs font-medium text-slate-500 mb-1">Subject</label>
                             <input
@@ -1216,10 +1273,10 @@ export default function OrdersPage({ clientId: propClientId }) {
                             required
                           />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <button
                             type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium border-none cursor-pointer"
+                            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                           >
                             {editingComplaint ? 'Update' : 'Submit'} Complaint
                           </button>
@@ -1229,7 +1286,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                               setEditingComplaint(null);
                               setComplaintForm({ subject: '', description: '', priority: 'Medium' });
                             }}
-                            className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border-none cursor-pointer"
+                            className="flex-1 sm:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -1292,7 +1349,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                   {(editingWarranty || !orderWarranty.length) && (
                     <div className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-200">
                       <form onSubmit={handleSaveWarranty}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                           <div>
                             <label className="block text-xs font-medium text-slate-500 mb-1">Product Name</label>
                             <input
@@ -1337,10 +1394,10 @@ export default function OrdersPage({ clientId: propClientId }) {
                             required
                           />
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <button
                             type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium border-none cursor-pointer"
+                            className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                           >
                             {editingWarranty ? 'Update' : 'Submit'} Warranty Claim
                           </button>
@@ -1350,7 +1407,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                               setEditingWarranty(null);
                               setWarrantyForm({ product_name: '', serial_no: '', issue_description: '', warranty_type: '' });
                             }}
-                            className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium border-none cursor-pointer"
+                            className="flex-1 sm:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                           >
                             Cancel
                           </button>

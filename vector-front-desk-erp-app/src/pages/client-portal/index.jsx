@@ -532,12 +532,12 @@ export default function ClientsPage() {
           </div>
 
           {/* Filters */}
-          <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-wrap gap-3 items-center justify-between">
-            <div className="flex flex-wrap gap-2 items-center">
+          <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none bg-white text-slate-600"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white text-slate-600 flex-1 sm:flex-none min-w-[120px]"
               >
                 <option value="All">All Statuses</option>
                 <option value="Active">Active</option>
@@ -548,7 +548,7 @@ export default function ClientsPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none bg-white text-slate-600"
+                className="border border-slate-200 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white text-slate-600 flex-1 sm:flex-none min-w-[120px]"
               >
                 <option value="All">All Types</option>
                 <option value="Corporate">Corporate</option>
@@ -557,28 +557,21 @@ export default function ClientsPage() {
               </select>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              {/* <button
-                onClick={() => setView('form')}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-xs flex items-center space-x-1.5 transition-colors border-none cursor-pointer"
-              >
-                <i className="fa-solid fa-plus"></i>
-                <span>New Client</span>
-              </button> */}
               <div className="relative flex-1 sm:flex-initial">
-                <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 <input
                   type="text"
                   placeholder="Search in table..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none w-full sm:w-48 bg-white"
+                  className="pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none w-full sm:w-48 bg-white"
                 />
               </div>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden">
+          {/* Table - Desktop */}
+          <div className="bg-white border border-slate-100 rounded-xl shadow-sm overflow-hidden hidden lg:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
@@ -631,6 +624,51 @@ export default function ClientsPage() {
               </table>
             </div>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-3">
+            {filteredClients.map((client, index) => (
+              <div key={client.id} className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-sm text-slate-800">{client.name}</h3>
+                    <p className="text-xs text-slate-500 mt-1">{client.company_name || '-'}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className={`px-2 py-1 rounded text-[10px] font-medium ${
+                      client.type === 'Corporate' ? 'bg-blue-100 text-blue-700' :
+                      client.type === 'Government' ? 'bg-emerald-100 text-emerald-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>{client.type || '-'}</span>
+                    <span className={`px-2 py-1 rounded text-[10px] font-medium ${
+                      client.status === 'Active' ? 'bg-green-100 text-green-700' :
+                      client.status === 'Prospective' ? 'bg-blue-100 text-blue-700' :
+                      client.status === 'Lost' ? 'bg-red-100 text-red-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>{client.status || '-'}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                  <div>
+                    <span className="text-slate-400">Phone:</span>
+                    <span className="ml-1 text-slate-600">{client.phone || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400">Email:</span>
+                    <span className="ml-1 text-slate-600 truncate block">{client.email || '-'}</span>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => handleEdit(client)}
+                    className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer text-xs font-medium"
+                  >
+                    <i className="fa-solid fa-pen-to-square mr-1"></i> Edit
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </>
       )}
 
@@ -644,17 +682,17 @@ export default function ClientsPage() {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: '20px'
+          padding: '16px'
         }}>
           <div style={{
             background: '#fff',
             borderRadius: '12px',
             width: '100%',
             maxWidth: '900px',
-            maxHeight: '90vh',
+            maxHeight: '95vh',
             overflowY: 'auto',
             boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-            padding: '20px'
+            padding: '16px'
           }}>
             <div className="flex justify-between items-center pb-2">
               <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
@@ -682,21 +720,21 @@ export default function ClientsPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-slate-200 text-xs gap-6 font-medium text-slate-400 pb-0 mb-4">
-              <button onClick={() => setFormTab('info')} className={`pb-3 border-b-2 cursor-pointer bg-transparent ${formTab === 'info' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Client Information</button>
-              <button onClick={() => setFormTab('address')} className={`pb-3 border-b-2 cursor-pointer bg-transparent ${formTab === 'address' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Address Information</button>
-              <button onClick={() => setFormTab('contacts')} className={`pb-3 border-b-2 cursor-pointer bg-transparent ${formTab === 'contacts' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Contact Persons</button>
-              <button onClick={() => setFormTab('additional')} className={`pb-3 border-b-2 cursor-pointer bg-transparent ${formTab === 'additional' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Additional Information</button>
-              <button onClick={() => setFormTab('documents')} className={`pb-3 border-b-2 cursor-pointer bg-transparent ${formTab === 'documents' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Documents</button>
-              <button onClick={() => setFormTab('notes')} className={`pb-3 border-b-2 cursor-pointer bg-transparent ${formTab === 'notes' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Notes</button>
+            <div className="flex border-b border-slate-200 text-xs gap-4 font-medium text-slate-400 pb-0 mb-4 overflow-x-auto scrollbar-hide">
+              <button onClick={() => setFormTab('info')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'info' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Client Information</button>
+              <button onClick={() => setFormTab('address')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'address' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Address Information</button>
+              <button onClick={() => setFormTab('contacts')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'contacts' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Contact Persons</button>
+              <button onClick={() => setFormTab('additional')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'additional' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Additional Information</button>
+              <button onClick={() => setFormTab('documents')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'documents' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Documents</button>
+              <button onClick={() => setFormTab('notes')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'notes' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Notes</button>
             </div>
 
             {/* TAB: Client Information */}
             {formTab === 'info' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                   <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2">Basic Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Client Name <span className="text-red-500">*</span></label>
                       <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter client name" required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white" />
@@ -731,7 +769,7 @@ export default function ClientsPage() {
                   </div>
                 </div>
 
-                <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                   <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2">Communication Information</h3>
                   <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">Phone</label>
@@ -755,7 +793,7 @@ export default function ClientsPage() {
 
             {/* TAB: Address Information */}
             {formTab === 'address' && (
-              <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                 <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2">Address Details</h3>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Address</label>
@@ -790,7 +828,7 @@ export default function ClientsPage() {
 
             {/* TAB: Contact Persons */}
             {formTab === 'contacts' && (
-              <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Contact Persons</h3>
                   <button
@@ -806,7 +844,7 @@ export default function ClientsPage() {
                     <div className="text-xs text-slate-400 italic py-4">No contact persons added yet. Click "+ Add Contact" to add.</div>
                   ) : (
                     contactPersons.map((cp, idx) => (
-                      <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-1 lg:grid-cols-4 gap-3">
+                      <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-slate-500 mb-1">Full Name</label>
                           <input
@@ -881,7 +919,7 @@ export default function ClientsPage() {
 
             {/* TAB: Additional Information */}
             {formTab === 'additional' && (
-              <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                 <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2">Additional Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
@@ -1014,7 +1052,7 @@ export default function ClientsPage() {
 
             {/* TAB: Documents */}
             {formTab === 'documents' && (
-              <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Documents</h3>
                   <button
@@ -1117,7 +1155,7 @@ export default function ClientsPage() {
 
             {/* TAB: Notes */}
             {formTab === 'notes' && (
-              <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Notes</h3>
                   <button
@@ -1161,10 +1199,10 @@ export default function ClientsPage() {
             )}
 
             {/* Footer — Save actions */}
-            <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-6">
-              <div className="flex items-center space-x-3">
-                <button type="button" onClick={resetForm} className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-5 py-2 rounded-lg font-medium text-xs transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" onClick={() => handleSubmit(new Event('submit'))} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium text-xs flex items-center space-x-1.5 transition-colors border-none cursor-pointer">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 pt-4 mt-6">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <button type="button" onClick={resetForm} className="flex-1 sm:flex-none bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-lg font-medium text-xs transition-colors cursor-pointer">Cancel</button>
+                <button type="submit" onClick={() => handleSubmit(new Event('submit'))} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium text-xs flex items-center justify-center gap-1.5 transition-colors border-none cursor-pointer">
                   <i className="fa-solid fa-floppy-disk"></i>
                   <span>Save</span>
                 </button>

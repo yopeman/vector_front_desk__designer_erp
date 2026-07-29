@@ -366,17 +366,17 @@ export default function SelfUpdateForm({ client, onUpdated }) {
               )}
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <button
                 onClick={() => setEditing(false)}
-                className="bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+                className="flex-1 sm:flex-none bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50 transition"
               >
                 Cancel
               </button>
               <button
                 onClick={saveLead}
                 disabled={saving}
-                className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
+                className="flex-1 sm:flex-none bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -404,7 +404,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
                 value={leadData.name}
                 onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
                 required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-500"
               />
             </div>
             <div>
@@ -414,7 +414,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
                 value={leadData.phone}
                 onChange={(e) => setLeadData({ ...leadData, phone: e.target.value })}
                 required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-500"
               />
             </div>
             <div>
@@ -424,7 +424,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
                 value={leadData.address}
                 onChange={(e) => setLeadData({ ...leadData, address: e.target.value })}
                 required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-500"
               />
             </div>
             <div>
@@ -434,7 +434,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
                 value={leadData.poc}
                 onChange={(e) => setLeadData({ ...leadData, poc: e.target.value })}
                 required
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-blue-500"
               />
             </div>
           </form>
@@ -443,7 +443,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
         {/* Lead Details Modal */}
         {showDetailsModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="bg-white rounded-xl max-w-md w-full max-h-[95vh] overflow-y-auto">
               <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-gray-800">Lead Details</h3>
                 <button
@@ -487,34 +487,34 @@ export default function SelfUpdateForm({ client, onUpdated }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-bold text-gray-800">My Information</h2>
         {!editing ? (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button
               onClick={() => setShowDetailsModal(true)}
-              className="bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+              className="flex-1 sm:flex-none bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50 transition"
             >
               View Details
             </button>
             {canEdit && (
               <button
                 onClick={() => setEditing(true)}
-                className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                className="flex-1 sm:flex-none bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-blue-700 transition"
               >
                 Edit
               </button>
             )}
           </div>
         ) : (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button
               onClick={() => setEditing(false)}
-              className="bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+              className="flex-1 sm:flex-none bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-50 transition"
             >
               Cancel
             </button>
             <button
               onClick={saveClient}
               disabled={saving}
-              className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
+              className="flex-1 sm:flex-none bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-60"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
@@ -532,12 +532,12 @@ export default function SelfUpdateForm({ client, onUpdated }) {
         /* Editable tabbed form */
         <div>
           {/* Tabs */}
-          <div className="flex flex-wrap gap-4 border-b border-gray-200 mb-4 text-sm font-medium text-gray-400">
+          <div className="flex flex-wrap gap-4 border-b border-gray-200 mb-4 text-sm font-medium text-gray-400 overflow-x-auto scrollbar-hide">
             {['info', 'address', 'contacts', 'additional', 'documents'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setFormTab(tab)}
-                className={`pb-2 capitalize ${formTab === tab ? 'text-blue-600 border-b-2 border-blue-600' : 'border-b-2 border-transparent'}`}
+                className={`pb-2 capitalize whitespace-nowrap ${formTab === tab ? 'text-blue-600 border-b-2 border-blue-600' : 'border-b-2 border-transparent'}`}
               >
                 {tab === 'info' ? 'Client Information' : tab === 'poc' ? 'Point of Contact' : tab}
               </button>
@@ -546,7 +546,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
 
           {/* TAB: info */}
           {formTab === 'info' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Name <span className="text-red-500">*</span></label>
                 <input type="text" value={clientData.name || ''} onChange={(e) => setClientData({ ...clientData, name: e.target.value })} className={inputCls} />
@@ -623,7 +623,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
               </div>
               {contactPersons.length === 0 && <p className="text-xs text-gray-400 italic">No contact persons added.</p>}
               {contactPersons.map((cp, idx) => (
-                <div key={idx} className="grid grid-cols-1 lg:grid-cols-4 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div key={idx} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <div><label className={labelCls}>Full Name</label><input type="text" value={cp.name || ''} onChange={(e) => { const n = [...contactPersons]; n[idx].name = e.target.value; setContactPersons(n); }} className={inputCls} /></div>
                   <div><label className={labelCls}>Role</label><input type="text" value={cp.role || ''} onChange={(e) => { const n = [...contactPersons]; n[idx].role = e.target.value; setContactPersons(n); }} className={inputCls} /></div>
                   <div><label className={labelCls}>Phone</label><input type="text" value={cp.phone || ''} onChange={(e) => { const n = [...contactPersons]; n[idx].phone = e.target.value; setContactPersons(n); }} className={inputCls} /></div>
@@ -722,8 +722,8 @@ export default function SelfUpdateForm({ client, onUpdated }) {
                       className={inputCls}
                     />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex-1 w-full">
                       <label className={labelCls}>Upload file</label>
                       <input
                         type="file"
@@ -743,7 +743,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
                         type="button"
                         onClick={() => handleUploadDocument(idx)}
                         disabled={uploadingIdx === idx}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-60 mt-5"
+                        className="flex-1 sm:flex-none bg-blue-600 text-white px-4 py-2.5 rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-60 mt-4 sm:mt-5"
                       >
                         {uploadingIdx === idx ? 'Uploading...' : 'Upload'}
                       </button>
@@ -792,7 +792,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
       {/* Client Details Modal */}
       {showDetailsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[95vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
               <h3 className="text-lg font-bold text-gray-800">Client Details</h3>
               <button
@@ -803,7 +803,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-500">Name</label>
                   <p className="text-sm text-gray-800">{clientData.name || '-'}</p>

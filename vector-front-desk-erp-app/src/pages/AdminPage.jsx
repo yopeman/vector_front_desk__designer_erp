@@ -139,9 +139,9 @@ export default function AdminPage() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-3xl font-bold" style={{ color: '#00ced1' }}>☰</span>
+          <span className="text-3xl font-bold" style={{ color: '#00ced1' }}>V</span>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">V☰ctor</h1>
+            <h1 className="text-xl font-bold text-gray-800">V☰CTOR</h1>
             <p className="text-xs text-gray-500 mt-0.5">Welcome, {profile?.username || 'Admin'}</p>
           </div>
         </div>

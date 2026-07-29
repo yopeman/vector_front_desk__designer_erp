@@ -177,8 +177,8 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
             fontSize: '24px',
             color: '#ffffff',
             flexShrink: 0
-          }}>☰</span>
-          {!collapsed && 'V☰ctor'}
+          }}>{collapsed && 'V'}</span>
+          {!collapsed && 'V☰CTOR'}
         </div>
         {!collapsed && (
           <div className="logo-sub" style={{
