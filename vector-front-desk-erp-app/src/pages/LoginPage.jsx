@@ -46,18 +46,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0d1b2e] via-[#1a2f4e] to-[#0d1b2e]">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#00ced1] via-[#00b8bb] to-[#00ced1]">
       <div className="bg-white rounded-2xl p-10 w-full max-w-md shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-purple-600" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00ced1] to-[#00b8bb]" />
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 bg-[#00ced1] rounded-xl py-5 px-4">
           <div className="inline-flex items-center gap-2 mb-2">
-            <div className="w-2 h-7 bg-gradient-to-b from-blue-600 to-purple-600 rounded-sm" />
-            <span className="text-2xl font-extrabold tracking-wider text-[#0d1b2e]">
-              VECTOR
+            <span className="text-3xl font-extrabold tracking-wider text-white uppercase">
+              ☰ V☰ctor
             </span>
           </div>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest">
+          <p className="text-[10px] text-white uppercase tracking-widest">
             Advert & Manufacturing ERP
           </p>
         </div>
@@ -95,7 +94,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your full name"
                 required
-                className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+                className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-[#00ced1] focus:ring-2 focus:ring-[#e6fffd] transition"
               />
             </div>
           )}
@@ -125,14 +124,14 @@ export default function LoginPage() {
               placeholder="Enter your password"
               required
               minLength={6}
-              className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition"
+              className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-[#00ced1] focus:ring-2 focus:ring-[#e6fffd] transition"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-sm rounded-lg hover:opacity-90 transition disabled:opacity-60"
+            className="w-full py-2.5 bg-gradient-to-r from-[#00ced1] to-[#00b8bb] text-white font-bold text-sm rounded-lg hover:opacity-90 transition disabled:opacity-60"
           >
             {loading
               ? 'Processing...'
@@ -145,7 +144,7 @@ export default function LoginPage() {
         <div className="text-center mt-6">
           <button
             onClick={toggleMode}
-            className="text-sm text-blue-600 hover:underline font-medium"
+            className="text-sm text-[#00ced1] hover:underline font-medium"
           >
             {mode === 'login'
               ? "Don't have an account? Sign up"
@@ -154,7 +153,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center mt-6 text-[11px] text-gray-300">
-          Internal use only &mdash; Vector ERP System
+          Internal use only &mdash; V☰ctor ERP System
         </p>
       </div>
     </div>

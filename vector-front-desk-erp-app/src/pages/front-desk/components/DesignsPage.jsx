@@ -169,16 +169,17 @@ export default function DesignsPage() {
       // Insert design versions
       const validVersions = formData.design_versions.filter(version => version.file_id);
       for (const version of validVersions) {
-        await supabase.from('design_versions').insert([{
+        const versionData = {
           design_id: designId,
           file_id: version.file_id,
           version_number: version.version_number,
-          description: version.description,
-          sent_on: version.sent_on,
-          sent_by: version.sent_by,
-          status: version.status,
-          comment: version.comment
-        }]);
+          status: version.status
+        };
+        if (version.description) versionData.description = version.description;
+        if (version.sent_on) versionData.sent_on = version.sent_on;
+        if (version.sent_by) versionData.sent_by = version.sent_by;
+        
+        await supabase.from('design_versions').insert([versionData]);
       }
 
       // Save attached_file_ids from documents
@@ -322,8 +323,7 @@ export default function DesignsPage() {
           description: '',
           sent_on: '',
           sent_by: `Front Desk Officer (${profile?.username})` || '',
-          status: 'Sent',
-          comment: ''
+          status: 'Sent'
         }
       ]
     });
@@ -973,16 +973,6 @@ export default function DesignsPage() {
                                 value={version.description}
                                 onChange={(e) => updateDesignVersion(index, 'description', e.target.value)}
                                 placeholder="Enter description"
-                                className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-slate-500 mb-1">Comment</label>
-                              <input
-                                type="text"
-                                value={version.comment}
-                                onChange={(e) => updateDesignVersion(index, 'comment', e.target.value)}
-                                placeholder="Enter comment"
                                 className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                               />
                             </div>

@@ -14,6 +14,7 @@ export default function SelfUpdateForm({ client, onUpdated }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formTab, setFormTab] = useState('info');
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // ---- Lead form state ----
   const [leadData, setLeadData] = useState({
@@ -337,18 +338,9 @@ export default function SelfUpdateForm({ client, onUpdated }) {
 
   // ---- Render guards ----
   if (!client) return null;
-  if (!client.allow_self_update) {
-    return (
-      <div className="bg-white rounded-xl p-6 border border-gray-200">
-        <h2 className="text-base font-bold text-gray-800 mb-2">Update My Information</h2>
-        <p className="text-sm text-gray-400">
-          Self-update is currently disabled. Please contact us if you need to update your information.
-        </p>
-      </div>
-    );
-  }
 
   const isLead = client.client_type === 'lead';
+  const canEdit = client.allow_self_update;
 
   // ---- Lead view (read-only + edit) ----
   if (isLead) {
@@ -357,12 +349,22 @@ export default function SelfUpdateForm({ client, onUpdated }) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-gray-800">My Information</h2>
           {!editing ? (
-            <button
-              onClick={() => setEditing(true)}
-              className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-            >
-              Edit
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDetailsModal(true)}
+                className="bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+              >
+                View Details
+              </button>
+              {canEdit && (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
           ) : (
             <div className="flex gap-2">
               <button
@@ -391,14 +393,6 @@ export default function SelfUpdateForm({ client, onUpdated }) {
             <div>
               <p className="text-xs text-gray-500">Phone</p>
               <p className="font-semibold text-gray-800">{leadData.phone || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Address</p>
-              <p className="font-semibold text-gray-800">{leadData.address || '-'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Point of Contact</p>
-              <p className="font-semibold text-gray-800">{leadData.poc || '-'}</p>
             </div>
           </div>
         ) : (
@@ -445,6 +439,41 @@ export default function SelfUpdateForm({ client, onUpdated }) {
             </div>
           </form>
         )}
+
+        {/* Lead Details Modal */}
+        {showDetailsModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-md w-full">
+              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-800">Lead Details</h3>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Name</label>
+                  <p className="text-sm text-gray-800">{leadData.name || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Phone</label>
+                  <p className="text-sm text-gray-800">{leadData.phone || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Address</label>
+                  <p className="text-sm text-gray-800">{leadData.address || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Point of Contact</label>
+                  <p className="text-sm text-gray-800">{leadData.poc || '-'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -458,12 +487,22 @@ export default function SelfUpdateForm({ client, onUpdated }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-bold text-gray-800">My Information</h2>
         {!editing ? (
-          <button
-            onClick={() => setEditing(true)}
-            className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Edit
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowDetailsModal(true)}
+              className="bg-white border border-gray-300 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-50 transition"
+            >
+              View Details
+            </button>
+            {canEdit && (
+              <button
+                onClick={() => setEditing(true)}
+                className="bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+              >
+                Edit
+              </button>
+            )}
+          </div>
         ) : (
           <div className="flex gap-2">
             <button
@@ -485,29 +524,9 @@ export default function SelfUpdateForm({ client, onUpdated }) {
 
       {!editing ? (
         /* Read-only summary */
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <div><p className="text-xs text-gray-500">Name</p><p className="font-semibold text-gray-800">{clientData.name || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Company</p><p className="font-semibold text-gray-800">{clientData.company_name || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Type</p><p className="font-semibold text-gray-800">{clientData.type || '-'}</p></div>
           <div><p className="text-xs text-gray-500">Phone</p><p className="font-semibold text-gray-800">{clientData.phone || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Email</p><p className="font-semibold text-gray-800">{clientData.email || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Alt Email</p><p className="font-semibold text-gray-800">{clientData.alt_email || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Address</p><p className="font-semibold text-gray-800">{clientData.address || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">City</p><p className="font-semibold text-gray-800">{clientData.city || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Subcity</p><p className="font-semibold text-gray-800">{clientData.subcity || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Woreda</p><p className="font-semibold text-gray-800">{clientData.woreda || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Region</p><p className="font-semibold text-gray-800">{clientData.region || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">PO Box</p><p className="font-semibold text-gray-800">{clientData.po_box || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Industry</p><p className="font-semibold text-gray-800">{clientData.industry || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Website</p><p className="font-semibold text-gray-800">{clientData.website || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">TIN</p><p className="font-semibold text-gray-800">{clientData.tin || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">VAT Number</p><p className="font-semibold text-gray-800">{clientData.vat_number || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Reg Number</p><p className="font-semibold text-gray-800">{clientData.reg_number || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Status</p><p className="font-semibold text-gray-800">{clientData.status || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Currency</p><p className="font-semibold text-gray-800">{clientData.currency || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Payment Terms</p><p className="font-semibold text-gray-800">{clientData.payment_terms || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Loyalty Level</p><p className="font-semibold text-gray-800">{clientData.loyalty_level || '-'}</p></div>
-          <div><p className="text-xs text-gray-500">Account Manager</p><p className="font-semibold text-gray-800">{clientData.account_manager || '-'}</p></div>
         </div>
       ) : (
         /* Editable tabbed form */
@@ -767,6 +786,179 @@ export default function SelfUpdateForm({ client, onUpdated }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Client Details Modal */}
+      {showDetailsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-gray-800">Client Details</h3>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Name</label>
+                  <p className="text-sm text-gray-800">{clientData.name || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Company Name</label>
+                  <p className="text-sm text-gray-800">{clientData.company_name || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Type</label>
+                  <p className="text-sm text-gray-800">{clientData.type || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Industry</label>
+                  <p className="text-sm text-gray-800">{clientData.industry || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Website</label>
+                  <p className="text-sm text-gray-800">{clientData.website || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Description</label>
+                  <p className="text-sm text-gray-800">{clientData.description || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Phone</label>
+                  <p className="text-sm text-gray-800">{clientData.phone || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Email</label>
+                  <p className="text-sm text-gray-800">{clientData.email || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Alt Email</label>
+                  <p className="text-sm text-gray-800">{clientData.alt_email || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Point of Contact</label>
+                  <p className="text-sm text-gray-800">{clientData.poc || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Address</label>
+                  <p className="text-sm text-gray-800">{clientData.address || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">City</label>
+                  <p className="text-sm text-gray-800">{clientData.city || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Subcity</label>
+                  <p className="text-sm text-gray-800">{clientData.subcity || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Woreda</label>
+                  <p className="text-sm text-gray-800">{clientData.woreda || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Region</label>
+                  <p className="text-sm text-gray-800">{clientData.region || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">PO Box</label>
+                  <p className="text-sm text-gray-800">{clientData.po_box || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">TIN</label>
+                  <p className="text-sm text-gray-800">{clientData.tin || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">VAT Number</label>
+                  <p className="text-sm text-gray-800">{clientData.vat_number || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Reg Number</label>
+                  <p className="text-sm text-gray-800">{clientData.reg_number || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Date Established</label>
+                  <p className="text-sm text-gray-800">{clientData.date_established || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Credit Limit</label>
+                  <p className="text-sm text-gray-800">{clientData.credit_limit || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Payment Terms</label>
+                  <p className="text-sm text-gray-800">{clientData.payment_terms || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Currency</label>
+                  <p className="text-sm text-gray-800">{clientData.currency || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Opening Balance</label>
+                  <p className="text-sm text-gray-800">{clientData.opening_balance || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Total Sales</label>
+                  <p className="text-sm text-gray-800">{clientData.total_sales || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Paid Amount</label>
+                  <p className="text-sm text-gray-800">{clientData.paid_amount || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Status</label>
+                  <p className="text-sm text-gray-800">{clientData.status || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Priority</label>
+                  <p className="text-sm text-gray-800">{clientData.priority || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Source</label>
+                  <p className="text-sm text-gray-800">{clientData.source || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Source Heard</label>
+                  <p className="text-sm text-gray-800">{clientData.source_heard || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Budget</label>
+                  <p className="text-sm text-gray-800">{clientData.budget || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Timeframe</label>
+                  <p className="text-sm text-gray-800">{clientData.timeframe || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Interests</label>
+                  <p className="text-sm text-gray-800">{Array.isArray(clientData.interests) ? clientData.interests.join(', ') : clientData.interests || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Followup Date</label>
+                  <p className="text-sm text-gray-800">{clientData.followup_date || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Registered On</label>
+                  <p className="text-sm text-gray-800">{clientData.registered_on || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Loyalty Level</label>
+                  <p className="text-sm text-gray-800">{clientData.loyalty_level || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Account Manager</label>
+                  <p className="text-sm text-gray-800">{clientData.account_manager || '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500">Referral Source</label>
+                  <p className="text-sm text-gray-800">{clientData.referral_source || '-'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
