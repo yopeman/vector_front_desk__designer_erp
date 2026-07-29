@@ -194,7 +194,7 @@ export default function SettingsPage() {
           >
             <i className="fa-solid fa-lock mr-2"></i>Password
           </button>
-          <button
+          {/* <button
             onClick={() => setActiveTab('appearance')}
             className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'appearance'
@@ -203,7 +203,7 @@ export default function SettingsPage() {
             }`}
           >
             <i className="fa-solid fa-palette mr-2"></i>Appearance
-          </button>
+          </button> */}
         </div>
 
         {/* Tab Content */}

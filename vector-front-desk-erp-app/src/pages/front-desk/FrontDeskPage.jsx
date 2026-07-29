@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useState } from 'react';
+import './dashboard.css';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
 import KpiGrid7 from './components/KpiGrid7';
 import KpiGrid6 from './components/KpiGrid6';
 import MiddleGrid from './components/MiddleGrid';
 import BottomGrid from './components/BottomGrid';
+import useDashboardData from './components/useDashboardData';
 import LeadsPage from './components/LeadsPage';
 import ClientsPage from './components/ClientsPage';
 import SiteVisitsPage from './components/SiteVisitsPage';
@@ -31,30 +32,10 @@ import NotesPage from './components/NotesPage';
 import SettingsPage from './components/SettingsPage';
 
 export default function FrontDeskPage() {
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [preselectedOrderId, setPreselectedOrderId] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  async function fetchDashboardData() {
-    setLoading(true);
-    try {
-      const [clientsRes, ordersRes, visitsRes] = await Promise.all([
-        supabase.from('clients').select('*').order('created_at', { ascending: false }).limit(10),
-        supabase.from('orders').select('*, clients(name)').order('created_at', { ascending: false }).limit(10),
-        supabase.from('site_visits').select('*, clients(name)').order('created_at', { ascending: false }).limit(10),
-      ]);
-      console.log('Dashboard data loaded:', { clients: clientsRes.data, orders: ordersRes.data, visits: visitsRes.data });
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { loading, data } = useDashboardData();
 
   const handleMenuClick = (page, orderId = null) => {
     console.log('Menu clicked:', page, '- setting currentPage to:', page);
@@ -97,10 +78,10 @@ export default function FrontDeskPage() {
             </div>
           ) : currentPage === 'dashboard' ? (
             <>
-              <KpiGrid7 />
-              <KpiGrid6 />
-              <MiddleGrid />
-              <BottomGrid />
+              <KpiGrid7 data={data} onNavigate={handleMenuClick} />
+              <KpiGrid6 data={data} onNavigate={handleMenuClick} />
+              <MiddleGrid data={data} onNavigate={handleMenuClick} />
+              <BottomGrid data={data} onNavigate={handleMenuClick} />
             </>
           ) : currentPage === 'leads' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

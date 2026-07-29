@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
 
-export default function DesignDetailModal({ design, onClose }) {
+export default function DesignDetailModal({ design, onClose, onUpdate }) {
   const { profile } = useAuth();
   const [communications, setCommunications] = useState([]);
   const [client, setClient] = useState(null);
   const [designVersions, setDesignVersions] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [updatingPriority, setUpdatingPriority] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editStatus, setEditStatus] = useState(design.status);
+  const [editPriority, setEditPriority] = useState(design.priority);
+  const [editNotes, setEditNotes] = useState(design.internal_notes || '');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('client');
   const [attachedFiles, setAttachedFiles] = useState([]);
@@ -183,6 +189,60 @@ export default function DesignDetailModal({ design, onClose }) {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleUpdateDesign = async () => {
+    try {
+      setUpdatingStatus(true);
+      const { error } = await supabase
+        .from('designs')
+        .update({
+          status: editStatus,
+          priority: editPriority,
+          internal_notes: editNotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', design.id);
+
+      if (error) throw error;
+
+      // Update local design object
+      design.status = editStatus;
+      design.priority = editPriority;
+      design.internal_notes = editNotes;
+
+      setEditMode(false);
+      onUpdate?.();
+    } catch (error) {
+      console.error('Error updating design:', error);
+      alert('Failed to update design: ' + error.message);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleQuickStatusUpdate = async (newStatus) => {
+    try {
+      setUpdatingStatus(true);
+      const { error } = await supabase
+        .from('designs')
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', design.id);
+
+      if (error) throw error;
+
+      design.status = newStatus;
+      setEditStatus(newStatus);
+      onUpdate?.();
+    } catch (error) {
+      console.error('Error updating design status:', error);
+      alert('Failed to update status: ' + error.message);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const markAsRead = async (communicationId) => {
     try {
       await supabase
@@ -284,80 +344,181 @@ export default function DesignDetailModal({ design, onClose }) {
               </div>
             )}
 
-            {/* Design Request Tab */}
+                {/* Design Request Tab */}
             {activeTab === 'design' && (
               <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
-                  Design Request
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">
+                    Design Request
+                  </h3>
+                  <div className="flex gap-2">
+                    {!editMode ? (
+                      <button
+                        onClick={() => setEditMode(true)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg text-xs font-medium hover:bg-blue-100 transition-colors cursor-pointer"
+                      >
+                        <i className="fa-solid fa-pen-to-square"></i> Edit
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setEditMode(false)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-white text-slate-600 border border-slate-300 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleUpdateDesign}
+                          disabled={updatingStatus}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white border-none rounded-lg text-xs font-medium hover:bg-green-700 transition-colors cursor-pointer"
+                        >
+                          {updatingStatus ? (
+                            <i className="fa-solid fa-spinner fa-spin"></i>
+                          ) : (
+                            <i className="fa-solid fa-floppy-disk"></i>
+                          )} Save
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Status Update Bar */}
+                {!editMode && (
+                  <div className="mb-4 p-3 bg-white rounded-lg border border-slate-200 flex items-center gap-3 flex-wrap">
+                    <span className="text-xs font-medium text-slate-500">Quick Update Status:</span>
+                    {['Pending', 'In Progress', 'Completed', 'Cancelled'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => handleQuickStatusUpdate(status)}
+                        disabled={updatingStatus || design.status === status}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                          design.status === status
+                            ? 'bg-blue-100 text-blue-700 border-blue-300 cursor-default'
+                            : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        {updatingStatus ? (
+                          <i className="fa-solid fa-spinner fa-spin"></i>
+                        ) : (
+                          status
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div className="space-y-3 text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="font-medium text-slate-500">Order No:</span>
-                      <p className="text-slate-800">{design.order?.order_no || '-'}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-slate-500">Design Type:</span>
-                      <p className="text-slate-800">{design.design_type || '-'}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-slate-500">Purpose:</span>
-                    <p className="text-slate-800">{design.purpose || '-'}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="font-medium text-slate-500">Requested Date:</span>
-                      <p className="text-slate-800">{design.requested_date || '-'}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-slate-500">Required Date:</span>
-                      <p className="text-slate-800">{design.required_date || '-'}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <span className="font-medium text-slate-500">Status:</span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        design.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                        design.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
-                        design.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {design.status}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-slate-500">Priority:</span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        design.priority === 'High' ? 'bg-red-100 text-red-700' :
-                        design.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-green-100 text-green-700'
-                      }`}>
-                        {design.priority}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-slate-500">Assigned Designer:</span>
-                    <p className="text-slate-800">{design.assigned_designer?.username || '-'}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-slate-500">Brief Dimensions:</span>
-                    <p className="text-slate-800">{design.brief_dimensions || '-'}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-slate-500">Specifications:</span>
-                    <p className="text-slate-800">{design.specifications || '-'}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-slate-500">Special Instructions:</span>
-                    <p className="text-slate-800">{design.special_instructions || '-'}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-slate-500">Internal Notes:</span>
-                    <p className="text-slate-800">{design.internal_notes || '-'}</p>
-                  </div>
+                  {editMode ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="font-medium text-slate-500 block mb-1">Status</span>
+                          <select
+                            value={editStatus}
+                            onChange={(e) => setEditStatus(e.target.value)}
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                          >
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+                        </div>
+                        <div>
+                          <span className="font-medium text-slate-500 block mb-1">Priority</span>
+                          <select
+                            value={editPriority}
+                            onChange={(e) => setEditPriority(e.target.value)}
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                          >
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-500 block mb-1">Internal Notes</span>
+                        <textarea
+                          value={editNotes}
+                          onChange={(e) => setEditNotes(e.target.value)}
+                          rows={4}
+                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="font-medium text-slate-500">Order No:</span>
+                          <p className="text-slate-800">{design.order?.order_no || '-'}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-slate-500">Design Type:</span>
+                          <p className="text-slate-800">{design.design_type || '-'}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-500">Purpose:</span>
+                        <p className="text-slate-800">{design.purpose || '-'}</p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="font-medium text-slate-500">Requested Date:</span>
+                          <p className="text-slate-800">{design.requested_date || '-'}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-slate-500">Required Date:</span>
+                          <p className="text-slate-800">{design.required_date || '-'}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="font-medium text-slate-500">Status:</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            design.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                            design.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
+                            design.status === 'Cancelled' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {design.status}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-slate-500">Priority:</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            design.priority === 'High' ? 'bg-red-100 text-red-700' :
+                            design.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {design.priority}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-500">Assigned Designer:</span>
+                        <p className="text-slate-800">{design.assigned_designer?.username || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-500">Brief Dimensions:</span>
+                        <p className="text-slate-800">{design.brief_dimensions || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-500">Specifications:</span>
+                        <p className="text-slate-800">{design.specifications || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-500">Special Instructions:</span>
+                        <p className="text-slate-800">{design.special_instructions || '-'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-500">Internal Notes:</span>
+                        <p className="text-slate-800">{design.internal_notes || '-'}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
