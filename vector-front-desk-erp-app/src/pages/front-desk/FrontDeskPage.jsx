@@ -45,7 +45,7 @@ export default function FrontDeskPage() {
   };
 
     return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#eef2f7' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: '#eef2f7' }}>
       <Sidebar onMenuClick={handleMenuClick} currentPage={currentPage} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
       <div className="main-content" style={{
@@ -54,6 +54,8 @@ export default function FrontDeskPage() {
         flexDirection: 'column',
         backgroundColor: '#eef2f7',
         overflowX: 'auto',
+        overflowY: 'auto',
+        height: '100vh',
         minWidth: 0
       }}>
         <TopHeader onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} onNavigate={handleMenuClick} />
