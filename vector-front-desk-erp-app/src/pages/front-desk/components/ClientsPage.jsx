@@ -557,13 +557,13 @@ export default function ClientsPage() {
               </select>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              <button
+              {/* <button
                 onClick={() => setView('form')}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-xs flex items-center space-x-1.5 transition-colors border-none cursor-pointer"
               >
                 <i className="fa-solid fa-plus"></i>
                 <span>New Client</span>
-              </button>
+              </button> */}
               <div className="relative flex-1 sm:flex-initial">
                 <i className="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                 <input

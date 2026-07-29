@@ -21,9 +21,26 @@ export default function LeadsPage({ onUpgradeToClient }) {
   const [noteAuthors, setNoteAuthors] = useState([]);
   const [editingId, setEditingId] = useState(null);
 
+  const [payingClientIds, setPayingClientIds] = useState(new Set());
+
   useEffect(() => {
     fetchLeads();
+    fetchPayingClientIds();
   }, []);
+
+  const fetchPayingClientIds = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('client_id');
+
+      if (error) throw error;
+      const ids = new Set((data || []).map(p => p.client_id));
+      setPayingClientIds(ids);
+    } catch (error) {
+      console.error('Error fetching paying client IDs:', error);
+    }
+  };
 
   const fetchLeads = async () => {
     try {
@@ -273,7 +290,7 @@ export default function LeadsPage({ onUpgradeToClient }) {
                 <option value="Converted">Converted</option>
                 <option value="Lost">Lost</option>
               </select>
-              <select 
+              {/* <select 
                 value={officerFilter}
                 onChange={(e) => setOfficerFilter(e.target.value)}
                 className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none bg-white text-slate-600"
@@ -282,7 +299,7 @@ export default function LeadsPage({ onUpgradeToClient }) {
                 <option value="Tigist">Tigist</option>
                 <option value="Lemi">Lemi</option>
                 <option value="Aster">Aster</option>
-              </select>
+              </select> */}
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <button
@@ -337,13 +354,15 @@ export default function LeadsPage({ onUpgradeToClient }) {
                         >
                           <i className="fa-solid fa-pen-to-square"></i> Edit
                         </button>
-                        <button
-                          onClick={() => handleUpgradeToClient(lead)}
-                          className="text-green-600 hover:text-green-800 bg-transparent border-none cursor-pointer"
-                          title="Upgrade to Client"
-                        >
-                          <i className="fa-solid fa-arrow-up"></i> Upgrade
-                        </button>
+                        {payingClientIds.has(lead.id) && (
+                          <button
+                            onClick={() => handleUpgradeToClient(lead)}
+                            className="text-green-600 hover:text-green-800 bg-transparent border-none cursor-pointer"
+                            title="Upgrade to Client"
+                          >
+                            <i className="fa-solid fa-arrow-up"></i> Upgrade
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
