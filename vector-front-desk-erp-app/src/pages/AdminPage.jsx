@@ -69,6 +69,13 @@ export default function AdminPage() {
     fetchDepartments();
   }
 
+  async function deleteDepartment(id) {
+    if (!window.confirm('Are you sure you want to delete this department? Users assigned to it will have their department set to none.')) return;
+    const { error } = await supabase.from('departments').delete().eq('id', id);
+    if (error) { showToast(error.message, 'error'); return; }
+    showToast('Department deleted');
+    fetchDepartments();
+  }
 
   // ── Users ──
 
@@ -106,6 +113,13 @@ export default function AdminPage() {
     fetchUsers();
   }
 
+  async function deleteUser(id) {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    const { error } = await supabase.from('users').delete().eq('id', id);
+    if (error) { showToast(error.message, 'error'); return; }
+    showToast('User deleted');
+    fetchUsers();
+  }
 
   // ── Filtered data ──
 
@@ -186,10 +200,14 @@ export default function AdminPage() {
                     <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
                       <td className="px-5 py-3.5 font-medium text-gray-800">{d.name}</td>
                       <td className="px-5 py-3.5 text-gray-500">{d.description || '—'}</td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-5 py-3.5 text-right space-x-1">
                         <button onClick={() => setDeptModal({ mode: 'edit', data: d })}
                           className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition">
                           Edit
+                        </button>
+                        <button onClick={() => deleteDepartment(d.id)}
+                          className="text-red-600 hover:text-red-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-red-50 transition">
+                          Delete
                         </button>
                       </td>
                     </tr>
@@ -246,10 +264,14 @@ export default function AdminPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5 text-gray-500">{u.departments?.name || '—'}</td>
-                      <td className="px-5 py-3.5 text-right">
+                      <td className="px-5 py-3.5 text-right space-x-1">
                         <button onClick={() => setUserModal({ mode: 'edit', data: u })}
                           className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition">
                           Edit
+                        </button>
+                        <button onClick={() => deleteUser(u.id)}
+                          className="text-red-600 hover:text-red-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-red-50 transition">
+                          Delete
                         </button>
                       </td>
                     </tr>
