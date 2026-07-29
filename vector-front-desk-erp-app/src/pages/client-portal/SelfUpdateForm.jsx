@@ -649,8 +649,8 @@ export default function SelfUpdateForm({ client, onUpdated }) {
                 <div><label className={labelCls}>Opening Balance</label><input type="number" value={clientData.opening_balance || ''} onChange={(e) => setClientData({ ...clientData, opening_balance: e.target.value })} className={inputCls} /></div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label className={labelCls}>Total Sales</label><input type="number" value={clientData.total_sales || ''} onChange={(e) => setClientData({ ...clientData, total_sales: e.target.value })} className={inputCls} /></div>
-                <div><label className={labelCls}>Paid Amount</label><input type="number" value={clientData.paid_amount || ''} onChange={(e) => setClientData({ ...clientData, paid_amount: e.target.value })} className={inputCls} /></div>
+                {/* <div><label className={labelCls}>Total Sales</label><input type="number" value={clientData.total_sales || ''} onChange={(e) => setClientData({ ...clientData, total_sales: e.target.value })} className={inputCls} /></div> */}
+                {/* <div><label className={labelCls}>Paid Amount</label><input type="number" value={clientData.paid_amount || ''} onChange={(e) => setClientData({ ...clientData, paid_amount: e.target.value })} className={inputCls} /></div> */}
               </div>
               <div><label className={labelCls}>Payment Terms</label><input type="text" value={clientData.payment_terms || ''} onChange={(e) => setClientData({ ...clientData, payment_terms: e.target.value })} className={inputCls} /></div>
               <div>

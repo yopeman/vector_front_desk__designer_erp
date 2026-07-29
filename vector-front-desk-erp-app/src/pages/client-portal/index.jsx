@@ -946,14 +946,14 @@ export default function ClientsPage() {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
+                  {/* <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">Total Sales (ETB)</label>
                     <input type="number" value={formData.total_sales} onChange={(e) => setFormData({ ...formData, total_sales: e.target.value })} placeholder="Enter total sales" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white" />
-                  </div>
-                  <div>
+                  </div> */}
+                  {/* <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">Paid Amount (ETB)</label>
                     <input type="number" value={formData.paid_amount} onChange={(e) => setFormData({ ...formData, paid_amount: e.target.value })} placeholder="Enter paid amount" className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white" />
-                  </div>
+                  </div> */}
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-500 mb-1">Payment Terms</label>
