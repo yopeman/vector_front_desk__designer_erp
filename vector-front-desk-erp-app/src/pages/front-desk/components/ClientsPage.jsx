@@ -660,12 +660,25 @@ export default function ClientsPage() {
               <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
                 {editingId ? 'Edit Client' : 'New Client'}
               </h2>
-              <button
-                onClick={resetForm}
-                className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
-              >
-                <i className="fa-solid fa-xmark"></i>
-              </button>
+              <div className="flex items-center gap-2">
+                {editingId && (
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/#/clients/${editingId}`);
+                    }}
+                    className="text-slate-500 hover:text-blue-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
+                    title="Copy client link"
+                  >
+                    <i className="fa-solid fa-link"></i> Copy Link
+                  </button>
+                )}
+                <button
+                  onClick={resetForm}
+                  className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </div>
             </div>
 
             {/* Tabs */}
