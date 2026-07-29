@@ -13,12 +13,12 @@ const menuItems = [
       { name: 'Orders', icon: 'fa-box' },
     ] 
   },
-  { 
-    name: 'Design', 
+  {
+    name: 'Design',
     submenu: [
       { name: 'Designs', icon: 'fa-file-code' },
       { name: 'Design Status', icon: 'fa-spinner' },
-    ] 
+    ]
   },
   { 
     name: 'Sales', 
@@ -52,7 +52,7 @@ const menuItems = [
 ];
 
 export default function ReportPage() {
-  const [selectedSubmenus, setSelectedSubmenus] = useState(['Leads']);
+  const [selectedSubmenus, setSelectedSubmenus] = useState([]);
   const [fromDate, setFromDate] = useState(() => {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -67,20 +67,29 @@ export default function ReportPage() {
   });
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [visibleColumns, setVisibleColumns] = useState({});
-  const [showColumnMenu, setShowColumnMenu] = useState(null);
+  const [tableColumnVisibility, setTableColumnVisibility] = useState({});
+  const [tableSearchQueries, setTableSearchQueries] = useState({});
+  const [tableCurrentPages, setTableCurrentPages] = useState({});
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [showReportDropdown, setShowReportDropdown] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, [selectedSubmenus, fromDate, toDate]);
 
+  // Reset page to 1 when search query changes for a table
+  useEffect(() => {
+    Object.keys(tableSearchQueries).forEach(submenu => {
+      if (tableSearchQueries[submenu] !== undefined) {
+        setCurrentPage(submenu, 1);
+      }
+    });
+  }, [tableSearchQueries]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
       let allData = [];
-      let allColumns = {};
 
       for (const submenu of selectedSubmenus) {
         let tableName = getTableName(submenu);
@@ -93,6 +102,17 @@ export default function ReportPage() {
           .from(tableName)
           .select(selectFields)
           .order(dateField, { ascending: false });
+
+        // Apply specific filters based on submenu
+        if (submenu === 'Design Status') {
+          query = query.eq('status', 'In Progress');
+        }
+        if (submenu === 'Leads') {
+          query = query.eq('client_type', 'lead');
+        }
+        if (submenu === 'Clients') {
+          query = query.eq('client_type', 'client');
+        }
 
         if (fromDate && dateField) {
           query = query.gte(dateField, fromDate);
@@ -113,17 +133,17 @@ export default function ReportPage() {
 
         allData = [...allData, ...dataWithSource];
 
-        // Initialize visible columns for this submenu
+        // Initialize per-table column visibility
         const columns = getColumns(submenu);
-        columns.forEach(col => {
-          if (!(col.key in allColumns)) {
-            allColumns[col.key] = true;
-          }
-        });
+        if (!tableColumnVisibility[submenu]) {
+          tableColumnVisibility[submenu] = {};
+          columns.forEach(col => {
+            tableColumnVisibility[submenu][col.key] = true;
+          });
+        }
       }
 
       setData(allData);
-      setVisibleColumns(allColumns);
     } catch (error) {
       console.error('Error fetching data:', error);
       setData([]);
@@ -140,14 +160,14 @@ export default function ReportPage() {
       'Items': 'items',
       'Orders': 'orders',
       'Designs': 'designs',
-      'Design Status': 'design_status',
+      'Design Status': 'designs',
       'Proforma Invoices': 'invoices',
       'Payments': 'payments',
       'Sales Invoices': 'invoices',
       'Job Orders': 'job_orders',
       'Delivery': 'deliveries',
       'Installation': 'installations',
-      'Feedback': 'feedback',
+      'Feedback': 'feedbacks',
       'Complaints': 'complaints',
       'Warranty': 'warranties',
     };
@@ -162,7 +182,7 @@ export default function ReportPage() {
       'Items': '*',
       'Orders': '*, client:clients(name)',
       'Designs': '*',
-      'Design Status': '*',
+      'Design Status': '*, order:orders(order_no), assigned_designer:users(username), design_versions(*)',
       'Proforma Invoices': '*, order:orders(order_no, client:clients(name))',
       'Payments': '*, invoice:invoices(invoice_no), client:clients(name)',
       'Sales Invoices': '*, order:orders(order_no, client:clients(name))',
@@ -180,7 +200,7 @@ export default function ReportPage() {
     const dateMap = {
       'Leads': 'created_at',
       'Clients': 'created_at',
-      'Site Visits': 'visit_date',
+      'Site Visits': 'created_at',
       'Items': 'created_at',
       'Orders': 'order_date',
       'Designs': 'created_at',
@@ -189,8 +209,8 @@ export default function ReportPage() {
       'Payments': 'payment_date',
       'Sales Invoices': 'issue_date',
       'Job Orders': 'created_at',
-      'Delivery': 'delivery_date',
-      'Installation': 'installation_date',
+      'Delivery': 'scheduled_date',
+      'Installation': 'scheduled_date',
       'Feedback': 'created_at',
       'Complaints': 'created_at',
       'Warranty': 'created_at',
@@ -215,10 +235,12 @@ export default function ReportPage() {
         { key: 'created_at', label: 'Created Date' },
       ],
       'Site Visits': [
-        { key: 'client_name', label: 'Client Name' },
-        { key: 'visit_date', label: 'Visit Date' },
-        { key: 'purpose', label: 'Purpose' },
-        { key: 'notes', label: 'Notes' },
+        { key: 'request_no', label: 'Request No' },
+        { key: 'visit_purpose', label: 'Purpose' },
+        { key: 'city', label: 'City' },
+        { key: 'preferred_date', label: 'Preferred Date' },
+        { key: 'status', label: 'Status' },
+        { key: 'created_at', label: 'Created Date' },
       ],
       'Items': [
         { key: 'name', label: 'Name' },
@@ -235,14 +257,19 @@ export default function ReportPage() {
         { key: 'status', label: 'Status' },
       ],
       'Designs': [
-        { key: 'name', label: 'Name' },
-        { key: 'description', label: 'Description' },
+        { key: 'design_type', label: 'Design Type' },
+        { key: 'purpose', label: 'Purpose' },
+        { key: 'requested_date', label: 'Requested Date' },
+        { key: 'required_date', label: 'Required Date' },
+        { key: 'status', label: 'Status' },
         { key: 'created_at', label: 'Created Date' },
       ],
       'Design Status': [
-        { key: 'design_name', label: 'Design Name' },
+        { key: 'order', label: 'Order No' },
+        { key: 'design_type', label: 'Design Type' },
+        { key: 'purpose', label: 'Purpose' },
+        { key: 'assigned_designer', label: 'Designer' },
         { key: 'status', label: 'Status' },
-        { key: 'updated_at', label: 'Updated Date' },
         { key: 'created_at', label: 'Created Date' },
       ],
       'Proforma Invoices': [
@@ -277,21 +304,26 @@ export default function ReportPage() {
       ],
       'Delivery': [
         { key: 'delivery_no', label: 'Delivery No' },
-        { key: 'client_name', label: 'Client' },
-        { key: 'delivery_date', label: 'Delivery Date' },
+        { key: 'delivery_address', label: 'Delivery Address' },
+        { key: 'scheduled_date', label: 'Scheduled Date' },
+        { key: 'actual_delivery_time', label: 'Actual Delivery Time' },
         { key: 'status', label: 'Status' },
+        { key: 'created_at', label: 'Created Date' },
       ],
       'Installation': [
         { key: 'installation_no', label: 'Installation No' },
-        { key: 'client_name', label: 'Client' },
-        { key: 'installation_date', label: 'Installation Date' },
+        { key: 'site_address', label: 'Site Address' },
+        { key: 'scheduled_date', label: 'Scheduled Date' },
+        { key: 'completion_time', label: 'Completion Time' },
         { key: 'status', label: 'Status' },
+        { key: 'created_at', label: 'Created Date' },
       ],
       'Feedback': [
-        { key: 'client_name', label: 'Client' },
-        { key: 'rating', label: 'Rating' },
-        { key: 'comments', label: 'Comments' },
-        { key: 'created_at', label: 'Created Date' },
+        { key: 'client', label: 'Client' },
+        { key: 'order', label: 'Order No' },
+        { key: 'overall_rating', label: 'Overall Rating' },
+        { key: 'recommend', label: 'Recommend' },
+        { key: 'created_at', label: 'Submitted Date' },
       ],
       'Complaints': [
         { key: 'client_name', label: 'Client' },
@@ -310,30 +342,43 @@ export default function ReportPage() {
     return columnMap[submenu] || [];
   };
 
-  const filterData = (data) => {
-    if (!searchQuery) return data;
-    return data.filter(row => {
-      // Get all columns from all selected submenus
-      const allColumns = selectedSubmenus.flatMap(submenu => getColumns(submenu));
-      return allColumns.some(col => {
-        let value = getNestedValue(row, col.key);
-        if (value && typeof value === 'object') {
-          value = value.name || value.order_no || value.invoice_no || '';
-        }
-        return value && String(value).toLowerCase().includes(searchQuery.toLowerCase());
-      });
-    });
-  };
-
   const getNestedValue = (obj, path) => {
     return path.split('.').reduce((acc, part) => acc && acc[part], obj);
   };
 
-  const toggleColumn = (columnKey) => {
-    setVisibleColumns(prev => ({
+  const toggleTableColumn = (submenu, columnKey) => {
+    setTableColumnVisibility(prev => ({
       ...prev,
-      [columnKey]: !prev[columnKey]
+      [submenu]: {
+        ...(prev[submenu] || {}),
+        [columnKey]: !prev[submenu]?.[columnKey]
+      }
     }));
+  };
+
+  const setCurrentPage = (submenu, page) => {
+    setTableCurrentPages(prev => ({
+      ...prev,
+      [submenu]: page
+    }));
+  };
+
+  const getTotalPages = (dataLength) => {
+    return Math.ceil(dataLength / itemsPerPage);
+  };
+
+  const getPaginatedData = (data, currentPage) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const toggleSubmenu = (submenu) => {
+    setSelectedSubmenus(prev =>
+      prev.includes(submenu)
+        ? prev.filter(s => s !== submenu)
+        : [...prev, submenu]
+    );
   };
 
   const handleExportPDF = () => {
@@ -341,117 +386,126 @@ export default function ReportPage() {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
+      const leftMargin = 15;
+      const rightMargin = pageWidth / 2 + 10;
+      const lineHeight = 7;
       let y = 20;
 
       // Title
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Report: ${selectedSubmenus.join(', ')}`, pageWidth / 2, y, { align: 'center' });
-      y += 15;
+      doc.text('Report', pageWidth / 2, y, { align: 'center' });
+      y += 10;
 
       // Date range
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.text(`From: ${fromDate}  To: ${toDate}`, pageWidth / 2, y, { align: 'center' });
-      y += 15;
-
-      const filteredData = filterData(data);
-      const allColumns = selectedSubmenus.flatMap(submenu => getColumns(submenu));
-      const uniqueColumns = Array.from(new Map(allColumns.map(col => [col.key, col])).values());
-      const columns = uniqueColumns.filter(col => visibleColumns[col.key]);
-
-      // Split data into left and right sections
-      const midPoint = Math.ceil(filteredData.length / 2);
-      const leftData = filteredData.slice(0, midPoint);
-      const rightData = filteredData.slice(midPoint);
-
-      // Left section
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Section 1', 20, y);
       y += 10;
 
-      leftData.forEach((row, index) => {
-        if (y > pageHeight - 30) {
-          doc.addPage();
-          y = 20;
-        }
-        
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Record ${index + 1}:`, 20, y);
-        y += 6;
+      // Process each submenu
+      selectedSubmenus.forEach((submenu, submenuIndex) => {
+        const submenuData = data.filter(row => row._source === submenu);
+        const columns = getColumns(submenu);
 
-        columns.forEach(col => {
-          if (y > pageHeight - 20) {
+        if (submenuData.length === 0) return;
+
+        // Add section header
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${submenu} (${submenuData.length})`, leftMargin, y);
+        y += 8;
+
+        // Split data into left and right sections
+        const midPoint = Math.ceil(submenuData.length / 2);
+        const leftData = submenuData.slice(0, midPoint);
+        const rightData = submenuData.slice(midPoint);
+
+        // Left section
+        let leftY = y;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Section 1', leftMargin, leftY);
+        leftY += 6;
+
+        leftData.forEach((row, index) => {
+          if (leftY > pageHeight - 20) {
             doc.addPage();
-            y = 20;
+            leftY = 20;
           }
-          let value = getNestedValue(row, col.key);
-          if (value && typeof value === 'object') {
-            value = value.name || value.order_no || value.invoice_no || '';
-          }
-          doc.setFont('helvetica', 'normal');
-          doc.text(`${col.label}: ${value || '-'}`, 25, y);
-          y += 5;
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Record ${index + 1}:`, leftMargin, leftY);
+          leftY += 5;
+
+          columns.forEach(col => {
+            if (leftY > pageHeight - 15) {
+              doc.addPage();
+              leftY = 20;
+            }
+            let value = getNestedValue(row, col.key);
+            if (value && typeof value === 'object') {
+              value = value.name || value.order_no || value.invoice_no || '';
+            }
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${col.label}:`, leftMargin, leftY);
+            doc.text(`${value || '-'}`, leftMargin + 35, leftY);
+            leftY += 4;
+          });
+          leftY += 3;
         });
-        y += 4;
+
+        // Right section (new page if needed)
+        let rightY = y;
+        if (leftY > pageHeight / 2) {
+          doc.addPage();
+          rightY = 20;
+        }
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Section 2', rightMargin, rightY);
+        rightY += 6;
+
+        rightData.forEach((row, index) => {
+          if (rightY > pageHeight - 20) {
+            doc.addPage();
+            rightY = 20;
+          }
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Record ${midPoint + index + 1}:`, rightMargin, rightY);
+          rightY += 5;
+
+          columns.forEach(col => {
+            if (rightY > pageHeight - 15) {
+              doc.addPage();
+              rightY = 20;
+            }
+            let value = getNestedValue(row, col.key);
+            if (value && typeof value === 'object') {
+              value = value.name || value.order_no || value.invoice_no || '';
+            }
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${col.label}:`, rightMargin, rightY);
+            doc.text(`${value || '-'}`, rightMargin + 35, rightY);
+            rightY += 4;
+          });
+          rightY += 3;
+        });
+
+        // Add page break between submenus
+        doc.addPage();
+        y = 20;
       });
 
-      // Right section (new page)
-      doc.addPage();
-      y = 20;
-
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Section 2', 20, y);
-      y += 10;
-
-      rightData.forEach((row, index) => {
-        if (y > pageHeight - 30) {
-          doc.addPage();
-          y = 20;
-        }
-        
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Record ${midPoint + index + 1}:`, 20, y);
-        y += 6;
-
-        columns.forEach(col => {
-          if (y > pageHeight - 20) {
-            doc.addPage();
-            y = 20;
-          }
-          let value = getNestedValue(row, col.key);
-          if (value && typeof value === 'object') {
-            value = value.name || value.order_no || value.invoice_no || '';
-          }
-          doc.setFont('helvetica', 'normal');
-          doc.text(`${col.label}: ${value || '-'}`, 25, y);
-          y += 5;
-        });
-        y += 4;
-      });
-
-      doc.save(`Report_${selectedSubmenus.join('_').replace(/\s+/g, '_')}.pdf`);
+      doc.save(`Report_${selectedSubmenus.join('_').replace(/\s+/g, '_')}_${fromDate}_to_${toDate}.pdf`);
     } catch (error) {
       console.error('Error exporting PDF:', error);
       alert('Error exporting PDF: ' + error.message);
     }
-  };
-
-  const allColumns = selectedSubmenus.flatMap(submenu => getColumns(submenu));
-  const uniqueColumns = Array.from(new Map(allColumns.map(col => [col.key, col])).values());
-  const visibleColumnsForTable = uniqueColumns.filter(col => visibleColumns[col.key]);
-  const filteredData = filterData(data);
-
-  const toggleSubmenu = (submenu) => {
-    setSelectedSubmenus(prev => 
-      prev.includes(submenu) 
-        ? prev.filter(s => s !== submenu)
-        : [...prev, submenu]
-    );
   };
 
   return (
@@ -487,6 +541,24 @@ export default function ReportPage() {
               onChange={(e) => setToDate(e.target.value)}
               className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Items Per Page</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                // Reset all tables to page 1 when items per page changes
+                setTableCurrentPages({});
+              }}
+              className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
           </div>
         </div>
       </div>
@@ -534,81 +606,140 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 mb-4">
-        <div className="flex gap-4 items-center">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-          <div className="flex-1">
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <div className="text-xs font-medium text-slate-600 mb-2">Show/Hide Columns</div>
-              <div className="flex flex-wrap gap-2">
-                {uniqueColumns.map(col => (
-                  <button
-                    key={col.key}
-                    onClick={() => toggleColumn(col.key)}
-                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs border cursor-pointer transition-colors ${
-                      visibleColumns[col.key] 
-                        ? 'bg-blue-100 border-blue-300 text-blue-700' 
-                        : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-100'
-                    }`}
-                  >
-                    <i className={`fa-solid ${visibleColumns[col.key] ? 'fa-eye' : 'fa-eye-slash'}`}></i>
-                    <span>{col.label}</span>
-                  </button>
-                ))}
+      {/* Separate Tables for Each Module */}
+      {selectedSubmenus.map(submenu => {
+        const submenuData = data.filter(row => row._source === submenu);
+        const columns = getColumns(submenu);
+        const visibleColumnsForSubmenu = columns.filter(col => 
+          tableColumnVisibility[submenu]?.[col.key] !== false
+        );
+
+        // Filter data based on table-specific search query
+        const tableSearchQuery = tableSearchQueries[submenu] || '';
+        const filteredSubmenuData = submenuData.filter(row => {
+          if (!tableSearchQuery) return true;
+          return columns.some(col => {
+            let value = getNestedValue(row, col.key);
+            if (value && typeof value === 'object') {
+              value = value.name || value.order_no || value.invoice_no || '';
+            }
+            return value && String(value).toLowerCase().includes(tableSearchQuery.toLowerCase());
+          });
+        });
+
+        // Pagination
+        const currentPage = tableCurrentPages[submenu] || 1;
+        const totalPages = getTotalPages(filteredSubmenuData.length);
+        const paginatedData = getPaginatedData(filteredSubmenuData, currentPage);
+
+        return (
+          <div key={submenu} className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6">
+            <div className="p-4 border-b border-slate-200 bg-slate-50">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-bold text-slate-800">{submenu} ({filteredSubmenuData.length})</h3>
+              </div>
+              <div className="flex gap-3 items-center">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder={`Search ${submenu}...`}
+                    value={tableSearchQueries[submenu] || ''}
+                    onChange={(e) => setTableSearchQueries(prev => ({
+                      ...prev,
+                      [submenu]: e.target.value
+                    }))}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {columns.map(col => (
+                    <button
+                      key={col.key}
+                      onClick={() => toggleTableColumn(submenu, col.key)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded text-xs border cursor-pointer transition-colors ${
+                        tableColumnVisibility[submenu]?.[col.key] !== false
+                          ? 'bg-blue-100 border-blue-300 text-blue-700'
+                          : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-100'
+                      }`}
+                    >
+                      <i className={`fa-solid ${tableColumnVisibility[submenu]?.[col.key] !== false ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                      <span>{col.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center">
-            <p className="text-slate-500">Loading data...</p>
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
-                {visibleColumnsForTable.map(col => (
-                  <th key={col.key} className="p-4 text-left text-xs font-semibold text-slate-600">{col.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredData.length === 0 ? (
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <td colSpan={visibleColumnsForTable.length + 1} className="p-8 text-center text-slate-400">
-                    No data found
-                  </td>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
+                  {visibleColumnsForSubmenu.map(col => (
+                    <th key={col.key} className="p-4 text-left text-xs font-semibold text-slate-600">{col.label}</th>
+                  ))}
                 </tr>
-              ) : (
-                filteredData.map((row, index) => (
-                  <tr key={row.id} className="hover:bg-slate-50">
-                    <td className="p-4 text-center">{index + 1}</td>
-                    {visibleColumnsForTable.map(col => (
-                      <td key={col.key} className="p-4">
-                        {renderCellValue(row, col.key)}
-                      </td>
-                    ))}
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={visibleColumnsForSubmenu.length + 1} className="p-8 text-center text-slate-400">
+                      No data found
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
+                ) : (
+                  paginatedData.map((row, index) => (
+                    <tr key={row.id} className="hover:bg-slate-50">
+                      <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      {visibleColumnsForSubmenu.map(col => (
+                        <td key={col.key} className="p-4">
+                          {renderCellValue(row, col.key)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+                <div className="text-xs text-slate-600">
+                  Page {currentPage} of {totalPages} ({filteredSubmenuData.length} total)
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(submenu, currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded border border-slate-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 cursor-pointer"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(submenu, page)}
+                        className={`px-3 py-1 rounded border text-xs cursor-pointer ${
+                          currentPage === page
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-slate-300 hover:bg-slate-100'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(submenu, currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded border border-slate-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 cursor-pointer"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

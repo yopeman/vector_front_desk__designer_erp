@@ -236,20 +236,6 @@ export default function OrdersPage({ onNavigateToProforma }) {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this order? This will also delete all order items.')) return;
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      await fetchOrders();
-    } catch (error) {
-      console.error('Error deleting order:', error);
-      alert('Error deleting order: ' + error.message);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -461,17 +447,10 @@ export default function OrdersPage({ onNavigateToProforma }) {
                     </button>
                     <button
                       onClick={() => onNavigateToProforma?.(order.id)}
-                      className="text-green-600 hover:text-green-800 bg-transparent border-none cursor-pointer mr-2"
+                      className="text-green-600 hover:text-green-800 bg-transparent border-none cursor-pointer"
                       title="Proforma Invoice"
                     >
                       <i className="fa-solid fa-file-invoice"></i> Proforma
-                    </button>
-                    <button
-                      onClick={() => handleDelete(order.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>

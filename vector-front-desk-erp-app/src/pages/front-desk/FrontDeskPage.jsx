@@ -25,6 +25,9 @@ import WarrantyPage from './components/WarrantyPage';
 import DailyFinanceReportPage from './components/DailyFinanceReportPage';
 import WeeklyFinanceReportPage from './components/WeeklyFinanceReportPage';
 import ReportPage from './components/ReportPage';
+import MessagesPage from './components/MessagesPage';
+import NotificationsPage from './components/NotificationsPage';
+import NotesPage from './components/NotesPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
@@ -204,6 +207,21 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Report Page Loaded</h2>
               <ReportPage />
+            </div>
+           ) : currentPage === 'messages' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', height: 'calc(100vh - 110px)' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Messages</h2>
+              <MessagesPage />
+            </div>
+           ) : currentPage === 'notifications' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', height: 'calc(100vh - 110px)' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Notifications</h2>
+              <NotificationsPage />
+            </div>
+          ) : currentPage === 'notes' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', height: 'calc(100vh - 110px)' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Notes</h2>
+              <NotesPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

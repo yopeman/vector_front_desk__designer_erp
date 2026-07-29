@@ -197,18 +197,6 @@ export default function InstallationPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this installation?')) return;
-
-    try {
-      const { error } = await supabase.from('installations').delete().eq('id', id);
-      if (error) throw error;
-      await fetchInstallations();
-    } catch (error) {
-      console.error('Error deleting installation:', error);
-      alert('Error deleting installation: ' + error.message);
-    }
-  };
 
   const handleOpenModal = () => {
     setEditingInstallation(null);
@@ -325,17 +313,10 @@ export default function InstallationPage() {
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleEdit(installation)}
-                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
+                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
                       title="Edit"
                     >
                       <i className="fa-solid fa-pen-to-square"></i> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(installation.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>

@@ -74,20 +74,6 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this proforma invoice?')) return;
-    try {
-      const { error } = await supabase
-        .from('invoices')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      await fetchInvoices();
-    } catch (error) {
-      console.error('Error deleting proforma invoice:', error);
-      alert('Error deleting proforma invoice: ' + error.message);
-    }
-  };
 
   const handlePreview = async (invoice) => {
     try {

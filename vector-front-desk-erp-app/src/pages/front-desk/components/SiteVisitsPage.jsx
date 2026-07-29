@@ -156,20 +156,6 @@ export default function SiteVisitsPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this site visit?')) return;
-    try {
-      const { error } = await supabase
-        .from('site_visits')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      await fetchSiteVisits();
-    } catch (error) {
-      console.error('Error deleting site visit:', error);
-      alert('Error deleting site visit: ' + error.message);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -329,17 +315,10 @@ export default function SiteVisitsPage() {
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleEdit(visit)}
-                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
+                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
                       title="Edit"
                     >
                       <i className="fa-solid fa-pen-to-square"></i> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(visit.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>

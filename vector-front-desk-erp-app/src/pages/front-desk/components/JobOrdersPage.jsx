@@ -141,18 +141,6 @@ export default function JobOrdersPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this job order?')) return;
-
-    try {
-      const { error } = await supabase.from('job_orders').delete().eq('id', id);
-      if (error) throw error;
-      await fetchJobOrders();
-    } catch (error) {
-      console.error('Error deleting job order:', error);
-      alert('Error deleting job order: ' + error.message);
-    }
-  };
 
   const handleOpenModal = () => {
     setEditingJobOrder(null);
@@ -262,17 +250,10 @@ export default function JobOrdersPage() {
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleEdit(jobOrder)}
-                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
+                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
                       title="Edit"
                     >
                       <i className="fa-solid fa-pen-to-square"></i> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(jobOrder.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>

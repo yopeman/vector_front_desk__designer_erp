@@ -192,18 +192,6 @@ export default function DeliveryPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this delivery?')) return;
-
-    try {
-      const { error } = await supabase.from('deliveries').delete().eq('id', id);
-      if (error) throw error;
-      await fetchDeliveries();
-    } catch (error) {
-      console.error('Error deleting delivery:', error);
-      alert('Error deleting delivery: ' + error.message);
-    }
-  };
 
   const handleOpenModal = () => {
     setEditingDelivery(null);
@@ -317,17 +305,10 @@ export default function DeliveryPage() {
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleEdit(delivery)}
-                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
+                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
                       title="Edit"
                     >
                       <i className="fa-solid fa-pen-to-square"></i> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(delivery.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>

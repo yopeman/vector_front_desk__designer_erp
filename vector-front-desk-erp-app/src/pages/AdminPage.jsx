@@ -69,13 +69,6 @@ export default function AdminPage() {
     fetchDepartments();
   }
 
-  async function deleteDepartment(id) {
-    if (!confirm('Delete this department?')) return;
-    const { error } = await supabase.from('departments').delete().eq('id', id);
-    if (error) { showToast(error.message, 'error'); return; }
-    showToast('Department deleted');
-    fetchDepartments();
-  }
 
   // ── Users ──
 
@@ -113,13 +106,6 @@ export default function AdminPage() {
     fetchUsers();
   }
 
-  async function deleteUser(id) {
-    if (!confirm('Delete this user?')) return;
-    const { error } = await supabase.from('users').delete().eq('id', id);
-    if (error) { showToast(error.message, 'error'); return; }
-    showToast('User deleted');
-    fetchUsers();
-  }
 
   // ── Filtered data ──
 
@@ -202,12 +188,8 @@ export default function AdminPage() {
                       <td className="px-5 py-3.5 text-gray-500">{d.description || '—'}</td>
                       <td className="px-5 py-3.5 text-right">
                         <button onClick={() => setDeptModal({ mode: 'edit', data: d })}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition mr-1">
+                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition">
                           Edit
-                        </button>
-                        <button onClick={() => deleteDepartment(d.id)}
-                          className="text-red-500 hover:text-red-700 text-xs font-semibold px-2.5 py-1 rounded hover:bg-red-50 transition">
-                          Delete
                         </button>
                       </td>
                     </tr>
@@ -266,12 +248,8 @@ export default function AdminPage() {
                       <td className="px-5 py-3.5 text-gray-500">{u.departments?.name || '—'}</td>
                       <td className="px-5 py-3.5 text-right">
                         <button onClick={() => setUserModal({ mode: 'edit', data: u })}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition mr-1">
+                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition">
                           Edit
-                        </button>
-                        <button onClick={() => deleteUser(u.id)}
-                          className="text-red-500 hover:text-red-700 text-xs font-semibold px-2.5 py-1 rounded hover:bg-red-50 transition">
-                          Delete
                         </button>
                       </td>
                     </tr>

@@ -223,20 +223,6 @@ export default function DesignsPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this design? This will also delete all design versions.')) return;
-    try {
-      const { error } = await supabase
-        .from('designs')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      await fetchDesigns();
-    } catch (error) {
-      console.error('Error deleting design:', error);
-      alert('Error deleting design: ' + error.message);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -527,17 +513,10 @@ export default function DesignsPage() {
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleEdit(design)}
-                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
+                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
                       title="Edit"
                     >
                       <i className="fa-solid fa-pen-to-square"></i> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(design.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>

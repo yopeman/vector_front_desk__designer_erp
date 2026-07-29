@@ -90,20 +90,6 @@ export default function ItemsPage() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
-    try {
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      await fetchItems();
-    } catch (error) {
-      console.error('Error deleting item:', error);
-      alert('Error deleting item: ' + error.message);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -207,17 +193,10 @@ export default function ItemsPage() {
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handleEdit(item)}
-                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer mr-2"
+                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
                       title="Edit"
                     >
                       <i className="fa-solid fa-pen-to-square"></i> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-red-600 hover:text-red-800 bg-transparent border-none cursor-pointer"
-                      title="Delete"
-                    >
-                      <i className="fa-solid fa-trash"></i> Delete
                     </button>
                   </td>
                 </tr>
