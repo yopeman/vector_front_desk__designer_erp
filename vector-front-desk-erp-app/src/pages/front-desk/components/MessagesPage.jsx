@@ -12,6 +12,11 @@ export default function MessagesPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const [notificationModal, setNotificationModal] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -20,6 +25,42 @@ export default function MessagesPage() {
   useEffect(() => {
     if (selectedUser) {
       fetchMessages(selectedUser.id);
+    }
+  }, [selectedUser]);
+
+  useEffect(() => {
+    if (selectedUser) {
+      const { data: { user } } = supabase.auth.getUser();
+      const currentUserId = user?.id;
+
+      const channel = supabase
+        .channel('messages-channel')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'messages',
+            filter: `or(and(sender_id.eq.${currentUserId},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${currentUserId}))`
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              fetchMessages(selectedUser.id);
+              if (payload.new.sender_id !== currentUserId) {
+                setNotificationModal({
+                  show: true,
+                  title: 'New Message',
+                  message: `You have a new message from ${selectedUser.username}`
+                });
+              }
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [selectedUser]);
 
@@ -613,6 +654,37 @@ export default function MessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Notification Modal */}
+      {notificationModal.show && (
+        <div
+          className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
+          onClick={() => setNotificationModal({ ...notificationModal, show: false })}
+        >
+          <div
+            className="bg-white rounded-xl border border-slate-200 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <i className="fa-solid fa-bell text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-800">{notificationModal.title}</h3>
+                  <p className="text-sm text-slate-600">{notificationModal.message}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNotificationModal({ ...notificationModal, show: false })}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-sm cursor-pointer border-none transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,10 +6,40 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedNotif, setSelectedNotif] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [notificationModal, setNotificationModal] = useState({
+    show: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     fetchNotifications();
     fetchReadNotifications();
+
+    // Realtime subscription for new notifications
+    const channel = supabase
+      .channel('notifications-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications'
+        },
+        (payload) => {
+          setNotifications(prev => [payload.new, ...prev]);
+          setNotificationModal({
+            show: true,
+            title: payload.new.title,
+            message: payload.new.body
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchNotifications = async () => {
@@ -366,6 +396,37 @@ export default function NotificationsPage() {
                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium text-xs cursor-pointer border-none"
               >
                 <i className="fa-solid fa-check mr-2"></i>Mark as Read
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Modal */}
+      {notificationModal.show && (
+        <div
+          className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
+          onClick={() => setNotificationModal({ ...notificationModal, show: false })}
+        >
+          <div
+            className="bg-white rounded-xl border border-slate-200 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <i className="fa-solid fa-bell text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-800">{notificationModal.title}</h3>
+                  <p className="text-sm text-slate-600">{notificationModal.message}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNotificationModal({ ...notificationModal, show: false })}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-sm cursor-pointer border-none transition-colors"
+              >
+                OK
               </button>
             </div>
           </div>

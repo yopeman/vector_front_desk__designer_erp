@@ -28,11 +28,13 @@ import ReportPage from './components/ReportPage';
 import MessagesPage from './components/MessagesPage';
 import NotificationsPage from './components/NotificationsPage';
 import NotesPage from './components/NotesPage';
+import SettingsPage from './components/SettingsPage';
 
 export default function FrontDeskPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [preselectedOrderId, setPreselectedOrderId] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -63,7 +65,7 @@ export default function FrontDeskPage() {
 
     return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#eef2f7' }}>
-      <Sidebar onMenuClick={handleMenuClick} currentPage={currentPage} />
+      <Sidebar onMenuClick={handleMenuClick} currentPage={currentPage} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
       
       <div className="main-content" style={{
         flex: 1,
@@ -73,20 +75,7 @@ export default function FrontDeskPage() {
         overflowX: 'auto',
         minWidth: 0
       }}>
-        <TopHeader />
-
-        <div className="date-bar" style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          padding: '8px 28px 0',
-          color: '#64748b',
-          fontSize: '11.5px',
-          gap: '6px'
-        }}>
-          <i className="fa-solid fa-calendar"></i>
-          <span id="currentDateText">June 26, 2026 | Friday</span>
-        </div>
+        <TopHeader onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} onNavigate={handleMenuClick} />
 
         <div className="dashboard-body" style={{
           padding: '16px 24px 24px',
@@ -222,6 +211,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', height: 'calc(100vh - 110px)' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Notes</h2>
               <NotesPage />
+            </div>
+          ) : currentPage === 'settings' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Settings</h2>
+              <SettingsPage />
             </div>
           ) : (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

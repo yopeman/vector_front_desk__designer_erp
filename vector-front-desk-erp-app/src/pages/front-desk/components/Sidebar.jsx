@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function Sidebar({ onMenuClick, currentPage }) {
-  const [collapsed, setCollapsed] = useState(false);
+export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollapsed }) {
   const [expandedMenus, setExpandedMenus] = useState({});
 
   // Determine which menu contains the current page
@@ -92,6 +91,12 @@ export default function Sidebar({ onMenuClick, currentPage }) {
     { 
       name: 'Notes', 
       icon: 'fa-sticky-note', 
+      active: false,
+      submenu: null 
+    },
+    { 
+      name: 'Settings', 
+      icon: 'fa-gear', 
       active: false,
       submenu: null 
     }
