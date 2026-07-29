@@ -138,9 +138,12 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
-          <p className="text-xs text-gray-500 mt-0.5">Welcome, {profile?.username || 'Admin'}</p>
+        <div className="flex items-center gap-3">
+          <span className="text-3xl font-bold" style={{ color: '#00ced1' }}>☰</span>
+          <div>
+            <h1 className="text-xl font-bold text-gray-800">V☰ctor</h1>
+            <p className="text-xs text-gray-500 mt-0.5">Welcome, {profile?.username || 'Admin'}</p>
+          </div>
         </div>
         <button onClick={signOut} className="text-sm text-red-600 hover:text-red-800 font-medium">Sign Out</button>
       </header>
@@ -156,11 +159,13 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="flex gap-6 mb-6 border-b border-gray-200 pb-2">
           <button onClick={() => setActiveTab('departments')}
-            className={`text-sm font-semibold pb-2 px-1 transition ${activeTab === 'departments' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+            className={`text-sm font-semibold pb-2 px-1 transition ${activeTab === 'departments' ? 'border-b-2' : 'text-gray-500 hover:text-gray-700'}`}
+            style={activeTab === 'departments' ? { color: '#00ced1', borderColor: '#00ced1' } : {}}>
             Departments {departments.length > 0 && <span className="ml-1 text-xs text-gray-400">({departments.length})</span>}
           </button>
           <button onClick={() => setActiveTab('users')}
-            className={`text-sm font-semibold pb-2 px-1 transition ${activeTab === 'users' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+            className={`text-sm font-semibold pb-2 px-1 transition ${activeTab === 'users' ? 'border-b-2' : 'text-gray-500 hover:text-gray-700'}`}
+            style={activeTab === 'users' ? { color: '#00ced1', borderColor: '#00ced1' } : {}}>
             Users {users.length > 0 && <span className="ml-1 text-xs text-gray-400">({users.length})</span>}
           </button>
         </div>
@@ -175,11 +180,17 @@ export default function AdminPage() {
                 placeholder="Search departments..."
                 value={deptSearch}
                 onChange={(e) => setDeptSearch(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 w-full max-w-xs"
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none w-full max-w-xs"
+                style={{ transition: 'border-color 0.2s' }}
+                onFocus={(e) => e.target.style.borderColor = '#00ced1'}
+                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
               />
               <button
                 onClick={() => setDeptModal({ mode: 'create' })}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5"
+                className="text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5"
+                style={{ backgroundColor: '#00ced1' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#00b8bb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#00ced1'}
               >
                 <span className="text-base leading-none">+</span> Add Department
               </button>
@@ -202,7 +213,10 @@ export default function AdminPage() {
                       <td className="px-5 py-3.5 text-gray-500">{d.description || '—'}</td>
                       <td className="px-5 py-3.5 text-right space-x-1">
                         <button onClick={() => setDeptModal({ mode: 'edit', data: d })}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition">
+                          className="text-xs font-semibold px-2.5 py-1 rounded transition"
+                          style={{ color: '#00ced1' }}
+                          onMouseEnter={(e) => { e.target.style.color = '#00b8bb'; e.target.style.backgroundColor = '#e6fffd'; }}
+                          onMouseLeave={(e) => { e.target.style.color = '#00ced1'; e.target.style.backgroundColor = 'transparent'; }}>
                           Edit
                         </button>
                         <button onClick={() => deleteDepartment(d.id)}
@@ -231,11 +245,17 @@ export default function AdminPage() {
                 placeholder="Search users by name or email..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 w-full max-w-xs"
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none w-full max-w-xs"
+                style={{ transition: 'border-color 0.2s' }}
+                onFocus={(e) => e.target.style.borderColor = '#00ced1'}
+                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
               />
               <button
                 onClick={() => setUserModal({ mode: 'create' })}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5"
+                className="text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5"
+                style={{ backgroundColor: '#00ced1' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#00b8bb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#00ced1'}
               >
                 <span className="text-base leading-none">+</span> Add User
               </button>
@@ -266,7 +286,10 @@ export default function AdminPage() {
                       <td className="px-5 py-3.5 text-gray-500">{u.departments?.name || '—'}</td>
                       <td className="px-5 py-3.5 text-right space-x-1">
                         <button onClick={() => setUserModal({ mode: 'edit', data: u })}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-blue-50 transition">
+                          className="text-xs font-semibold px-2.5 py-1 rounded transition"
+                          style={{ color: '#00ced1' }}
+                          onMouseEnter={(e) => { e.target.style.color = '#00b8bb'; e.target.style.backgroundColor = '#e6fffd'; }}
+                          onMouseLeave={(e) => { e.target.style.color = '#00ced1'; e.target.style.backgroundColor = 'transparent'; }}>
                           Edit
                         </button>
                         <button onClick={() => deleteUser(u.id)}
@@ -326,16 +349,28 @@ function DeptModal({ mode, data, onSave, onClose }) {
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Name</label>
           <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ transition: 'all 0.2s' }}
+            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
+            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+          />
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Description</label>
           <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ transition: 'all 0.2s' }}
+            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
+            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+          />
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">{mode === 'edit' ? 'Update' : 'Create'}</button>
+          <button type="submit" className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition"
+            style={{ backgroundColor: '#00ced1' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#00b8bb'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#00ced1'}
+          >{mode === 'edit' ? 'Update' : 'Create'}</button>
         </div>
       </form>
     </Modal>
@@ -364,24 +399,40 @@ function UserModal({ mode, data, departments, onSave, onClose }) {
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
           <input type="text" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })}
-            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ transition: 'all 0.2s' }}
+            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
+            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+          />
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Email</label>
           <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ transition: 'all 0.2s' }}
+            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
+            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+          />
         </div>
         {mode === 'create' && (
           <div>
             <label className="block text-xs font-semibold text-gray-700 mb-1">Password</label>
             <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required minLength={6} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" />
+              required minLength={6} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+              style={{ transition: 'all 0.2s' }}
+              onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
+              onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+            />
           </div>
         )}
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Role</label>
           <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ transition: 'all 0.2s' }}
+            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
+            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+          >
             <option value="">— No role (pending) —</option>
             <option value="front_desk">Front Desk Officer</option>
             <option value="designer">Designer</option>
@@ -391,7 +442,11 @@ function UserModal({ mode, data, departments, onSave, onClose }) {
         <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Department</label>
           <select value={form.department_id} onChange={(e) => setForm({ ...form, department_id: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ transition: 'all 0.2s' }}
+            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
+            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+          >
             <option value="">No department</option>
             {departments.map((d) => (
               <option key={d.id} value={d.id}>{d.name}</option>
@@ -400,7 +455,11 @@ function UserModal({ mode, data, departments, onSave, onClose }) {
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition">{mode === 'edit' ? 'Update' : 'Create'}</button>
+          <button type="submit" className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition"
+            style={{ backgroundColor: '#00ced1' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#00b8bb'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#00ced1'}
+          >{mode === 'edit' ? 'Update' : 'Create'}</button>
         </div>
       </form>
     </Modal>

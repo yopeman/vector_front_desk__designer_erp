@@ -2,8 +2,8 @@
   --bg-color: #eef2f7;
   --sidebar-bg: #0d1b2e;
   --sidebar-hover: rgba(255,255,255,0.06);
-  --primary-blue: #2563eb;
-  --primary-blue-light: #eff6ff;
+  --primary-blue: #00ced1;
+  --primary-blue-light: #e6fffd;
   --text-main: #1e293b;
   --text-muted: #64748b;
   --border-color: #e8edf3;
@@ -13,7 +13,7 @@
   --green: #059669;
   --orange: #ea580c;
   --teal: #0891b2;
-  --blue: #2563eb;
+  --blue: #00ced1;
   --red: #dc2626;
 }
 
@@ -78,7 +78,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, var(--kpi-accent, #2563eb), transparent);
+  background: linear-gradient(90deg, var(--kpi-accent, #00ced1), transparent);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -230,10 +230,10 @@
 
 .action-btn:hover {
   background-color: var(--primary-blue-light);
-  border-color: #bfdbfe;
+  border-color: #b5f5f5;
   color: var(--primary-blue);
   transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(37,99,235,0.1);
+  box-shadow: 0 3px 8px rgba(0,206,209,0.1);
 }
 
 .action-btn i {

@@ -73,7 +73,7 @@ export default function FrontDeskPage() {
                 width: '40px',
                 height: '40px',
                 border: '3px solid #e2e8f0',
-                borderTop: '3px solid #2563eb',
+                borderTop: '3px solid #00ced1',
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite'
               }}></div>

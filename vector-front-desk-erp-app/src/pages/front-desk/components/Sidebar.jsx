@@ -151,7 +151,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
   return (
     <div className={`sidebar ${collapsed ? 'collapsed' : ''}`} style={{
       width: collapsed ? '60px' : '240px',
-      backgroundColor: '#0d1b2e',
+      backgroundColor: '#00ced1',
       color: '#fff',
       minHeight: '100vh',
       display: 'flex',
@@ -173,19 +173,17 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
           alignItems: 'center',
           gap: '8px'
         }}>
-          <div style={{
-            width: '8px',
-            height: '22px',
-            background: 'linear-gradient(180deg, #2563eb, #7c3aed)',
-            borderRadius: '3px',
+          <span style={{
+            fontSize: '24px',
+            color: '#ffffff',
             flexShrink: 0
-          }}></div>
-          {!collapsed && 'VECTOR'}
+          }}>☰</span>
+          {!collapsed && 'V☰ctor'}
         </div>
         {!collapsed && (
           <div className="logo-sub" style={{
             fontSize: '9.5px',
-            color: '#4e6580',
+            color: 'rgba(255,255,255,0.85)',
             textTransform: 'uppercase',
             letterSpacing: '0.8px',
             marginTop: '5px',
@@ -214,9 +212,9 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   cursor: 'pointer',
-                  color: activeMenu === item.name ? '#93bbff' : '#7a93ae',
-                  borderLeft: activeMenu === item.name ? '3px solid #2563eb' : '3px solid transparent',
-                  backgroundColor: activeMenu === item.name ? 'rgba(37,99,235,0.15)' : 'transparent',
+                  color: activeMenu === item.name ? '#ffffff' : 'rgba(255,255,255,0.9)',
+                  borderLeft: activeMenu === item.name ? '3px solid #ffffff' : '3px solid transparent',
+                  backgroundColor: activeMenu === item.name ? 'rgba(255,255,255,0.2)' : 'transparent',
                   margin: '1px 0',
                   fontSize: '12.5px',
                   transition: 'all 0.18s ease, transform 0.18s ease',
@@ -224,16 +222,16 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                 }}
                 onMouseEnter={(e) => {
                   if (activeMenu !== item.name) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                    e.currentTarget.style.color = '#c8d8e8';
-                    e.currentTarget.style.borderLeftColor = 'rgba(37,99,235,0.4)';
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                    e.currentTarget.style.color = '#ffffff';
+                    e.currentTarget.style.borderLeftColor = 'rgba(255,255,255,0.5)';
                     e.currentTarget.style.transform = 'scaleX(1.03) scaleY(1.04)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (activeMenu !== item.name) {
                     e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#7a93ae';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.9)';
                     e.currentTarget.style.borderLeftColor = 'transparent';
                     e.currentTarget.style.transform = 'scaleX(1) scaleY(1)';
                   }
@@ -255,7 +253,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                   style={{
                     listStyle: 'none',
                     paddingLeft: '45px',
-                    backgroundColor: 'rgba(0,0,0,0.12)',
+                    backgroundColor: 'rgba(0,0,0,0.08)',
                     maxHeight: '400px',
                     overflowY: 'auto'
                   }}
@@ -266,7 +264,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                       className="submenu-item"
                       style={{
                         padding: '7px 0',
-                        color: activeSubmenu === subItem.name ? '#93bbff' : '#4e6580',
+                        color: activeSubmenu === subItem.name ? '#ffffff' : 'rgba(255,255,255,0.8)',
                         cursor: 'pointer',
                         transition: 'color 0.18s',
                         fontSize: '12px',
@@ -275,17 +273,17 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                         gap: '8px',
                         position: 'relative',
                         zIndex: 10,
-                        borderLeft: activeSubmenu === subItem.name ? '2px solid #2563eb' : '2px solid transparent',
+                        borderLeft: activeSubmenu === subItem.name ? '2px solid #ffffff' : '2px solid transparent',
                         paddingLeft: activeSubmenu === subItem.name ? '6px' : '0'
                       }}
                       onMouseEnter={(e) => {
                         if (activeSubmenu !== subItem.name) {
-                          e.currentTarget.style.color = '#93bbff';
+                          e.currentTarget.style.color = '#ffffff';
                         }
                       }}
                       onMouseLeave={(e) => {
                         if (activeSubmenu !== subItem.name) {
-                          e.currentTarget.style.color = '#4e6580';
+                          e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
                         }
                       }}
                       onClick={() => handleSubItemClick(subItem)}
@@ -310,14 +308,14 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
         onClick={() => setCollapsed(!collapsed)}
         style={{
           padding: '14px 18px',
-          borderTop: '1px solid rgba(255,255,255,0.07)',
+          borderTop: '1px solid rgba(255,255,255,0.15)',
           textAlign: 'left',
           cursor: 'pointer',
-          color: '#4e6580',
+          color: 'rgba(255,255,255,0.85)',
           transition: 'color 0.18s'
         }}
-        onMouseEnter={(e) => e.currentTarget.style.color = '#93bbff'}
-        onMouseLeave={(e) => e.currentTarget.style.color = '#4e6580'}
+        onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+        onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.85)'}
       >
         <i className={`fa-solid fa-chevron-${collapsed ? 'right' : 'left'}`}></i>
       </div>
