@@ -14,6 +14,28 @@ export default function DesignDetailModal({ design, onClose }) {
   const [uploading, setUploading] = useState(false);
   const [versionFileUrls, setVersionFileUrls] = useState({});
   const [commFileUrls, setCommFileUrls] = useState({});
+  
+  // New version form state
+  const [showNewVersionForm, setShowNewVersionForm] = useState(false);
+  const [newVersion, setNewVersion] = useState({
+    version_number: designVersions.length > 0 ? Math.max(...designVersions.map(v => v.version_number)) + 1 : 1,
+    description: '',
+    status: 'Sent',
+    sent_on: new Date().toISOString().slice(0, 16),
+    sent_by: profile?.username || '',
+    file: null
+  });
+  const [versionUploading, setVersionUploading] = useState(false);
+
+  // Update version number when design versions change
+  useEffect(() => {
+    if (designVersions.length > 0) {
+      const maxVersion = Math.max(...designVersions.map(v => v.version_number));
+      setNewVersion(prev => ({ ...prev, version_number: maxVersion + 1 }));
+    } else {
+      setNewVersion(prev => ({ ...prev, version_number: 1 }));
+    }
+  }, [designVersions]);
 
   // Generate signed URLs for communication attached files
   useEffect(() => {
@@ -67,6 +89,8 @@ export default function DesignDetailModal({ design, onClose }) {
           filter: `design_id=eq.${design.id}`
         },
         async (payload) => {
+          console.log('Realtime INSERT event:', payload);
+          
           // Fetch the full communication with sender info and files
           const newComm = await fetchSingleCommunication(payload.new.id);
           if (newComm) {
@@ -78,11 +102,29 @@ export default function DesignDetailModal({ design, onClose }) {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to realtime channel');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Realtime channel error');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
+  }, [design?.id]);
+
+  // Fallback polling for messages (in case realtime doesn't work)
+  useEffect(() => {
+    if (!design?.id) return;
+
+    const interval = setInterval(() => {
+      fetchCommunications();
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
   }, [design?.id]);
 
   const fetchSingleCommunication = async (commId) => {
@@ -274,6 +316,83 @@ export default function DesignDetailModal({ design, onClose }) {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleAddNewVersion = async (e) => {
+    e.preventDefault();
+    if (!newVersion.version_number || !newVersion.file) {
+      alert('Please provide version number and upload a file');
+      return;
+    }
+
+    try {
+      setVersionUploading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+
+      // Upload file
+      const fileName = `${Date.now()}_${newVersion.file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, newVersion.file);
+
+      if (uploadError) throw uploadError;
+
+      // Save file metadata
+      const { data: fileData, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          name: newVersion.file.name,
+          path: uploadData.path,
+          mime_type: newVersion.file.type,
+          file_size: newVersion.file.size,
+          uploaded_by: userId
+        })
+        .select()
+        .single();
+
+      if (fileError) throw fileError;
+
+      // Create design version
+      const { error: versionError } = await supabase
+        .from('design_versions')
+        .insert([{
+          design_id: design.id,
+          file_id: fileData.id,
+          version_number: parseInt(newVersion.version_number),
+          description: newVersion.description,
+          sent_on: newVersion.sent_on ? new Date(newVersion.sent_on).toISOString() : null,
+          sent_by: newVersion.sent_by,
+          status: newVersion.status,
+          comment: ''
+        }]);
+
+      if (versionError) throw versionError;
+
+      // Reset form and refresh versions
+      setNewVersion({
+        version_number: '',
+        description: '',
+        status: 'Sent',
+        sent_on: new Date().toISOString().slice(0, 16),
+        sent_by: profile?.username || '',
+        file: null
+      });
+      setShowNewVersionForm(false);
+      await fetchDesignVersionsWithFiles();
+    } catch (error) {
+      console.error('Error adding new version:', error);
+      alert('Error adding new version: ' + error.message);
+    } finally {
+      setVersionUploading(false);
+    }
+  };
+
+  const handleVersionFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewVersion(prev => ({ ...prev, file }));
+    }
+  };
+
   const markAsRead = async (communicationId) => {
     try {
       await supabase
@@ -456,9 +575,111 @@ export default function DesignDetailModal({ design, onClose }) {
             {/* Design Versions Tab */}
             {activeTab === 'versions' && (
               <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2 mb-4">
-                  Design Versions
-                </h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2">
+                    Design Versions
+                  </h3>
+                  <button
+                    onClick={() => setShowNewVersionForm(!showNewVersionForm)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg font-medium text-xs flex items-center gap-1 transition-colors border-none cursor-pointer"
+                  >
+                    <i className="fa-solid fa-plus"></i> Add Version
+                  </button>
+                </div>
+
+                {/* New Version Form */}
+                {showNewVersionForm && (
+                  <div className="bg-white p-4 rounded-lg border border-slate-200 mb-4">
+                    <form onSubmit={handleAddNewVersion} className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Version Number</label>
+                          <div className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-slate-50 text-slate-600">
+                            {newVersion.version_number}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
+                          <select
+                            value={newVersion.status}
+                            onChange={(e) => setNewVersion(prev => ({ ...prev, status: e.target.value }))}
+                            className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                          >
+                            <option value="Sent">Sent</option>
+                            <option value="Reviewed">Reviewed</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
+                        <input
+                          type="text"
+                          value={newVersion.description}
+                          onChange={(e) => setNewVersion(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Enter description"
+                          className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Sent On</label>
+                        <input
+                          type="datetime-local"
+                          value={newVersion.sent_on}
+                          onChange={(e) => setNewVersion(prev => ({ ...prev, sent_on: e.target.value }))}
+                          className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Sent By</label>
+                        <div className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-slate-50 text-slate-600">
+                          {newVersion.sent_by}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-slate-500 mb-1">Upload File</label>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <input
+                              type="file"
+                              onChange={handleVersionFileChange}
+                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
+                              required
+                            />
+                          </div>
+                        </div>
+                        {newVersion.file && (
+                          <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg mt-2">
+                            <i className="fa-solid fa-check text-green-700"></i>
+                            <span className="text-xs text-green-700">{newVersion.file.name}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => setShowNewVersionForm(false)}
+                          className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-lg font-medium text-xs transition-colors cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={versionUploading}
+                          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-3 py-1.5 rounded-lg font-medium text-xs cursor-pointer border-none"
+                        >
+                          {versionUploading ? (
+                            <i className="fa-solid fa-spinner fa-spin"></i>
+                          ) : (
+                            'Save Version'
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
                 {designVersions && designVersions.length > 0 ? (
                   <div className="space-y-3">
                     {designVersions.map((version, index) => (
@@ -477,7 +698,7 @@ export default function DesignDetailModal({ design, onClose }) {
                         <p className="text-xs text-slate-600 mb-2">{version.description || '-'}</p>
                         <div className="grid grid-cols-2 gap-2 text-xs text-slate-500">
                           <div>
-                            <span className="font-medium">Sent On:</span> {version.sent_on || '-'}
+                            <span className="font-medium">Sent On:</span> {version.sent_on ? new Date(version.sent_on).toLocaleDateString() : '-'}
                           </div>
                           <div>
                             <span className="font-medium">Sent By:</span> {version.sent_by || '-'}

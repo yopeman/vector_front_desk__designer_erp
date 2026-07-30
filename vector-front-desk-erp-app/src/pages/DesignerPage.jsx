@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import DesignDetailModal from './front-desk/components/DesignDetailModal';
 import './DesignerPage.css';
 
 export default function DesignerPage() {
@@ -13,6 +14,7 @@ export default function DesignerPage() {
   const [clockInTime, setClockInTime] = useState('08:58 AM');
   const [clockOutTime, setClockOutTime] = useState('--:-- --');
   const [selectedDesign, setSelectedDesign] = useState(null);
+  const [showDesignDetailModal, setShowDesignDetailModal] = useState(false);
   const [adsSearchQuery, setAdsSearchQuery] = useState('');
   const [showChatDropdown, setShowChatDropdown] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
@@ -210,7 +212,9 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'active-status-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-file-pen w-4"></i> Active Design Status</div>
-              <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">18</span>
+              {designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length}</span>
+              )}
             </button>
             <button 
               onClick={() => handleSectionChange('customer-approval-section')}
@@ -643,7 +647,7 @@ export default function DesignerPage() {
                 </div>
               </div>
 
-              {!selectedDesign ? (
+              {true ? (
                 <>
                   <div className="flex justify-between items-center">
                     <div>
@@ -654,7 +658,7 @@ export default function DesignerPage() {
                     </div>
                     <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
                       <i className="fa-solid fa-database text-blue-500"></i>
-                      <span>{designs.length}</span> registered
+                      <span>{designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length}</span> registered
                     </span>
                   </div>
 
@@ -691,13 +695,15 @@ export default function DesignerPage() {
                         <tbody className="text-slate-600 divide-y divide-slate-100">
                           {designs
                             .filter(d => 
-                              !adsSearchQuery || 
+                              d.status === 'In Progress' && 
+                              d.assigned_designer_id === user?.id &&
+                              (!adsSearchQuery || 
                               d.orders?.order_no?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
                               d.orders?.clients?.name?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
-                              d.design_type?.toLowerCase().includes(adsSearchQuery.toLowerCase())
+                              d.design_type?.toLowerCase().includes(adsSearchQuery.toLowerCase()))
                             )
                             .map((d, index) => (
-                            <tr key={d.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => setSelectedDesign(d)}>
+                            <tr key={d.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => { setSelectedDesign(d); setShowDesignDetailModal(true); }}>
                               <td className="p-3">{index + 1}</td>
                               <td className="p-3 font-semibold text-blue-600">{d.orders?.order_no || '-'}</td>
                               <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
@@ -720,10 +726,10 @@ export default function DesignerPage() {
                               </td>
                             </tr>
                           ))}
-                          {designs.length === 0 && (
+                          {designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length === 0 && (
                             <tr>
                               <td colSpan={8} className="p-8 text-center text-slate-400">
-                                No design requests yet.
+                                No active design requests yet.
                               </td>
                             </tr>
                           )}
@@ -1309,6 +1315,14 @@ export default function DesignerPage() {
           )}
         </main>
       </div>
+
+      {/* Design Detail Modal */}
+      {showDesignDetailModal && selectedDesign && (
+        <DesignDetailModal 
+          design={selectedDesign} 
+          onClose={() => { setShowDesignDetailModal(false); setSelectedDesign(null); }} 
+        />
+      )}
     </div>
   );
 }
