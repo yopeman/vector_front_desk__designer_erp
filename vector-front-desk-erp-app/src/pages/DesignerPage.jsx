@@ -270,6 +270,9 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'design-library-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-book-open w-4"></i> Design Library</div>
+              {designs.length > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.length}</span>
+              )}
             </button>
             
             <div className="pt-4 pb-1 border-t border-slate-700/40 my-2"></div>
@@ -1220,13 +1223,133 @@ export default function DesignerPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Design Library</h1>
-                  <p className="text-xs text-slate-500">Browse and manage design assets</p>
+                  <p className="text-xs text-slate-500">All designs across all statuses and users</p>
                 </div>
+                <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
+                  <i className="fa-solid fa-database text-blue-500"></i>
+                  <span>{designs.length}</span> total designs
+                </span>
               </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-book-open text-4xl mb-4"></i>
-                <p className="text-sm">Design library coming soon</p>
-              </div>
+
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-left">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Design Type</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Client</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Priority</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Assigned Designer</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {designs.map((d) => (
+                        <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-800">
+                            {d.design_type || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {d.orders?.order_no || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {d.orders?.clients?.name || '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                d.priority === 'High'
+                                  ? 'bg-red-50 text-red-700'
+                                  : d.priority === 'Medium'
+                                  ? 'bg-yellow-50 text-yellow-700'
+                                  : 'bg-green-50 text-green-700'
+                              }`}
+                            >
+                              {d.priority}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-50 text-purple-700">
+                              {d.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {d.assigned_designer?.username || '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => {
+                                const fetchDesignDetails = async () => {
+                                  const { data: designers } = await supabase
+                                    .from('users')
+                                    .select('id, username')
+                                    .eq('id', d.assigned_designer_id)
+                                    .single();
+                                  
+                                  const allFileIds = d.attached_file_ids || [];
+                                  const { data: files } = await supabase
+                                    .from('files')
+                                    .select('id, name, path')
+                                    .in('id', allFileIds);
+
+                                  const { data: designVersions } = await supabase
+                                    .from('design_versions')
+                                    .select('*, files(id, name, path)')
+                                    .eq('design_id', d.id);
+
+                                  const urls = {};
+                                  if (files) {
+                                    for (const file of files) {
+                                      if (file.path) {
+                                        const url = await getFileUrl(file.path);
+                                        if (url) urls[file.id] = url;
+                                      }
+                                    }
+                                  }
+                                  if (designVersions) {
+                                    for (const version of designVersions) {
+                                      if (version.files?.path) {
+                                        const url = await getFileUrl(version.files.path);
+                                        if (url) urls[version.files.id] = url;
+                                      }
+                                    }
+                                  }
+                                  setFileUrls(urls);
+
+                                  setSelectedTask({
+                                    ...d,
+                                    assigned_designer: designers,
+                                    attached_files: files || [],
+                                    design_versions: designVersions || []
+                                  });
+                                  setShowTaskModal(true);
+                                };
+                                fetchDesignDetails();
+                              }}
+                              className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {designs.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                            No designs found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
