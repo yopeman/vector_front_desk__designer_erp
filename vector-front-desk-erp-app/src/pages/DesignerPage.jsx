@@ -32,6 +32,20 @@ export default function DesignerPage() {
     fetchMyTasks();
   }, [user?.id]);
 
+  useEffect(() => {
+    // Refresh data when switching sections
+    if (activeSection === 'my-tasks-section') {
+      fetchMyTasks();
+    } else if (activeSection === 'customer-approval-section') {
+      fetchCustomerApprovalVersions();
+    } else if (activeSection === 'new-requests-section' || 
+               activeSection === 'active-design-section' ||
+               activeSection === 'production-files-section' ||
+               activeSection === 'design-library-section') {
+      fetchDesigns();
+    }
+  }, [activeSection]);
+
   const fetchDesigns = async () => {
     try {
       const { data, error } = await supabase
@@ -263,7 +277,7 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'send-production-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-print w-4"></i> Send to Production</div>
-              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">7</span>
+              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold"> {/* 7 */} </span>
             </button>
             <button 
               onClick={() => handleSectionChange('design-library-section')}
@@ -291,7 +305,8 @@ export default function DesignerPage() {
               <div className="flex items-center gap-3"><i className="fa-solid fa-sticky-note w-4"></i> Notes</div>
             </button>
             <button 
-              onClick={() => handleSectionChange('hr-requests-section')}
+            //   onClick={() => handleSectionChange('hr-requests-section')}
+              onClick={() => { window.location = 'https://vectoradvert.com/hr' }}
               className={`flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'hr-requests-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-users w-4"></i> HR Requests</div>
@@ -331,7 +346,7 @@ export default function DesignerPage() {
             </div>
           </div>
           
-          <div className="bg-slate-800/60 p-2.5 rounded mb-2 space-y-2 text-[11px]">
+          {/* <div className="bg-slate-800/60 p-2.5 rounded mb-2 space-y-2 text-[11px]">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Clock In / Out</span>
             <div className="flex justify-between items-center">
               <span className="text-slate-300">Clock In Time <b className="block text-white text-xs">{clockInTime}</b></span>
@@ -342,7 +357,7 @@ export default function DesignerPage() {
               <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${clockedIn ? 'bg-red-600/20 text-red-400' : 'bg-green-600/20 text-green-400'}`}>{clockedIn ? 'Out' : 'In'}</span>
             </div>
           </div>
-          <button onClick={toggleClock} className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] py-1.5 text-center text-white font-medium rounded transition">Toggle Attendance</button>
+          <button onClick={toggleClock} className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] py-1.5 text-center text-white font-medium rounded transition">Toggle Attendance</button> */}
           <button onClick={signOut} className="w-full mt-2 bg-slate-700 hover:bg-red-700 active:scale-[0.98] py-1.5 text-center text-white font-medium rounded transition flex items-center justify-center gap-2">
             <i className="fa-solid fa-right-from-bracket text-[11px]"></i> Logout
           </button>
