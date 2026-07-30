@@ -29,7 +29,8 @@ export default function DesignerPage() {
   useEffect(() => {
     fetchDesigns();
     fetchCustomerApprovalVersions();
-  }, []);
+    fetchMyTasks();
+  }, [user?.id]);
 
   const fetchDesigns = async () => {
     try {
@@ -64,18 +65,19 @@ export default function DesignerPage() {
 
   async function fetchMyTasks() {
     if (!user?.id) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('designs')
-      .select('*, orders(order_no, clients(name))')
+      .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
       .eq('assigned_designer_id', user.id)
       .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching my tasks:', error);
+      return;
+    }
+    
     if (data) {
-      // Fetch assigned designer names
-      const designerIds = [...new Set(data.map(d => d.assigned_designer_id).filter(Boolean))];
-      const { data: designers } = await supabase
-        .from('users')
-        .select('id, username')
-        .in('id', designerIds);
+      console.log('My tasks fetched:', data.length, 'tasks for user:', user.id);
       
       // Fetch attached files
       const allFileIds = data.flatMap(d => d.attached_file_ids || []);
@@ -122,7 +124,6 @@ export default function DesignerPage() {
       // Combine data
       const tasksWithDetails = data.map(task => ({
         ...task,
-        assigned_designer: designers?.find(d => d.id === task.assigned_designer_id),
         attached_files: files?.filter(f => (task.attached_file_ids || []).includes(f.id)) || [],
         design_versions: designVersions?.filter(v => v.design_id === task.id) || []
       }));
@@ -253,6 +254,9 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'production-files-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-folder-open w-4"></i> Production Files</div>
+              {designs.filter(d => d.status === 'Completed').length > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'Completed').length}</span>
+              )}
             </button>
             <button 
               onClick={() => handleSectionChange('send-production-section')}
@@ -1123,12 +1127,75 @@ export default function DesignerPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Production Files</h1>
-                  <p className="text-xs text-slate-500">Manage production-ready design files</p>
+                  <p className="text-xs text-slate-500">Completed designs ready for production</p>
                 </div>
+                <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
+                  <i className="fa-solid fa-database text-blue-500"></i>
+                  <span>{designs.filter(d => d.status === 'Completed').length}</span> completed
+                </span>
               </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-folder-open text-4xl mb-4"></i>
-                <p className="text-sm">Production files management coming soon</p>
+
+              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <div className="p-3 bg-slate-50/50 border-b border-slate-200">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <i className="fa-solid fa-list text-slate-500"></i> Completed Designs
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
+                        <th className="p-3 w-10">#</th>
+                        <th className="p-3">Order No.</th>
+                        <th className="p-3">Client</th>
+                        <th className="p-3">Design Type</th>
+                        <th className="p-3">Priority</th>
+                        <th className="p-3">Assigned Designer</th>
+                        <th className="p-3">Completed Date</th>
+                        <th className="p-3 text-center w-32">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-600 divide-y divide-slate-100">
+                      {designs.filter(d => d.status === 'Completed').length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="p-8 text-center text-slate-400">
+                            No completed designs yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        designs
+                          .filter(d => d.status === 'Completed')
+                          .map((d, index) => (
+                          <tr key={d.id} className="hover:bg-slate-50/80 transition">
+                            <td className="p-3">{index + 1}</td>
+                            <td className="p-3 font-semibold text-blue-600">{d.orders?.order_no || '-'}</td>
+                            <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
+                            <td className="p-3">{d.design_type || '-'}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                d.priority === 'High' ? 'bg-red-100 text-red-700' :
+                                d.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-green-100 text-green-700'
+                              }`}>
+                                {d.priority}
+                              </span>
+                            </td>
+                            <td className="p-3">{d.assigned_designer?.username || '-'}</td>
+                            <td className="p-3">{d.updated_at ? new Date(d.updated_at).toLocaleDateString() : '-'}</td>
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => { setSelectedTask(d); setShowTaskModal(true); }}
+                                className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
