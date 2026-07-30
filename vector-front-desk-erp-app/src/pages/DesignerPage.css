@@ -1,0 +1,88 @@
+body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+/* Design System CSS Variables & Styles */
+:root {
+    --primary-blue: #0b57d0;
+    --border-color: #e2e8f0;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --pending-bg: #fff3e0;
+    --pending-text: #b76e00;
+    --progress-bg: #e3f2fd;
+    --progress-text: #0d47a1;
+    --completed-bg: #e8f5e9;
+    --completed-text: #1b5e20;
+    --cancelled-bg: #ffebee;
+    --cancelled-text: #b71c1c;
+}
+.status-badge { padding: 5px 12px; border-radius: 6px; font-size: 11.5px; font-weight: 600; display: inline-block; }
+.status-pending { background: var(--pending-bg); color: var(--pending-text); }
+.status-progress { background: var(--progress-bg); color: var(--progress-text); }
+.status-completed { background: var(--completed-bg); color: var(--completed-text); }
+.status-cancelled { background: var(--cancelled-bg); color: var(--cancelled-text); }
+.priority-badge { font-weight: 600; font-size: 12.5px;}
+.priority-high { color: #ef4444; }
+.priority-medium { color: #3b82f6; }
+.priority-low { color: #64748b; }
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; }
+.modal-content { background: white; width: 95%; max-width: 1180px; max-height: 90vh; border-radius: 16px; overflow-y: auto; position: relative; padding: 35px 40px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+.close-modal-icon { position: absolute; top: 30px; right: 30px; font-size: 22px; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
+.close-modal-icon:hover { color: var(--text-dark); }
+.tabs-header { display: flex; gap: 24px; border-bottom: 1px solid #e2e8f0; margin-bottom: 25px; margin-top: 20px; }
+.tab-item { padding: 10px 4px; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
+.tab-item.active { color: var(--primary-blue); border-bottom-color: var(--primary-blue); }
+.form-columns-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-bottom: 25px; }
+.column-section { display: flex; flex-direction: column; gap: 16px; }
+.column-section h3 { font-size: 14.5px; font-weight: 700; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 4px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; position: relative; }
+.form-group label { font-size: 12.5px; font-weight: 600; color: #475569; }
+.form-group label span { color: #ef4444; }
+.input-with-icon-inner { position: relative; width: 100%; }
+.input-with-icon-inner input { padding-right: 35px; }
+.input-with-icon-inner i { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
+.form-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 25px; }
+.upload-box { border: 2px dashed #cbd5e1; padding: 22px; border-radius: 10px; text-align: center; background: #f8fafc; cursor: pointer; transition: border-color 0.2s; }
+.upload-box:hover { border-color: var(--primary-blue); }
+.upload-box i { font-size: 32px; color: var(--primary-blue); margin-bottom: 8px; }
+.form-actions-container { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+.btn-outline-blue { background: white; border: 1px solid var(--primary-blue); color: var(--primary-blue); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: background-color 0.2s; }
+.btn-outline-blue:hover { background: #f0f6ff; }
+.btn-primary-custom { background-color: var(--primary-blue); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: background-color 0.2s; }
+.btn-primary-custom:hover { background-color: #084bb3; }
+.btn-secondary-custom { background: white; border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; color: var(--text-dark); }
+.btn-secondary-custom:hover { background: #f8fafc; }
+.donut-chart { width: 120px; height: 120px; border-radius: 50%; background: #e2e8f0; position: relative; display: flex; align-items: center; justify-content: center; }
+.donut-chart::before { content: ""; position: absolute; width: 80px; height: 80px; background: white; border-radius: 50%; }
+select, input[type="text"], input[type="date"], input[type="email"], input[type="password"], textarea { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 13px; outline: none; background: white; color: var(--text-dark); width: 100%; }
+select { cursor: pointer; width: auto; min-width: 140px; }
+.settings-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: #475569; cursor: pointer; transition: background-color 0.15s, color 0.15s; }
+.settings-nav-item:hover { background: #f1f5f9; }
+.settings-nav-item.active { background: #eff6ff; color: var(--primary-blue); font-weight: 600; }
+@keyframes comm-pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%      { opacity:.5; transform:scale(1.35); }
+}
+/* ── Cross-device responsive overrides for PM panel ── */
+@media (max-width: 768px) {
+    /* Stack PM panel vertically on small screens */
+    #private-messages-section .flex.bg-white.border { flex-direction: column; height: auto !important; }
+    /* Conversation sidebar goes full-width on mobile */
+    #private-messages-section .flex.bg-white.border > div:first-child { width: 100% !important; height: 220px; border-right: none !important; border-bottom: 1px solid #e2e8f0; }
+    /* Chat area goes full-width below sidebar */
+    #pm-active-chat { min-height: 400px; }
+    /* Keep input usable on mobile keyboards */
+    #pm-input-bar { position: sticky; bottom: 0; background: white; z-index: 10; }
+    /* Prevent horizontal overflow on sidebar nav */
+    .sidebar { min-width: 0 !important; }
+}
+@media (max-width: 480px) {
+    #private-messages-section { padding: 12px !important; }
+    #private-messages-section .flex.justify-between.items-center { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+/* Ensure touch scrolling works on iOS */
+.custom-scrollbar, #pm-conv-list, #pm-messages-list { -webkit-overflow-scrolling: touch; }
+/* Prevent text selection issues on touch devices during chat */
+#pm-messages-list { -webkit-user-select: text; user-select: text; }
