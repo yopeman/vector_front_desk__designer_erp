@@ -16,6 +16,8 @@ export default function DesignerPage() {
   const [selectedDesign, setSelectedDesign] = useState(null);
   const [showDesignDetailModal, setShowDesignDetailModal] = useState(false);
   const [adsSearchQuery, setAdsSearchQuery] = useState('');
+  const [customerApprovalVersions, setCustomerApprovalVersions] = useState([]);
+  const [selectedVersion, setSelectedVersion] = useState(null);
   const [showChatDropdown, setShowChatDropdown] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showCalDropdown, setShowCalDropdown] = useState(false);
@@ -26,18 +28,39 @@ export default function DesignerPage() {
 
   useEffect(() => {
     fetchDesigns();
-    fetchMyTasks();
+    fetchCustomerApprovalVersions();
   }, []);
 
-  async function fetchDesigns() {
-    setLoading(true);
-    const { data } = await supabase
-      .from('designs')
-      .select('*, orders(order_no, clients(name))')
-      .order('created_at', { ascending: false });
-    if (data) setDesigns(data);
-    setLoading(false);
-  }
+  const fetchDesigns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('designs')
+        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDesigns(data || []);
+    } catch (error) {
+      console.error('Error fetching designs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCustomerApprovalVersions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('design_versions')
+        .select('*, designs(*, orders(order_no, clients(name)), assigned_designer:users(username)), file:files(id, name, path)')
+        .in('status', ['Sent', 'Reviewed'])
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCustomerApprovalVersions(data || []);
+    } catch (error) {
+      console.error('Error fetching customer approval versions:', error);
+    }
+  };
 
   async function fetchMyTasks() {
     if (!user?.id) return;
@@ -221,7 +244,9 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'customer-approval-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-user-check w-4"></i> Customer Approval</div>
-              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">16</span>
+              {customerApprovalVersions.length > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{customerApprovalVersions.length}</span>
+              )}
             </button>
             <button 
               onClick={() => handleSectionChange('production-files-section')}
@@ -926,13 +951,76 @@ export default function DesignerPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-xl font-bold text-slate-900">Customer Approval</h1>
-                  <p className="text-xs text-slate-500">Designs awaiting customer approval</p>
+                  <p className="text-xs text-slate-500">Design versions awaiting customer approval</p>
                 </div>
+                <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
+                  <i className="fa-solid fa-database text-blue-500"></i>
+                  <span>{customerApprovalVersions.length}</span> versions
+                </span>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-user-check text-4xl mb-4"></i>
-                <p className="text-sm">No designs awaiting customer approval</p>
+              <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                <div className="p-3 bg-slate-50/50 border-b border-slate-200">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <i className="fa-solid fa-list text-slate-500"></i> Design Versions Awaiting Approval
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
+                        <th className="p-3 w-10">#</th>
+                        <th className="p-3">Order No.</th>
+                        <th className="p-3">Client</th>
+                        <th className="p-3">Design Type</th>
+                        <th className="p-3">Version</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3">Sent On</th>
+                        <th className="p-3">Sent By</th>
+                        <th className="p-3 text-center w-32">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-600 divide-y divide-slate-100">
+                      {customerApprovalVersions.length === 0 ? (
+                        <tr>
+                          <td colSpan={9} className="p-8 text-center text-slate-400">
+                            No design versions awaiting approval.
+                          </td>
+                        </tr>
+                      ) : (
+                        customerApprovalVersions.map((version, index) => (
+                          <tr key={version.id} className="hover:bg-slate-50/80 transition">
+                            <td className="p-3">{index + 1}</td>
+                            <td className="p-3 font-semibold text-blue-600">{version.designs?.orders?.order_no || '-'}</td>
+                            <td className="p-3 font-bold text-slate-800">{version.designs?.orders?.clients?.name || '-'}</td>
+                            <td className="p-3">{version.designs?.design_type || '-'}</td>
+                            <td className="p-3">Version {version.version_number}</td>
+                            <td className="p-3">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                version.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                version.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                version.status === 'Reviewed' ? 'bg-blue-100 text-blue-700' :
+                                'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {version.status}
+                              </span>
+                            </td>
+                            <td className="p-3">{version.sent_on ? new Date(version.sent_on).toLocaleDateString() : '-'}</td>
+                            <td className="p-3">{version.sent_by || '-'}</td>
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => { setSelectedDesign(version.designs); setSelectedVersion(version); setShowDesignDetailModal(true); }}
+                                className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -1320,7 +1408,8 @@ export default function DesignerPage() {
       {showDesignDetailModal && selectedDesign && (
         <DesignDetailModal 
           design={selectedDesign} 
-          onClose={() => { setShowDesignDetailModal(false); setSelectedDesign(null); }} 
+          selectedVersion={selectedVersion}
+          onClose={() => { setShowDesignDetailModal(false); setSelectedDesign(null); setSelectedVersion(null); }} 
         />
       )}
     </div>

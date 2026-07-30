@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
 
-export default function DesignDetailModal({ design, onClose }) {
+export default function DesignDetailModal({ design, onClose, selectedVersion }) {
   const { profile } = useAuth();
   const [communications, setCommunications] = useState([]);
   const [client, setClient] = useState(null);
   const [designVersions, setDesignVersions] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('client');
+  const [activeTab, setActiveTab] = useState(selectedVersion ? 'versions' : 'client');
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [versionFileUrls, setVersionFileUrls] = useState({});
