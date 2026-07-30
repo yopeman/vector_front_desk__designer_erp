@@ -59,6 +59,13 @@ export default function DesignerPage() {
         .select('id, name, path')
         .in('id', allFileIds);
 
+      // Fetch design versions
+      const designIds = data.map(d => d.id);
+      const { data: designVersions } = await supabase
+        .from('design_versions')
+        .select('*, files(id, name, path)')
+        .in('design_id', designIds);
+
       // Generate signed URLs for files
       const urls = {};
       if (files) {
@@ -73,13 +80,26 @@ export default function DesignerPage() {
           }
         }
       }
+      
+      // Generate signed URLs for version files
+      if (designVersions) {
+        for (const version of designVersions) {
+          if (version.files?.path) {
+            const url = await getFileUrl(version.files.path);
+            if (url) {
+              urls[version.files.id] = url;
+            }
+          }
+        }
+      }
       setFileUrls(urls);
 
       // Combine data
       const tasksWithDetails = data.map(task => ({
         ...task,
         assigned_designer: designers?.find(d => d.id === task.assigned_designer_id),
-        attached_files: files?.filter(f => (task.attached_file_ids || []).includes(f.id)) || []
+        attached_files: files?.filter(f => (task.attached_file_ids || []).includes(f.id)) || [],
+        design_versions: designVersions?.filter(v => v.design_id === task.id) || []
       }));
       
       setMyTasks(tasksWithDetails);
@@ -181,7 +201,9 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'new-requests-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-file-circle-plus w-4"></i> New Design Requests</div>
-              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">8</span>
+              {designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').length > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').length}</span>
+              )}
             </button>
             <button 
               onClick={() => handleSectionChange('active-status-section')}
@@ -502,7 +524,7 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {designs.map((d) => (
+                      {designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').map((d) => (
                         <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
                             {d.design_type || '-'}
@@ -532,28 +554,65 @@ export default function DesignerPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex gap-2">
-                              {d.status === 'Pending' && (
-                                <button
-                                  onClick={() => updateDesignStatus(d.id, 'In Progress')}
-                                  className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
-                                >
-                                  Start
-                                </button>
-                              )}
-                              {d.status === 'In Progress' && (
-                                <button
-                                  onClick={() => updateDesignStatus(d.id, 'Completed')}
-                                  className="text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition"
-                                >
-                                  Complete
-                                </button>
-                              )}
-                            </div>
+                            <button
+                              onClick={() => {
+                                // Fetch additional details for the selected design
+                                const fetchDesignDetails = async () => {
+                                  const { data: designers } = await supabase
+                                    .from('users')
+                                    .select('id, username')
+                                    .eq('id', d.assigned_designer_id)
+                                    .single();
+                                  
+                                  const allFileIds = d.attached_file_ids || [];
+                                  const { data: files } = await supabase
+                                    .from('files')
+                                    .select('id, name, path')
+                                    .in('id', allFileIds);
+
+                                  const { data: designVersions } = await supabase
+                                    .from('design_versions')
+                                    .select('*, files(id, name, path)')
+                                    .eq('design_id', d.id);
+
+                                  // Generate signed URLs
+                                  const urls = {};
+                                  if (files) {
+                                    for (const file of files) {
+                                      if (file.path) {
+                                        const url = await getFileUrl(file.path);
+                                        if (url) urls[file.id] = url;
+                                      }
+                                    }
+                                  }
+                                  if (designVersions) {
+                                    for (const version of designVersions) {
+                                      if (version.files?.path) {
+                                        const url = await getFileUrl(version.files.path);
+                                        if (url) urls[version.files.id] = url;
+                                      }
+                                    }
+                                  }
+                                  setFileUrls(urls);
+
+                                  setSelectedTask({
+                                    ...d,
+                                    assigned_designer: designers,
+                                    attached_files: files || [],
+                                    design_versions: designVersions || []
+                                  });
+                                  setShowTaskModal(true);
+                                };
+                                fetchDesignDetails();
+                              }}
+                              className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                            >
+                              View
+                            </button>
                           </td>
                         </tr>
                       ))}
-                      {designs.length === 0 && (
+                      {designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').length === 0 && (
                         <tr>
                           <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                             No design requests yet.
@@ -1165,8 +1224,67 @@ export default function DesignerPage() {
                   </div>
                 )}
 
+                {selectedTask.design_versions && selectedTask.design_versions.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Design Versions</h3>
+                    <div className="space-y-3">
+                      {selectedTask.design_versions.map((version) => (
+                        <div key={version.id} className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-900">Version {version.version_number}</span>
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                version.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                                version.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                version.status === 'Reviewed' ? 'bg-blue-100 text-blue-700' :
+                                'bg-slate-100 text-slate-700'
+                              }`}>
+                                {version.status}
+                              </span>
+                            </div>
+                            {version.sent_on && (
+                              <span className="text-xs text-slate-500">
+                                {new Date(version.sent_on).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          {version.description && (
+                            <p className="text-sm text-slate-600 mb-2">{version.description}</p>
+                          )}
+                          {version.files && (
+                            <div className="flex items-center gap-2">
+                              <i className="fa-solid fa-file text-slate-400"></i>
+                              <span className="text-sm text-slate-600">{version.files.name}</span>
+                              {fileUrls[version.files.id] && (
+                                <a 
+                                  href={fileUrls[version.files.id]} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="ml-auto text-blue-600 hover:text-blue-800 text-xs flex items-center gap-1"
+                                >
+                                  <i className="fa-solid fa-external-link-alt"></i> Open
+                                </a>
+                              )}
+                            </div>
+                          )}
+                          {version.sent_by && (
+                            <div className="text-xs text-slate-500 mt-2">
+                              Sent by: {version.sent_by}
+                            </div>
+                          )}
+                          {version.comment && (
+                            <div className="mt-2 p-2 bg-white border border-slate-200 rounded text-xs text-slate-600">
+                              <span className="font-semibold">Comment:</span> {version.comment}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-3 justify-end">
-                  {selectedTask.status === 'Pending' && (
+                  {selectedTask.assigned_designer_id === user?.id && selectedTask.status === 'Pending' && (
                     <button 
                       onClick={() => { updateDesignStatus(selectedTask.id, 'In Progress'); setSelectedTask({...selectedTask, status: 'In Progress'}); }}
                       className="btn-primary-custom"
@@ -1174,7 +1292,7 @@ export default function DesignerPage() {
                       <i className="fa-solid fa-play"></i> Start Task
                     </button>
                   )}
-                  {selectedTask.status === 'In Progress' && (
+                  {selectedTask.assigned_designer_id === user?.id && selectedTask.status === 'In Progress' && (
                     <button 
                       onClick={() => { updateDesignStatus(selectedTask.id, 'Completed'); setSelectedTask({...selectedTask, status: 'Completed'}); }}
                       className="btn-primary-custom"
