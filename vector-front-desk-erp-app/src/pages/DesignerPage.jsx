@@ -4,6 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import DesignDetailModal from './front-desk/components/DesignDetailModal';
 import ProductionOrderModal from './front-desk/components/ProductionOrderModal';
+import MessagesPage from './front-desk/components/MessagesPage';
+import NotificationsPage from './front-desk/components/NotificationsPage';
+import NotesPage from './front-desk/components/NotesPage';
+import SettingsPage from './front-desk/components/SettingsPage';
 import './DesignerPage.css';
 
 export default function DesignerPage() {
@@ -1515,96 +1519,15 @@ export default function DesignerPage() {
           )}
 
           {activeSection === 'profile-settings-section' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">Profile Settings</h1>
-                  <p className="text-xs text-slate-500">Manage your account settings and preferences</p>
-                </div>
-              </div>
-
-              <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-2xl">{initials}</div>
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">{displayName}</h2>
-                    <p className="text-sm text-slate-500">Designer</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Username</label>
-                    <input type="text" value={profile?.username || ''} disabled className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm text-slate-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email</label>
-                    <input type="email" value={profile?.email || ''} disabled className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm text-slate-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Role</label>
-                    <input type="text" value={profile?.role || 'Designer'} disabled className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm text-slate-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Department</label>
-                    <input type="text" value={profile?.departments?.name || 'Design Department'} disabled className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded text-sm text-slate-600" />
-                  </div>
-                </div>
-
-                <div className="mt-6 pt-6 border-t border-slate-200">
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Change Password</h3>
-                  <div className="space-y-4 max-w-md">
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-600">Current Password</label>
-                      <input type="password" placeholder="Enter current password" className="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-600">New Password</label>
-                      <input type="password" placeholder="Enter new password" className="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-semibold text-slate-600">Confirm New Password</label>
-                      <input type="password" placeholder="Confirm new password" className="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-blue-500" />
-                    </div>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                      Update Password
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <SettingsPage />
           )}
 
           {activeSection === 'notifications-section' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">Notifications</h1>
-                  <p className="text-xs text-slate-500">View your system notifications</p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-bell text-4xl mb-4"></i>
-                <p className="text-sm">No new notifications</p>
-              </div>
-            </div>
+            <NotificationsPage />
           )}
 
           {activeSection === 'private-messages-section' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">Messages</h1>
-                  <p className="text-xs text-slate-500">Private messaging with team members</p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-envelope text-4xl mb-4"></i>
-                <p className="text-sm">Messaging system will be implemented here</p>
-              </div>
-            </div>
+            <MessagesPage />
           )}
 
           {activeSection === 'production-files-section' && (
@@ -2240,18 +2163,7 @@ export default function DesignerPage() {
           )}
 
           {activeSection === 'notes-section' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">Notes</h1>
-                  <p className="text-xs text-slate-500">Manage your notes and memos</p>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-sticky-note text-4xl mb-4"></i>
-                <p className="text-sm">Notes management coming soon</p>
-              </div>
-            </div>
+            <NotesPage />
           )}
 
           {activeSection === 'hr-requests-section' && (
