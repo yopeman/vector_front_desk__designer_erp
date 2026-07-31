@@ -39,7 +39,7 @@ function loadProfile() {
     }
 }
 
-function saveProfile() {
+async function saveProfile() {
     const name = document.getElementById('settings-profile-name').value.trim();
     const title = document.getElementById('settings-profile-title').value.trim();
     const email = document.getElementById('settings-profile-email').value.trim();
@@ -56,7 +56,7 @@ function saveProfile() {
         return;
     }
 
-    const result = Auth.updateUserProfile(user.id, { name, title, email });
+    const result = await Auth.updateUserProfile(user.id, { name, title, email });
     if (!result.success) {
         alert(result.error);
         return;
@@ -75,7 +75,7 @@ function resetProfileForm() {
 // =============================================
 // PASSWORD MANAGEMENT
 // =============================================
-function updatePassword() {
+async function updatePassword() {
     const currentPwd = document.getElementById('settings-current-password').value;
     const newPwd = document.getElementById('settings-new-password').value;
     const confirmPwd = document.getElementById('settings-confirm-password').value;
@@ -91,7 +91,7 @@ function updatePassword() {
         return;
     }
 
-    const result = Auth.changePassword(user.id, currentPwd, newPwd);
+    const result = await Auth.changePassword(user.id, currentPwd, newPwd);
     if (!result.success) {
         alert(result.error);
         return;

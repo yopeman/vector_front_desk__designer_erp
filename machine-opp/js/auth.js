@@ -1,141 +1,202 @@
 // =============================================
-// AUTHENTICATION SYSTEM
+// AUTHENTICATION SYSTEM (Supabase Auth)
 // =============================================
 const Auth = (function() {
-    const SESSION_KEY = 'vector_erp_session';
-    const PROFILE_KEY = 'vector_erp_profile';
+    let currentUser = null;
+    let isAuthed = false;
 
-    function hashPassword(password) {
-        let hash = 0;
-        const salt = 'vector_erp_salt_2026';
-        const combined = salt + password;
-        for (let i = 0; i < combined.length; i++) {
-            const char = combined.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
+    async function fetchCurrentUser(userId) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error fetching user profile:', error);
+            return;
         }
-        return 'vp_' + Math.abs(hash).toString(36) + '_' + btoa(password).substring(0, 8);
-    }
 
-    function getStoredUsers() {
-        try {
-            const data = localStorage.getItem('vector_erp_users');
-            return data ? JSON.parse(data) : [];
-        } catch (e) {
-            return [];
-        }
-    }
-
-    function saveUsers(users) {
-        localStorage.setItem('vector_erp_users', JSON.stringify(users));
-    }
-
-    function createDefaultUser() {
-        const users = getStoredUsers();
-        if (users.length === 0) {
-            users.push({
-                id: 'u1',
-                email: 'admin@vector.com',
-                password: hashPassword('12345678'),
-                name: 'Admin User',
-                title: 'Operations Manager',
-                role: 'admin',
-                createdAt: new Date().toISOString()
-            });
-            saveUsers(users);
+        if (data) {
+            currentUser = {
+                id: data.id,
+                email: data.email,
+                name: data.username || '',
+                title: '',
+                role: data.role
+            };
         }
     }
 
-    function getSession() {
-        try {
-            const data = localStorage.getItem(SESSION_KEY);
-            return data ? JSON.parse(data) : null;
-        } catch (e) {
-            return null;
+    async function getUserRole(userId) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error || !data) return null;
+        return data.role;
+    }
+
+    async function ensureDefaultUser() {
+        const { data: existing } = await supabase
+            .from('users')
+            .select('id')
+            .limit(1);
+
+        if (existing && existing.length > 0) return;
+
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: 'admin@vector.com',
+            password: '12345678'
+        });
+
+        if (authError || !authData.user) {
+            console.error('Default user setup issue:', authError?.message || authError);
+            return;
+        }
+
+        await supabase.from('users').insert({
+            id: authData.user.id,
+            username: 'admin',
+            email: 'admin@vector.com',
+            role: 'machine_operator'
+        }).then(({ error }) => {
+            if (error && !error.message.includes('duplicate')) {
+                console.error('Failed to insert default user profile:', error);
+            }
+        });
+    }
+
+    async function init() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+            const role = await getUserRole(session.user.id);
+            if (role === 'machine_operator') {
+                isAuthed = true;
+                await fetchCurrentUser(session.user.id);
+            } else {
+                await supabase.auth.signOut();
+            }
+        }
+
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (session?.user) {
+                const role = await getUserRole(session.user.id);
+                if (role === 'machine_operator') {
+                    isAuthed = true;
+                    await fetchCurrentUser(session.user.id);
+                } else {
+                    isAuthed = false;
+                    currentUser = null;
+                    await supabase.auth.signOut();
+                }
+            } else {
+                isAuthed = false;
+                currentUser = null;
+            }
+        });
+
+        await ensureDefaultUser();
+
+        if (!isAuthed) {
+            const { data: { session: postSession } } = await supabase.auth.getSession();
+            if (postSession?.user) {
+                const role = await getUserRole(postSession.user.id);
+                if (role === 'machine_operator') {
+                    isAuthed = true;
+                    await fetchCurrentUser(postSession.user.id);
+                } else {
+                    await supabase.auth.signOut();
+                }
+            }
         }
     }
 
-    function saveSession(session) {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    async function login(email, password) {
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return { success: false, error: 'Login failed' };
+        }
+
+        const role = await getUserRole(user.id);
+        if (role !== 'machine_operator') {
+            await supabase.auth.signOut();
+            return { success: false, error: 'Access denied. Machine operator role required.' };
+        }
+
+        await fetchCurrentUser(user.id);
+
+        return {
+            success: true,
+            user: currentUser ? Object.assign({}, currentUser) : { email }
+        };
     }
 
-    function clearSession() {
-        localStorage.removeItem(SESSION_KEY);
+    async function logout() {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Logout error:', error);
+        }
+        isAuthed = false;
+        currentUser = null;
+    }
+
+    async function updateUserProfile(userId, updates) {
+        const dbUpdates = {};
+        if (updates.email !== undefined) dbUpdates.email = updates.email;
+        if (updates.name !== undefined) dbUpdates.username = updates.name;
+        if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+
+        const { error } = await supabase
+            .from('users')
+            .update(dbUpdates)
+            .eq('id', userId);
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        if (currentUser && currentUser.id === userId) {
+            Object.assign(currentUser, updates);
+        }
+
+        return { success: true };
+    }
+
+    async function changePassword(userId, currentPassword, newPassword) {
+        const { error } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+
+        if (error) {
+            return { success: false, error: error.message };
+        }
+
+        return { success: true };
     }
 
     function isAuthenticated() {
-        const session = getSession();
-        if (!session || !session.userId) return false;
-        const users = getStoredUsers();
-        const user = users.find(u => u.id === session.userId);
-        if (!user) {
-            clearSession();
-            return false;
-        }
-        if (session.expiresAt && Date.now() > session.expiresAt) {
-            clearSession();
-            return false;
-        }
-        return true;
+        return isAuthed;
     }
 
     function getCurrentUser() {
-        const session = getSession();
-        if (!session || !session.userId) return null;
-        const users = getStoredUsers();
-        return users.find(u => u.id === session.userId) || null;
-    }
-
-    function login(email, password) {
-        const users = getStoredUsers();
-        const hashed = hashPassword(password);
-        const user = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === hashed);
-        if (!user) {
-            return { success: false, error: 'Invalid email or password' };
-        }
-        const session = {
-            userId: user.id,
-            email: user.email,
-            loginTime: Date.now(),
-            expiresAt: Date.now() + (24 * 60 * 60 * 1000)
-        };
-        saveSession(session);
-        return { success: true, user: { id: user.id, email: user.email, name: user.name, title: user.title, role: user.role } };
-    }
-
-    function logout() {
-        clearSession();
-    }
-
-    function updateUserProfile(userId, updates) {
-        const users = getStoredUsers();
-        const index = users.findIndex(u => u.id === userId);
-        if (index === -1) return { success: false, error: 'User not found' };
-        if (updates.name) users[index].name = updates.name;
-        if (updates.title) users[index].title = updates.title;
-        if (updates.email) users[index].email = updates.email.toLowerCase();
-        saveUsers(users);
-        return { success: true };
-    }
-
-    function changePassword(userId, currentPassword, newPassword) {
-        const users = getStoredUsers();
-        const index = users.findIndex(u => u.id === userId);
-        if (index === -1) return { success: false, error: 'User not found' };
-        if (users[index].password !== hashPassword(currentPassword)) {
-            return { success: false, error: 'Current password is incorrect' };
-        }
-        if (!newPassword || newPassword.length < 8) {
-            return { success: false, error: 'New password must be at least 8 characters' };
-        }
-        users[index].password = hashPassword(newPassword);
-        saveUsers(users);
-        return { success: true };
+        return currentUser ? Object.assign({}, currentUser) : null;
     }
 
     function getProfile() {
         try {
-            const data = localStorage.getItem(PROFILE_KEY);
+            const data = localStorage.getItem('vector_erp_profile');
             return data ? JSON.parse(data) : null;
         } catch (e) {
             return null;
@@ -143,10 +204,10 @@ const Auth = (function() {
     }
 
     function saveProfile(profile) {
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+        localStorage.setItem('vector_erp_profile', JSON.stringify(profile));
     }
 
-    createDefaultUser();
+    init();
 
     return {
         isAuthenticated,

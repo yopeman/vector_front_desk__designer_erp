@@ -54,17 +54,17 @@
     </div>
     `;
 
-    function injectAuthOverlay() {
+    async function injectAuthOverlay() {
         // Inject the auth overlay HTML at the beginning of the body
         document.body.insertAdjacentHTML('afterbegin', authOverlayHTML);
 
         // Set up event listeners (replacing inline handlers)
         const loginForm = document.getElementById('auth-login-form');
         if (loginForm) {
-            loginForm.addEventListener('submit', function(event) {
+            loginForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 if (typeof handleAuthLogin === 'function') {
-                    handleAuthLogin(event);
+                    await handleAuthLogin(event);
                 }
             });
         }

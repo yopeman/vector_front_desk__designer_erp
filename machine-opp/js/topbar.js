@@ -109,18 +109,10 @@ class TopNavigationBar {
     }
 
     checkAuthState() {
-        const savedAuth = localStorage.getItem('erp_auth');
-        if (savedAuth) {
-            try {
-                const authData = JSON.parse(savedAuth);
-                if (authData.isLoggedIn) {
-                    this.isLoggedIn = true;
-                    this.currentUser = authData.user;
-                    this.updateUserUI();
-                }
-            } catch (e) {
-                console.error('Auth state check failed:', e);
-            }
+        if (Auth.isAuthenticated()) {
+            this.isLoggedIn = true;
+            this.currentUser = Auth.getCurrentUser();
+            this.updateUserUI();
         }
     }
 
@@ -190,13 +182,11 @@ class TopNavigationBar {
         this.closeMsgDropdown();
     }
 
-    handleLogout() {
-        // Call Auth.logout() if available
+    async handleLogout() {
         if (typeof Auth !== 'undefined' && Auth.logout) {
-            Auth.logout();
+            await Auth.logout();
         }
         
-        localStorage.removeItem('erp_auth');
         this.isLoggedIn = false;
         this.currentUser = null;
         
