@@ -48,6 +48,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       active: false,
       submenu: [
         { name: 'Job Orders', icon: 'fa-clipboard-list' },
+        { name: 'Production Status', icon: 'fa-chart-line' },
       ] 
     },
     { 
