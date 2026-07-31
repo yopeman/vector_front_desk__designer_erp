@@ -256,10 +256,9 @@ class TopNavigationBar {
     }
 }
 
-// Initialize top navigation
-const topNav = new TopNavigationBar();
-
-// Export for use in other modules
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = TopNavigationBar;
-}
+document.addEventListener('DOMContentLoaded', () => {
+    window.topNav = new TopNavigationBar();
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = TopNavigationBar;
+    }
+});

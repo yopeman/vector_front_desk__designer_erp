@@ -2,96 +2,9 @@
 // RECEIVED ORDERS MODULE
 // =============================================
 
-// Sample data for received orders
-const ordersData = [
-    {
-        no: '01',
-        date: '02/06/26',
-        taskType: 'project',
-        orderNum: '0001/09',
-        designer: 'Abeba',
-        title: 'uv print',
-        priority: 'urgent',
-        machine: 'co2',
-        material: 'Premium Acrylic',
-        thickness: '4mm',
-        color: 'Transparent Glossy',
-        length: '600 mm',
-        width: '400 mm',
-        height: '12 mm',
-        gram: '150 g'
-    },
-    {
-        no: '02',
-        date: '02/06/26',
-        taskType: 'project',
-        orderNum: '0002/09',
-        designer: 'Abeba',
-        title: 'uv print Sub-Job',
-        priority: 'normal',
-        machine: 'uv',
-        material: 'Premium Acrylic',
-        thickness: '4mm',
-        color: 'Transparent Glossy',
-        length: '600 mm',
-        width: '400 mm',
-        height: '12 mm',
-        gram: '150 g'
-    },
-    {
-        no: '03',
-        date: '03/06/26',
-        taskType: 'task',
-        orderNum: '0003/09',
-        designer: 'Tigist',
-        title: 'Acrylic Signage',
-        priority: 'urgent',
-        machine: 'cnc',
-        material: 'Cast Acrylic',
-        thickness: '6mm',
-        color: 'White Glossy',
-        length: '900 mm',
-        width: '450 mm',
-        height: '15 mm',
-        gram: '320 g'
-    },
-    {
-        no: '04',
-        date: '03/06/26',
-        taskType: 'project',
-        orderNum: '0004/09',
-        designer: 'Biruk',
-        title: 'Metal Nameplate',
-        priority: 'normal',
-        machine: 'fiber-mark',
-        material: 'Brass',
-        thickness: '2mm',
-        color: 'Gold',
-        length: '200 mm',
-        width: '80 mm',
-        height: '2 mm',
-        gram: '45 g'
-    },
-    {
-        no: '05',
-        date: '04/06/26',
-        taskType: 'task',
-        orderNum: '0005/09',
-        designer: 'Meron',
-        title: 'Fiber Cut Steel Bracket',
-        priority: 'urgent',
-        machine: 'fiber-cut',
-        material: 'Mild Steel',
-        thickness: '8mm',
-        color: 'Raw Metal',
-        length: '500 mm',
-        width: '300 mm',
-        height: '8 mm',
-        gram: '950 g'
-    }
-];
-
-let currentOrderIndex = -1;
+// =============================================
+// RECEIVED ORDERS DATA
+// =============================================
 
 // =============================================
 // RENDER RECEIVED ORDERS TABLE

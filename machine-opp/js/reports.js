@@ -2,57 +2,7 @@
 // REPORTS MODULE
 // =============================================
 
-// Column definitions per module for dynamic table rendering
-const reportColumnConfigs = {
-    'received-orders': [
-        { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'date', label: 'Date', cls: '' },
-        { key: 'orderNum', label: 'Order #', cls: 'font-mono' },
-        { key: 'title', label: 'Title', cls: '' },
-        { key: 'designer', label: 'Designer', cls: 'text-xs' },
-        { key: 'material', label: 'Material', cls: 'text-xs' },
-        { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
-    ],
-    'completed-orders': [
-        { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'date', label: 'Date', cls: '' },
-        { key: 'orderNum', label: 'Order #', cls: 'font-mono' },
-        { key: 'title', label: 'Title', cls: '' },
-        { key: 'designer', label: 'Machine', cls: 'text-xs' },
-        { key: 'material', label: 'Material', cls: 'text-xs' },
-        { key: 'machine', label: 'Equipment', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
-    ],
-    'rework': [
-        { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'date', label: 'Date', cls: '' },
-        { key: 'title', label: 'Rework Item', cls: '' },
-        { key: 'material', label: 'Material', cls: 'text-xs' },
-        { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
-    ],
-    'store-request': [
-        { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'date', label: 'Date', cls: '' },
-        { key: 'orderNum', label: 'Task #', cls: 'font-mono' },
-        { key: 'title', label: 'Item', cls: '' },
-        { key: 'designer', label: 'Material', cls: 'text-xs' },
-        { key: 'material', label: 'Spec', cls: 'text-xs' },
-        { key: 'machine', label: 'Unit', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
-    ]
-};
 
-const moduleLabels = {
-    'received-orders': 'Received Orders',
-    'completed-orders': 'Completed Orders',
-    'rework': 'Rework Records',
-    'store-request': 'Store Requests'
-};
-
-// Column visibility state
-let columnVisibility = {};
 
 // =============================================
 // BUILD REPORT DATA FROM ALL MODULES

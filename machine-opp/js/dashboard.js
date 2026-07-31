@@ -2,10 +2,7 @@
 // DASHBOARD MODULE
 // =============================================
 
-// Dashboard data references (will be populated from other modules)
-let ordersData = [];
-let completedOrdersData = [];
-let localStoreItemsList = [];
+// Dashboard data references (populated from mock-data.js and other modules)
 
 // =============================================
 // DASHBOARD STATS UPDATE

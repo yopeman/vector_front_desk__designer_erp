@@ -2,11 +2,7 @@
 // NOTES MODULE
 // =============================================
 
-let notesData = [];
-let notesIdCounter = 1;
-let currentNoteFilter = 'all';
-let tempNoteChecklist = [];
-let selectedNoteColor = 'slate';
+
 
 // =============================================
 // RENDER NOTES

@@ -3,48 +3,7 @@
 // =============================================
 
 // Machine checklist data
-const machineData = {
-    cnc: {
-        name: "CNC Machine",
-        daily: ["Clean dust and debris from the machine bed and work area", "Inspect spindle collet and tool holder for wear or dirt", "Check tool bits for sharpness (replace if needed)", "Verify proper air pressure (if pneumatic system is used)", "Inspect vacuum system or dust collector for blockages (if mounted)", "Check emergency stop and safety switches are working", "Lubricate moving parts if required (per manufacturer guidelines)"],
-        weekly: ["Inspect spindle for unusual noise or vibration", "Check and tighten loose bolts, screws, or connections", "Inspect belts and pulleys for wear or misalignment", "Clean linear rails and ball screws; apply lubricant if needed", "Check coolant or lubrication levels (if applicable)", "Test machine homing and limit switches", "Inspect dust extraction hoses for leaks (if applicable)"],
-        monthly: ["Check spindle runout and alignment", "Inspect motor couplings for looseness", "Clean electrical cabinet filters and fans", "Verify software/controller settings backup", "Check grounding and wiring connections", "Inspect tool changer (if equipped) for smooth operation", "Run a test job to ensure accuracy and repeatability"]
-    },
-    co2: {
-        name: "CO2 Machine",
-        daily: ["Check water chiller (temperature, water level, no bubbles, no leaks)", "Inspect water hoses for kinks, leaks, or blockages", "Clean mirrors and focusing lens with lens cleaner and lint-free swabs", "Verify air assist flow is strong and stable", "Check ventilation/exhaust system is working properly", "Remove dust/debris from work area", "Power on machine and confirm laser fires properly at low power test"],
-        weekly: ["Inspect laser tube for cracks, condensation, or discoloration", "Check mirror alignment using tape test on all three mirrors", "Clean fan filters and dust from electronics cabinet", "Check belt tension (X & Y axis) and adjust if loose", "Inspect rails and bearings for dirt or wear", "Apply light lubricant to linear guides/rails (if manufacturer allows)", "Test emergency stop button and safety switches"],
-        monthly: ["Check spindle runout and alignment", "Inspect motor couplings for looseness", "Clean electrical cabinet filters and fans", "Verify software/controller settings backup", "Check grounding and wiring connections", "Inspect tool changer (if equipped) for smooth operation", "Run a test job to ensure accuracy and repeatability"]
-    },
-    'fiber-cut': {
-        name: "Fiber Cutting Machine",
-        daily: ["Check power-on self-test — Ensure system initializes without error codes", "Clean lens and protective window — Use lens wipes or alcohol swabs; avoid fingerprints", "Inspect nozzle and cutting head — Remove dross or debris; check for damage", "Check focus lens alignment — Verify focus height is calibrated", "Check assist gas (O2/N2) pressure — Maintain within recommended levels", "Verify water chiller temperature — Keep between 20–25°C", "Drain water filter or separator — Remove condensed moisture", "Clean worktable and cutting bed — Remove slag and metal pieces", "Inspect fiber cable — Ensure no sharp bends or mechanical stress", "Test emergency stop button — Confirm it cuts power immediately"],
-        weekly: ["Inspect air filters — Clean or replace if clogged", "Check lens alignment (optical path) — Verify beam center using alignment paper", "Lubricate linear guides and bearings — Use light machine oil or grease", "Tighten screws and connections — Especially around head, nozzle, and gantry", "Inspect exhaust and ventilation system — Remove dust or metal powder buildup", "Clean sensors (Z-axis/focus sensor) — Use dry air or soft cloth"],
-        monthly: ["Check cooling water quality — Replace with deionized or distilled water", "Inspect water chiller filters — Clean or replace", "Inspect servo motor & belts — Check for wear or abnormal noise", "Check grounding and electrical terminals — Tighten and ensure good connection", "Update controller firmware (if needed) — Consult manufacturer before update", "Inspect laser protective glass — Replace if discolored or cracked"]
-    },
-    uv: {
-        name: "UV Machine",
-        daily: ["Power on printer and run nozzle check before printing", "Clean printhead surface with recommended cleaning solution", "Wipe capping station and wiper blade to remove ink buildup", "Shake UV ink bottles gently to prevent pigment settling", "Check ink levels and refill/replace if low", "Inspect UV lamp/LED curing unit for functionality", "Clean platen and work area from dust, ink, or debris"],
-        weekly: ["Perform full printhead cleaning cycle", "Check ink lines and dampers for air bubbles or leaks", "Clean encoder strip and encoder wheel carefully", "Check and clean ventilation fans and filters", "Inspect carriage movement for smooth operation", "Run nozzle alignment test and adjust if needed"],
-        monthly: ["Deep clean printhead and flush with cleaning solution (if required)", "Inspect capping station seals for wear or cracks", "Replace wiper blade if worn or damaged", "Check UV lamp/LED curing hours and replace if near end of life", "Verify RIP software and firmware are up to date", "Clean ink waste tank and reset waste counter if necessary"]
-    },
-    '3d-print': {
-        name: "3D Printing Machine",
-        daily: ["Check bed level and nozzle height before printing", "Clean print bed surface and remove any residue or filament", "Inspect filament spool for tangles or moisture", "Run nozzle purge before each print", "Check for proper first layer adhesion", "Wipe rails and rods to remove dust or filament debris"],
-        weekly: ["Perform nozzle cleaning with needle or cleaning filament", "Inspect and clean the extruder gear teeth", "Check all belts for tension and signs of wear", "Clean cooling fans and ventilation openings", "Verify proper lubrication of linear rods or lead screws", "Inspect all wiring for loose or frayed connections"],
-        monthly: ["Deep clean nozzle (cold pull or disassembly if needed)", "Calibrate bed leveling and nozzle offset manually", "Check and tighten all frame screws and bolts", "Inspect PTFE tubes for wear or blockage", "Clean build surface thoroughly or replace if worn", "Update firmware and slicer software if needed"]
-    },
-    'fiber-mark': {
-        name: "Fiber Marking Machine",
-        daily: ["Power on self-test execution validation", "Clean f-theta scan lens using optical wipes", "Verify workspace alignment laser works", "Clean structural external frame bed area"],
-        weekly: ["Check electrical power plug connections stability", "Inspect software focus heights metrics verification"],
-        monthly: ["Complete general backup calibrations profiling parameters log"]
-    }
-};
 
-// Track current machine and checklist states
-let currentMachine = 'cnc';
-const checklistStates = { daily: {}, weekly: {}, monthly: {} };
 
 // =============================================
 // SWITCH MACHINE TAB

@@ -2,61 +2,8 @@
 // REWORK MODULE
 // =============================================
 
-// Sample data for rework records
-let reworkData = [
-    {
-        id: 1,
-        title: 'UV Print Color Calibration',
-        date: '2026-06-03',
-        material: 'Premium Acrylic',
-        thickness: '4mm',
-        color: 'Transparent Glossy',
-        machine: 'uv',
-        length: '600 mm',
-        width: '400 mm',
-        height: '12 mm',
-        gram: '150 g',
-        reason: 'Color mismatch on first print run - required recalibration of UV ink density',
-        status: 'completed',
-        startTime: '2026-06-03T09:15:00.000Z',
-        endTime: '2026-06-03T10:30:00.000Z'
-    },
-    {
-        id: 2,
-        title: 'CNC Cut Precision Adjustment',
-        date: '2026-06-04',
-        material: 'Cast Acrylic',
-        thickness: '6mm',
-        color: 'White Glossy',
-        machine: 'cnc',
-        length: '900 mm',
-        width: '450 mm',
-        height: '15 mm',
-        gram: '320 g',
-        reason: 'Edge finish quality below standard - adjusted cutting speed and feed rate',
-        status: 'completed',
-        startTime: '2026-06-04T14:00:00.000Z',
-        endTime: '2026-06-04T15:45:00.000Z'
-    },
-    {
-        id: 3,
-        title: 'Fiber Mark Font Alignment',
-        date: '2026-06-05',
-        material: 'Brass',
-        thickness: '3mm',
-        color: 'Gold',
-        machine: 'fiber-mark',
-        length: '400 mm',
-        width: '250 mm',
-        height: '3 mm',
-        gram: '100 g',
-        reason: 'Text alignment shifted on memorial plaque - recalibrated laser focus and position',
-        status: 'in-progress',
-        startTime: '2026-06-05T11:20:00.000Z',
-        endTime: null
-    }
-];
-let reworkIdCounter = 4;
+// REWORK DATA
+// (initialized in mock-data.js)
 
 // =============================================
 // ADD REWORK ENTRY

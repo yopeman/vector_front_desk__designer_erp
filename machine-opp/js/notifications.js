@@ -2,8 +2,7 @@
 // NOTIFICATIONS MODULE
 // =============================================
 
-let notificationsData = [];
-let notifIdCounter = 1;
+
 
 // =============================================
 // INITIALIZE NOTIFICATIONS DATA

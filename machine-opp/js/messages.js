@@ -2,21 +2,7 @@
 // MESSAGES MODULE
 // =============================================
 
-let messagesData = [];
-let selectedMsgUserId = null;
-let msgIdCounter = 1;
-let msgUserIdCounter = 1;
 
-const avatarColors = [
-    'bg-gradient-to-br from-blue-500 to-indigo-600',
-    'bg-gradient-to-br from-emerald-500 to-teal-600',
-    'bg-gradient-to-br from-amber-500 to-orange-600',
-    'bg-gradient-to-br from-rose-500 to-pink-600',
-    'bg-gradient-to-br from-purple-500 to-violet-600',
-    'bg-gradient-to-br from-cyan-500 to-blue-600',
-    'bg-gradient-to-br from-lime-500 to-green-600',
-    'bg-gradient-to-br from-fuchsia-500 to-purple-600'
-];
 
 function getAvatarColor(index) {
     return avatarColors[index % avatarColors.length];

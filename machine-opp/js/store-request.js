@@ -2,51 +2,7 @@
 // STORE REQUEST MODULE
 // =============================================
 
-// Sample data for store items
-let localStoreItemsList = [
-    {
-        taskNum: '0001/09',
-        title: 'UV Print Acrylic Sign',
-        date: '2026-06-02',
-        material: 'Acrylic',
-        unit: 'Sheets',
-        qty: '5',
-        thickness: '4mm',
-        color: 'Transparent Glossy',
-        length: '600',
-        width: '400',
-        height: '12',
-        gram: '150'
-    },
-    {
-        taskNum: '0003/09',
-        title: 'Acrylic Signage Project',
-        date: '2026-06-03',
-        material: 'Cast Acrylic',
-        unit: 'Sheets',
-        qty: '3',
-        thickness: '6mm',
-        color: 'White Glossy',
-        length: '900',
-        width: '450',
-        height: '15',
-        gram: '320'
-    },
-    {
-        taskNum: '0005/09',
-        title: 'Steel Bracket Cutting',
-        date: '2026-06-04',
-        material: 'Mild Steel',
-        unit: 'Sheets',
-        qty: '2',
-        thickness: '8mm',
-        color: 'Raw Metal',
-        length: '500',
-        width: '300',
-        height: '8',
-        gram: '950'
-    }
-];
+
 
 // =============================================
 // ADD STORE ITEM
