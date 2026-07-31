@@ -574,6 +574,19 @@ export default function DesignerPage() {
   const displayName = profile?.username || 'Designer';
   const initials = getInitials(displayName);
 
+  // Dashboard computed metrics from real data
+  const activeProjects = designs.filter(d => d.status === 'In Progress').length;
+  const pendingApprovals = customerApprovalVersions.length;
+  const completedDesigns = designs.filter(d => d.status === 'Completed').length;
+  const myTaskCount = myTasks.length;
+  const newRequests = designs.filter(d => d.status === 'Pending').length;
+  const productionCount = productionOrders.length;
+  const totalDesigns = designs.length;
+  const efficiencyRate = totalDesigns > 0 ? ((completedDesigns / totalDesigns) * 100).toFixed(1) : '0.0';
+  const highPriorityCount = designs.filter(d => d.priority === 'High').length;
+  const mediumPriorityCount = designs.filter(d => d.priority === 'Medium').length;
+  const lowPriorityCount = designs.filter(d => d.priority === 'Low').length;
+
   return (
     <div className="flex h-screen overflow-hidden text-slate-700 select-none">
       {/* SIDEBAR */}
@@ -750,88 +763,205 @@ export default function DesignerPage() {
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6">
           {activeSection === 'overview-section' && (
             <div className="space-y-6">
+              {/* Welcome Header */}
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900">System Overview Dashboard</h1>
-                  <p className="text-xs text-slate-500">Welcome back! Here's a live summary of your design operations and factory metrics.</p>
+                  <h1 className="text-xl font-bold text-slate-900">Design Dashboard</h1>
+                  <p className="text-xs text-slate-500">Welcome back, {displayName}! Here's a live summary of your design operations.</p>
                 </div>
                 <div className="date-badge text-xs font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm">
                   <i className="fa-regular fa-calendar-days text-blue-600 mr-1"></i> {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </div>
               </div>
 
-              {/* Upper Metric Cards Grid */}
-              <div className="grid grid-cols-4 gap-5">
-                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+              {/* KPI Metric Cards - Real Data */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {/* My Tasks */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSectionChange('my-tasks-section')}>
                   <div className="space-y-1">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Active Projects</span>
-                    <span className="text-2xl font-bold text-slate-900 block">34</span>
-                    <span className="text-[10px] text-green-500 font-semibold"><i className="fa-solid fa-arrow-trend-up"></i> +12% this week</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">My Tasks</span>
+                    <span className="text-2xl font-bold text-slate-900 block">{myTaskCount}</span>
+                    <span className="text-[10px] text-blue-500 font-semibold"><i className="fa-solid fa-list-check"></i> Assigned to you</span>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-diagram-project"></i></div>
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-list-check"></i></div>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+
+                {/* Active Projects */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSectionChange('active-status-section')}>
                   <div className="space-y-1">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Pending Approvals</span>
-                    <span className="text-2xl font-bold text-slate-900 block">16</span>
-                    <span className="text-[10px] text-amber-500 font-semibold"><i className="fa-regular fa-clock"></i> Awaiting client response</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Active Projects</span>
+                    <span className="text-2xl font-bold text-slate-900 block">{activeProjects}</span>
+                    <span className="text-[10px] text-amber-500 font-semibold"><i className="fa-solid fa-spinner"></i> In progress</span>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-user-clock"></i></div>
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-diagram-project"></i></div>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+
+                {/* Pending Approvals */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSectionChange('customer-approval-section')}>
                   <div className="space-y-1">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Sent to Production</span>
-                    <span className="text-2xl font-bold text-slate-900 block">142</span>
-                    <span className="text-[10px] text-blue-500 font-semibold"><i className="fa-solid fa-circle-check"></i> 7 items in queue</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Pending Approvals</span>
+                    <span className="text-2xl font-bold text-slate-900 block">{pendingApprovals}</span>
+                    <span className="text-[10px] text-orange-500 font-semibold"><i className="fa-regular fa-clock"></i> Awaiting client</span>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-industry"></i></div>
+                  <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-user-clock"></i></div>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm">
+
+                {/* Completed Designs */}
+                <div className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleSectionChange('production-files-section')}>
                   <div className="space-y-1">
-                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Efficiency Rate</span>
-                    <span className="text-2xl font-bold text-slate-900 block">94.8%</span>
-                    <span className="text-[10px] text-green-500 font-semibold"><i className="fa-solid fa-bolt"></i> Optimal operational level</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Completed</span>
+                    <span className="text-2xl font-bold text-slate-900 block">{completedDesigns}</span>
+                    <span className="text-[10px] text-green-500 font-semibold"><i className="fa-solid fa-circle-check"></i> Ready for production</span>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-gauge-high"></i></div>
+                  <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl shadow-inner"><i className="fa-solid fa-circle-check"></i></div>
                 </div>
               </div>
 
-              {/* Placeholder for chart */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2"><i className="fa-solid fa-chart-line text-blue-600"></i> Analytics: Order Volume vs. Completion Rate</h3>
-                <div className="h-64 flex items-center justify-center text-slate-400 text-sm mt-4">Chart will be added with react-chartjs-2</div>
+              {/* Secondary Stats Row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm"><i className="fa-solid fa-file-circle-plus"></i></div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">New Requests</span>
+                    <span className="text-lg font-bold text-slate-900">{newRequests}</span>
+                  </div>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-sm"><i className="fa-solid fa-print"></i></div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Production Orders</span>
+                    <span className="text-lg font-bold text-slate-900">{productionCount}</span>
+                  </div>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center text-sm"><i className="fa-solid fa-book-open"></i></div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Total Designs</span>
+                    <span className="text-lg font-bold text-slate-900">{totalDesigns}</span>
+                  </div>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-lg p-3 shadow-sm flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center text-sm"><i className="fa-solid fa-gauge-high"></i></div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 uppercase font-semibold block">Completion Rate</span>
+                    <span className="text-lg font-bold text-slate-900">{efficiencyRate}%</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Bottom Table Block (Recent Global Design Logs) */}
+              {/* Status Distribution & Priority Breakdown */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Status Distribution */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-4">
+                    <i className="fa-solid fa-chart-pie text-blue-600"></i> Design Status Distribution
+                  </h3>
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Pending', count: newRequests, color: 'bg-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' },
+                      { label: 'In Progress', count: activeProjects, color: 'bg-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' },
+                      { label: 'Completed', count: completedDesigns, color: 'bg-green-500', text: 'text-green-600', bg: 'bg-green-50' },
+                    ].map((item) => {
+                      const pct = totalDesigns > 0 ? ((item.count / totalDesigns) * 100).toFixed(0) : 0;
+                      return (
+                        <div key={item.label} className="flex items-center gap-3">
+                          <span className="text-xs font-medium text-slate-600 w-24">{item.label}</span>
+                          <div className="flex-1 h-6 bg-slate-100 rounded-lg overflow-hidden relative">
+                            <div className={`h-full ${item.color} rounded-lg transition-all duration-500`} style={{ width: `${pct}%` }}></div>
+                            <span className="absolute inset-0 flex items-center justify-end pr-2 text-[10px] font-bold text-slate-700">{item.count} ({pct}%)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Priority Breakdown */}
+                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-4">
+                    <i className="fa-solid fa-flag text-red-500"></i> Priority Breakdown
+                  </h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                      <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-2"><i className="fa-solid fa-fire"></i></div>
+                      <span className="text-2xl font-bold text-red-700 block">{highPriorityCount}</span>
+                      <span className="text-[10px] text-red-500 font-semibold uppercase">High</span>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-2"><i className="fa-solid fa-bolt"></i></div>
+                      <span className="text-2xl font-bold text-blue-700 block">{mediumPriorityCount}</span>
+                      <span className="text-[10px] text-blue-500 font-semibold uppercase">Medium</span>
+                    </div>
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-center">
+                      <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center mx-auto mb-2"><i className="fa-solid fa-leaf"></i></div>
+                      <span className="text-2xl font-bold text-slate-700 block">{lowPriorityCount}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase">Low</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <i className="fa-solid fa-bolt text-amber-500"></i> Quick Actions
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button onClick={() => handleSectionChange('my-tasks-section')} className="flex items-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left">
+                    <i className="fa-solid fa-list-check text-blue-600"></i>
+                    <span className="text-xs font-semibold text-slate-700">View My Tasks</span>
+                  </button>
+                  <button onClick={() => handleSectionChange('new-requests-section')} className="flex items-center gap-2 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-left">
+                    <i className="fa-solid fa-file-circle-plus text-purple-600"></i>
+                    <span className="text-xs font-semibold text-slate-700">New Requests</span>
+                  </button>
+                  <button onClick={() => handleSectionChange('customer-approval-section')} className="flex items-center gap-2 p-3 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors text-left">
+                    <i className="fa-solid fa-user-check text-orange-600"></i>
+                    <span className="text-xs font-semibold text-slate-700">Approvals</span>
+                  </button>
+                  <button onClick={() => handleSectionChange('send-production-section')} className="flex items-center gap-2 p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors text-left">
+                    <i className="fa-solid fa-print text-indigo-600"></i>
+                    <span className="text-xs font-semibold text-slate-700">Production</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Recent Design Activity Table */}
               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                 <div className="p-4 bg-slate-50/50 border-b border-slate-200 flex justify-between items-center">
-                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2"><i className="fa-solid fa-list text-slate-500"></i> Recent Global Design Logs</h3>
+                  <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2"><i className="fa-solid fa-list text-slate-500"></i> Recent Design Activity</h3>
                   <span className="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded-full font-bold">Live Feed</span>
                 </div>
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
-                      <th className="p-3">Order No</th><th className="p-3">Client</th><th className="p-3">Project Title</th><th className="p-3">Designer</th><th className="p-3">Priority</th><th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-slate-600 divide-y divide-slate-100">
-                    {designs.slice(0, 5).map((d) => (
-                      <tr key={d.id} className="hover:bg-slate-50/80 transition">
-                        <td className="p-3 font-semibold text-blue-600">{d.orders?.order_no || '-'}</td>
-                        <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
-                        <td className="p-3">{d.design_type || '-'}</td>
-                        <td className="p-3">{profile?.username || 'Designer'}</td>
-                        <td className="p-3"><span className={`priority-badge ${d.priority === 'High' ? 'priority-high' : d.priority === 'Medium' ? 'priority-medium' : 'priority-low'}`}>{d.priority}</span></td>
-                        <td className="p-3"><span className={`status-badge ${d.status === 'Pending' ? 'status-pending' : d.status === 'In Progress' ? 'status-progress' : d.status === 'Completed' ? 'status-completed' : 'status-cancelled'}`}>{d.status}</span></td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
+                        <th className="p-3">Order No</th><th className="p-3">Client</th><th className="p-3">Design Type</th><th className="p-3">Designer</th><th className="p-3">Priority</th><th className="p-3">Status</th><th className="p-3">Date</th>
                       </tr>
-                    ))}
-                    {designs.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="p-8 text-center text-slate-400">No recent activity</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="text-slate-600 divide-y divide-slate-100">
+                      {designs.slice(0, 8).map((d) => (
+                        <tr key={d.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => { setSelectedDesign(d); setShowDesignDetailModal(true); }}>
+                          <td className="p-3 font-semibold text-blue-600">{d.orders?.order_no || '-'}</td>
+                          <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
+                          <td className="p-3">{d.design_type || '-'}</td>
+                          <td className="p-3">{d.assigned_designer?.username || profile?.username || '-'}</td>
+                          <td className="p-3"><span className={`priority-badge ${d.priority === 'High' ? 'priority-high' : d.priority === 'Medium' ? 'priority-medium' : 'priority-low'}`}>{d.priority || '-'}</span></td>
+                          <td className="p-3"><span className={`status-badge ${d.status === 'Pending' ? 'status-pending' : d.status === 'In Progress' ? 'status-progress' : d.status === 'Completed' ? 'status-completed' : 'status-cancelled'}`}>{d.status}</span></td>
+                          <td className="p-3 text-slate-400">{d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
+                        </tr>
+                      ))}
+                      {designs.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-slate-400">
+                            <i className="fa-solid fa-inbox text-3xl block mb-2"></i>
+                            No recent design activity
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
