@@ -96,6 +96,13 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       submenu: null 
     },
     { 
+      name: 'HR Requests', 
+      icon: 'fa-user-tie', 
+      active: false,
+      submenu: null,
+      externalUrl: 'https://vectoradvert.com/hr'
+    },
+    { 
       name: 'Settings', 
       icon: 'fa-gear', 
       active: false,
@@ -136,7 +143,9 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
   };
 
   const handleItemClick = (item) => {
-    if (item.submenu) {
+    if (item.externalUrl) {
+      window.location.href = item.externalUrl;
+    } else if (item.submenu) {
       toggleMenu(item.name);
     } else if (onMenuClick) {
       onMenuClick(item.name.toLowerCase());
