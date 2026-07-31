@@ -25,18 +25,6 @@ BEGIN
     END IF;
 END $$;
 
--- Insert default departments
-INSERT INTO departments (name) VALUES
-    ('Sales'),
-    ('Marketing'),
-    ('Finance'),
-    ('Operations'),
-    ('IT'),
-    ('Human Resources'),
-    ('Production'),
-    ('Logistics')
-ON CONFLICT (name) DO NOTHING;
-
 -- First, drop the old department column
 ALTER TABLE site_visits DROP COLUMN IF EXISTS department;
 

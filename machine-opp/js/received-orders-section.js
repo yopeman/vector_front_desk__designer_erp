@@ -1,0 +1,395 @@
+// received-orders Section Component
+// Renders the received-orders section HTML
+
+class ReceivedordersSection {
+    constructor() {
+        this.render();
+    }
+    
+    render() {
+        const container = document.getElementById('content-received-orders');
+        if (container) {
+            container.innerHTML = `<!-- Header with stats summary -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                            <i class="fa-solid fa-list-check text-blue-400"></i>
+                            Received Order Status
+                        </h2>
+                        <p class="text-sm text-slate-400 mt-1">
+                            Track and manage incoming tasks. 
+                            <span class="text-slate-500">(ዝርዝሩን ለማየት መስመሩን ይጫኑ)</span>
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-slate-500 bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50">
+                        <i class="fa-regular fa-clock text-slate-400"></i>
+                        <span>Order Sequence: Date <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Project # <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Designer <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Title <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Priority <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Machine</span>
+                    </div>
+                </div>
+
+                <!-- ===== NEW: Stats Summary Cards ===== -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="orders-stats-container">
+                    <div class="stat-card bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-5 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-clipboard-list text-blue-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Orders</p>
+                            <p class="text-2xl font-bold text-white mt-0.5" id="stats-total">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 rounded-2xl p-5 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-exclamation-triangle text-rose-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Urgent</p>
+                            <p class="text-2xl font-bold text-rose-400 mt-0.5" id="stats-urgent">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 rounded-2xl p-5 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/15 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check-circle text-emerald-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Normal</p>
+                            <p class="text-2xl font-bold text-emerald-400 mt-0.5" id="stats-normal">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search/Filter Header (Enhanced for Priority Filter) -->
+                <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                        <!-- Search input with clear button -->
+                        <div class="relative w-full md:w-80">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                            <input type="text" id="order-search" onkeyup="filterOrders()" placeholder="Search by order #, title, designer, machine..." 
+                                   class="w-full bg-slate-900/90 border border-slate-700 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 placeholder-slate-500 input-glow">
+                            <button id="search-clear-btn" onclick="clearSearch()" class="search-clear absolute right-3 top-3 text-slate-500 hover:text-slate-300 transition-colors">
+                                <i class="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                        </div>
+                        <!-- Priority Dropdown -->
+                        <div class="relative w-full md:w-48">
+                            <select id="priority-filter" onchange="filterOrders()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                                <option value="all" class="text-slate-300">All Priorities (ሁሉም)</option>
+                                <option value="urgent" class="text-rose-400 font-bold">Urgent Only (ኤርጀንት ብቻ)</option>
+                                <option value="normal" class="text-slate-300 font-medium">Normal Only (ኖርማል ብቻ)</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-slate-500 pointer-events-none text-[10px]"></i>
+                        </div>
+                        <!-- Filter results count -->
+                        <div class="flex items-center gap-2 text-xs text-slate-500 bg-slate-900/60 px-3.5 py-2 rounded-xl border border-slate-700/50">
+                            <i class="fa-regular fa-filter"></i>
+                            <span>Showing: <strong id="filter-count" class="text-slate-300 font-semibold">0</strong></span>
+                        </div>
+                    </div>
+                    <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-slate-700/30">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                </div>
+
+                <!-- Table Content -->
+                <div class="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
+                    <div class="table-wrapper">
+                        <table class="orders-table w-full text-left border-collapse min-w-[900px]">
+                            <thead>
+                                <tr class="bg-slate-800/80 border-b border-slate-700/60 text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                                    <th class="p-4 text-center w-16">
+                                        <span class="flex items-center justify-center gap-1">
+                                            <i class="fa-solid fa-hashtag text-[10px] text-slate-500"></i>
+                                            No
+                                        </span>
+                                    </th>
+                                    <th class="p-4">
+                                        <span class="flex items-center gap-1.5">
+                                            <i class="fa-regular fa-calendar text-[10px] text-slate-500"></i>
+                                            Date
+                                        </span>
+                                    </th>
+                                    <th class="p-4">Task/Project</th>
+                                    <th class="p-4">Order Number</th>
+                                    <th class="p-4">Designer</th>
+                                    <th class="p-4">Project/Task Name/Title</th>
+                                    <th class="p-4">Priority</th>
+                                    <th class="p-4">Machine Type</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-800 text-sm text-slate-300 cursor-pointer" id="received-orders-body">
+                                <!-- Rows will be dynamically rendered by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- No results state -->
+                    <div id="no-results-state" class="hidden flex flex-col items-center justify-center py-16 px-4">
+                        <div class="w-16 h-16 rounded-full bg-slate-800/60 flex items-center justify-center mb-4">
+                            <i class="fa-solid fa-search-minus text-2xl text-slate-500"></i>
+                        </div>
+                        <p class="text-slate-400 font-medium">No orders match your search criteria</p>
+                        <p class="text-xs text-slate-500 mt-1">Try adjusting your search or filter settings</p>
+                        <button onclick="resetFilters()" class="mt-4 text-xs bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white px-4 py-2 rounded-xl transition-all border border-blue-500/20">
+                            <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- ORDER DETAIL MODAL OVERLAY (popup style)                    -->
+                <!-- ============================================================ -->
+                <div id="order-detail-modal" class="modal-overlay" onclick="closeOrderModal(event)">
+                    <div class="modal-container" onclick="event.stopPropagation()">
+                        <!-- Close button -->
+                        <button onclick="closeOrderModal()" class="modal-close-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+
+                        <!-- Modal header -->
+                        <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-2">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                                <i class="fa-solid fa-folder-open text-white text-base"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white tracking-wide">Order Details & Execution Framework</h3>
+                                <p class="text-xs text-slate-400">Review and manage the selected order</p>
+                            </div>
+                        </div>
+
+                        <!-- Priority indicator alert bar -->
+                        <div id="detail-priority-bar" class="flex items-center gap-3 px-4 py-3 rounded-xl border-l-4 bg-slate-900/50 text-sm mb-6">
+                            <i class="fa-solid fa-circle-info text-lg"></i>
+                            <span id="detail-priority-text" class="font-medium">Priority information</span>
+                        </div><br>
+
+                        <!-- Meta Inputs Matrix Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-regular fa-calendar text-slate-500"></i> Date
+                                </label>
+                                <input id="det-date" type="text" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-heading text-slate-500 text-[10px]"></i> Project/Task Name/Title
+                                </label>
+                                <input id="det-title" type="text" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-cubes text-slate-500 text-[10px]"></i> Material Type
+                                </label>
+                                <input id="det-material" type="text" readonly class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-arrows-left-right text-slate-500 text-[10px]"></i> Thickness
+                                </label>
+                                <input id="det-thickness" type="text" readonly class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-palette text-slate-500 text-[10px]"></i> Color
+                                </label>
+                                <input id="det-color" type="text" readonly class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-industry text-slate-500 text-[10px]"></i> Machine Type
+                                </label>
+                                <input id="det-machine" type="text" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-user text-slate-500 text-[10px]"></i> Designer
+                                </label>
+                                <input id="det-designer" type="text" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-barcode text-slate-500 text-[10px]"></i> Order Number
+                                </label>
+                                <input id="det-order-num" type="text" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Size Breakdown Layout Matrix -->
+                        <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                            <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                    <i class="fa-solid fa-ruler-combined text-blue-400 text-[10px]"></i>
+                                </span>
+                                Dimensions (Size Layout Spec)
+                            </span>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-[11px] text-slate-400 mb-1">Length</label>
+                                    <input id="det-length" type="text" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 input-glow">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-slate-400 mb-1">Width</label>
+                                    <input id="det-width" type="text" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 input-glow">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-slate-400 mb-1">Height</label>
+                                    <input id="det-height" type="text" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 input-glow">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] text-slate-400 mb-1">Gram</label>
+                                    <input id="det-gram" type="text" readonly class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 input-glow">
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Bottom Functional Blocks Grid -->
+                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+                             <!-- Shared Design File Element Block -->
+                             <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
+
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                                        <i class="fa-solid fa-share-nodes text-indigo-400 text-[10px]"></i>
+                                    </span>
+                                    Shared Design File
+                                </span>
+                                <div class="flex items-center justify-between bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
+                                    <div class="flex items-center space-x-2 overflow-hidden">
+                                        <i class="fa-solid fa-file-vector text-emerald-400 text-lg flex-shrink-0"></i>
+                                        <span class="text-xs text-slate-300 truncate font-mono">vector_blueprint.dxf</span>
+                                    </div>
+                                    <button onclick="downloadSharedFile()" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded transition-all flex items-center shrink-0">
+                                        <i class="fa-solid fa-download mr-1"></i> download file
+                                    </button>
+                                </div>
+                                <div class="flex items-center text-[10px] text-emerald-400 font-medium bg-emerald-500/5 p-1 px-2 rounded w-max border border-emerald-500/10">
+                                    <i class="fa-solid fa-shield-halved mr-1 text-xs"></i> Secure Verified File Asset
+                                </div>
+                            </div>
+
+                            <!-- Message Interaction Blocks Segment -->
+                            <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                                        <i class="fa-solid fa-comments text-sky-400 text-[10px]"></i>
+                                    </span>
+                                    Message Panel
+                                </span>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="openTextNoteModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2 px-1 rounded-lg text-center font-medium transition-all">
+                                        <i class="fa-solid fa-font mr-1 block text-slate-400 mb-0.5"></i> text
+                                    </button>
+                                    <button onclick="startVoiceRecording()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2 px-1 rounded-lg text-center font-medium transition-all">
+                                        <i class="fa-solid fa-microphone mr-1 block text-rose-400 mb-0.5"></i> voice
+                                    </button>
+                                    <button onclick="triggerFileUpload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2 px-1 rounded-lg text-center font-medium transition-all">
+                                        <i class="fa-solid fa-cloud-arrow-up mr-1 block text-blue-400 mb-0.5"></i> upload file
+                                    </button>
+                                </div>
+                                <!-- Hidden file input -->
+                                <input type="file" id="file-upload-input" class="hidden" onchange="handleFileUpload(event)">
+                                <!-- Uploaded file display -->
+                                <div id="uploaded-file-info" class="hidden flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700/50 text-xs text-slate-300">
+                                    <i class="fa-solid fa-file text-emerald-400"></i>
+                                    <span id="uploaded-file-name" class="truncate flex-1"></span>
+                                    <button onclick="removeUploadedFile()" class="text-slate-500 hover:text-rose-400 transition-colors">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                                <!-- Voice recording status -->
+                                <div id="voice-recording-status" class="hidden flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700/50 text-xs text-slate-300">
+                                    <span class="relative flex h-2 w-2">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                    </span>
+                                    <span id="voice-status-text">Recording...</span>
+                                    <span id="voice-timer" class="font-mono text-rose-400">00:00</span>
+                                    <button onclick="stopVoiceRecording()" class="ml-auto text-rose-400 hover:text-rose-300 transition-colors text-xs font-semibold">Stop</button>
+                                </div>
+                            </div>
+
+                            <!-- Status Update Operations with Timeline -->
+                            <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                                        <i class="fa-solid fa-circle-notch text-amber-400 text-[10px] animate-spin"></i>
+                                    </span>
+                                    Status Timeline
+                                </span>
+                                
+                                <!-- Timeline visualization -->
+                                <div class="space-y-1 mb-3">
+                                    <div class="timeline-step">
+                                        <span class="dot"></span>
+                                        <p class="text-xs text-slate-400">Order Received</p>
+                                    </div>
+                                    <div class="timeline-step active" id="step-in-progress">
+                                        <span class="dot"></span>
+                                        <p class="text-xs text-slate-300 font-medium" id="step-progress-text">In Progress</p>
+                                    </div>
+                                    <div class="timeline-step" id="step-completed">
+                                        <span class="dot"></span>
+                                        <p class="text-xs text-slate-500" id="step-completed-text">Completed</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-700/40">
+                                    <div class="space-y-2">
+                                        <button onclick="logOrderStatusTime('start')" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2 px-2 rounded-lg text-xs transition-all text-center tracking-wide shadow-md uppercase flex items-center justify-center gap-1.5">
+                                            <i class="fa-solid fa-play text-[10px]"></i> start order
+                                        </button>
+                                        <div id="ord-start-time" class="text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg">recorded start time</div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <button onclick="logOrderStatusTime('end')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-2 rounded-lg text-xs transition-all text-center tracking-wide shadow-md uppercase flex items-center justify-center gap-1.5">
+                                            <i class="fa-solid fa-stop text-[10px]"></i> End order
+                                        </button>
+                                        <div id="ord-end-time" class="text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg">recorded end time</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                             <!-- Mark as Complete Button -->
+                             <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3 flex flex-col justify-center">
+                                 <button onclick="markOrderAsComplete()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-all text-sm shadow-lg shadow-emerald-500/15 flex items-center justify-center gap-2">
+                                     <i class="fa-solid fa-circle-check text-xs"></i> Mark as Complete
+                                 </button>
+                                 <p class="text-[10px] text-slate-500 text-center">Move this order to the Completed Order Status List</p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- TEXT NOTE MODAL (for Message Panel text button)              -->
+                <!-- ============================================================ -->
+                <div id="text-note-modal" class="modal-overlay" onclick="closeTextNoteModal(event)">
+                    <div class="modal-container max-w-lg" onclick="event.stopPropagation()">
+                        <button onclick="closeTextNoteModal()" class="modal-close-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-4">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+                                <i class="fa-solid fa-pen text-white text-base"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-white tracking-wide">Write Note</h3>
+                                <p class="text-xs text-slate-400">Add a note for this order</p>
+                            </div>
+                        </div>
+                        <textarea id="text-note-editor" rows="5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 placeholder-slate-600 resize-none" placeholder="Type your note here..."></textarea>
+                        <div class="flex justify-end gap-3 mt-4 pt-3 border-t border-slate-700/50">
+                            <button onclick="closeTextNoteModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-xl transition-all">Cancel</button>
+                            <button onclick="saveTextNote()" class="px-5 py-2 text-xs font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 rounded-xl transition-all shadow-lg shadow-sky-500/15 flex items-center gap-1.5">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Note
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+    }
+}
+
+// Initialize section
+document.addEventListener('DOMContentLoaded', () => {
+    new ReceivedordersSection();
+});

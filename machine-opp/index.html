@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Machine Operation ERP System</title>
+    <!-- Google Fonts & Tailwind CSS for Modern Premium UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Beautiful Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2pdf.js for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- External JavaScript Files -->
+    <script src="js/auth-overlay.js"></script>
+    <script src="js/topbar.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/mock-data.js"></script>
+    <script src="js/received-orders.js"></script>
+    <script src="js/rework.js"></script>
+    <script src="js/completed-orders.js"></script>
+    <script src="js/machine-maintenance.js"></script>
+    <script src="js/store-request.js"></script>
+    <script src="js/notes.js"></script>
+    <script src="js/messages.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/settings.js"></script>
+    <!-- Tab Component Scripts -->
+    <script src="js/sidebar.js"></script>
+    <script src="js/dashboard-tab.js"></script>
+    <script src="js/received-orders-tab.js"></script>
+    <script src="js/rework-tab.js"></script>
+    <script src="js/completed-orders-tab.js"></script>
+    <script src="js/machine-maintenance-tab.js"></script>
+    <script src="js/store-request-tab.js"></script>
+    <script src="js/notes-tab.js"></script>
+    <script src="js/messages-tab.js"></script>
+    <script src="js/notifications-tab.js"></script>
+    <script src="js/reports-tab.js"></script>
+    <script src="js/settings-tab.js"></script>
+    <!-- Section Component Scripts -->
+    <script src="js/dashboard-section.js"></script>
+    <script src="js/received-orders-section.js"></script>
+    <script src="js/rework-login-section.js"></script>
+    <script src="js/completed-orders-section.js"></script>
+    <script src="js/machine-login-section.js"></script>
+    <script src="js/store-request-section.js"></script>
+    <script src="js/notes-section.js"></script>
+    <script src="js/messages-section.js"></script>
+    <script src="js/notifications-section.js"></script>
+    <script src="js/reports-section.js"></script>
+    <script src="js/settings-section.js"></script>
+    <script src="js/sidebar-section.js"></script>
+    <!-- Modal Component Scripts -->
+    <script src="js/store-request-modal.js"></script>
+    <script src="js/note-modal.js"></script>
+    <script src="js/notification-modal.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar Navigation - Modernized Premium -->
+        <div id="sidebar-container"></div>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-8 overflow-y-auto bg-slate-900">
+            
+            <!-- Tab 1: Dashboard -->
+<div id="content-dashboard" class="space-y-6 container-tab"></div>
+
+            <!-- ============================================================ -->
+            <!-- Tab 2: Received Orders - IMPROVED UI/UX                      -->
+            <!-- ============================================================ -->
+            <div id="content-received-orders" class="space-y-6 hidden container-tab"></div>
+
+            <!-- Tab 3: Rework Login - IMPROVED UI -->
+            <div id="content-rework-login" class="space-y-6 hidden container-tab"></div>
+
+            <!-- Tab 4: Completed Orders -->
+            <div id="content-completed-orders" class="space-y-6 hidden container-tab"></div>
+
+            <!-- Tab 5: Machine Login & Checklists - MODERNIZED -->
+            <div id="content-machine-login" class="space-y-6 hidden container-tab"></div>
+
+            <!-- Tab 6: Store Request - IMPROVED UI -->
+            <div id="content-store-request" class="space-y-6 hidden container-tab"></div>
+
+            <!-- ============================================================ -->
+            <!-- STORE REQUEST MODAL (popup style) -->
+            <!-- ============================================================ -->
+            <div id="store-request-modal-container"></div>
+
+            <!-- Tab 7: Notes - MODERNIZED -->
+            <div id="content-notes" class="space-y-6 hidden container-tab"></div>
+
+            <!-- Note Modal (Add / Edit) -->
+            <div id="note-modal-container"></div>
+
+            <div id="content-messages" class="space-y-6 hidden container-tab"></div>
+
+            <!-- ============================================================ -->
+            <!-- Tab 9: Notifications Module                                   -->
+            <!-- ============================================================ -->
+            <div id="content-notifications" class="space-y-6 hidden container-tab"></div>
+
+            <!-- ============================================================ -->
+            <!-- NOTIFICATION CREATE MODAL                                     -->
+            <!-- ============================================================ -->
+            <div id="notification-modal-container"></div>
+
+            <!-- ============================================================ -->
+            <!-- Tab 10: Reports Module                                       -->
+            <!-- ============================================================ -->
+            <div id="content-reports" class="space-y-6 hidden container-tab"></div>
+
+            <!-- ============================================================ -->
+            <!-- Tab 11: Settings Module                                       -->
+            <!-- ============================================================ -->
+            <div id="content-settings" class="space-y-6 hidden container-tab"></div>
+
+        </main>
+    </div>
+</body>
+</html>
+

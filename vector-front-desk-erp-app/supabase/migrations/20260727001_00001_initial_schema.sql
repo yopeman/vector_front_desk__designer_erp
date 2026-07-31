@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT,
     email         TEXT,
     phone         TEXT,
-    role          TEXT CHECK (role IN ('admin', 'designer', 'front_desk')),
+    role          TEXT CHECK (role IN ('admin', 'designer', 'front_desk', 'machine_operator')),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
