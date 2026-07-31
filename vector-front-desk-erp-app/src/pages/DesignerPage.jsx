@@ -590,7 +590,7 @@ export default function DesignerPage() {
   return (
     <div className="flex h-screen overflow-hidden text-slate-700 select-none">
       {/* SIDEBAR */}
-      <div className="w-64 bg-[#0a1931] text-white flex flex-col h-full justify-between text-xs shrink-0">
+      <div className="designer-sidebar w-64 bg-[#00ced1] text-white flex flex-col h-full justify-between text-xs shrink-0">
         <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
           {/* Logo */}
           <div className="p-4 border-b border-slate-700/50 flex items-center gap-2">
@@ -721,7 +721,7 @@ export default function DesignerPage() {
         </div>
 
         {/* Sidebar Bottom */}
-        <div className="p-3 bg-slate-900/60 border-t border-slate-800">
+        <div className="p-3 bg-[#00b8bb] border-t border-white/20">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">{initials}</div>
             <div>
@@ -744,7 +744,7 @@ export default function DesignerPage() {
             </div>
           </div>
           <button onClick={toggleClock} className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] py-1.5 text-center text-white font-medium rounded transition">Toggle Attendance</button> */}
-          <button onClick={signOut} className="w-full mt-2 bg-slate-700 hover:bg-red-700 active:scale-[0.98] py-1.5 text-center text-white font-medium rounded transition flex items-center justify-center gap-2">
+          <button onClick={signOut} className="w-full mt-2 bg-[#0a1931] hover:bg-red-700 active:scale-[0.98] py-1.5 text-center text-white font-medium rounded transition flex items-center justify-center gap-2">
             <i className="fa-solid fa-right-from-bracket text-[11px]"></i> Logout
           </button>
         </div>

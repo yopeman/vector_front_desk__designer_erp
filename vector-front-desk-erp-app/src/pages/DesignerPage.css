@@ -336,6 +336,29 @@ select { cursor: pointer; width: auto; min-width: 140px; }
   border-color: #2563eb;
 }
 
+/* ── Designer Sidebar Teal Theme ── */
+.designer-sidebar .nav-item,
+.designer-sidebar nav button {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.designer-sidebar .nav-item:hover,
+.designer-sidebar nav button:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+.designer-sidebar .nav-item[class*="bg-blue-600"],
+.designer-sidebar nav button[class*="bg-blue-600"] {
+  background-color: #0a1931 !important;
+  color: #ffffff !important;
+}
+.designer-sidebar .text-slate-300 { color: rgba(255, 255, 255, 0.9) !important; }
+.designer-sidebar .text-slate-400 { color: rgba(255, 255, 255, 0.7) !important; }
+.designer-sidebar .text-slate-200 { color: #ffffff !important; }
+.designer-sidebar .border-slate-700\/50 { border-color: rgba(255, 255, 255, 0.2) !important; }
+.designer-sidebar .border-slate-700\/40 { border-color: rgba(255, 255, 255, 0.2) !important; }
+.designer-sidebar .hover\:bg-slate-800:hover { background-color: rgba(255, 255, 255, 0.15) !important; }
+.designer-sidebar .bg-blue-600 { background-color: #0a1931 !important; }
+.designer-sidebar .bg-slate-800\/60 { background-color: rgba(0, 0, 0, 0.2) !important; }
+
 /* ── Animation Keyframes ── */
 @keyframes spin {
   from { transform: rotate(0deg); }
