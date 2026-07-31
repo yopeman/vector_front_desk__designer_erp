@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import jsPDF from 'jspdf';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import DesignDetailModal from './front-desk/components/DesignDetailModal';
+import ProductionOrderModal from './front-desk/components/ProductionOrderModal';
 import './DesignerPage.css';
 
 export default function DesignerPage() {
@@ -25,11 +27,46 @@ export default function DesignerPage() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [fileUrls, setFileUrls] = useState({});
+  const [showProductionOrderModal, setShowProductionOrderModal] = useState(false);
+  const [productionOrders, setProductionOrders] = useState([]);
+
+  // Reports state
+  const [reportDateFrom, setReportDateFrom] = useState(() => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  });
+  const [reportDateTo, setReportDateTo] = useState(() => {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  });
+  const [reportSelectedModules, setReportSelectedModules] = useState([]);
+  const [reportTableColumnVisibility, setReportTableColumnVisibility] = useState({});
+  const [reportTableSearchQueries, setReportTableSearchQueries] = useState({});
+  const [reportTableCurrentPages, setReportTableCurrentPages] = useState({});
+  const [reportItemsPerPage, setReportItemsPerPage] = useState(10);
+  const [showReportDropdown, setShowReportDropdown] = useState(false);
+  
+  // Search and filter states
+  const [myTasksSearch, setMyTasksSearch] = useState('');
+  const [myTasksFilter, setMyTasksFilter] = useState('all');
+  const [newRequestsSearch, setNewRequestsSearch] = useState('');
+  const [newRequestsFilter, setNewRequestsFilter] = useState('all');
+  const [activeDesignSearch, setActiveDesignSearch] = useState('');
+  const [activeDesignFilter, setActiveDesignFilter] = useState('all');
+  const [customerApprovalSearch, setCustomerApprovalSearch] = useState('');
+  const [productionFilesSearch, setProductionFilesSearch] = useState('');
+  const [designLibrarySearch, setDesignLibrarySearch] = useState('');
+  const [designLibraryFilter, setDesignLibraryFilter] = useState('all');
 
   useEffect(() => {
     fetchDesigns();
     fetchCustomerApprovalVersions();
     fetchMyTasks();
+    fetchProductionOrders();
   }, [user?.id]);
 
   useEffect(() => {
@@ -38,11 +75,13 @@ export default function DesignerPage() {
       fetchMyTasks();
     } else if (activeSection === 'customer-approval-section') {
       fetchCustomerApprovalVersions();
-    } else if (activeSection === 'new-requests-section' || 
+    } else if (activeSection === 'new-requests-section' ||
                activeSection === 'active-design-section' ||
                activeSection === 'production-files-section' ||
                activeSection === 'design-library-section') {
       fetchDesigns();
+    } else if (activeSection === 'send-production-section') {
+      fetchProductionOrders();
     }
   }, [activeSection]);
 
@@ -84,15 +123,15 @@ export default function DesignerPage() {
       .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
       .eq('assigned_designer_id', user.id)
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching my tasks:', error);
       return;
     }
-    
+
     if (data) {
       console.log('My tasks fetched:', data.length, 'tasks for user:', user.id);
-      
+
       // Fetch attached files
       const allFileIds = data.flatMap(d => d.attached_file_ids || []);
       const { data: files } = await supabase
@@ -121,7 +160,7 @@ export default function DesignerPage() {
           }
         }
       }
-      
+
       // Generate signed URLs for version files
       if (designVersions) {
         for (const version of designVersions) {
@@ -145,6 +184,300 @@ export default function DesignerPage() {
       setMyTasks(tasksWithDetails);
     }
   }
+
+  const fetchProductionOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('production_orders')
+        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username)')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProductionOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching production orders:', error);
+    }
+  };
+
+  // Designer report menu items
+  const designerReportMenuItems = [
+    {
+      name: 'Design',
+      submenu: [
+        { name: 'My Tasks', icon: 'fa-list-check' },
+        { name: 'New Design Requests', icon: 'fa-plus-circle' },
+        { name: 'Active Design Status', icon: 'fa-spinner' },
+        { name: 'Customer Approval', icon: 'fa-user-check' },
+        { name: 'Production Files', icon: 'fa-folder-open' },
+        { name: 'Design Library', icon: 'fa-book' },
+      ]
+    },
+    {
+      name: 'Production',
+      submenu: [
+        { name: 'Send to Production', icon: 'fa-print' },
+      ]
+    },
+  ];
+
+  const getReportData = (module) => {
+    switch (module) {
+      case 'My Tasks':
+        return myTasks.map(item => ({ ...item, _source: 'My Tasks' }));
+      case 'New Design Requests':
+        return designs.filter(d => d.status === 'New' || d.status === 'Pending').map(item => ({ ...item, _source: 'New Design Requests' }));
+      case 'Active Design Status':
+        return designs.filter(d => d.status === 'In Progress').map(item => ({ ...item, _source: 'Active Design Status' }));
+      case 'Customer Approval':
+        return customerApprovalVersions.map(item => ({ ...item, _source: 'Customer Approval' }));
+      case 'Production Files':
+        return designs.filter(d => d.status === 'Completed').map(item => ({ ...item, _source: 'Production Files' }));
+      case 'Send to Production':
+        return productionOrders.map(item => ({ ...item, _source: 'Send to Production' }));
+      case 'Design Library':
+        return designs.map(item => ({ ...item, _source: 'Design Library' }));
+      default:
+        return [];
+    }
+  };
+
+  const getReportColumns = (module) => {
+    const columnMap = {
+      'My Tasks': [
+        { key: 'design_type', label: 'Design Type' },
+        { key: 'orders.order_no', label: 'Order No' },
+        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'status', label: 'Status' },
+        { key: 'priority', label: 'Priority' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+      'New Design Requests': [
+        { key: 'design_type', label: 'Design Type' },
+        { key: 'orders.order_no', label: 'Order No' },
+        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'status', label: 'Status' },
+        { key: 'priority', label: 'Priority' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+      'Active Design Status': [
+        { key: 'design_type', label: 'Design Type' },
+        { key: 'orders.order_no', label: 'Order No' },
+        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'status', label: 'Status' },
+        { key: 'priority', label: 'Priority' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+      'Customer Approval': [
+        { key: 'designs.design_type', label: 'Design Type' },
+        { key: 'designs.orders.order_no', label: 'Order No' },
+        { key: 'designs.orders.clients.name', label: 'Client' },
+        { key: 'status', label: 'Status' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+      'Production Files': [
+        { key: 'design_type', label: 'Design Type' },
+        { key: 'orders.order_no', label: 'Order No' },
+        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'status', label: 'Status' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+      'Send to Production': [
+        { key: 'orders.order_no', label: 'Order No' },
+        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'material', label: 'Material' },
+        { key: 'machines.name', label: 'Machine' },
+        { key: 'status', label: 'Status' },
+        { key: 'priority', label: 'Priority' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+      'Design Library': [
+        { key: 'design_type', label: 'Design Type' },
+        { key: 'orders.order_no', label: 'Order No' },
+        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'status', label: 'Status' },
+        { key: 'priority', label: 'Priority' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+    };
+    return columnMap[module] || [];
+  };
+
+  const getNestedValue = (obj, path) => {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+  };
+
+  const toggleReportSubmenu = (submenu) => {
+    setReportSelectedModules(prev =>
+      prev.includes(submenu)
+        ? prev.filter(s => s !== submenu)
+        : [...prev, submenu]
+    );
+  };
+
+  const toggleReportTableColumn = (module, columnKey) => {
+    setReportTableColumnVisibility(prev => ({
+      ...prev,
+      [module]: {
+        ...(prev[module] || {}),
+        [columnKey]: !prev[module]?.[columnKey]
+      }
+    }));
+  };
+
+  const setReportCurrentPage = (module, page) => {
+    setReportTableCurrentPages(prev => ({
+      ...prev,
+      [module]: page
+    }));
+  };
+
+  const getReportTotalPages = (dataLength) => {
+    return Math.ceil(dataLength / reportItemsPerPage);
+  };
+
+  const getReportPaginatedData = (data, currentPage) => {
+    const startIndex = (currentPage - 1) * reportItemsPerPage;
+    const endIndex = startIndex + reportItemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const renderReportCellValue = (row, key) => {
+    const value = key.split('.').reduce((acc, part) => acc && acc[part], row);
+    if (value === null || value === undefined) return '-';
+    if (typeof value === 'object') {
+      return value.name || value.order_no || value.invoice_no || JSON.stringify(value);
+    }
+    if (key.includes('date') && value) {
+      return new Date(value).toLocaleDateString();
+    }
+    return String(value);
+  };
+
+  const handleExportPDF = () => {
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const leftMargin = 15;
+      const rightMargin = pageWidth / 2 + 10;
+      let y = 20;
+
+      // Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Design Report', pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      // Date range
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`From: ${reportDateFrom}  To: ${reportDateTo}`, pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      // Process each selected module
+      reportSelectedModules.forEach((module) => {
+        const moduleData = getReportData(module);
+        const columns = getReportColumns(module);
+
+        if (moduleData.length === 0) return;
+
+        // Add section header
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${module} (${moduleData.length})`, leftMargin, y);
+        y += 8;
+
+        // Split data into left and right sections
+        const midPoint = Math.ceil(moduleData.length / 2);
+        const leftData = moduleData.slice(0, midPoint);
+        const rightData = moduleData.slice(midPoint);
+
+        // Left section
+        let leftY = y;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Section 1', leftMargin, leftY);
+        leftY += 6;
+
+        leftData.forEach((row, index) => {
+          if (leftY > pageHeight - 20) {
+            doc.addPage();
+            leftY = 20;
+          }
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Record ${index + 1}:`, leftMargin, leftY);
+          leftY += 5;
+
+          columns.forEach(col => {
+            if (leftY > pageHeight - 15) {
+              doc.addPage();
+              leftY = 20;
+            }
+            let value = getNestedValue(row, col.key);
+            if (value && typeof value === 'object') {
+              value = value.name || value.order_no || value.invoice_no || '';
+            }
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${col.label}:`, leftMargin, leftY);
+            doc.text(`${value || '-'}`, leftMargin + 35, leftY);
+            leftY += 4;
+          });
+          leftY += 3;
+        });
+
+        // Right section
+        let rightY = y;
+        if (leftY > pageHeight / 2) {
+          doc.addPage();
+          rightY = 20;
+        }
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Section 2', rightMargin, rightY);
+        rightY += 6;
+
+        rightData.forEach((row, index) => {
+          if (rightY > pageHeight - 20) {
+            doc.addPage();
+            rightY = 20;
+          }
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Record ${midPoint + index + 1}:`, rightMargin, rightY);
+          rightY += 5;
+
+          columns.forEach(col => {
+            if (rightY > pageHeight - 15) {
+              doc.addPage();
+              rightY = 20;
+            }
+            let value = getNestedValue(row, col.key);
+            if (value && typeof value === 'object') {
+              value = value.name || value.order_no || value.invoice_no || '';
+            }
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${col.label}:`, rightMargin, rightY);
+            doc.text(`${value || '-'}`, rightMargin + 35, rightY);
+            rightY += 4;
+          });
+          rightY += 3;
+        });
+
+        // Add page break between modules
+        doc.addPage();
+        y = 20;
+      });
+
+      doc.save(`Design_Report_${reportSelectedModules.join('_').replace(/\s+/g, '_')}_${reportDateFrom}_to_${reportDateTo}.pdf`);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Error exporting PDF: ' + error.message);
+    }
+  };
 
   async function getFileUrl(filePath) {
     try {
@@ -225,7 +558,7 @@ export default function DesignerPage() {
               onClick={() => handleSectionChange('overview-section')}
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded font-medium w-full ${activeSection === 'overview-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
-              <div className="flex items-center gap-3"><i className="fa-solid fa-gauge w-4"></i> Overview</div>
+              <div className="flex items-center gap-3"><i className="fa-solid fa-gauge w-4"></i> Dashboard</div>
             </button>
             <button 
               onClick={() => handleSectionChange('my-tasks-section')}
@@ -272,14 +605,16 @@ export default function DesignerPage() {
                 <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'Completed').length}</span>
               )}
             </button>
-            <button 
+            <button
               onClick={() => handleSectionChange('send-production-section')}
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'send-production-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-print w-4"></i> Send to Production</div>
-              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold"> {/* 7 */} </span>
+              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                {productionOrders.length}
+              </span>
             </button>
-            <button 
+            <button
               onClick={() => handleSectionChange('design-library-section')}
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'design-library-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
@@ -288,15 +623,27 @@ export default function DesignerPage() {
                 <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.length}</span>
               )}
             </button>
-            
-            <div className="pt-4 pb-1 border-t border-slate-700/40 my-2"></div>
-
-            <button 
+            <button
               onClick={() => handleSectionChange('reports-section')}
-              className={`flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'reports-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+              className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'reports-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
-              <div className="flex items-center gap-3"><i className="fa-solid fa-chart-bar w-4"></i> Reports</div>
-              <i className="fa-solid fa-chevron-down text-[10px]"></i>
+              <div className="flex items-center gap-3"><i className="fa-solid fa-chart-simple w-4"></i> Reports</div>
+            </button>
+
+            <div className="pt-4 pb-1 border-t border-slate-700/40 my-2"></div>
+            <button 
+              onClick={() => handleSectionChange('private-messages-section')}
+              className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'private-messages-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <div className="flex items-center gap-3"><i className="fa-solid fa-envelope w-4"></i> Messages</div>
+              <span className="bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold hidden">0</span>
+            </button>
+            <button 
+              onClick={() => handleSectionChange('notifications-section')}
+              className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'notifications-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <div className="flex items-center gap-3"><i className="fa-solid fa-bell w-4"></i> Notifications</div>
+              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
             </button>
             <button 
               onClick={() => handleSectionChange('notes-section')}
@@ -310,20 +657,6 @@ export default function DesignerPage() {
               className={`flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'hr-requests-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-users w-4"></i> HR Requests</div>
-            </button>
-            <button 
-              onClick={() => handleSectionChange('notifications-section')}
-              className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'notifications-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
-            >
-              <div className="flex items-center gap-3"><i className="fa-solid fa-bell w-4"></i> Notifications</div>
-              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
-            </button>
-            <button 
-              onClick={() => handleSectionChange('private-messages-section')}
-              className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'private-messages-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
-            >
-              <div className="flex items-center gap-3"><i className="fa-solid fa-envelope w-4"></i> Messages</div>
-              <span className="bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold hidden">0</span>
             </button>
             <button 
               onClick={() => handleSectionChange('profile-settings-section')}
@@ -557,6 +890,29 @@ export default function DesignerPage() {
                 </div>
               </div>
 
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by design type, client, or order..."
+                      value={newRequestsSearch}
+                      onChange={(e) => setNewRequestsSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={newRequestsFilter}
+                  onChange={(e) => setNewRequestsFilter(e.target.value)}
+                  className="px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="all">All Status</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                </select>
+              </div>
+
               {loading ? (
                 <div className="flex justify-center py-20">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
@@ -575,7 +931,17 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').map((d) => (
+                      {designs
+                        .filter(d => (d.status === 'Pending' || d.status === 'In Progress') && 
+                          (newRequestsFilter === 'all' || d.status === newRequestsFilter))
+                        .filter(d => {
+                          const matchesSearch = 
+                            (d.design_type?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
+                            (d.orders?.clients?.name?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
+                            (d.orders?.order_no?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase());
+                          return matchesSearch;
+                        })
+                        .map((d) => (
                         <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
                             {d.design_type || '-'}
@@ -663,10 +1029,19 @@ export default function DesignerPage() {
                           </td>
                         </tr>
                       ))}
-                      {designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').length === 0 && (
+                      {designs
+                        .filter(d => (d.status === 'Pending' || d.status === 'In Progress') && 
+                          (newRequestsFilter === 'all' || d.status === newRequestsFilter))
+                        .filter(d => {
+                          const matchesSearch = 
+                            (d.design_type?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
+                            (d.orders?.clients?.name?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
+                            (d.orders?.order_no?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase());
+                          return matchesSearch;
+                        }).length === 0 && (
                         <tr>
                           <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                            No design requests yet.
+                            No design requests found matching your criteria.
                           </td>
                         </tr>
                       )}
@@ -714,15 +1089,27 @@ export default function DesignerPage() {
                       <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                         <i className="fa-solid fa-list text-slate-500"></i> All Registered Design Projects
                       </h3>
-                      <div className="relative">
-                        <input 
-                          type="text" 
-                          placeholder="Search by order, client, project..." 
-                          value={adsSearchQuery}
-                          onChange={(e) => setAdsSearchQuery(e.target.value)}
-                          className="pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded text-xs focus:outline-none focus:border-blue-500 w-64"
-                        />
-                        <i className="fa-solid fa-magnifying-glass absolute left-2.5 text-slate-400 text-xs" style={{top: '50%', transform: 'translateY(-50%)'}}></i>
+                      <div className="flex gap-2">
+                        <div className="relative">
+                          <input 
+                            type="text" 
+                            placeholder="Search by order, client, project..." 
+                            value={adsSearchQuery}
+                            onChange={(e) => setAdsSearchQuery(e.target.value)}
+                            className="pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded text-xs focus:outline-none focus:border-blue-500 w-64"
+                          />
+                          <i className="fa-solid fa-magnifying-glass absolute left-2.5 text-slate-400 text-xs" style={{top: '50%', transform: 'translateY(-50%)'}}></i>
+                        </div>
+                        <select
+                          value={activeDesignFilter}
+                          onChange={(e) => setActiveDesignFilter(e.target.value)}
+                          className="px-3 py-1.5 bg-white border border-slate-200 rounded text-xs focus:outline-none focus:border-blue-500"
+                        >
+                          <option value="all">All Priority</option>
+                          <option value="High">High</option>
+                          <option value="Medium">Medium</option>
+                          <option value="Low">Low</option>
+                        </select>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -744,6 +1131,7 @@ export default function DesignerPage() {
                             .filter(d => 
                               d.status === 'In Progress' && 
                               d.assigned_designer_id === user?.id &&
+                              (activeDesignFilter === 'all' || d.priority === activeDesignFilter) &&
                               (!adsSearchQuery || 
                               d.orders?.order_no?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
                               d.orders?.clients?.name?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
@@ -773,10 +1161,19 @@ export default function DesignerPage() {
                               </td>
                             </tr>
                           ))}
-                          {designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length === 0 && (
+                          {designs
+                            .filter(d => 
+                              d.status === 'In Progress' && 
+                              d.assigned_designer_id === user?.id &&
+                              (activeDesignFilter === 'all' || d.priority === activeDesignFilter) &&
+                              (!adsSearchQuery || 
+                              d.orders?.order_no?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
+                              d.orders?.clients?.name?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
+                              d.design_type?.toLowerCase().includes(adsSearchQuery.toLowerCase()))
+                            ).length === 0 && (
                             <tr>
                               <td colSpan={8} className="p-8 text-center text-slate-400">
-                                No active design requests yet.
+                                No active design requests found matching your criteria.
                               </td>
                             </tr>
                           )}
@@ -899,6 +1296,30 @@ export default function DesignerPage() {
                 </div>
               </div>
 
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by design type, client, or order..."
+                      value={myTasksSearch}
+                      onChange={(e) => setMyTasksSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={myTasksFilter}
+                  onChange={(e) => setMyTasksFilter(e.target.value)}
+                  className="px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="all">All Status</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+
               <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50 text-left">
@@ -913,7 +1334,16 @@ export default function DesignerPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {myTasks.map((d) => (
+                    {myTasks
+                      .filter(d => {
+                        const matchesSearch = 
+                          (d.design_type?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
+                          (d.orders?.clients?.name?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
+                          (d.orders?.order_no?.toLowerCase() || '').includes(myTasksSearch.toLowerCase());
+                        const matchesFilter = myTasksFilter === 'all' || d.status === myTasksFilter;
+                        return matchesSearch && matchesFilter;
+                      })
+                      .map((d) => (
                       <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
                         <td className="px-4 py-3 font-medium text-slate-800">
                           {d.design_type || '-'}
@@ -955,10 +1385,17 @@ export default function DesignerPage() {
                         </td>
                       </tr>
                     ))}
-                    {myTasks.length === 0 && (
+                    {myTasks.filter(d => {
+                      const matchesSearch = 
+                        (d.design_type?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
+                        (d.orders?.clients?.name?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
+                        (d.orders?.order_no?.toLowerCase() || '').includes(myTasksSearch.toLowerCase());
+                      const matchesFilter = myTasksFilter === 'all' || d.status === myTasksFilter;
+                      return matchesSearch && matchesFilter;
+                    }).length === 0 && (
                       <tr>
                         <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                          No tasks assigned yet.
+                          No tasks found matching your criteria.
                         </td>
                       </tr>
                     )}
@@ -979,6 +1416,20 @@ export default function DesignerPage() {
                   <i className="fa-solid fa-database text-blue-500"></i>
                   <span>{customerApprovalVersions.length}</span> versions
                 </span>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by order, client, or design type..."
+                      value={customerApprovalSearch}
+                      onChange={(e) => setCustomerApprovalSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -1003,14 +1454,30 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody className="text-slate-600 divide-y divide-slate-100">
-                      {customerApprovalVersions.length === 0 ? (
+                      {customerApprovalVersions
+                        .filter(version => {
+                          const matchesSearch = 
+                            (version.designs?.orders?.order_no?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
+                            (version.designs?.orders?.clients?.name?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
+                            (version.designs?.design_type?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase());
+                          return matchesSearch;
+                        })
+                        .length === 0 ? (
                         <tr>
                           <td colSpan={9} className="p-8 text-center text-slate-400">
-                            No design versions awaiting approval.
+                            No design versions found matching your criteria.
                           </td>
                         </tr>
                       ) : (
-                        customerApprovalVersions.map((version, index) => (
+                        customerApprovalVersions
+                          .filter(version => {
+                            const matchesSearch = 
+                              (version.designs?.orders?.order_no?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
+                              (version.designs?.orders?.clients?.name?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
+                              (version.designs?.design_type?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase());
+                            return matchesSearch;
+                          })
+                          .map((version, index) => (
                           <tr key={version.id} className="hover:bg-slate-50/80 transition">
                             <td className="p-3">{index + 1}</td>
                             <td className="p-3 font-semibold text-blue-600">{version.designs?.orders?.order_no || '-'}</td>
@@ -1153,6 +1620,20 @@ export default function DesignerPage() {
                 </span>
               </div>
 
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by order, client, or design type..."
+                      value={productionFilesSearch}
+                      onChange={(e) => setProductionFilesSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                 <div className="p-3 bg-slate-50/50 border-b border-slate-200">
                   <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -1174,15 +1655,31 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody className="text-slate-600 divide-y divide-slate-100">
-                      {designs.filter(d => d.status === 'Completed').length === 0 ? (
+                      {designs
+                        .filter(d => d.status === 'Completed')
+                        .filter(d => {
+                          const matchesSearch = 
+                            (d.orders?.order_no?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
+                            (d.orders?.clients?.name?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
+                            (d.design_type?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase());
+                          return matchesSearch;
+                        })
+                        .length === 0 ? (
                         <tr>
                           <td colSpan={8} className="p-8 text-center text-slate-400">
-                            No completed designs yet.
+                            No completed designs found matching your criteria.
                           </td>
                         </tr>
                       ) : (
                         designs
                           .filter(d => d.status === 'Completed')
+                          .filter(d => {
+                            const matchesSearch = 
+                              (d.orders?.order_no?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
+                              (d.orders?.clients?.name?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
+                              (d.design_type?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase());
+                            return matchesSearch;
+                          })
                           .map((d, index) => (
                           <tr key={d.id} className="hover:bg-slate-50/80 transition">
                             <td className="p-3">{index + 1}</td>
@@ -1225,11 +1722,344 @@ export default function DesignerPage() {
                   <h1 className="text-xl font-bold text-slate-900">Send to Production</h1>
                   <p className="text-xs text-slate-500">Queue designs for production</p>
                 </div>
+                <button
+                  onClick={() => setShowProductionOrderModal(true)}
+                  className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <i className="fa-solid fa-plus"></i>
+                  New Production Order
+                </button>
               </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-print text-4xl mb-4"></i>
-                <p className="text-sm">Production queue management coming soon</p>
+
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+                </div>
+              ) : productionOrders.length === 0 ? (
+                <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+                  <i className="fa-solid fa-print text-4xl mb-4"></i>
+                  <p className="text-sm">No production orders yet</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-left">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Task Name</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Material</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Machine</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Designer</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Priority</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Job Type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productionOrders.map((order) => (
+                        <tr key={order.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-800">
+                            {order.material || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.orders?.order_no || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.material} / {order.thickness} / {order.color}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.machines?.name || '-'} ({order.machines?.machine_type || '-'})
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.designer?.username || '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                order.priority === 'High'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : order.priority === 'Medium'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {order.priority}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                order.status === 'New'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : order.status === 'In Progress'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : order.status === 'Completed'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                order.job_type === 'received'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-purple-100 text-purple-700'
+                              }`}
+                            >
+                              {order.job_type}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeSection === 'reports-section' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Reports</h1>
+                  <p className="text-xs text-slate-500">Generate comprehensive reports with search, filtering, date range selection, and PDF export.</p>
+                </div>
+                <button onClick={handleExportPDF} className="px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                  <i className="fa-solid fa-file-pdf"></i> Export PDF
+                </button>
               </div>
+
+              {/* Date Range Filter */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200">
+                <div className="flex gap-4 items-center flex-wrap">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">From Date</label>
+                    <input
+                      type="date"
+                      value={reportDateFrom}
+                      onChange={(e) => setReportDateFrom(e.target.value)}
+                      className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">To Date</label>
+                    <input
+                      type="date"
+                      value={reportDateTo}
+                      onChange={(e) => setReportDateTo(e.target.value)}
+                      className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">Items Per Page</label>
+                    <select
+                      value={reportItemsPerPage}
+                      onChange={(e) => {
+                        setReportItemsPerPage(Number(e.target.value));
+                        setReportTableCurrentPages({});
+                      }}
+                      className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Module/Submenu Selection */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200">
+                <label className="block text-xs font-medium text-slate-700 mb-1">Select Reports</label>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowReportDropdown(!showReportDropdown)}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white text-left flex justify-between items-center"
+                  >
+                    <span>
+                      {reportSelectedModules.length === 0
+                        ? 'Select reports...'
+                        : `${reportSelectedModules.length} report${reportSelectedModules.length > 1 ? 's' : ''} selected`}
+                    </span>
+                    <i className={`fa-solid fa-chevron-${showReportDropdown ? 'up' : 'down'}`}></i>
+                  </button>
+
+                  {showReportDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg p-4 z-10 max-h-96 overflow-y-auto">
+                      <div className="space-y-4">
+                        {designerReportMenuItems.map(menu => (
+                          <div key={menu.name}>
+                            <div className="text-sm font-semibold text-slate-800 mb-2">{menu.name}</div>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                              {menu.submenu.map(sub => (
+                                <label key={sub.name} className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={reportSelectedModules.includes(sub.name)}
+                                    onChange={() => toggleReportSubmenu(sub.name)}
+                                    className="w-4 h-4 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500"
+                                  />
+                                  <span className="text-xs text-slate-600">{sub.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Separate Tables for Each Module */}
+              {reportSelectedModules.map(module => {
+                const moduleData = getReportData(module);
+                const columns = getReportColumns(module);
+
+                // Initialize column visibility for this module
+                if (!reportTableColumnVisibility[module]) {
+                  reportTableColumnVisibility[module] = {};
+                  columns.forEach(col => {
+                    reportTableColumnVisibility[module][col.key] = true;
+                  });
+                }
+
+                const visibleColumnsForModule = columns.filter(col =>
+                  reportTableColumnVisibility[module]?.[col.key] !== false
+                );
+
+                // Filter data based on table-specific search query
+                const tableSearchQuery = reportTableSearchQueries[module] || '';
+                const filteredModuleData = moduleData.filter(row => {
+                  if (!tableSearchQuery) return true;
+                  return columns.some(col => {
+                    let value = getNestedValue(row, col.key);
+                    if (value && typeof value === 'object') {
+                      value = value.name || value.order_no || value.invoice_no || '';
+                    }
+                    return value && String(value).toLowerCase().includes(tableSearchQuery.toLowerCase());
+                  });
+                });
+
+                // Pagination
+                const currentPage = reportTableCurrentPages[module] || 1;
+                const totalPages = getReportTotalPages(filteredModuleData.length);
+                const paginatedData = getReportPaginatedData(filteredModuleData, currentPage);
+
+                return (
+                  <div key={module} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="p-4 border-b border-slate-200 bg-slate-50">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="text-sm font-bold text-slate-800">{module} ({filteredModuleData.length})</h3>
+                      </div>
+                      <div className="flex gap-3 items-center">
+                        <div className="flex-1">
+                          <input
+                            type="text"
+                            placeholder={`Search ${module}...`}
+                            value={reportTableSearchQueries[module] || ''}
+                            onChange={(e) => setReportTableSearchQueries(prev => ({
+                              ...prev,
+                              [module]: e.target.value
+                            }))}
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {columns.map(col => (
+                            <button
+                              key={col.key}
+                              onClick={() => toggleReportTableColumn(module, col.key)}
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-xs border cursor-pointer transition-colors ${
+                                reportTableColumnVisibility[module]?.[col.key] !== false
+                                  ? 'bg-blue-100 border-blue-300 text-blue-700'
+                                  : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-100'
+                              }`}
+                            >
+                              <i className={`fa-solid ${reportTableColumnVisibility[module]?.[col.key] !== false ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                              <span>{col.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <table className="w-full">
+                      <thead className="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                          <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
+                          {visibleColumnsForModule.map(col => (
+                            <th key={col.key} className="p-4 text-left text-xs font-semibold text-slate-600">{col.label}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-xs">
+                        {paginatedData.length === 0 ? (
+                          <tr>
+                            <td colSpan={visibleColumnsForModule.length + 1} className="p-8 text-center text-slate-400">
+                              No data found
+                            </td>
+                          </tr>
+                        ) : (
+                          paginatedData.map((row, index) => (
+                            <tr key={row.id} className="hover:bg-slate-50">
+                              <td className="p-4 text-center">{(currentPage - 1) * reportItemsPerPage + index + 1}</td>
+                              {visibleColumnsForModule.map(col => (
+                                <td key={col.key} className="p-4">
+                                  {renderReportCellValue(row, col.key)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                    {totalPages > 1 && (
+                      <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+                        <div className="text-xs text-slate-600">
+                          Page {currentPage} of {totalPages} ({filteredModuleData.length} total)
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setReportCurrentPage(module, currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 rounded border border-slate-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 cursor-pointer"
+                          >
+                            Previous
+                          </button>
+                          <div className="flex gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                              <button
+                                key={page}
+                                onClick={() => setReportCurrentPage(module, page)}
+                                className={`px-3 py-1 rounded border text-xs cursor-pointer ${
+                                  currentPage === page
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'border-slate-300 hover:bg-slate-100'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+                          </div>
+                          <button
+                            onClick={() => setReportCurrentPage(module, currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="px-3 py-1 rounded border border-slate-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-100 cursor-pointer"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -1244,6 +2074,30 @@ export default function DesignerPage() {
                   <i className="fa-solid fa-database text-blue-500"></i>
                   <span>{designs.length}</span> total designs
                 </span>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search by design type, client, or order..."
+                      value={designLibrarySearch}
+                      onChange={(e) => setDesignLibrarySearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={designLibraryFilter}
+                  onChange={(e) => setDesignLibraryFilter(e.target.value)}
+                  className="px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="all">All Status</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
               </div>
 
               {loading ? (
@@ -1265,7 +2119,16 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {designs.map((d) => (
+                      {designs
+                        .filter(d => designLibraryFilter === 'all' || d.status === designLibraryFilter)
+                        .filter(d => {
+                          const matchesSearch = 
+                            (d.design_type?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
+                            (d.orders?.clients?.name?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
+                            (d.orders?.order_no?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase());
+                          return matchesSearch;
+                        })
+                        .map((d) => (
                         <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
                             {d.design_type || '-'}
@@ -1354,10 +2217,18 @@ export default function DesignerPage() {
                           </td>
                         </tr>
                       ))}
-                      {designs.length === 0 && (
+                      {designs
+                        .filter(d => designLibraryFilter === 'all' || d.status === designLibraryFilter)
+                        .filter(d => {
+                          const matchesSearch = 
+                            (d.design_type?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
+                            (d.orders?.clients?.name?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
+                            (d.orders?.order_no?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase());
+                          return matchesSearch;
+                        }).length === 0 && (
                         <tr>
                           <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                            No designs found.
+                            No designs found matching your criteria.
                           </td>
                         </tr>
                       )}
@@ -1365,21 +2236,6 @@ export default function DesignerPage() {
                   </table>
                 </div>
               )}
-            </div>
-          )}
-
-          {activeSection === 'reports-section' && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="text-xl font-bold text-slate-900">Reports</h1>
-                  <p className="text-xs text-slate-500">View analytics and reports</p>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-                <i className="fa-solid fa-chart-bar text-4xl mb-4"></i>
-                <p className="text-sm">Reports coming soon</p>
-              </div>
             </div>
           )}
 
@@ -1611,10 +2467,21 @@ export default function DesignerPage() {
 
       {/* Design Detail Modal */}
       {showDesignDetailModal && selectedDesign && (
-        <DesignDetailModal 
-          design={selectedDesign} 
+        <DesignDetailModal
+          design={selectedDesign}
           selectedVersion={selectedVersion}
-          onClose={() => { setShowDesignDetailModal(false); setSelectedDesign(null); setSelectedVersion(null); }} 
+          onClose={() => { setShowDesignDetailModal(false); setSelectedDesign(null); setSelectedVersion(null); }}
+        />
+      )}
+
+      {/* Production Order Modal */}
+      {showProductionOrderModal && (
+        <ProductionOrderModal
+          onClose={() => setShowProductionOrderModal(false)}
+          onSuccess={() => {
+            fetchProductionOrders();
+            setShowProductionOrderModal(false);
+          }}
         />
       )}
     </div>
