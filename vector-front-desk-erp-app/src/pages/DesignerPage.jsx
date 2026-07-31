@@ -8,6 +8,7 @@ import MessagesPage from './front-desk/components/MessagesPage';
 import NotificationsPage from './front-desk/components/NotificationsPage';
 import NotesPage from './front-desk/components/NotesPage';
 import SettingsPage from './front-desk/components/SettingsPage';
+import TopHeader from './front-desk/components/TopHeader';
 import './DesignerPage.css';
 
 export default function DesignerPage() {
@@ -24,10 +25,6 @@ export default function DesignerPage() {
   const [adsSearchQuery, setAdsSearchQuery] = useState('');
   const [customerApprovalVersions, setCustomerApprovalVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
-  const [showChatDropdown, setShowChatDropdown] = useState(false);
-  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
-  const [showCalDropdown, setShowCalDropdown] = useState(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [fileUrls, setFileUrls] = useState({});
@@ -519,6 +516,46 @@ export default function DesignerPage() {
     setActiveSection(section);
   }
 
+  // Designer-specific menu items for the TopHeader search
+  const designerMenuItems = [
+    { name: 'Dashboard', icon: 'fa-gauge', path: 'dashboard' },
+    { name: 'My Tasks', icon: 'fa-list-check', path: 'my-tasks' },
+    { name: 'New Design Requests', icon: 'fa-file-circle-plus', path: 'new-requests' },
+    { name: 'Active Design Status', icon: 'fa-file-pen', path: 'active-status' },
+    { name: 'Customer Approval', icon: 'fa-user-check', path: 'customer-approval' },
+    { name: 'Production Files', icon: 'fa-folder-open', path: 'production-files' },
+    { name: 'Send to Production', icon: 'fa-print', path: 'send-production' },
+    { name: 'Design Library', icon: 'fa-book-open', path: 'design-library' },
+    { name: 'Reports', icon: 'fa-chart-simple', path: 'reports' },
+    { name: 'Messages', icon: 'fa-envelope', path: 'messages' },
+    { name: 'Notifications', icon: 'fa-bell', path: 'notifications' },
+    { name: 'Notes', icon: 'fa-sticky-note', path: 'notes' },
+    { name: 'Settings', icon: 'fa-gear', path: 'settings' },
+  ];
+
+  // Map TopHeader navigation paths to DesignerPage section IDs
+  const topHeaderNavigate = (path) => {
+    const pathMap = {
+      'dashboard': 'overview-section',
+      'my-tasks': 'my-tasks-section',
+      'new-requests': 'new-requests-section',
+      'active-status': 'active-status-section',
+      'customer-approval': 'customer-approval-section',
+      'production-files': 'production-files-section',
+      'send-production': 'send-production-section',
+      'design-library': 'design-library-section',
+      'reports': 'reports-section',
+      'messages': 'private-messages-section',
+      'notifications': 'notifications-section',
+      'notes': 'notes-section',
+      'settings': 'profile-settings-section',
+    };
+    const section = pathMap[path];
+    if (section) {
+      handleSectionChange(section);
+    }
+  };
+
   function toggleClock() {
     setClockedIn(!clockedIn);
     if (clockedIn) {
@@ -536,7 +573,6 @@ export default function DesignerPage() {
 
   const displayName = profile?.username || 'Designer';
   const initials = getInitials(displayName);
-  const sectionTitle = activeSection.replace('-section', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
   return (
     <div className="flex h-screen overflow-hidden text-slate-700 select-none">
@@ -704,96 +740,11 @@ export default function DesignerPage() {
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* TOP HEADER NAVBAR */}
-        <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Dashboard</span> <i className="fa-solid fa-chevron-right text-[9px]"></i> 
-            <span>{sectionTitle}</span>
-          </div>
-          {/* Search Bar */}
-          <div className="relative w-80">
-            <input type="text" placeholder="Search by order no., client, project, status..." className="w-full pl-3 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded text-xs focus:outline-none focus:border-blue-500 transition-all" />
-            <i className="fa-solid fa-magnifying-glass absolute right-3 text-slate-400 text-xs" style={{top: '50%', transform: 'translateY(-50%)'}}></i>
-          </div>
-          {/* Action Icons & Profile */}
-          <div className="flex items-center gap-4 text-slate-600">
-            {/* Chat Icon */}
-            <div className="relative">
-              <div className="relative cursor-pointer hover:text-blue-600 transition" onClick={() => setShowChatDropdown(!showChatDropdown)}>
-                <i className="fa-regular fa-comment-dots text-lg"></i>
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] px-1 rounded-full hidden">0</span>
-              </div>
-              {showChatDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="p-3 border-b border-slate-200 flex justify-between items-center">
-                    <span className="text-sm font-bold text-slate-900">Messages</span>
-                    <button onClick={() => { setShowChatDropdown(false); handleSectionChange('private-messages-section'); }} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Open inbox →</button>
-                  </div>
-                  <div className="p-4 text-center text-slate-400 text-xs">No new messages</div>
-                </div>
-              )}
-            </div>
-
-            {/* Bell Icon */}
-            <div className="relative">
-              <div className="relative cursor-pointer hover:text-blue-600 transition" onClick={() => setShowNotifDropdown(!showNotifDropdown)}>
-                <i className="fa-regular fa-bell text-lg"></i>
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] px-1 rounded-full">0</span>
-              </div>
-              {showNotifDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="p-3 border-b border-slate-200 flex justify-between items-center">
-                    <span className="text-sm font-bold text-slate-900">Notifications</span>
-                    <button className="text-xs font-semibold text-blue-600 hover:text-blue-800">Mark all read</button>
-                  </div>
-                  <div className="p-4 text-center text-slate-400 text-xs">No new notifications</div>
-                </div>
-              )}
-            </div>
-
-            {/* Calendar Icon */}
-            <div className="relative">
-              <div className="cursor-pointer hover:text-blue-600 transition" onClick={() => setShowCalDropdown(!showCalDropdown)}>
-                <i className="fa-regular fa-calendar-days text-lg"></i>
-              </div>
-              {showCalDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="p-3 border-b border-slate-200 flex justify-between items-center">
-                    <span className="text-sm font-bold text-slate-900">Calendar & Deadlines</span>
-                    <button onClick={() => setShowCalDropdown(false)} className="text-slate-400 hover:text-slate-600 text-lg">×</button>
-                  </div>
-                  <div className="p-4 text-center text-slate-400 text-xs">No upcoming deadlines</div>
-                </div>
-              )}
-            </div>
-
-            {/* Profile Menu */}
-            <div className="relative">
-              <div className="flex items-center gap-2 border-l pl-4 border-slate-200 cursor-pointer hover:bg-slate-50 rounded-lg transition py-1 pr-2" onClick={() => setShowProfileDropdown(!showProfileDropdown)}>
-                <div className="w-8 h-8 rounded-full bg-blue-900 text-white text-xs flex items-center justify-center font-bold">{initials}</div>
-                <div className="text-left text-[11px]">
-                  <p className="font-semibold text-slate-800 leading-3">{displayName}</p>
-                  <span className="text-slate-400 text-[10px]">Designer</span>
-                </div>
-                <i className="fa-solid fa-chevron-down text-[9px] text-slate-400 ml-1"></i>
-              </div>
-              {showProfileDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  <div className="p-3 border-b border-slate-200">
-                    <p className="text-sm font-bold text-slate-900">{displayName}</p>
-                    <p className="text-xs text-slate-500">Designer</p>
-                  </div>
-                  <button onClick={() => { setShowProfileDropdown(false); handleSectionChange('profile-settings-section'); }} className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
-                    <i className="fa-regular fa-user text-blue-600"></i> Profile Settings
-                  </button>
-                  <div className="border-t border-slate-200"></div>
-                  <button onClick={() => { setShowProfileDropdown(false); signOut(); }} className="w-full text-left px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2">
-                    <i className="fa-solid fa-right-from-bracket"></i> Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+        <TopHeader
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onNavigate={topHeaderNavigate}
+          menuItems={designerMenuItems}
+        />
 
         {/* PAGE CONTENT - Will be populated with sections */}
         <main className="flex-1 overflow-y-auto custom-scrollbar p-6">

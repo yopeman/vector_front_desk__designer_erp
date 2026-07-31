@@ -3,7 +3,7 @@ import { useAuth } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 import CalendarModal from './CalendarModal';
 
-export default function TopHeader({ onToggleSidebar, onNavigate }) {
+export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: customMenuItems }) {
   const { profile } = useAuth();
   const [notificationDropdown, setNotificationDropdown] = useState(false);
   const [messageDropdown, setMessageDropdown] = useState(false);
@@ -17,7 +17,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate }) {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const searchInputRef = useRef(null);
 
-  const menuItems = [
+  const defaultMenuItems = [
     { name: 'Dashboard', icon: 'fa-house', path: 'dashboard' },
     { name: 'Leads', icon: 'fa-user-tag', path: 'leads' },
     { name: 'Clients', icon: 'fa-user-check', path: 'clients' },
@@ -43,6 +43,8 @@ export default function TopHeader({ onToggleSidebar, onNavigate }) {
     { name: 'Notes', icon: 'fa-sticky-note', path: 'notes' },
     { name: 'Settings', icon: 'fa-gear', path: 'settings' },
   ];
+
+  const menuItems = customMenuItems || defaultMenuItems;
 
   useEffect(() => {
     fetchNotifications();
