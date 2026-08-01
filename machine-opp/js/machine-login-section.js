@@ -28,57 +28,28 @@ class MachineloginSection {
                             </div>
                             <div class="bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-700/50">
                                 <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Operator</p>
-                                <p class="text-xs font-semibold text-slate-200">Admin User</p>
+                                <p class="text-xs font-semibold text-slate-200" id="operator-name">Admin User</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Machine Selector Tabs - Modern Card Style -->
+                <!-- Machine Selector Tabs - Dynamic from Database -->
                 <div class="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-2 shadow-lg">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                        <button onclick="switchMachine('cnc')" id="machinetab-cnc" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-105">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <i class="fa-solid fa-microchip text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="text-xs font-semibold">CNC</span>
-                            </div>
-                            <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                        </button>
-                        <button onclick="switchMachine('co2')" id="machinetab-co2" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <i class="fa-solid fa-fire text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="text-xs font-semibold">CO2</span>
-                            </div>
-                            <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                        </button>
-                        <button onclick="switchMachine('fiber-cut')" id="machinetab-fiber-cut" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <i class="fa-solid fa-scissors text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="text-xs font-semibold">Fiber Cut</span>
-                            </div>
-                            <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                        </button>
-                        <button onclick="switchMachine('uv')" id="machinetab-uv" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <i class="fa-solid fa-sun text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="text-xs font-semibold">UV Print</span>
-                            </div>
-                            <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                        </button>
-                        <button onclick="switchMachine('3d-print')" id="machinetab-3d-print" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <i class="fa-solid fa-cube text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="text-xs font-semibold">3D Print</span>
-                            </div>
-                            <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                        </button>
-                        <button onclick="switchMachine('fiber-mark')" id="machinetab-fiber-mark" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105">
-                            <div class="flex flex-col items-center gap-1.5">
-                                <i class="fa-solid fa-stamp text-lg group-hover:scale-110 transition-transform"></i>
-                                <span class="text-xs font-semibold">Fiber Mark</span>
-                            </div>
-                            <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                        </button>
+                    <div class="flex items-center justify-between mb-3 px-2">
+                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Machines</span>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-filter text-slate-500 text-xs"></i>
+                            <select id="machine-status-filter" onchange="filterMachinesByStatus(this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer">
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2" id="machine-tabs-container">
+                        <div class="text-xs text-slate-500 text-center py-6 col-span-6">Loading machines...</div>
                     </div>
                 </div>
 
@@ -110,13 +81,139 @@ class MachineloginSection {
                     </div>
                 </div>
 
+                <!-- CRUD Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2 mt-4">
+                    <button onclick="openAddMachineModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-blue-500/10">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add Machine
+                    </button>
+                    <button onclick="openEditMachineModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-amber-500/10">
+                        <i class="fa-solid fa-pen text-[10px]"></i> Edit Machine
+                    </button>
+                    <button onclick="deleteMachine()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-rose-500/10">
+                        <i class="fa-solid fa-trash text-[10px]"></i> Delete Machine
+                    </button>
+                    <button onclick="showMaintenanceLogs()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-purple-500/10">
+                        <i class="fa-solid fa-history text-[10px]"></i> View Maintenance Logs
+                    </button>
+                </div>
+
                 <!-- Dynamic Checklist Cards Container -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="checklist-container"></div>`;
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="checklist-container"></div>
+
+                <!-- ============================================================ -->
+                <!-- MACHINE CRUD MODAL                                            -->
+                <!-- ============================================================ -->
+                <div id="machine-crud-modal" class="modal-overlay" onclick="closeMachineCrudModal(event)">
+                    <div class="modal-container max-w-md" onclick="event.stopPropagation()">
+                        <button onclick="closeMachineCrudModal()" class="modal-close-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
+                                <i class="fa-solid fa-gears text-white text-base"></i>
+                            </div>
+                            <div>
+                                <h3 id="machine-crud-title" class="text-lg font-bold text-white tracking-wide">Add New Machine</h3>
+                                <p class="text-xs text-slate-400">Manage machine details</p>
+                            </div>
+                        </div>
+                        <form onsubmit="event.preventDefault(); saveMachine();" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Machine Name</label>
+                                <input type="text" id="machine-name" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow" placeholder="e.g. CNC-02">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Machine Type</label>
+                                <input type="text" id="machine-type" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow" placeholder="e.g. cnc, co2, uv">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Status</label>
+                                <select id="machine-status" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow cursor-pointer">
+                                    <option value="active">Active</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <div class="flex justify-end pt-2">
+                                <button type="submit" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold px-6 py-3 rounded-xl transition-all text-sm shadow-lg shadow-blue-500/15 flex items-center gap-2">
+                                    <i class="fa-solid fa-check text-xs"></i> Save Machine
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- CHECKLIST ITEM CRUD MODAL                                      -->
+                <!-- ============================================================ -->
+                <div id="checklist-item-modal" class="modal-overlay" onclick="closeChecklistItemModal(event)">
+                    <div class="modal-container max-w-md" onclick="event.stopPropagation()">
+                        <button onclick="closeChecklistItemModal()" class="modal-close-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                                <i class="fa-solid fa-list-check text-white text-base"></i>
+                            </div>
+                            <div>
+                                <h3 id="checklist-item-title" class="text-lg font-bold text-white tracking-wide">Add Checklist Item</h3>
+                                <p class="text-xs text-slate-400">Add or edit checklist items</p>
+                            </div>
+                        </div>
+                        <form onsubmit="event.preventDefault(); saveChecklistItem();" class="space-y-4">
+                            <input type="hidden" id="checklist-item-period" value="daily">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Checklist Item</label>
+                                <textarea id="checklist-item-text" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 input-glow resize-none" placeholder="Enter checklist item description..."></textarea>
+                            </div>
+                            <div class="flex justify-end pt-2">
+                                <button type="submit" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-6 py-3 rounded-xl transition-all text-sm shadow-lg shadow-emerald-500/15 flex items-center gap-2">
+                                    <i class="fa-solid fa-check text-xs"></i> Save Item
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- MAINTENANCE LOGS MODAL                                         -->
+                <!-- ============================================================ -->
+                <div id="machine-logs-modal" class="modal-overlay" onclick="closeMachineLogsModal(event)">
+                    <div class="modal-container max-w-2xl" onclick="event.stopPropagation()">
+                        <button onclick="closeMachineLogsModal()" class="modal-close-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0">
+                                <i class="fa-solid fa-history text-white text-base"></i>
+                            </div>
+                            <div>
+                                <h3 id="machine-logs-title" class="text-lg font-bold text-white tracking-wide">Maintenance Logs</h3>
+                                <p class="text-xs text-slate-400">Recorded maintenance history for this machine</p>
+                            </div>
+                        </div>
+                        <div id="machine-logs-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+                            <div class="text-xs text-slate-500 text-center py-8">Loading logs...</div>
+                        </div>
+                    </div>
+                </div>`;
         }
     }
 }
 
 // Initialize section
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     new MachineloginSection();
+    // Load machine data from database and render first machine
+    if (typeof fetchMachinesAndChecklists === 'function') {
+        await fetchMachinesAndChecklists();
+        
+        // Switch to first available machine from database
+        const machineKeys = typeof machineData !== 'undefined' ? Object.keys(machineData) : [];
+        const firstMachineKey = machineKeys[0];
+        
+        if (firstMachineKey && typeof switchMachine === 'function') {
+            switchMachine(firstMachineKey);
+        }
+    }
 });
