@@ -1,3 +1,5 @@
+// sidebar-section.js
+
 // Sidebar Section Component
 // Renders the sidebar navigation HTML
 
@@ -46,7 +48,8 @@ class SidebarSection {
                             <i class="fa-solid fa-desktop w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Machine Maintenance</span>
                         </button>
-                        <button onclick="switchTab('store-request')" id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <!-- <button onclick="switchTab('store-request')" id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all"> -->
+                        <button onclick="window.location.href = 'https://vectoradvert.com/store'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-boxes-stacked w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Store Request</span>

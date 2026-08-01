@@ -7,208 +7,33 @@
 // RECEIVED ORDERS DATA
 // =============================================
 let ordersData = [];
+window.ordersData = ordersData;
 
 // =============================================
 // COMPLETED ORDERS DATA
 // =============================================
-let completedOrdersData = [
-    {
-        no: 1,
-        date: '02/06/26',
-        taskType: 'project',
-        orderNum: '0001/09',
-        title: 'uv print',
-        machine: 'co2',
-        material: 'Premium Acrylic',
-        thickness: '4mm',
-        color: 'Transparent Glossy',
-        length: '600 mm',
-        width: '400 mm',
-        area: 240000,
-        quality: 'Pass',
-        status: 'Completed',
-        completedAt: '2026-06-02T14:30:00.000Z'
-    },
-    {
-        no: 2,
-        date: '03/06/26',
-        taskType: 'task',
-        orderNum: '0003/09',
-        title: 'Acrylic Signage',
-        machine: 'cnc',
-        material: 'Cast Acrylic',
-        thickness: '6mm',
-        color: 'White Glossy',
-        length: '900 mm',
-        width: '450 mm',
-        area: 405000,
-        quality: 'Pass',
-        status: 'Completed',
-        completedAt: '2026-06-03T16:45:00.000Z'
-    },
-    {
-        no: 3,
-        date: '04/06/26',
-        taskType: 'task',
-        orderNum: '0005/09',
-        title: 'Fiber Cut Steel Bracket',
-        machine: 'fiber-cut',
-        material: 'Mild Steel',
-        thickness: '8mm',
-        color: 'Raw Metal',
-        length: '500 mm',
-        width: '300 mm',
-        area: 150000,
-        quality: 'Pass',
-        status: 'Completed',
-        completedAt: '2026-06-04T11:20:00.000Z'
-    },
-    {
-        no: 4,
-        date: '05/06/26',
-        taskType: 'project',
-        orderNum: '0006/09',
-        title: 'Office Directory Sign',
-        machine: 'uv',
-        material: 'Premium Acrylic',
-        thickness: '5mm',
-        color: 'Frosted White',
-        length: '1200 mm',
-        width: '300 mm',
-        area: 360000,
-        quality: 'Pass',
-        status: 'Completed',
-        completedAt: '2026-06-05T09:15:00.000Z'
-    },
-    {
-        no: 5,
-        date: '06/06/26',
-        taskType: 'project',
-        orderNum: '0007/09',
-        title: 'Brass Memorial Plaque',
-        machine: 'fiber-mark',
-        material: 'Brass',
-        thickness: '3mm',
-        color: 'Gold',
-        length: '400 mm',
-        width: '250 mm',
-        area: 100000,
-        quality: 'Pass',
-        status: 'Completed',
-        completedAt: '2026-06-06T13:00:00.000Z'
-    }
-];
+let completedOrdersData = [];
+window.completedOrdersData = completedOrdersData;
 
 // =============================================
 // REWORK RECORDS DATA
 // =============================================
-let reworkData = [
-    {
-        id: 1,
-        title: 'UV Print Color Calibration',
-        date: '2026-06-03',
-        material: 'Premium Acrylic',
-        thickness: '4mm',
-        color: 'Transparent Glossy',
-        machine: 'uv',
-        length: '600 mm',
-        width: '400 mm',
-        height: '12 mm',
-        gram: '150 g',
-        reason: 'Color mismatch on first print run - required recalibration of UV ink density',
-        status: 'completed',
-        startTime: '2026-06-03T09:15:00.000Z',
-        endTime: '2026-06-03T10:30:00.000Z'
-    },
-    {
-        id: 2,
-        title: 'CNC Cut Precision Adjustment',
-        date: '2026-06-04',
-        material: 'Cast Acrylic',
-        thickness: '6mm',
-        color: 'White Glossy',
-        machine: 'cnc',
-        length: '900 mm',
-        width: '450 mm',
-        height: '15 mm',
-        gram: '320 g',
-        reason: 'Edge finish quality below standard - adjusted cutting speed and feed rate',
-        status: 'completed',
-        startTime: '2026-06-04T14:00:00.000Z',
-        endTime: '2026-06-04T15:45:00.000Z'
-    },
-    {
-        id: 3,
-        title: 'Fiber Mark Font Alignment',
-        date: '2026-06-05',
-        material: 'Brass',
-        thickness: '3mm',
-        color: 'Gold',
-        machine: 'fiber-mark',
-        length: '400 mm',
-        width: '250 mm',
-        height: '3 mm',
-        gram: '100 g',
-        reason: 'Text alignment shifted on memorial plaque - recalibrated laser focus and position',
-        status: 'in-progress',
-        startTime: '2026-06-05T11:20:00.000Z',
-        endTime: null
-    }
-];
+let reworkData = [];
 let reworkIdCounter = 4;
+window.reworkData = reworkData;
+window.reworkIdCounter = reworkIdCounter;
 
 // =============================================
 // STORE REQUEST DATA
 // =============================================
-let localStoreItemsList = [
-    {
-        taskNum: '0001/09',
-        title: 'UV Print Acrylic Sign',
-        date: '2026-06-02',
-        material: 'Acrylic',
-        unit: 'Sheets',
-        qty: '5',
-        thickness: '4mm',
-        color: 'Transparent Glossy',
-        length: '600',
-        width: '400',
-        height: '12',
-        gram: '150'
-    },
-    {
-        taskNum: '0003/09',
-        title: 'Acrylic Signage Project',
-        date: '2026-06-03',
-        material: 'Cast Acrylic',
-        unit: 'Sheets',
-        qty: '3',
-        thickness: '6mm',
-        color: 'White Glossy',
-        length: '900',
-        width: '450',
-        height: '15',
-        gram: '320'
-    },
-    {
-        taskNum: '0005/09',
-        title: 'Steel Bracket Cutting',
-        date: '2026-06-04',
-        material: 'Mild Steel',
-        unit: 'Sheets',
-        qty: '2',
-        thickness: '8mm',
-        color: 'Raw Metal',
-        length: '500',
-        width: '300',
-        height: '8',
-        gram: '950'
-    }
-];
+let localStoreItemsList = [];
+window.localStoreItemsList = localStoreItemsList;
 
 // =============================================
 // MACHINE CHECKLISTS DATA
 // =============================================
 let machineData = {};
+window.machineData = machineData;
 
 // =============================================
 // MESSAGES DATA
@@ -253,7 +78,7 @@ function initMessagesData() {
     const now = new Date();
     const timeStr = (h, m) => `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     const h = now.getHours();
-    const m = now.getMinutes();
+    const m = now.getMinutes(); 
 
     messagesData = [
         createMsgUser('Abeba', 'AB', true, [
@@ -367,6 +192,14 @@ const reportColumnConfigs = {
         { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
         { key: 'status', label: 'Status', cls: '' }
     ],
+    'rework': [
+        { key: 'no', label: 'No', cls: 'text-center w-16' },
+        { key: 'date', label: 'Date', cls: '' },
+        { key: 'title', label: 'Rework Item', cls: '' },
+        { key: 'material', label: 'Material', cls: 'text-xs' },
+        { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
+        { key: 'status', label: 'Status', cls: '' }
+    ],
     'completed-orders': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
         { key: 'date', label: 'Date', cls: '' },
@@ -375,14 +208,6 @@ const reportColumnConfigs = {
         { key: 'designer', label: 'Machine', cls: 'text-xs' },
         { key: 'material', label: 'Material', cls: 'text-xs' },
         { key: 'machine', label: 'Equipment', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
-    ],
-    'rework': [
-        { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'date', label: 'Date', cls: '' },
-        { key: 'title', label: 'Rework Item', cls: '' },
-        { key: 'material', label: 'Material', cls: 'text-xs' },
-        { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
         { key: 'status', label: 'Status', cls: '' }
     ],
     'store-request': [
@@ -399,8 +224,8 @@ const reportColumnConfigs = {
 
 const moduleLabels = {
     'received-orders': 'Received Orders',
-    'completed-orders': 'Completed Orders',
     'rework': 'Rework Records',
+    'completed-orders': 'Completed Orders',
     'store-request': 'Store Requests'
 };
 
