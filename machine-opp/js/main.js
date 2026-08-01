@@ -21,6 +21,63 @@ function switchTab(targetId) {
     if (targetTab) {
         targetTab.classList.add('active-tab');
     }
+
+    // Refetch/refresh data when switching tabs
+    const refreshFunctions = {
+        'dashboard': () => {
+            if (typeof updateDashboardStats === 'function') updateDashboardStats();
+            if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+        },
+        'received-orders': async () => {
+            if (typeof fetchReceivedOrders === 'function') {
+                await fetchReceivedOrders();
+            }
+            if (typeof renderOrdersTable === 'function') renderOrdersTable();
+        },
+        'rework-login': () => {
+            if (typeof renderReworkRecords === 'function') renderReworkRecords();
+        },
+        'completed-orders': () => {
+            if (typeof renderCompletedOrdersTable === 'function') renderCompletedOrdersTable();
+        },
+        'machine-login': () => {
+            if (typeof switchMachine === 'function') {
+                const currentMachineKey = typeof currentMachine !== 'undefined' ? currentMachine : 'cnc';
+                switchMachine(currentMachineKey);
+            }
+        },
+        'store-request': () => {
+            if (typeof renderStoreItemsTable === 'function') renderStoreItemsTable();
+        },
+        'notes': () => {
+            if (typeof renderNotes === 'function') renderNotes();
+        },
+        'messages': () => {
+            if (typeof renderUserList === 'function') renderUserList();
+            if (typeof renderChatMessages === 'function') renderChatMessages();
+        },
+        'notifications': () => {
+            if (typeof renderNotifications === 'function') renderNotifications();
+            if (typeof renderNotifDropdown === 'function') renderNotifDropdown();
+        },
+        'reports': () => {
+            if (typeof filterReports === 'function') filterReports();
+        },
+        'settings': () => {
+            if (typeof loadProfile === 'function') loadProfile();
+            if (typeof loadNotificationSettings === 'function') loadNotificationSettings();
+            if (typeof loadAppearanceSettings === 'function') loadAppearanceSettings();
+        }
+    };
+
+    const refreshFn = refreshFunctions[targetId];
+    if (typeof refreshFn === 'function') {
+        try {
+            refreshFn();
+        } catch (error) {
+            console.error(`Error refreshing ${targetId} tab:`, error);
+        }
+    }
 }
 
 // =============================================
