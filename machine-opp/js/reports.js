@@ -51,7 +51,7 @@ function getReportData() {
             moduleLabel: 'Rework Records',
             date: entry.date,
             orderNum: '-',
-            title: entry.title,
+            title: entry.taskType,
             designer: entry.machine,
             material: entry.material || '-',
             machine: entry.machine,

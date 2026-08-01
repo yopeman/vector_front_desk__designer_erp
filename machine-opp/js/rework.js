@@ -5,62 +5,124 @@
 // REWORK DATA
 // (initialized in mock-data.js)
 
+let reworkLoaded = false;
+
+async function fetchReworkRecords() {
+    if (typeof supabase === 'undefined') {
+        console.error('Supabase client not initialized');
+        return;
+    }
+
+    // Fetch only active statuses (exclude cancelled if needed)
+    const { data, error } = await supabase
+        .from('production_orders')
+        .select('*')
+        .eq('job_type', 'rework')
+        .in('status', ['New', 'In Progress'])
+        .order('updated_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching rework records:', error);
+        return;
+    }
+
+    reworkData = (data || []).map(row => ({
+        id: row.id,
+        taskType: row.task_type || 'task',
+        date: row.date || '',
+        material: row.material || 'N/A',
+        thickness: row.thickness || 'N/A',
+        color: row.color || 'N/A',
+        machine: row.machine || '',
+        machine_id: row.machine_id || '',
+        length: row.length || 'N/A',
+        width: row.width || 'N/A',
+        height: row.height || 'N/A',
+        gram: row.gram || 'N/A',
+        reason: row.rework_reason || '',
+        status: row.status || 'in-progress',
+        startTime: row.started_at,
+        endTime: row.completed_at
+    }));
+
+    reworkIdCounter = Math.max(...reworkData.map(r => parseInt(r.id) || 0), 0) + 1;
+    reworkLoaded = true;
+}
+
 // =============================================
 // ADD REWORK ENTRY
 // =============================================
-function addReworkEntry() {
-    const title = document.getElementById('rework-title').value;
-    const date = document.getElementById('rework-date').value;
+async function addReworkEntry() {
+    const modal = document.getElementById('new-rework-modal');
+    const editingId = modal ? modal.getAttribute('data-editing-id') : null;
+
+    // If editing, call update function instead
+    if (editingId) {
+        await updateReworkEntry();
+        return;
+    }
+
+    const taskType = document.getElementById('rework-task-type').value;
     const material = document.getElementById('rework-material').value;
     const thickness = document.getElementById('rework-thickness').value;
     const color = document.getElementById('rework-color').value;
-    const machine = document.getElementById('rework-machine').value;
+    const machineSelect = document.getElementById('rework-machine');
+    const machineId = machineSelect ? machineSelect.value : '';
     const length = document.getElementById('rework-length').value;
     const width = document.getElementById('rework-width').value;
     const height = document.getElementById('rework-height').value;
     const gram = document.getElementById('rework-gram').value;
     const reason = document.getElementById('rework-reason').value;
 
-    // Validation
-    if (!title || !date || !machine) {
-        alert('Please fill in at least Project Title, Date, and Machine Type.');
+    if (!taskType || !machineId) {
+        alert('Please fill in at least Task Type and Machine Type.');
         return;
     }
 
-    const entry = {
-        id: reworkIdCounter++,
-        title,
-        date,
-        material: material || 'N/A',
-        thickness: thickness || 'N/A',
-        color: color || 'N/A',
-        machine,
-        length: length || 'N/A',
-        width: width || 'N/A',
-        height: height || 'N/A',
-        gram: gram || 'N/A',
-        reason: reason || '',
-        status: 'in-progress',
-        startTime: null,
-        endTime: null
-    };
+    const { data, error } = await supabase
+        .from('production_orders')
+        .insert({
+            task_type: taskType,
+            material: material || 'N/A',
+            thickness: thickness || 'N/A',
+            color: color || 'N/A',
+            machine_id: machineId,
+            length: length || 'N/A',
+            width: width || 'N/A',
+            height: height || 'N/A',
+            gram: gram || 'N/A',
+            rework_reason: reason || '',
+            status: 'New',
+            job_type: 'rework'
+        })
+        .select()
+        .single();
 
-    reworkData.push(entry);
+    if (error) {
+        console.error('Error adding rework entry:', error);
+        alert('Failed to add rework entry. Please try again.');
+        return;
+    }
+
+    await fetchReworkRecords();
     renderReworkRecords();
     updateReworkStats();
-    
+
     // Clear form
-    document.getElementById('rework-title').value = '';
-    document.getElementById('rework-date').value = '';
+    document.getElementById('rework-task-type').value = '';
     document.getElementById('rework-material').value = '';
     document.getElementById('rework-thickness').value = '';
     document.getElementById('rework-color').value = '';
-    document.getElementById('rework-machine').value = '';
     document.getElementById('rework-length').value = '';
     document.getElementById('rework-width').value = '';
     document.getElementById('rework-height').value = '';
     document.getElementById('rework-gram').value = '';
     document.getElementById('rework-reason').value = '';
+
+    if (machineSelect) machineSelect.value = '';
+
+    // Close the modal
+    closeNewReworkModal();
 
     alert('Rework entry added successfully!');
 }
@@ -68,38 +130,70 @@ function addReworkEntry() {
 // =============================================
 // RENDER REWORK RECORDS TABLE
 // =============================================
-function renderReworkRecords() {
+let machinesCache = [];
+
+async function renderReworkRecords() {
     const tbody = document.getElementById('rework-records-body');
     if (!tbody) return;
-    
+
     tbody.innerHTML = '';
 
-    if (reworkData.length === 0) {
+    if (!reworkData.length) {
         tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-500 italic">No rework records yet. Add your first entry above.</td></tr>';
         return;
     }
 
+    // Fetch machines if not cached
+    if (machinesCache.length === 0) {
+        machinesCache = await fetchMachines();
+    }
+
+    renderRows(tbody);
+}
+
+function renderRows(tbody) {
     reworkData.forEach((entry, index) => {
         const row = document.createElement('tr');
         row.className = 'order-row hover:bg-blue-600/10 transition-colors';
         row.setAttribute('data-index', index);
+
+        // Status badge with all statuses
+        let statusBadge = '';
+        const status = entry.status ? entry.status.toLowerCase().replace(/\s+/g, '-') : 'new';
         
-        const statusBadge = entry.status === 'completed' 
-            ? '<span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded border border-emerald-500/20">Completed</span>'
-            : '<span class="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs font-bold rounded border border-amber-500/20">In Progress</span>';
+        if (status === 'completed') {
+            statusBadge = '<span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded border border-emerald-500/20">Completed</span>';
+        } else if (status === 'in-progress') {
+            statusBadge = '<span class="px-2 py-1 bg-amber-500/10 text-amber-400 text-xs font-bold rounded border border-amber-500/20">In Progress</span>';
+        } else if (status === 'cancelled') {
+            statusBadge = '<span class="px-2 py-1 bg-rose-500/10 text-rose-400 text-xs font-bold rounded border border-rose-500/20">Cancelled</span>';
+        } else {
+            statusBadge = '<span class="px-2 py-1 bg-blue-500/10 text-blue-400 text-xs font-bold rounded border border-blue-500/20">New</span>';
+        }
+
+        // Find machine name by machine_id
+        let machineName = 'N/A';
+        if (entry.machine_id && machinesCache.length > 0) {
+            const machine = machinesCache.find(m => m.id === entry.machine_id);
+            if (machine) {
+                machineName = machine.name;
+            }
+        } else if (entry.machine) {
+            machineName = entry.machine;
+        }
 
         row.innerHTML = `
-            <td class="p-4 text-center font-mono font-medium text-slate-400">${String(index + 1).padStart(2, '0')}</td>
-            <td class="p-4 font-mono text-xs">${entry.date}</td>
-            <td class="p-4 font-medium text-slate-200">${entry.title}</td>
+            <td class="p-4 text-center font-mono font-medium text-slate-400">${String(index + 1).padStart(2, '00')}</td>
+            <td class="p-4 font-mono text-xs">${entry.date || entry.created_at || ''}</td>
+            <td class="p-4 font-medium text-slate-200 capitalize">${entry.taskType}</td>
             <td class="p-4 text-xs text-slate-400">${entry.material}</td>
             <td class="p-4 font-mono text-xs">${entry.thickness}</td>
             <td class="p-4 text-xs">${entry.color}</td>
-            <td class="p-4 text-xs font-mono">${entry.machine}</td>
+            <td class="p-4 text-xs font-mono">${machineName}</td>
             <td class="p-4">${statusBadge}</td>
             <td class="p-4 text-center">
-                <button onclick="deleteReworkEntry(${index})" class="text-rose-400 hover:text-rose-300 transition-colors text-xs">
-                    <i class="fa-solid fa-trash"></i>
+                <button onclick="editReworkEntry('${entry.id}')" class="text-blue-400 hover:text-blue-300 transition-colors text-xs" title="Edit">
+                    <i class="fa-solid fa-pen-to-square"></i>
                 </button>
             </td>
         `;
@@ -111,14 +205,261 @@ function renderReworkRecords() {
 }
 
 // =============================================
-// DELETE REWORK ENTRY
+// EDIT REWORK ENTRY
 // =============================================
-function deleteReworkEntry(index) {
-    if (confirm('Are you sure you want to delete this rework record?')) {
-        reworkData.splice(index, 1);
-        renderReworkRecords();
-        updateReworkStats();
+async function editReworkEntry(entryId) {
+    const entry = reworkData.find(r => r.id === entryId);
+    if (!entry) {
+        alert('Rework entry not found.');
+        return;
     }
+
+    // Populate the modal form with existing data
+    document.getElementById('rework-task-type').value = entry.taskType || '';
+    document.getElementById('rework-material').value = entry.material === 'N/A' ? '' : entry.material;
+    document.getElementById('rework-thickness').value = entry.thickness === 'N/A' ? '' : entry.thickness;
+    document.getElementById('rework-color').value = entry.color === 'N/A' ? '' : entry.color;
+    document.getElementById('rework-length').value = entry.length === 'N/A' ? '' : entry.length;
+    document.getElementById('rework-width').value = entry.width === 'N/A' ? '' : entry.width;
+    document.getElementById('rework-height').value = entry.height === 'N/A' ? '' : entry.height;
+    document.getElementById('rework-gram').value = entry.gram === 'N/A' ? '' : entry.gram;
+    document.getElementById('rework-reason').value = entry.reason || '';
+
+    // Set machine select
+    const machineSelect = document.getElementById('rework-machine');
+    if (machineSelect) {
+        // Ensure machines are loaded and then select the correct one
+        const loadAndSelectMachine = async () => {
+            let machines = [];
+            
+            // Check if we need to fetch machines
+            if (!machineSelect.options || machineSelect.options.length <= 1 || 
+                (machineSelect.options[1]?.textContent === 'Loading machines...')) {
+                machines = await fetchMachines();
+                if (machineSelect) {
+                    machineSelect.innerHTML = '<option value="">Select Machine</option>' +
+                        machines.map(m => `<option value="${m.id}">${m.name} (${m.machine_type})</option>`).join('');
+                }
+            } else {
+                // Machines already loaded, get them from the select options
+                machines = Array.from(machineSelect.options)
+                    .filter(opt => opt.value && opt.value !== '')
+                    .map(opt => {
+                        const text = opt.textContent.trim();
+                        const match = text.match(/^(.+)\s\((.+)\)$/);
+                        if (match) {
+                            return {
+                                id: opt.value,
+                                name: match[1],
+                                machine_type: match[2]
+                            };
+                        }
+                        return null;
+                    })
+                    .filter(m => m !== null);
+            }
+            
+            // Find and select the machine by matching the machine_id
+            if (entry.machine_id && machines.length > 0) {
+                const matchedMachine = machines.find(m => m.id === entry.machine_id);
+                if (matchedMachine && machineSelect) {
+                    machineSelect.value = matchedMachine.id;
+                }
+            }
+        };
+        
+        await loadAndSelectMachine();
+    }
+
+    // Store the entry ID being edited
+    const modal = document.getElementById('new-rework-modal');
+    if (modal) {
+        modal.setAttribute('data-editing-id', entryId);
+        modal.setAttribute('data-mode', 'edit');
+    }
+
+    // Change modal title to indicate edit mode
+    const modalTitle = document.querySelector('#new-rework-modal h3');
+    if (modalTitle) {
+        modalTitle.textContent = 'Edit Rework Entry';
+    }
+
+    // Change submit button text
+    const submitBtn = document.querySelector('#new-rework-modal button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Update Entry';
+    }
+
+    // Display status timeline for existing entry
+    displayStatusTimeline(entry);
+
+    // Open the modal
+    openNewReworkModal();
+}
+
+// =============================================
+// DISPLAY STATUS TIMELINE
+// =============================================
+function displayStatusTimeline(entry) {
+    const statusTimeline = document.querySelector('#new-rework-modal .bg-slate-900\\/50');
+    if (!statusTimeline) return;
+
+    // Show the Status Timeline section
+    statusTimeline.classList.remove('hidden');
+
+    // Reset timeline first
+    const stepInProgress = document.getElementById('rework-step-in-progress');
+    const stepCompleted = document.getElementById('rework-step-completed');
+    const progressText = document.getElementById('rework-step-progress-text');
+    const completedText = document.getElementById('rework-step-completed-text');
+    const startEl = document.getElementById('rework-start-time');
+    const endEl = document.getElementById('rework-end-time');
+
+    // Reset classes
+    if (stepInProgress) {
+        stepInProgress.classList.remove('active', 'completed');
+    }
+    if (stepCompleted) {
+        stepCompleted.classList.remove('completed');
+    }
+
+    // Display start time if exists
+    if (entry.startTime) {
+        const startTime = new Date(entry.startTime);
+        const timeString = startTime.toTimeString().split(' ')[0];
+        if (startEl) {
+            startEl.innerText = `Started at: ${timeString}`;
+            startEl.className = "text-[11px] text-center font-mono text-amber-400 font-bold border border-amber-500/30 bg-amber-500/10 py-1.5 rounded-lg shadow";
+        }
+        if (stepInProgress) {
+            stepInProgress.classList.add('active');
+        }
+        if (progressText) {
+            progressText.innerHTML = `In Progress <span class="text-amber-400 font-mono">(${timeString})</span>`;
+        }
+    } else {
+        if (startEl) {
+            startEl.innerText = 'recorded start time';
+            startEl.className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
+        }
+    }
+
+    // Display end time if exists
+    if (entry.endTime) {
+        const endTime = new Date(entry.endTime);
+        const timeString = endTime.toTimeString().split(' ')[0];
+        if (endEl) {
+            endEl.innerText = `Ended at: ${timeString}`;
+            endEl.className = "text-[11px] text-center font-mono text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-500/10 py-1.5 rounded-lg shadow";
+        }
+        if (stepInProgress) {
+            stepInProgress.classList.remove('active');
+            stepInProgress.classList.add('completed');
+        }
+        if (stepCompleted) {
+            stepCompleted.classList.add('completed');
+        }
+        if (completedText) {
+            completedText.innerHTML = `Completed <span class="text-emerald-400 font-mono">(${timeString})</span>`;
+        }
+    } else {
+        if (endEl) {
+            endEl.innerText = 'recorded end time';
+            endEl.className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
+        }
+    }
+}
+
+// =============================================
+// UPDATE REWORK ENTRY
+// =============================================
+async function updateReworkEntry() {
+    const modal = document.getElementById('new-rework-modal');
+    const editingId = modal ? modal.getAttribute('data-editing-id') : null;
+
+    if (!editingId) {
+        // If no editing ID, it's a new entry
+        await addReworkEntry();
+        return;
+    }
+
+    const taskType = document.getElementById('rework-task-type').value;
+    const material = document.getElementById('rework-material').value;
+    const thickness = document.getElementById('rework-thickness').value;
+    const color = document.getElementById('rework-color').value;
+    const machineSelect = document.getElementById('rework-machine');
+    const machineId = machineSelect ? machineSelect.value : '';
+    const length = document.getElementById('rework-length').value;
+    const width = document.getElementById('rework-width').value;
+    const height = document.getElementById('rework-height').value;
+    const gram = document.getElementById('rework-gram').value;
+    const reason = document.getElementById('rework-reason').value;
+
+    if (!taskType || !machineId) {
+        alert('Please fill in at least Task Type and Machine Type.');
+        return;
+    }
+
+    const { error } = await supabase
+        .from('production_orders')
+        .update({
+            task_type: taskType,
+            material: material || 'N/A',
+            thickness: thickness || 'N/A',
+            color: color || 'N/A',
+            machine_id: machineId,
+            length: length || 'N/A',
+            width: width || 'N/A',
+            height: height || 'N/A',
+            gram: gram || 'N/A',
+            rework_reason: reason || ''
+        })
+        .eq('id', editingId)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating rework entry:', error);
+        alert('Failed to update rework entry. Please try again.');
+        return;
+    }
+
+    // Reset modal state
+    if (modal) {
+        modal.removeAttribute('data-editing-id');
+        modal.removeAttribute('data-mode');
+    }
+
+    // Reset modal title
+    const modalTitle = document.querySelector('#new-rework-modal h3');
+    if (modalTitle) {
+        modalTitle.textContent = 'New Rework Entry';
+    }
+
+    // Reset submit button text
+    const submitBtn = document.querySelector('#new-rework-modal button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Request Approval';
+    }
+
+    // Clear form
+    document.getElementById('rework-task-type').value = '';
+    document.getElementById('rework-material').value = '';
+    document.getElementById('rework-thickness').value = '';
+    document.getElementById('rework-color').value = '';
+    document.getElementById('rework-length').value = '';
+    document.getElementById('rework-width').value = '';
+    document.getElementById('rework-height').value = '';
+    document.getElementById('rework-gram').value = '';
+    document.getElementById('rework-reason').value = '';
+    if (machineSelect) machineSelect.value = '';
+
+    closeNewReworkModal();
+    await fetchReworkRecords();
+    renderReworkRecords();
+    updateReworkStats();
+
+    alert('Rework entry updated successfully!');
 }
 
 // =============================================
@@ -128,14 +469,13 @@ function updateReworkStats() {
     const total = reworkData.length;
     const inProgress = reworkData.filter(r => r.status === 'in-progress').length;
     const completed = reworkData.filter(r => r.status === 'completed').length;
-    
-    // Calculate average time (simplified)
+
     let avgTime = 0;
     if (completed > 0) {
         const times = reworkData.filter(r => r.startTime && r.endTime).map(r => {
             const start = new Date(r.startTime);
             const end = new Date(r.endTime);
-            return (end - start) / 1000 / 60; // minutes
+            return (end - start) / 1000 / 60;
         });
         avgTime = times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
     }
@@ -144,74 +484,11 @@ function updateReworkStats() {
     const progressEl = document.getElementById('rework-stats-progress');
     const completedEl = document.getElementById('rework-stats-completed');
     const avgTimeEl = document.getElementById('rework-stats-avgtime');
-    
+
     if (totalEl) totalEl.textContent = total;
     if (progressEl) progressEl.textContent = inProgress;
     if (completedEl) completedEl.textContent = completed;
     if (avgTimeEl) avgTimeEl.textContent = avgTime + 'm';
-}
-
-// =============================================
-// LOG REWORK STATUS TIME
-// =============================================
-function logReworkStatusTime(mode) {
-    const now = new Date();
-    const timestamp = now.toISOString();
-    
-    const stepInProgress = document.getElementById('rework-step-in-progress');
-    const stepCompleted = document.getElementById('rework-step-completed');
-    
-    if (mode === 'start') {
-        // Find the most recent in-progress entry
-        const latestEntry = reworkData[reworkData.length - 1];
-        if (latestEntry && latestEntry.status === 'in-progress') {
-            latestEntry.startTime = timestamp;
-        }
-        
-        const startEl = document.getElementById('rework-start-time');
-        const timeString = now.toTimeString().split(' ')[0];
-        if (startEl) {
-            startEl.innerText = `Started at: ${timeString}`;
-            startEl.className = "text-[11px] text-center font-mono text-amber-400 font-bold border border-amber-500/30 bg-amber-500/10 py-1.5 rounded-lg shadow";
-        }
-        
-        // Update timeline
-        if (stepInProgress) stepInProgress.classList.add('active');
-        const progressText = document.getElementById('rework-step-progress-text');
-        if (progressText) {
-            progressText.innerHTML = 'In Progress <span class="text-amber-400 font-mono">(' + timeString + ')</span>';
-        }
-        
-        alert('Rework started. Start time captured.');
-    } else if (mode === 'end') {
-        const latestEntry = reworkData[reworkData.length - 1];
-        if (latestEntry && latestEntry.status === 'in-progress') {
-            latestEntry.endTime = timestamp;
-            latestEntry.status = 'completed';
-            renderReworkRecords();
-            updateReworkStats();
-        }
-        
-        const endEl = document.getElementById('rework-end-time');
-        const timeString = now.toTimeString().split(' ')[0];
-        if (endEl) {
-            endEl.innerText = `Ended at: ${timeString}`;
-            endEl.className = "text-[11px] text-center font-mono text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-500/10 py-1.5 rounded-lg shadow";
-        }
-        
-        // Update timeline
-        if (stepInProgress) {
-            stepInProgress.classList.remove('active');
-            stepInProgress.classList.add('completed');
-        }
-        if (stepCompleted) stepCompleted.classList.add('completed');
-        const completedText = document.getElementById('rework-step-completed-text');
-        if (completedText) {
-            completedText.innerHTML = 'Completed <span class="text-emerald-400 font-mono">(' + timeString + ')</span>';
-        }
-        
-        alert('Rework completed. End time captured.');
-    }
 }
 
 // =============================================
@@ -223,9 +500,9 @@ function filterReworkRecords() {
     const noResults = document.getElementById('rework-no-results');
     const clearBtn = document.getElementById('rework-search-clear');
     const filterCountEl = document.getElementById('rework-filter-count');
-    
+
     if (!searchVal) return;
-    
+
     const search = searchVal.value.toLowerCase();
     let visibleCount = 0;
 
@@ -257,7 +534,7 @@ function filterReworkRecords() {
 function clearReworkSearch() {
     const searchInput = document.getElementById('rework-search');
     const clearBtn = document.getElementById('rework-search-clear');
-    
+
     if (searchInput) searchInput.value = '';
     if (clearBtn) clearBtn.classList.remove('visible');
     filterReworkRecords();
@@ -265,4 +542,240 @@ function clearReworkSearch() {
 
 function resetReworkFilters() {
     clearReworkSearch();
+}
+
+// =============================================
+// INITIALIZE REWORK DATA
+// =============================================
+async function initReworkData() {
+    if (!reworkLoaded) {
+        await fetchReworkRecords();
+    }
+    renderReworkRecords();
+    updateReworkStats();
+}
+
+// =============================================
+// FETCH MACHINES FROM DATABASE
+// =============================================
+async function fetchMachines() {
+    if (typeof supabase === 'undefined') {
+        console.error('Supabase client not initialized');
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('machines')
+        .select('id, name, machine_type')
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching machines:', error);
+        return [];
+    }
+
+    return data || [];
+}
+
+// =============================================
+// MODAL FUNCTIONS
+// =============================================
+function openNewReworkModal() {
+    const modal = document.getElementById('new-rework-modal');
+    if (!modal) return;
+
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+
+    const machineSelect = document.getElementById('rework-machine');
+    if (machineSelect && (!machineSelect.options || machineSelect.options.length <= 1 || machineSelect.options[0].value === '' && machineSelect.options[1]?.value === 'Loading machines...')) {
+        fetchMachines().then(machines => {
+            if (machineSelect) {
+                machineSelect.innerHTML = '<option value="">Select Machine</option>' +
+                    machines.map(m => `<option value="${m.id}">${m.name} (${m.machine_type})</option>`).join('');
+            }
+        });
+    }
+
+    // Hide Status Timeline section for new entries
+    const mode = modal.getAttribute('data-mode');
+    const statusTimeline = document.querySelector('#new-rework-modal .bg-slate-900\\/50');
+    if (statusTimeline && mode !== 'edit') {
+        statusTimeline.classList.add('hidden');
+    }
+}
+
+function closeNewReworkModal(event) {
+    if (event && event.target !== document.getElementById('new-rework-modal')) return;
+    const modal = document.getElementById('new-rework-modal');
+    if (modal) {
+        modal.classList.remove('open');
+        // Reset modal state when closing
+        modal.removeAttribute('data-editing-id');
+        modal.removeAttribute('data-mode');
+        
+        // Reset modal title
+        const modalTitle = document.querySelector('#new-rework-modal h3');
+        if (modalTitle) {
+            modalTitle.textContent = 'New Rework Entry';
+        }
+        
+        // Reset submit button text
+        const submitBtn = document.querySelector('#new-rework-modal button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Request Approval';
+        }
+
+        // Clear all form fields
+        document.getElementById('rework-task-type').value = '';
+        document.getElementById('rework-material').value = '';
+        document.getElementById('rework-thickness').value = '';
+        document.getElementById('rework-color').value = '';
+        document.getElementById('rework-length').value = '';
+        document.getElementById('rework-width').value = '';
+        document.getElementById('rework-height').value = '';
+        document.getElementById('rework-gram').value = '';
+        document.getElementById('rework-reason').value = '';
+        const machineSelect = document.getElementById('rework-machine');
+        if (machineSelect) machineSelect.value = '';
+
+        // Reset and hide Status Timeline section
+        const statusTimeline = document.querySelector('#new-rework-modal .bg-slate-900\\/50');
+        if (statusTimeline) {
+            statusTimeline.classList.add('hidden');
+            
+            // Reset timeline display
+            const stepInProgress = document.getElementById('rework-step-in-progress');
+            const stepCompleted = document.getElementById('rework-step-completed');
+            const progressText = document.getElementById('rework-step-progress-text');
+            const completedText = document.getElementById('rework-step-completed-text');
+            const startEl = document.getElementById('rework-start-time');
+            const endEl = document.getElementById('rework-end-time');
+            
+            if (stepInProgress) {
+                stepInProgress.classList.remove('active', 'completed');
+            }
+            if (stepCompleted) {
+                stepCompleted.classList.remove('completed');
+            }
+            if (progressText) {
+                progressText.innerHTML = 'In Progress';
+            }
+            if (completedText) {
+                completedText.innerHTML = 'Completed';
+            }
+            if (startEl) {
+                startEl.innerText = 'recorded start time';
+                startEl.className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
+            }
+            if (endEl) {
+                endEl.innerText = 'recorded end time';
+                endEl.className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
+            }
+        }
+    }
+    document.body.classList.remove('modal-open');
+}
+
+// =============================================
+// LOG REWORK STATUS TIME
+// =============================================
+async function logReworkStatusTime(mode) {
+    if (!reworkData.length) {
+        alert('No rework entries available.');
+        return;
+    }
+
+    // Check if we're editing an entry
+    const modal = document.getElementById('new-rework-modal');
+    const editingId = modal ? modal.getAttribute('data-editing-id') : null;
+    
+    // Use the editing entry if in edit mode, otherwise use the latest entry
+    let targetEntry = null;
+    if (editingId) {
+        targetEntry = reworkData.find(r => r.id === editingId);
+    }
+    if (!targetEntry) {
+        targetEntry = reworkData[reworkData.length - 1];
+    }
+    if (!targetEntry || !targetEntry.id) return;
+
+    const now = new Date();
+    const timestamp = now.toISOString();
+    const timeString = now.toTimeString().split(' ')[0];
+
+    const stepInProgress = document.getElementById('rework-step-in-progress');
+    const stepCompleted = document.getElementById('rework-step-completed');
+
+    if (mode === 'start') {
+        const { error } = await supabase
+            .from('production_orders')
+            .update({
+                started_at: timestamp,
+                status: 'In Progress'
+            })
+            .eq('id', targetEntry.id);
+
+        if (error) {
+            console.error('Error saving start time:', error);
+            alert('Failed to save start time. Please try again.');
+            return;
+        }
+
+        // Update the entry in reworkData
+        targetEntry.startTime = timestamp;
+        targetEntry.status = 'In Progress';
+
+        const startEl = document.getElementById('rework-start-time');
+        if (startEl) {
+            startEl.innerText = `Started at: ${timeString}`;
+            startEl.className = "text-[11px] text-center font-mono text-amber-400 font-bold border border-amber-500/30 bg-amber-500/10 py-1.5 rounded-lg shadow";
+        }
+
+        if (stepInProgress) stepInProgress.classList.add('active');
+        const progressText = document.getElementById('rework-step-progress-text');
+        if (progressText) {
+            progressText.innerHTML = 'In Progress <span class="text-amber-400 font-mono">(' + timeString + ')</span>';
+        }
+
+        alert('Rework started. Start time captured.');
+    } else if (mode === 'end') {
+        const { error } = await supabase
+            .from('production_orders')
+            .update({
+                completed_at: timestamp,
+                status: 'Completed'
+            })
+            .eq('id', targetEntry.id);
+
+        if (error) {
+            console.error('Error saving end time:', error);
+            alert('Failed to save end time. Please try again.');
+            return;
+        }
+
+        // Update the entry in reworkData
+        targetEntry.endTime = timestamp;
+        targetEntry.status = 'completed';
+
+        const endEl = document.getElementById('rework-end-time');
+        if (endEl) {
+            endEl.innerText = `Ended at: ${timeString}`;
+            endEl.className = "text-[11px] text-center font-mono text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-500/10 py-1.5 rounded-lg shadow";
+        }
+
+        if (stepInProgress) {
+            stepInProgress.classList.remove('active');
+            stepInProgress.classList.add('completed');
+        }
+        if (stepCompleted) stepCompleted.classList.add('completed');
+        const completedText = document.getElementById('rework-step-completed-text');
+        if (completedText) {
+            completedText.innerHTML = 'Completed <span class="text-emerald-400 font-mono">(' + timeString + ')</span>';
+        }
+
+        renderReworkRecords();
+        updateReworkStats();
+        alert('Rework completed. End time captured.');
+    }
 }
