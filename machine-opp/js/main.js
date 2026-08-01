@@ -193,7 +193,30 @@ function removeUploadedFile() {
     document.getElementById('uploaded-file-name').textContent = '';
 }
 
-function downloadSharedFile() {
+async function downloadSharedFile() {
+    if (typeof currentSharedFile !== 'undefined' && currentSharedFile && typeof supabase !== 'undefined') {
+        try {
+            const { data, error } = await supabase.storage
+                .from('documents')
+                .createSignedUrl(currentSharedFile.filePath, 60);
+
+            if (error || !data?.signedUrl) {
+                throw error || new Error('Failed to create download link');
+            }
+
+            const a = document.createElement('a');
+            a.href = data.signedUrl;
+            a.download = currentSharedFile.fileName;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            return;
+        } catch (err) {
+            console.error('Download failed, falling back to sample:', err);
+        }
+    }
+
     const sampleContent = `0
 SECTION
 2
@@ -722,7 +745,11 @@ document.addEventListener('click', function(e) {
 // =============================================
 // INITIALIZATION ON PAGE LOAD
 // =============================================
-window.onload = function() {
+window.onload = async function() {
+    if (Auth?.initPromise) {
+        await Auth.initPromise;
+    }
+
     // Auth initialization
     if (typeof checkAuthOnLoad === 'function') checkAuthOnLoad();
     

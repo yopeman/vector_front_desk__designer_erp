@@ -42,38 +42,38 @@ function renderCompletedOrdersTable() {
 }
 
 // =============================================
-// MARK ORDER AS COMPLETE
+// SAVE BATON
 // =============================================
-function markOrderAsComplete() {
-    if (currentOrderIndex === -1) {
+async function saveBaton() {
+    if (currentOrderIndex < 0 || !ordersData[currentOrderIndex]) {
         alert('No order selected.');
         return;
     }
 
     const order = ordersData[currentOrderIndex];
-    if (!order) return;
+    if (!order || !order.id) return;
 
-    const now = new Date();
-    const completedOrder = {
-        no: completedOrdersData.length + 1,
-        date: order.date,
-        taskType: order.taskType,
-        orderNum: order.orderNum,
-        title: order.title,
-        machine: order.machine,
-        material: order.material || '',
-        thickness: order.thickness || '',
-        color: order.color || '',
-        length: order.length || '',
-        width: order.width || '',
-        area: (parseInt(order.length) || 0) * (parseInt(order.width) || 0),
-        quality: 'Pass',
-        status: 'Completed',
-        completedAt: now.toISOString()
+    const updates = {
+        status: order.status || 'New',
+        started_at: order.startedAt || null,
+        completed_at: order.completedAt || null,
+        updated_at: new Date().toISOString()
     };
 
-    completedOrdersData.push(completedOrder);
-    renderCompletedOrdersTable();
+    const { error } = await supabase
+        .from('production_orders')
+        .update(updates)
+        .eq('id', order.id);
+
+    if (error) {
+        console.error('Error saving baton:', error);
+        alert('Failed to save changes. Please try again.');
+        return;
+    }
+
+    // Refresh local data from Supabase
+    await fetchReceivedOrders();
+    renderOrdersTable();
 
     // Close the modal
     const modal = document.getElementById('order-detail-modal');
@@ -82,7 +82,7 @@ function markOrderAsComplete() {
         document.body.classList.remove('modal-open');
     }
 
-    alert('Order marked as complete and added to the Completed Order Status List!');
+    alert('Baton saved successfully! Order state has been updated.');
 }
 
 // =============================================

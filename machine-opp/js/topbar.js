@@ -108,7 +108,10 @@ class TopNavigationBar {
         });
     }
 
-    checkAuthState() {
+    async checkAuthState() {
+        if (Auth?.initPromise) {
+            await Auth.initPromise;
+        }
         if (Auth.isAuthenticated()) {
             this.isLoggedIn = true;
             this.currentUser = Auth.getCurrentUser();

@@ -207,9 +207,10 @@ const Auth = (function() {
         localStorage.setItem('vector_erp_profile', JSON.stringify(profile));
     }
 
-    init();
+    const initPromise = init();
 
     return {
+        initPromise,
         isAuthenticated,
         getCurrentUser,
         login,

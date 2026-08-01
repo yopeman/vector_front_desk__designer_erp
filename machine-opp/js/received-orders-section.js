@@ -243,69 +243,34 @@ class ReceivedordersSection {
 
                          <!-- Bottom Functional Blocks Grid -->
                          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                             <!-- Shared Design File Element Block -->
-                             <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
+                              <!-- Shared Design File Element Block -->
+                              <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
 
-                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                                        <i class="fa-solid fa-share-nodes text-indigo-400 text-[10px]"></i>
-                                    </span>
-                                    Shared Design File
-                                </span>
-                                <div class="flex items-center justify-between bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
-                                    <div class="flex items-center space-x-2 overflow-hidden">
-                                        <i class="fa-solid fa-file-vector text-emerald-400 text-lg flex-shrink-0"></i>
-                                        <span class="text-xs text-slate-300 truncate font-mono">vector_blueprint.dxf</span>
-                                    </div>
-                                    <button onclick="downloadSharedFile()" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded transition-all flex items-center shrink-0">
-                                        <i class="fa-solid fa-download mr-1"></i> download file
-                                    </button>
-                                </div>
-                                <div class="flex items-center text-[10px] text-emerald-400 font-medium bg-emerald-500/5 p-1 px-2 rounded w-max border border-emerald-500/10">
-                                    <i class="fa-solid fa-shield-halved mr-1 text-xs"></i> Secure Verified File Asset
-                                </div>
-                            </div>
+                                 <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                     <span class="w-6 h-6 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                                         <i class="fa-solid fa-share-nodes text-indigo-400 text-[10px]"></i>
+                                     </span>
+                                     Shared Design File
+                                 </span>
+                                 <div id="shared-versions-list" class="space-y-2">
+                                     <div class="text-xs text-slate-500">Loading approved versions...</div>
+                                 </div>
+                                 <div id="shared-file-meta" class="flex items-center text-[10px] text-slate-400 font-medium bg-slate-900/30 p-1 px-2 rounded w-max border border-slate-700/30 hidden">
+                                 </div>
+                             </div>
 
                             <!-- Message Interaction Blocks Segment -->
                             <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
-                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                    <span class="w-6 h-6 rounded-lg bg-sky-500/10 flex items-center justify-center">
-                                        <i class="fa-solid fa-comments text-sky-400 text-[10px]"></i>
-                                    </span>
-                                    Message Panel
-                                </span>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <button onclick="openTextNoteModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2 px-1 rounded-lg text-center font-medium transition-all">
-                                        <i class="fa-solid fa-font mr-1 block text-slate-400 mb-0.5"></i> text
-                                    </button>
-                                    <button onclick="startVoiceRecording()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2 px-1 rounded-lg text-center font-medium transition-all">
-                                        <i class="fa-solid fa-microphone mr-1 block text-rose-400 mb-0.5"></i> voice
-                                    </button>
-                                    <button onclick="triggerFileUpload()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2 px-1 rounded-lg text-center font-medium transition-all">
-                                        <i class="fa-solid fa-cloud-arrow-up mr-1 block text-blue-400 mb-0.5"></i> upload file
-                                    </button>
-                                </div>
-                                <!-- Hidden file input -->
-                                <input type="file" id="file-upload-input" class="hidden" onchange="handleFileUpload(event)">
-                                <!-- Uploaded file display -->
-                                <div id="uploaded-file-info" class="hidden flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700/50 text-xs text-slate-300">
-                                    <i class="fa-solid fa-file text-emerald-400"></i>
-                                    <span id="uploaded-file-name" class="truncate flex-1"></span>
-                                    <button onclick="removeUploadedFile()" class="text-slate-500 hover:text-rose-400 transition-colors">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                </div>
-                                <!-- Voice recording status -->
-                                <div id="voice-recording-status" class="hidden flex items-center gap-2 bg-slate-900/80 p-2 rounded-lg border border-slate-700/50 text-xs text-slate-300">
-                                    <span class="relative flex h-2 w-2">
-                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                                    </span>
-                                    <span id="voice-status-text">Recording...</span>
-                                    <span id="voice-timer" class="font-mono text-rose-400">00:00</span>
-                                    <button onclick="stopVoiceRecording()" class="ml-auto text-rose-400 hover:text-rose-300 transition-colors text-xs font-semibold">Stop</button>
-                                </div>
-                            </div>
+                                 <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                     <span class="w-6 h-6 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                                         <i class="fa-solid fa-comments text-sky-400 text-[10px]"></i>
+                                     </span>
+                                     Designer Chat
+                                 </span>
+                                 <button onclick="openDesignerChat()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2.5 rounded-lg text-center font-medium transition-all flex items-center justify-center gap-2">
+                                     <i class="fa-solid fa-message text-sky-400"></i> Open Chat
+                                 </button>
+                             </div>
 
                             <!-- Status Update Operations with Timeline -->
                             <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
@@ -318,13 +283,13 @@ class ReceivedordersSection {
                                 
                                 <!-- Timeline visualization -->
                                 <div class="space-y-1 mb-3">
-                                    <div class="timeline-step">
+                                    <div class="timeline-step active">
                                         <span class="dot"></span>
                                         <p class="text-xs text-slate-400">Order Received</p>
                                     </div>
-                                    <div class="timeline-step active" id="step-in-progress">
-                                        <span class="dot"></span>
-                                        <p class="text-xs text-slate-300 font-medium" id="step-progress-text">In Progress</p>
+                                    <div class="timeline-step" id="step-in-progress">
+                                        <span class="dot active"></span>
+                                        <p class="text-xs text-slate-500" id="step-progress-text">In Progress</p>
                                     </div>
                                     <div class="timeline-step" id="step-completed">
                                         <span class="dot"></span>
@@ -348,13 +313,13 @@ class ReceivedordersSection {
                                 </div>
                             </div>
 
-                             <!-- Mark as Complete Button -->
-                             <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3 flex flex-col justify-center">
-                                 <button onclick="markOrderAsComplete()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-bold py-3 px-4 rounded-xl transition-all text-sm shadow-lg shadow-emerald-500/15 flex items-center justify-center gap-2">
-                                     <i class="fa-solid fa-circle-check text-xs"></i> Mark as Complete
-                                 </button>
-                                 <p class="text-[10px] text-slate-500 text-center">Move this order to the Completed Order Status List</p>
-                             </div>
+                              <!-- Save Button -->
+                              <!-- <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3 flex flex-col justify-center">
+                                  <button onclick="saveBaton()" class="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold py-3 px-4 rounded-xl transition-all text-sm shadow-lg shadow-amber-500/15 flex items-center justify-center gap-2">
+                                      <i class="fa-solid fa-bolt text-xs"></i> Save
+                                  </button>
+                                  <p class="text-[10px] text-slate-500 text-center">Save current changes and pass to next stage</p>
+                              </div> -->
                         </div>
                     </div>
                 </div>
@@ -382,9 +347,40 @@ class ReceivedordersSection {
                             <button onclick="saveTextNote()" class="px-5 py-2 text-xs font-semibold text-white bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 rounded-xl transition-all shadow-lg shadow-sky-500/15 flex items-center gap-1.5">
                                 <i class="fa-solid fa-floppy-disk"></i> Save Note
                             </button>
-                        </div>
-                    </div>
-                </div>`;
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- ============================================================ -->
+                 <!-- DESIGNER CHAT MODAL                                             -->
+                 <!-- ============================================================ -->
+                 <div id="designer-chat-modal" class="modal-overlay" onclick="closeDesignerChatModal(event)">
+                     <div class="modal-container max-w-2xl" onclick="event.stopPropagation()">
+                         <button onclick="closeDesignerChatModal()" class="modal-close-btn">
+                             <i class="fa-solid fa-xmark"></i>
+                         </button>
+                         <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-4">
+                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+                                 <i class="fa-solid fa-comments text-white text-base"></i>
+                             </div>
+                             <div>
+                                 <h3 class="text-lg font-bold text-white tracking-wide">Designer Chat</h3>
+                                 <p id="designer-chat-subtitle" class="text-xs text-slate-400">Loading conversation...</p>
+                             </div>
+                         </div>
+                         <div id="designer-chat-messages" class="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4 h-80 overflow-y-auto space-y-3 mb-4">
+                             <div class="text-xs text-slate-500 text-center py-8">Loading messages...</div>
+                         </div>
+                         <div class="flex gap-3 pt-3 border-t border-slate-700/50">
+                             <input id="designer-chat-input" type="text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 placeholder-slate-600" placeholder="Type a message to the designer...">
+                             <button onclick="sendDesignerMessage()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                                 <i class="fa-solid fa-paper-plane text-[10px]"></i> Send
+                             </button>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+          </aside>`;
         }
     }
 }

@@ -2,18 +2,169 @@
 // RECEIVED ORDERS MODULE
 // =============================================
 
-// =============================================
-// RECEIVED ORDERS DATA
-// =============================================
+let receivedOrdersLoaded = false;
+let currentSharedFile = null;
+let approvedDesignVersions = [];
+let designerChatChannel = null;
+let designerChatPollInterval = null;
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(2);
+    return `${day}/${month}/${year}`;
+}
+
+function formatFileSize(bytes) {
+    if (!bytes && bytes !== 0) return '';
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+async function fetchReceivedOrders() {
+    if (typeof supabase === 'undefined') {
+        console.error('Supabase client not initialized');
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('production_orders')
+        .select(`
+            id,
+            task_type,
+            priority,
+            status,
+            job_type,
+            material,
+            thickness,
+            color,
+            length,
+            width,
+            height,
+            gram,
+            started_at,
+            completed_at,
+            created_at,
+            users!designer_id(username),
+            machines(name, machine_type),
+            orders(id, order_no, order_date)
+        `)
+        .eq('job_type', 'received')
+        .in('status', ['New', 'In Progress'])
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching received orders:', error);
+        return;
+    }
+
+    ordersData = (data || []).map((po, index) => ({
+        id: po.id,
+        orderId: po.orders?.id || null,
+        no: String(index + 1).padStart(2, '0'),
+        date: po.orders?.order_date || formatDate(po.created_at),
+        taskType: po.task_type || 'task',
+        orderNum: po.orders?.order_no || 'N/A',
+        designer: po.users?.username || 'Unknown',
+        title: po.orders?.order_no || 'Untitled Order',
+        priority: po.priority === 'High' ? 'urgent' : (po.priority === 'Medium' ? 'normal' : 'normal'),
+        machine: po.machines?.machine_type || po.machines?.name || 'N/A',
+        material: po.material || '',
+        thickness: po.thickness || '',
+        color: po.color || '',
+        length: po.length || '',
+        width: po.width || '',
+        height: po.height || '',
+        gram: po.gram || '',
+        startedAt: po.started_at || null,
+        completedAt: po.completed_at || null
+    }));
+
+    receivedOrdersLoaded = true;
+}
+
+async function fetchApprovedDesignVersions(orderId) {
+    if (!orderId || typeof supabase === 'undefined') return [];
+
+    const { data: designs, error: designError } = await supabase
+        .from('designs')
+        .select(`
+            id,
+            design_versions!inner(
+                id,
+                version_number,
+                status,
+                sent_on,
+                sent_by,
+                file_id,
+                files!inner(
+                    id,
+                    name,
+                    path,
+                    mime_type,
+                    file_size
+                )
+            )
+        `)
+        .eq('order_id', orderId)
+        .eq('design_versions.status', 'Approved');
+
+    if (designError || !designs) return [];
+
+    const versions = [];
+    for (const design of designs || []) {
+        for (const v of design.design_versions || []) {
+            if (v.files) {
+                versions.push({
+                    designId: design.id,
+                    versionId: v.id,
+                    versionNumber: v.version_number,
+                    sentOn: v.sent_on,
+                    sentBy: v.sent_by,
+                    fileId: v.files.id,
+                    fileName: v.files.name,
+                    filePath: v.files.path,
+                    mimeType: v.files.mime_type,
+                    fileSize: v.files.file_size
+                });
+            }
+        }
+    }
+
+    versions.sort((a, b) => (a.version_number || 0) - (b.version_number || 0));
+    return versions;
+}
 
 // =============================================
 // RENDER RECEIVED ORDERS TABLE
 // =============================================
-function renderOrdersTable() {
+async function renderOrdersTable() {
+    if (!receivedOrdersLoaded) {
+        await fetchReceivedOrders();
+    }
+
     const tbody = document.getElementById('received-orders-body');
     if (!tbody) return;
     
     tbody.innerHTML = '';
+
+    if (!ordersData.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="p-8 text-center text-slate-400">
+                    No received orders found
+                </td>
+            </tr>
+        `;
+        updateStats();
+        updateFilterCount();
+        return;
+    }
 
     ordersData.forEach((order, index) => {
         const isUrgent = order.priority === 'urgent';
@@ -63,6 +214,10 @@ function renderOrdersTable() {
 
     updateStats();
     updateFilterCount();
+
+    if (typeof updateDashboardStats === 'function') {
+        updateDashboardStats();
+    }
 }
 
 // =============================================
@@ -175,11 +330,12 @@ function resetFilters() {
 // =============================================
 // OPEN ORDER MODAL
 // =============================================
-function openOrderDetails(index) {
+async function openOrderDetails(index) {
     const order = ordersData[index];
     if (!order) return;
 
     currentOrderIndex = index;
+    currentDesignId = null;
     const modal = document.getElementById('order-detail-modal');
     if (!modal) return;
     
@@ -215,18 +371,72 @@ function openOrderDetails(index) {
     }
 
     // Reset timeline
-    document.getElementById('ord-start-time').innerText = "recorded start time";
-    document.getElementById('ord-start-time').className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
-    document.getElementById('ord-end-time').innerText = "recorded end time";
-    document.getElementById('ord-end-time').className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
+    const startEl = document.getElementById('ord-start-time');
+    const endEl = document.getElementById('ord-end-time');
+    const stepInProgress = document.getElementById('step-in-progress');
+    const stepCompleted = document.getElementById('step-completed');
 
-    // Reset timeline steps
-    document.querySelectorAll('#order-detail-modal .timeline-step').forEach(step => {
-        step.classList.remove('completed', 'active');
-    });
-    document.querySelectorAll('#order-detail-modal .timeline-step')[0].classList.add('completed');
-    document.getElementById('step-progress-text').innerHTML = 'In Progress';
+    if (order.startedAt) {
+        const startTime = formatTimestamp(order.startedAt);
+        startEl.innerText = `Started at: ${startTime}`;
+        startEl.className = "text-[11px] text-center font-mono text-amber-400 font-bold border border-amber-500/30 bg-amber-500/10 py-1 rounded-lg shadow";
+        stepInProgress.classList.add('active');
+    } else {
+        startEl.innerText = "recorded start time";
+        startEl.className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
+    }
+
+    if (order.completedAt) {
+        const endTime = formatTimestamp(order.completedAt);
+        endEl.innerText = `Ended at: ${endTime}`;
+        endEl.className = "text-[11px] text-center font-mono text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-500/10 py-1 rounded-lg shadow";
+        stepInProgress.classList.remove('active');
+        stepInProgress.classList.add('completed');
+        stepCompleted.classList.add('completed');
+    } else {
+        endEl.innerText = "recorded end time";
+        endEl.className = "text-[11px] text-center font-mono text-slate-400 border border-slate-800 bg-slate-900/80 py-1 rounded-lg";
+    }
+
+    // Reset timeline steps text
+    document.getElementById('step-progress-text').innerHTML = order.completedAt ? 'Completed' : 'In Progress';
     document.getElementById('step-completed-text').innerHTML = 'Completed';
+
+    // Reset and load shared design file versions
+    currentSharedFile = null;
+    const versionsList = document.getElementById('shared-versions-list');
+    const sharedFileMeta = document.getElementById('shared-file-meta');
+
+    if (versionsList) {
+        versionsList.innerHTML = '<div class="text-xs text-slate-500">Loading approved versions...</div>';
+    }
+    if (sharedFileMeta) {
+        sharedFileMeta.classList.add('hidden');
+    }
+
+    const versions = await fetchApprovedDesignVersions(order.orderId);
+    approvedDesignVersions = versions;
+    if (versionsList) {
+        if (versions.length === 0) {
+            versionsList.innerHTML = '<div class="text-xs text-slate-500">No approved versions found</div>';
+        } else {
+            versionsList.innerHTML = versions.map((v, idx) => `
+                <div class="flex items-center justify-between bg-slate-900/80 p-2.5 rounded-lg border border-slate-800 ${idx === versions.length - 1 ? 'ring-1 ring-emerald-500/30' : ''}">
+                    <div class="flex items-center space-x-2 overflow-hidden">
+                        <i class="fa-solid fa-file-vector text-emerald-400 text-lg flex-shrink-0"></i>
+                        <div class="min-w-0">
+                            <span class="text-xs text-slate-300 truncate font-mono block">${v.fileName}</span>
+                            <span class="text-[10px] text-slate-500">v${v.versionNumber} · Approved · ${formatFileSize(v.fileSize)}</span>
+                        </div>
+                    </div>
+                    <button onclick="downloadSharedFileVersion('${v.versionId}')" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded transition-all flex items-center shrink-0">
+                        <i class="fa-solid fa-download mr-1"></i> download
+                    </button>
+                </div>
+            `).join('');
+            currentSharedFile = versions[versions.length - 1];
+        }
+    }
 
     // Open modal
     modal.classList.add('open');
@@ -247,19 +457,40 @@ function closeOrderModal(event) {
     if (event && event.target !== modal) return;
     modal.classList.remove('open');
     document.body.classList.remove('modal-open');
+
+    const chatModal = document.getElementById('designer-chat-modal');
+    if (chatModal) {
+        chatModal.classList.remove('open');
+    }
+
+    if (designerChatChannel && typeof supabase !== 'undefined') {
+        supabase.removeChannel(designerChatChannel);
+        designerChatChannel = null;
+    }
+    if (designerChatPollInterval) {
+        clearInterval(designerChatPollInterval);
+        designerChatPollInterval = null;
+    }
 }
 
 // =============================================
 // LOG ORDER STATUS TIME
 // =============================================
-function logOrderStatusTime(mode) {
+async function logOrderStatusTime(mode) {
+    if (currentOrderIndex < 0 || !ordersData[currentOrderIndex]) {
+        alert('No order selected.');
+        return;
+    }
+
+    const order = ordersData[currentOrderIndex];
     const now = new Date();
     const timestamp = now.toTimeString().split(' ')[0];
+    const isoNow = now.toISOString();
     
     const stepInProgress = document.getElementById('step-in-progress');
     const stepCompleted = document.getElementById('step-completed');
     
-    if(mode === 'start') {
+    if (mode === 'start') {
         const startEl = document.getElementById('ord-start-time');
         startEl.innerText = `Started at: ${timestamp}`;
         startEl.className = "text-[11px] text-center font-mono text-amber-400 font-bold border border-amber-500/30 bg-amber-500/10 py-1 rounded-lg shadow";
@@ -268,8 +499,23 @@ function logOrderStatusTime(mode) {
         stepInProgress.classList.add('active');
         document.getElementById('step-progress-text').innerHTML = 'In Progress <span class="text-amber-400 font-mono">(' + timestamp + ')</span>';
         
-        alert('Order active status triggered. Start time captured.');
-    } else if(mode === 'end') {
+        // Persist to Supabase
+        if (typeof supabase !== 'undefined' && order.id) {
+            const { error } = await supabase
+                .from('production_orders')
+                .update({
+                    started_at: isoNow,
+                    status: 'In Progress'
+                })
+                .eq('id', order.id);
+
+            if (error) {
+                console.error('Error updating start time:', error);
+                alert('Failed to save start time. Please try again.');
+                return;
+            }
+        }
+    } else if (mode === 'end') {
         const endEl = document.getElementById('ord-end-time');
         endEl.innerText = `Ended at: ${timestamp}`;
         endEl.className = "text-[11px] text-center font-mono text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-500/10 py-1 rounded-lg shadow";
@@ -280,7 +526,51 @@ function logOrderStatusTime(mode) {
         stepCompleted.classList.add('completed');
         document.getElementById('step-completed-text').innerHTML = 'Completed <span class="text-emerald-400 font-mono">(' + timestamp + ')</span>';
         
-        alert('Order shutdown execution completed. Termination time captured.');
+        // Persist to Supabase
+        if (typeof supabase !== 'undefined' && order.id) {
+            const { error } = await supabase
+                .from('production_orders')
+                .update({
+                    completed_at: isoNow,
+                    status: 'Completed'
+                })
+                .eq('id', order.id);
+
+            if (error) {
+                console.error('Error updating end time:', error);
+                alert('Failed to save completion time. Please try again.');
+                return;
+            }
+        }
+    }
+}
+
+async function downloadSharedFileVersion(versionId) {
+    const version = approvedDesignVersions.find(v => v.versionId === versionId) || currentSharedFile;
+    if (!version || typeof supabase === 'undefined') {
+        alert('No file selected for download.');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.storage
+            .from('documents')
+            .createSignedUrl(version.filePath, 60);
+
+        if (error || !data?.signedUrl) {
+            throw error || new Error('Failed to create download link');
+        }
+
+        const a = document.createElement('a');
+        a.href = data.signedUrl;
+        a.download = version.fileName;
+        a.target = '_blank';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    } catch (err) {
+        console.error('Download failed:', err);
+        alert('Failed to download file. Please try again.');
     }
 }
 
@@ -392,5 +682,354 @@ function startVoiceRecording() {
 function stopVoiceRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
+    }
+}
+
+// =============================================
+// DESIGNER CHAT (design_communications)
+// =============================================
+let currentDesignId = null;
+let designerChatMessages = [];
+
+async function getDesignIdForOrder(orderId) {
+    if (!orderId || typeof supabase === 'undefined') return null;
+
+    const { data, error } = await supabase
+        .from('designs')
+        .select('id')
+        .eq('order_id', orderId)
+        .maybeSingle();
+
+    if (error || !data) return null;
+    return data.id;
+}
+
+async function fetchSingleCommunication(commId) {
+    if (!commId || typeof supabase === 'undefined') return null;
+
+    const { data, error } = await supabase
+        .from('design_communications')
+        .select(`
+            *,
+            sender:users!sender_id(username),
+            receiver:users!receiver_id(username)
+        `)
+        .eq('id', commId)
+        .single();
+
+    if (error || !data) return null;
+
+    let attachedFiles = [];
+    if (data.attached_file_ids && data.attached_file_ids.length > 0) {
+        const { data: files } = await supabase
+            .from('files')
+            .select('id, name, path')
+            .in('id', data.attached_file_ids);
+        attachedFiles = files || [];
+    }
+
+    return {
+        id: data.id,
+        message: data.message,
+        isRead: data.is_read,
+        readAt: data.read_at,
+        createdAt: data.created_at,
+        senderId: data.sender_id,
+        receiverId: data.receiver_id,
+        senderName: data.sender?.username || 'Unknown',
+        receiverName: data.receiver?.username || 'Unknown',
+        attachedFiles: attachedFiles
+    };
+}
+
+async function fetchDesignCommunications(designId) {
+    if (!designId || typeof supabase === 'undefined') return [];
+
+    const { data, error } = await supabase
+        .from('design_communications')
+        .select(`
+            *,
+            sender:users!sender_id(username),
+            receiver:users!receiver_id(username)
+        `)
+        .eq('design_id', designId)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching design communications:', error);
+        return [];
+    }
+
+    const communicationsWithFiles = await Promise.all(
+        (data || []).map(async (comm) => {
+            let attachedFiles = [];
+            if (comm.attached_file_ids && comm.attached_file_ids.length > 0) {
+                const { data: files } = await supabase
+                    .from('files')
+                    .select('id, name, path')
+                    .in('id', comm.attached_file_ids);
+                attachedFiles = files || [];
+            }
+            return {
+                id: comm.id,
+                message: comm.message,
+                isRead: comm.is_read,
+                readAt: comm.read_at,
+                createdAt: comm.created_at,
+                senderId: comm.sender_id,
+                receiverId: comm.receiver_id,
+                senderName: comm.sender?.username || 'Unknown',
+                receiverName: comm.receiver?.username || 'Unknown',
+                attachedFiles: attachedFiles
+            };
+        })
+    );
+
+    return communicationsWithFiles;
+}
+
+async function markAsRead(communicationId) {
+    if (!communicationId || typeof supabase === 'undefined') return;
+
+    const { error } = await supabase
+        .from('design_communications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', communicationId);
+
+    if (error) {
+        console.error('Error marking as read:', error);
+        return;
+    }
+
+    const msg = designerChatMessages.find(m => m.id === communicationId);
+    if (msg) {
+        msg.isRead = true;
+        msg.readAt = new Date().toISOString();
+        renderDesignChat(designerChatMessages);
+    }
+}
+
+async function sendDesignCommunication(designId, messageText) {
+    if (!designId || !messageText.trim() || typeof supabase === 'undefined') return null;
+
+    const currentUser = Auth.getCurrentUser();
+    if (!currentUser) {
+        alert('You must be logged in to send messages.');
+        return null;
+    }
+
+    const { error } = await supabase
+        .from('design_communications')
+        .insert({
+            design_id: designId,
+            sender_id: currentUser.id,
+            message: messageText.trim(),
+            is_read: false
+        });
+
+    if (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+        return null;
+    }
+
+    return { success: true };
+}
+
+function renderDesignChat(messages) {
+    const container = document.getElementById('designer-chat-messages');
+    if (!container) return;
+
+    const currentUser = Auth.getCurrentUser();
+    const myId = currentUser ? currentUser.id : null;
+
+    if (!messages.length) {
+        container.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">No messages yet. Start the conversation!</div>';
+        return;
+    }
+
+    container.innerHTML = messages.map(msg => {
+        const isMe = myId && msg.senderId === myId;
+        const attachedHtml = (msg.attachedFiles && msg.attachedFiles.length > 0) ? `
+            <div class="mt-2 space-y-1">
+                ${msg.attachedFiles.map(file => `
+                    <div class="flex items-center gap-2 bg-white/50 p-2 rounded">
+                        <i class="fa-solid fa-file text-slate-500 text-xs"></i>
+                        <span class="text-xs text-slate-700">${escapeHtml(file.name)}</span>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
+
+        const unreadButton = (!msg.isRead && msg.senderId !== myId) ? `
+            <button onclick="markAsRead('${msg.id}')" class="mt-1 text-xs text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer p-0">
+                Mark as read
+            </button>
+        ` : '';
+
+        return `
+            <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                <div class="max-w-[80%] ${isMe ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-200'} rounded-xl px-4 py-2.5 text-sm shadow-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] font-semibold ${isMe ? 'text-blue-200' : 'text-slate-400'}">${msg.senderName}</span>
+                        <span class="text-[10px] ${isMe ? 'text-blue-200' : 'text-slate-500'}">${formatChatTime(msg.createdAt)}</span>
+                    </div>
+                    <div class="text-xs leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.message)}</div>
+                    ${attachedHtml}
+                    ${unreadButton}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatChatTime(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatTimestamp(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(2);
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${day}/${month}/${year} ${time}`;
+}
+
+async function openDesignerChat() {
+    if (currentOrderIndex < 0 || !ordersData[currentOrderIndex]) {
+        alert('Please select an order first.');
+        return;
+    }
+
+    const order = ordersData[currentOrderIndex];
+    const modal = document.getElementById('designer-chat-modal');
+    if (!modal) return;
+
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+    designerChatMessages = [];
+
+    const subtitle = document.getElementById('designer-chat-subtitle');
+    if (subtitle) subtitle.textContent = 'Loading conversation...';
+
+    const messagesContainer = document.getElementById('designer-chat-messages');
+    if (messagesContainer) messagesContainer.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Loading messages...</div>';
+
+    const input = document.getElementById('designer-chat-input');
+    if (input) {
+        input.value = '';
+        input.onkeydown = function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendDesignerMessage();
+            }
+        };
+    }
+
+    if (!currentDesignId) {
+        currentDesignId = await getDesignIdForOrder(order.orderId);
+    }
+
+    if (!currentDesignId) {
+        if (messagesContainer) messagesContainer.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">No design linked to this order yet.</div>';
+        if (subtitle) subtitle.textContent = 'No design linked';
+        return;
+    }
+
+    designerChatMessages = await fetchDesignCommunications(currentDesignId);
+    renderDesignChat(designerChatMessages);
+
+    if (designerChatChannel) {
+        supabase.removeChannel(designerChatChannel);
+    }
+
+    if (designerChatPollInterval) {
+        clearInterval(designerChatPollInterval);
+    }
+
+    if (typeof supabase !== 'undefined' && currentDesignId) {
+        designerChatChannel = supabase
+            .channel(`design-communications-${currentDesignId}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'design_communications',
+                filter: `design_id=eq.${currentDesignId}`
+            }, async (payload) => {
+                const newComm = await fetchSingleCommunication(payload.new.id);
+                if (newComm) {
+                    if (!designerChatMessages.find(m => m.id === newComm.id)) {
+                        designerChatMessages.push(newComm);
+                        renderDesignChat(designerChatMessages);
+                    }
+                }
+            })
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Realtime chat connected');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('Realtime channel error');
+                }
+            });
+
+        designerChatPollInterval = setInterval(async () => {
+            if (currentDesignId) {
+                const refreshed = await fetchDesignCommunications(currentDesignId);
+                const existingIds = new Set(designerChatMessages.map(m => m.id));
+                const newMsgs = refreshed.filter(m => !existingIds.has(m.id));
+                if (newMsgs.length > 0) {
+                    designerChatMessages.push(...newMsgs);
+                    designerChatMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    renderDesignChat(designerChatMessages);
+                }
+            }
+        }, 5000);
+    }
+
+    const currentUser = Auth.getCurrentUser();
+    if (subtitle) {
+        subtitle.textContent = currentUser ? `Chatting as ${currentUser.name || currentUser.email}` : 'Chat';
+    }
+}
+
+function closeDesignerChatModal(event) {
+    if (event && event.target !== document.getElementById('designer-chat-modal')) return;
+    const modal = document.getElementById('designer-chat-modal');
+    if (modal) modal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+
+    if (designerChatChannel && typeof supabase !== 'undefined') {
+        supabase.removeChannel(designerChatChannel);
+        designerChatChannel = null;
+    }
+    if (designerChatPollInterval) {
+        clearInterval(designerChatPollInterval);
+        designerChatPollInterval = null;
+    }
+}
+
+async function sendDesignerMessage() {
+    const input = document.getElementById('designer-chat-input');
+    if (!input || !input.value.trim() || !currentDesignId) return;
+
+    const messageText = input.value.trim();
+    input.value = '';
+
+    const sentMsg = await sendDesignCommunication(currentDesignId, messageText);
+    if (sentMsg) {
+        designerChatMessages = await fetchDesignCommunications(currentDesignId);
+        renderDesignChat(designerChatMessages);
     }
 }
