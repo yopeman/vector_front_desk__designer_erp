@@ -7,6 +7,16 @@
 
 let reworkLoaded = false;
 
+// Date formatting function
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}/${month}/${year}`;
+}
+
 async function fetchReworkRecords() {
     if (typeof supabase === 'undefined') {
         console.error('Supabase client not initialized');
@@ -29,7 +39,7 @@ async function fetchReworkRecords() {
     reworkData = (data || []).map(row => ({
         id: row.id,
         taskType: row.task_type || 'task',
-        date: row.date || '',
+        date: formatDate(row.created_at || row.date),
         material: row.material || 'N/A',
         thickness: row.thickness || 'N/A',
         color: row.color || 'N/A',

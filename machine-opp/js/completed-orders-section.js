@@ -11,7 +11,7 @@ class CompletedordersSection {
         if (container) {
             container.innerHTML = `<div class="flex justify-between items-center">
                     <div>
-                        <h2 class="text-2xl font-bold text-white tracking-tight">Completed Order Status List</h2>
+                        <h2 class="text-2xl font-bold text-white tracking-tight">Completed Order Status</h2>
                         <p class="text-sm text-slate-400">Overview of completed operations with data export options.</p>
                     </div>
                     <button onclick="exportPDF()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center shadow-lg shadow-rose-600/10">
@@ -77,4 +77,8 @@ class CompletedordersSection {
 // Initialize section
 document.addEventListener('DOMContentLoaded', () => {
     new CompletedordersSection();
+    // Fetch and render completed orders from Supabase
+    if (typeof initCompletedOrders === 'function') {
+        initCompletedOrders();
+    }
 });

@@ -2,16 +2,91 @@
 // COMPLETED ORDERS MODULE
 // =============================================
 
+let completedOrdersLoaded = false;
 
+// =============================================
+// FETCH COMPLETED ORDERS FROM SUPABASE
+// =============================================
+async function fetchCompletedOrders() {
+    if (typeof supabase === 'undefined') {
+        console.error('Supabase client not initialized');
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('production_orders')
+        .select('*')
+        .eq('status', 'Completed')
+        .order('completed_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching completed orders:', error);
+        return;
+    }
+
+    // Fetch machines for name lookup
+    const machines = await fetchMachines();
+    const machinesMap = {};
+    machines.forEach(m => {
+        machinesMap[m.id] = m.name;
+    });
+
+    completedOrdersData = (data || []).map(row => {
+        // Format date - try multiple fields
+        let formattedDate = '';
+        const dateValue = row.created_at || row.date || row.completed_at;
+        
+        if (dateValue) {
+            try {
+                // Handle ISO timestamp format like "2026-08-01T08:39:15.67197+00:00"
+                const dateStr = String(dateValue).split('T')[0]; // Get "2026-08-01" part
+                const [year, month, day] = dateStr.split('-');
+                if (year && month && day) {
+                    formattedDate = `${day}/${month}/${year.slice(-2)}`;
+                } else {
+                    formattedDate = dateValue;
+                }
+            } catch (e) {
+                formattedDate = String(dateValue);
+            }
+        }
+
+        return {
+            id: row.id,
+            no: row.id.slice(0, 8),
+            date: formattedDate,
+            taskType: row.task_type || 'task',
+            orderNum: row.order_number || 'N/A',
+            title: row.title || 'Untitled',
+            machine: machinesMap[row.machine_id] || row.machine || 'N/A',
+            material: row.material || 'N/A',
+            thickness: row.thickness || 'N/A',
+            color: row.color || 'N/A',
+            length: row.length || 'N/A',
+            width: row.width || 'N/A',
+            area: row.area || 0,
+            quality: row.quality || 'Pass',
+            status: row.status || 'Completed',
+            completedAt: row.completed_at
+        };
+    });
+
+    completedOrdersLoaded = true;
+}
 
 // =============================================
 // RENDER COMPLETED ORDERS TABLE
 // =============================================
-function renderCompletedOrdersTable() {
+async function renderCompletedOrdersTable() {
     const tbody = document.getElementById('completed-orders-body');
     if (!tbody) return;
 
     tbody.innerHTML = '';
+
+    // Fetch data if not loaded
+    if (!completedOrdersLoaded) {
+        await fetchCompletedOrders();
+    }
 
     if (completedOrdersData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="14" class="p-8 text-center text-slate-500 italic">No completed orders yet. Mark orders as complete from the Received Order Status popup.</td></tr>';
@@ -83,6 +158,16 @@ async function saveBaton() {
     }
 
     alert('Baton saved successfully! Order state has been updated.');
+}
+
+// =============================================
+// INITIALIZE COMPLETED ORDERS
+// =============================================
+async function initCompletedOrders() {
+    if (!completedOrdersLoaded) {
+        await fetchCompletedOrders();
+    }
+    renderCompletedOrdersTable();
 }
 
 // =============================================
@@ -161,7 +246,7 @@ function exportPDF() {
     wrapper.innerHTML = `
         <div style="padding: 25px; font-family: 'Inter', sans-serif; background: #0f172a; color: #fff;">
             <div style="text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #3b82f6;">
-                <h1 style="font-size: 26px; font-weight: bold; margin: 0 0 8px 0; color: #fff;">Completed Order Status List</h1>
+                <h1 style="font-size: 26px; font-weight: bold; margin: 0 0 8px 0; color: #fff;">Completed Order Status</h1>
                 <p style="font-size: 11px; color: #94a3b8; margin: 0;">Generated on: ${new Date().toLocaleString()}</p>
                 <p style="font-size: 10px; color: #64748b; margin: 5px 0 0 0;">Total Orders: ${tableRows.length}</p>
             </div>

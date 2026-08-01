@@ -29,7 +29,7 @@ class SidebarSection {
                         <button onclick="switchTab('received-orders')" id="tab-received-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-list-check w-5 text-left text-base shrink-0"></i>
-                            <span class="truncate font-medium">Received Order Status</span>
+                            <span class="truncate font-medium">Received Order</span>
                         </button>
                         <button onclick="switchTab('rework-login')" id="tab-rework-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
                             <span class="active-indicator"></span>
@@ -39,7 +39,7 @@ class SidebarSection {
                         <button onclick="switchTab('completed-orders')" id="tab-completed-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-circle-check w-5 text-left text-base shrink-0"></i>
-                            <span class="truncate font-medium">Completed Order Status</span>
+                            <span class="truncate font-medium">Completed Order</span>
                         </button>
                         <button onclick="switchTab('machine-login')" id="tab-machine-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
                             <span class="active-indicator"></span>
