@@ -28,7 +28,7 @@ class MachineloginSection {
                             </div>
                             <div class="bg-slate-900/60 px-4 py-2 rounded-xl border border-slate-700/50">
                                 <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Operator</p>
-                                <p class="text-xs font-semibold text-slate-200" id="operator-name">Admin User</p>
+                                <p class="text-xs font-semibold text-slate-200" id="operator-name">-</p>
                             </div>
                         </div>
                     </div>

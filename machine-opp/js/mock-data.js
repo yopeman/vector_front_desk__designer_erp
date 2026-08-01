@@ -186,7 +186,7 @@ const reportColumnConfigs = {
         { key: 'no', label: 'No', cls: 'text-center w-16' },
         { key: 'date', label: 'Date', cls: '' },
         { key: 'orderNum', label: 'Order #', cls: 'font-mono' },
-        { key: 'title', label: 'Title', cls: '' },
+        { key: 'title', label: 'Work Type', cls: '' },
         { key: 'designer', label: 'Designer', cls: 'text-xs' },
         { key: 'material', label: 'Material', cls: 'text-xs' },
         { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
@@ -195,7 +195,7 @@ const reportColumnConfigs = {
     'rework': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
         { key: 'date', label: 'Date', cls: '' },
-        { key: 'title', label: 'Rework Item', cls: '' },
+        { key: 'title', label: 'Work Type', cls: '' },
         { key: 'material', label: 'Material', cls: 'text-xs' },
         { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
         { key: 'status', label: 'Status', cls: '' }
@@ -204,29 +204,31 @@ const reportColumnConfigs = {
         { key: 'no', label: 'No', cls: 'text-center w-16' },
         { key: 'date', label: 'Date', cls: '' },
         { key: 'orderNum', label: 'Order #', cls: 'font-mono' },
-        { key: 'title', label: 'Title', cls: '' },
+        { key: 'title', label: 'Work Type', cls: '' },
         { key: 'designer', label: 'Machine', cls: 'text-xs' },
         { key: 'material', label: 'Material', cls: 'text-xs' },
         { key: 'machine', label: 'Equipment', cls: 'font-mono text-xs' },
         { key: 'status', label: 'Status', cls: '' }
     ],
-    'store-request': [
+    'machine-maintenance': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
         { key: 'date', label: 'Date', cls: '' },
-        { key: 'orderNum', label: 'Task #', cls: 'font-mono' },
-        { key: 'title', label: 'Item', cls: '' },
-        { key: 'designer', label: 'Material', cls: 'text-xs' },
-        { key: 'material', label: 'Spec', cls: 'text-xs' },
-        { key: 'machine', label: 'Unit', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
+        { key: 'orderNum', label: 'Log ID', cls: 'font-mono' },
+        { key: 'title', label: 'Machine', cls: '' },
+        { key: 'designer', label: 'Performed By', cls: 'text-xs' },
+        { key: 'material', label: 'Type', cls: 'text-xs' },
+        { key: 'machine', label: 'Machine Name', cls: 'font-mono text-xs' },
+        { key: 'status', label: 'Status', cls: '' },
+        { key: 'checklistCount', label: 'Items', cls: 'text-center' },
+        { key: 'notes', label: 'Notes', cls: 'text-xs' }
     ]
 };
 
 const moduleLabels = {
-    'received-orders': 'Received Orders',
-    'rework': 'Rework Records',
-    'completed-orders': 'Completed Orders',
-    'store-request': 'Store Requests'
+    'received-orders': 'Received Order',
+    'rework': 'Rework Recording',
+    'completed-orders': 'Completed Order',
+    'machine-maintenance': 'Machine Maintenance Logs'
 };
 
 // =============================================
@@ -239,3 +241,6 @@ let columnVisibility = {};
 let currentNoteFilter = 'all';
 let tempNoteChecklist = [];
 let selectedNoteColor = 'slate';
+let itemsPerPage = 10;
+let tableSearchQueries = {};
+let tableCurrentPages = {};

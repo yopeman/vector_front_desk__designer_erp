@@ -79,8 +79,8 @@ class TopNavigationBar {
                 <!-- User Info & Logout -->
                 <div class="flex items-center gap-2.5">
                     <div id="user-info-badge" class="user-info-badge hidden items-center gap-2">
-                        <div class="user-avatar-sm" id="topbar-avatar">AD</div>
-                        <span id="topbar-username" class="text-xs font-medium text-slate-300 hidden lg:inline">Admin User</span>
+                        <div class="user-avatar-sm" id="topbar-avatar">-</div>
+                        <span id="topbar-username" class="text-xs font-medium text-slate-300 hidden lg:inline">-</span>
                     </div>
                     <button id="logout-btn" class="logout-btn hidden px-2.5 py-1.5 text-[11px] font-semibold bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-1.5" onclick="topNav.handleLogout()">
                         <i class="fa-solid fa-right-from-bracket text-[10px]"></i>

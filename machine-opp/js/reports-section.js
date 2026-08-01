@@ -24,7 +24,7 @@ class ReportsSection {
                 </div>
 
                 <!-- Stats Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4" id="report-stats-container">
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-4" id="report-stats-container">
                     <div class="stat-card bg-gradient-to-br from-violet-500/10 to-violet-600/5 border border-violet-500/20 rounded-2xl p-5 flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-database text-violet-400 text-xl"></i>
@@ -61,6 +61,15 @@ class ReportsSection {
                             <p class="text-2xl font-bold text-amber-400 mt-0.5" id="report-stats-rework">0</p>
                         </div>
                     </div>
+                    <div class="stat-card bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 rounded-2xl p-5 flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-wrench text-rose-400 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Maintenance</p>
+                            <p class="text-2xl font-bold text-rose-400 mt-0.5" id="report-stats-maintenance">0</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Filters: Module Selection, Search, Date Range -->
@@ -80,19 +89,19 @@ class ReportsSection {
                                     <div class="p-2 space-y-1">
                                         <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
                                             <input type="checkbox" value="received-orders" onchange="updateModuleSelection()" class="module-checkbox">
-                                            <span>Received Orders</span>
-                                        </label>
-                                        <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
-                                            <input type="checkbox" value="completed-orders" onchange="updateModuleSelection()" class="module-checkbox">
-                                            <span>Completed Orders</span>
+                                            <span>Received Order</span>
                                         </label>
                                         <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
                                             <input type="checkbox" value="rework" onchange="updateModuleSelection()" class="module-checkbox">
-                                            <span>Rework Records</span>
+                                            <span>Rework Recording</span>
                                         </label>
                                         <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
-                                            <input type="checkbox" value="store-request" onchange="updateModuleSelection()" class="module-checkbox">
-                                            <span>Store Requests</span>
+                                            <input type="checkbox" value="completed-orders" onchange="updateModuleSelection()" class="module-checkbox">
+                                            <span>Completed Order</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
+                                            <input type="checkbox" value="machine-maintenance" onchange="updateModuleSelection()" class="module-checkbox">
+                                            <span>Machine Maintenance Logs</span>
                                         </label>
                                     </div>
                                 </div>
@@ -145,43 +154,22 @@ class ReportsSection {
                     </div>
 </div>
 
-                 <!-- Column Visibility Checklist -->
-                 <div class="px-4 py-2 border-b border-slate-700/50">
-                     <div class="flex items-center justify-between mb-2">
-                         <span class="text-xs text-slate-400 font-semibold uppercase tracking-wider">Columns</span>
-                         <button type="button" onclick="toggleAllColumns()" id="report-column-toggle-all" class="text-xs text-slate-400 hover:text-violet-400 transition-colors flex items-center gap-1.5" title="Toggle all columns">
-                             <i class="fa-solid fa-eye" id="report-column-toggle-all-icon"></i>
-                             <span id="report-column-toggle-all-text">Show All</span>
-                         </button>
-                     </div>
-                     <div id="report-column-checklist" class="flex flex-wrap gap-2">
-                     </div>
+                 <!-- Reports Tables Container -->
+                 <div id="report-tables-container">
+                     <!-- Dynamic tables will be rendered here by JS -->
                  </div>
-
-                 <!-- Reports Table -->
-                 <div class="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl">
-                     <div class="table-wrapper max-h-[500px] overflow-y-auto">
-                         <table class="w-full text-left border-collapse min-w-[700px]">
-                             <thead class="bg-slate-800/80 border-b border-slate-700/60 text-xs font-semibold text-slate-300 uppercase tracking-wider sticky top-0 z-10">
-                                 <tr id="report-thead-row"></tr>
-                             </thead>
-                             <tbody id="report-records-body" class="divide-y divide-slate-800 text-sm text-slate-300">
-                                 <!-- Dynamic rows rendered by JS -->
-                             </tbody>
-                         </table>
+                 
+                 <!-- No results state -->
+                 <div id="report-no-results" class="hidden flex flex-col items-center justify-center py-16 px-4">
+                     <div class="w-16 h-16 rounded-full bg-slate-800/60 flex items-center justify-center mb-4">
+                         <i class="fa-solid fa-chart-simple text-2xl text-slate-500"></i>
                      </div>
-                    <!-- No results state -->
-                    <div id="report-no-results" class="hidden flex flex-col items-center justify-center py-16 px-4">
-                        <div class="w-16 h-16 rounded-full bg-slate-800/60 flex items-center justify-center mb-4">
-                            <i class="fa-solid fa-chart-simple text-2xl text-slate-500"></i>
-                        </div>
-                        <p class="text-slate-400 font-medium">No records match your criteria</p>
-                        <p class="text-xs text-slate-500 mt-1">Try adjusting the filters or date range</p>
-                        <button onclick="resetReportFilters()" class="mt-4 text-xs bg-violet-600/20 hover:bg-violet-600 text-violet-400 hover:text-white px-4 py-2 rounded-xl transition-all border border-violet-500/20">
-                            <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset Filters
-                        </button>
-                    </div>
-                </div>`;
+                     <p class="text-slate-400 font-medium">No records match your criteria</p>
+                     <p class="text-xs text-slate-500 mt-1">Try adjusting the filters or date range</p>
+                     <button onclick="resetReportFilters()" class="mt-4 text-xs bg-violet-600/20 hover:bg-violet-600 text-violet-400 hover:text-white px-4 py-2 rounded-xl transition-all border border-violet-500/20">
+                         <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset Filters
+                     </button>
+                 </div>`;
         }
     }
 }

@@ -7,17 +7,17 @@
 // =============================================
 // BUILD REPORT DATA FROM ALL MODULES
 // =============================================
-function getReportData() {
+async function getReportData() {
     const records = [];
 
     // Add received orders
     ordersData.forEach(order => {
         records.push({
             module: 'received-orders',
-            moduleLabel: 'Received Orders',
+            moduleLabel: 'Received Order',
             date: order.date,
             orderNum: order.orderNum,
-            title: order.title,
+            title: order.taskType,
             designer: order.designer,
             material: order.material || '-',
             machine: order.machine,
@@ -31,10 +31,10 @@ function getReportData() {
     completedOrdersData.forEach(order => {
         records.push({
             module: 'completed-orders',
-            moduleLabel: 'Completed Orders',
+            moduleLabel: 'Completed Order',
             date: order.date,
             orderNum: order.orderNum,
-            title: order.title,
+            title: order.taskType,
             designer: order.machine,
             material: order.material || '-',
             machine: order.machine,
@@ -48,7 +48,7 @@ function getReportData() {
     reworkData.forEach(entry => {
         records.push({
             module: 'rework',
-            moduleLabel: 'Rework Records',
+            moduleLabel: 'Rework Recording',
             date: entry.date,
             orderNum: '-',
             title: entry.taskType,
@@ -61,22 +61,63 @@ function getReportData() {
         });
     });
 
-    // Add store request items
-    localStoreItemsList.forEach(item => {
-        records.push({
-            module: 'store-request',
-            moduleLabel: 'Store Requests',
-            date: item.date || '-',
-            orderNum: item.taskNum,
-            title: item.title,
-            designer: item.material || '-',
-            material: (item.material || '-') + ' ' + (item.color ? '(' + item.color + ')' : ''),
-            machine: item.unit || 'pcs',
-            status: 'Pending',
-            statusColor: 'text-amber-400',
-            statusBg: 'bg-amber-500/10 border-amber-500/20'
-        });
-    });
+    // Add machine maintenance logs from Supabase
+    if (typeof supabase !== 'undefined') {
+        try {
+            const { data: logs, error } = await supabase
+                .from('machine_maintenance_logs')
+                .select('*, machine:machines(name, machine_type), performed_by_user:users(username)')
+                .order('performed_at', { ascending: false });
+
+            if (!error && logs && logs.length > 0) {
+                // Fetch user names for performers
+                const performerIds = [...new Set(logs.map(l => l.performed_by).filter(Boolean))];
+                let userNames = {};
+                if (performerIds.length > 0) {
+                    const { data: users } = await supabase
+                        .from('users')
+                        .select('id, username')
+                        .in('id', performerIds);
+                    
+                    (users || []).forEach(u => {
+                        userNames[u.id] = u.username || u.email || 'Unknown';
+                    });
+                }
+
+                logs.forEach(log => {
+                    const logDate = log.performed_at ? new Date(log.performed_at) : null;
+                    const formattedDate = logDate ? logDate.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                    }) : '-';
+
+                    const machineName = log.machine?.name || 'Unknown Machine';
+                    const machineType = log.machine?.machine_type || 'N/A';
+                    const performerName = log.performed_by ? (userNames[log.performed_by] || 'Unknown') : 'System';
+                    const checklistCount = log.checklist_results?.length || 0;
+
+                    records.push({
+                        module: 'machine-maintenance',
+                        moduleLabel: 'Machine Maintenance Logs',
+                        date: formattedDate,
+                        orderNum: log.id.substring(0, 8).toUpperCase(),
+                        title: `Maintenance - ${machineName}`,
+                        designer: performerName,
+                        material: machineType.toUpperCase(),
+                        machine: machineName,
+                        status: log.status === 'completed' ? 'Completed' : log.status === 'partial' ? 'Partial' : 'Pending',
+                        statusColor: log.status === 'completed' ? 'text-emerald-400' : log.status === 'partial' ? 'text-amber-400' : 'text-slate-400',
+                        statusBg: log.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : log.status === 'partial' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40',
+                        checklistCount: checklistCount,
+                        notes: log.notes || '-'
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching machine maintenance logs:', error);
+        }
+    }
 
     return records;
 }
@@ -116,7 +157,11 @@ function renderReportHeader(columns) {
 // COLUMN VISIBILITY FUNCTIONS
 // =============================================
 function renderColumnChecklist() {
+    // This function is deprecated - column visibility is now per-table
+    // Kept for backward compatibility but does nothing
     const container = document.getElementById('report-column-checklist');
+    if (!container) return; // Exit if container doesn't exist
+    
     const selectedModules = getSelectedModules();
     const columns = getMergedColumnConfig(selectedModules);
     container.innerHTML = '';
@@ -198,13 +243,11 @@ function getMergedColumnConfig(selectedModules) {
 // =============================================
 // FILTER AND RENDER REPORTS
 // =============================================
-function filterReports() {
+async function filterReports() {
     const selectedModules = getSelectedModules();
     const searchVal = document.getElementById('report-search').value.toLowerCase();
     const dateFrom = document.getElementById('report-date-from').value;
     const dateTo = document.getElementById('report-date-to').value;
-    const tbody = document.getElementById('report-records-body');
-    const theadRow = document.getElementById('report-thead-row');
     const noResults = document.getElementById('report-no-results');
 
     // Render column checklist
@@ -231,11 +274,11 @@ function filterReports() {
 
     // If no modules selected, show no results
     if (selectedModules.length === 0) {
-        theadRow.innerHTML = '';
-        tbody.innerHTML = '';
+        const tablesContainer = document.getElementById('report-tables-container');
+        if (tablesContainer) tablesContainer.innerHTML = '';
         noResults.classList.remove('hidden');
         filterCount.textContent = '0';
-        updateReportStats();
+        await updateReportStats();
         return;
     }
 
@@ -244,21 +287,16 @@ function filterReports() {
     const columns = getVisibleColumns(allColumns);
 
     if (columns.length === 0) {
-        theadRow.innerHTML = '';
-        tbody.innerHTML = '';
+        const tablesContainer = document.getElementById('report-tables-container');
+        if (tablesContainer) tablesContainer.innerHTML = '';
         noResults.classList.remove('hidden');
         filterCount.textContent = '0';
-        updateReportStats();
+        await updateReportStats();
         return;
     }
 
-    // Render table header dynamically
-    theadRow.innerHTML = renderReportHeader(columns);
-
-    // Render table body
-    tbody.innerHTML = '';
-
-    const allRecords = getReportData();
+    // Get all records
+    const allRecords = await getReportData();
     let filtered = allRecords;
 
     // Apply multi-module filter
@@ -290,70 +328,231 @@ function filterReports() {
     if (filtered.length === 0) {
         noResults.classList.remove('hidden');
         filterCount.textContent = '0';
-        updateReportStats();
+        await updateReportStats();
         return;
     }
 
     noResults.classList.add('hidden');
     filterCount.textContent = filtered.length;
 
-    filtered.forEach((record, index) => {
-        const row = document.createElement('tr');
-        row.className = 'order-row hover:bg-violet-600/10 transition-colors';
+    // Render separate tables for each selected module
+    const tablesContainer = document.getElementById('report-tables-container');
+    tablesContainer.innerHTML = '';
 
-        // Render dynamic columns
-        columns.forEach(col => {
-            let value = record[col.key] || '-';
-            let cellCls = 'p-4';
-            if (col.cls) cellCls += ' ' + col.cls;
+    selectedModules.forEach(module => {
+        const moduleRecords = filtered.filter(r => r.module === module);
+        if (moduleRecords.length === 0) return;
 
-            const cell = document.createElement('td');
-            cell.className = cellCls;
+        const moduleColumns = getMergedColumnConfig([module]);
+        const visibleColumns = getVisibleColumns(moduleColumns);
 
-            if (col.key === '__src__') {
-                cell.innerHTML = `<span class="px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs rounded border border-violet-500/20 font-medium">${value}</span>`;
-            } else if (col.key === 'no') {
-                cell.textContent = String(index + 1).padStart(2, '0') + ' -';
-                cell.classList.add('font-mono', 'font-medium', 'text-slate-400');
-            } else if (col.key === 'status') {
-                cell.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${record.statusBg} ${record.statusColor} border">${value}</span>`;
-            } else {
-                cell.textContent = value;
-                if (col.key === 'date') {
-                    cell.classList.add('font-mono', 'text-xs');
+        // Get or initialize table state
+        const tableSearch = tableSearchQueries[module] || '';
+        const currentPage = tableCurrentPages[module] || 1;
+        
+        // Apply per-table search filter
+        let tableFiltered = moduleRecords;
+        if (tableSearch) {
+            tableFiltered = moduleRecords.filter(r => 
+                visibleColumns.some(col => {
+                    if (col.key === 'no' || col.key === '__src__') return false;
+                    let value = r[col.key] || '-';
+                    return String(value).toLowerCase().includes(tableSearch.toLowerCase());
+                })
+            );
+        }
+
+        // Pagination
+        const totalPages = Math.ceil(tableFiltered.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedRecords = tableFiltered.slice(startIndex, endIndex);
+
+        // Create table wrapper
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl mb-6';
+
+        // Create table header with module name and controls
+        const tableHeader = document.createElement('div');
+        tableHeader.className = 'p-4 border-b border-slate-700/50 bg-slate-800/80';
+        tableHeader.innerHTML = `
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-table text-violet-400"></i>
+                    ${moduleLabels[module] || module}
+                    <span class="text-xs text-slate-400 font-normal">(${tableFiltered.length} records)</span>
+                </h3>
+            </div>
+            <div class="flex gap-3 items-center">
+                <div class="flex-1">
+                    <input type="text" 
+                           placeholder="Search ${moduleLabels[module]}..." 
+                           value="${tableSearch}"
+                           oninput="updateTableSearch('${module}', this.value)"
+                           class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-violet-500 placeholder-slate-500">
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    ${visibleColumns.filter(col => col.key !== '__src__' && col.key !== 'no').map(col => `
+                        <button type="button" 
+                                onclick="toggleTableColumn('${module}', '${col.key}')"
+                                class="flex items-center gap-1 px-2 py-1 rounded text-xs border cursor-pointer transition-colors ${
+                                    columnVisibility[col.key] !== false
+                                        ? 'bg-violet-500/10 border-violet-500/30 text-violet-400'
+                                        : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'
+                                }">
+                            <i class="fa-solid ${columnVisibility[col.key] !== false ? 'fa-eye' : 'fa-eye-slash'} text-[10px]"></i>
+                            <span>${col.label}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        tableWrapper.appendChild(tableHeader);
+
+        // Create table
+        const tableDiv = document.createElement('div');
+        tableDiv.className = 'table-wrapper max-h-[400px] overflow-y-auto';
+
+        const table = document.createElement('table');
+        table.className = 'w-full text-left border-collapse min-w-[700px]';
+
+        // Table head
+        const thead = document.createElement('thead');
+        thead.className = 'bg-slate-800/80 border-b border-slate-700/60 text-xs font-semibold text-slate-300 uppercase tracking-wider sticky top-0 z-10';
+        const theadRow = document.createElement('tr');
+        theadRow.innerHTML = renderReportHeader(visibleColumns);
+        thead.appendChild(theadRow);
+        table.appendChild(thead);
+
+        // Table body
+        const tbody = document.createElement('tbody');
+        tbody.className = 'divide-y divide-slate-800 text-sm text-slate-300';
+
+        paginatedRecords.forEach((record, index) => {
+            const row = document.createElement('tr');
+            row.className = 'order-row hover:bg-violet-600/10 transition-colors';
+
+            visibleColumns.forEach(col => {
+                let value = record[col.key] || '-';
+                let cellCls = 'p-4';
+                if (col.cls) cellCls += ' ' + col.cls;
+
+                const cell = document.createElement('td');
+                cell.className = cellCls;
+
+                if (col.key === '__src__') {
+                    cell.innerHTML = `<span class="px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs rounded border border-violet-500/20 font-medium">${value}</span>`;
+                } else if (col.key === 'no') {
+                    cell.textContent = String(startIndex + index + 1).padStart(2, '0') + ' -';
+                    cell.classList.add('font-mono', 'font-medium', 'text-slate-400');
+                } else if (col.key === 'status') {
+                    cell.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${record.statusBg} ${record.statusColor} border">${value}</span>`;
                 } else {
-                    cell.classList.add('text-xs', 'text-slate-300');
+                    cell.textContent = value;
+                    if (col.key === 'date') {
+                        cell.classList.add('font-mono', 'text-xs');
+                    } else {
+                        cell.classList.add('text-xs', 'text-slate-300');
+                    }
                 }
-            }
 
-            row.appendChild(cell);
+                row.appendChild(cell);
+            });
+
+            tbody.appendChild(row);
         });
 
-        tbody.appendChild(row);
+        table.appendChild(tbody);
+        tableDiv.appendChild(table);
+        tableWrapper.appendChild(tableDiv);
+
+        // Add pagination controls
+        if (totalPages > 1 || tableFiltered.length > 0) {
+            const paginationDiv = document.createElement('div');
+            paginationDiv.className = 'p-4 border-t border-slate-700/50 bg-slate-800/80 flex justify-between items-center';
+            paginationDiv.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="text-xs text-slate-400">
+                        Page ${currentPage} of ${totalPages} (${tableFiltered.length} total)
+                    </div>
+                    <select onchange="changeTableItemsPerPage('${module}', this.value)" 
+                            class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-violet-500">
+                        <option value="5" ${itemsPerPage === 5 ? 'selected' : ''}>5</option>
+                        <option value="10" ${itemsPerPage === 10 ? 'selected' : ''}>10</option>
+                        <option value="25" ${itemsPerPage === 25 ? 'selected' : ''}>25</option>
+                        <option value="50" ${itemsPerPage === 50 ? 'selected' : ''}>50</option>
+                        <option value="100" ${itemsPerPage === 100 ? 'selected' : ''}>100</option>
+                    </select>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" 
+                            onclick="changeTablePage('${module}', ${currentPage - 1})"
+                            ${currentPage === 1 ? 'disabled' : ''}
+                            class="px-3 py-1 rounded border border-slate-700 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                        Previous
+                    </button>
+                    <div class="flex gap-1">
+                        ${Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                                pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                            } else {
+                                pageNum = currentPage - 2 + i;
+                            }
+                            return `<button type="button" 
+                                            onclick="changeTablePage('${module}', ${pageNum})"
+                                            class="px-3 py-1 rounded border text-xs cursor-pointer transition-colors ${
+                                                currentPage === pageNum
+                                                    ? 'bg-violet-600 text-white border-violet-600'
+                                                    : 'border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                            }">
+                                        ${pageNum}
+                                    </button>`;
+                        }).join('')}
+                    </div>
+                    <button type="button" 
+                            onclick="changeTablePage('${module}', ${currentPage + 1})"
+                            ${currentPage === totalPages ? 'disabled' : ''}
+                            class="px-3 py-1 rounded border border-slate-700 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                        Next
+                    </button>
+                </div>
+            `;
+            tableWrapper.appendChild(paginationDiv);
+        }
+
+        tablesContainer.appendChild(tableWrapper);
     });
 
-    updateReportStats();
+    await updateReportStats();
 }
 
 // =============================================
 // UPDATE REPORT STATS
 // =============================================
-function updateReportStats() {
-    const allRecords = getReportData();
+async function updateReportStats() {
+    const allRecords = await getReportData();
     const total = allRecords.length;
     const received = allRecords.filter(r => r.module === 'received-orders').length;
     const completed = allRecords.filter(r => r.module === 'completed-orders').length;
     const rework = allRecords.filter(r => r.module === 'rework').length;
+    const maintenance = allRecords.filter(r => r.module === 'machine-maintenance').length;
 
     const totalEl = document.getElementById('report-stats-total');
     const receivedEl = document.getElementById('report-stats-received');
     const completedEl = document.getElementById('report-stats-completed');
     const reworkEl = document.getElementById('report-stats-rework');
+    const maintenanceEl = document.getElementById('report-stats-maintenance');
     
     if (totalEl) totalEl.textContent = total;
     if (receivedEl) receivedEl.textContent = received;
     if (completedEl) completedEl.textContent = completed;
     if (reworkEl) reworkEl.textContent = rework;
+    if (maintenanceEl) maintenanceEl.textContent = maintenance;
 }
 
 // =============================================
@@ -386,110 +585,240 @@ function resetReportFilters() {
 // =============================================
 // EXPORT REPORT TO PDF
 // =============================================
-function exportReportPDF() {
-    const tbody = document.getElementById('report-records-body');
-    const rows = tbody.querySelectorAll('tr');
-    if (rows.length === 0) {
-        alert('No data available to export. Please adjust your filters.');
-        return;
-    }
-
+async function exportReportPDF() {
     const selectedModules = getSelectedModules();
     if (selectedModules.length === 0) {
         alert('No modules selected. Please select at least one module to export.');
         return;
     }
-    
+
+    const dateFrom = document.getElementById('report-date-from').value;
+    const dateTo = document.getElementById('report-date-to').value;
+
+    // Get all filtered data
+    const allRecords = await getReportData();
+    const searchVal = document.getElementById('report-search').value.toLowerCase();
+    let filtered = allRecords;
+
+    // Apply filters (same as filterReports)
+    if (selectedModules.length > 0) {
+        filtered = filtered.filter(r => selectedModules.includes(r.module));
+    }
+    if (searchVal) {
+        filtered = filtered.filter(r =>
+            (r.title + ' ' + r.orderNum + ' ' + r.designer + ' ' + r.material + ' ' + r.machine + ' ' + r.status).toLowerCase().includes(searchVal)
+        );
+    }
+    if (dateFrom) {
+        filtered = filtered.filter(r => {
+            const d = formatDateForCompare(r.date);
+            return d && d >= dateFrom;
+        });
+    }
+    if (dateTo) {
+        filtered = filtered.filter(r => {
+            const d = formatDateForCompare(r.date);
+            return d && d <= dateTo;
+        });
+    }
+
+    if (filtered.length === 0) {
+        alert('No data available to export. Please adjust your filters.');
+        return;
+    }
+
     let moduleName;
     if (selectedModules.length === 4) {
         moduleName = 'All Modules';
     } else {
         moduleName = selectedModules.map(m => moduleLabels[m] || m).join(', ');
     }
-    
-    const dateFrom = document.getElementById('report-date-from').value;
-    const dateTo = document.getElementById('report-date-to').value;
 
-    const allColumns = getMergedColumnConfig(selectedModules);
-    const columns = getVisibleColumns(allColumns);
-    if (columns.length === 0) {
-        alert('No columns are visible. Please enable at least one column to export.');
-        return;
-    }
-    const allColumnLabels = columns.map(c => c.label);
+    // Use jsPDF directly for left/right split layout
+    try {
+        // jsPDF is loaded via CDN as UMD module
+        const jsPDFLib = window.jspdf.jsPDF;
+        const doc = new jsPDFLib();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const leftMargin = 15;
+        const rightMargin = pageWidth / 2 + 10;
+        const lineHeight = 7;
+        let y = 20;
 
-    // Build form HTML for PDF
-    let recordsHtml = '';
-    rows.forEach((row, index) => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 1) {
-            const srcCell = cells[0];
-            const srcLabel = srcCell.textContent.trim();
-            let fieldsHtml = '';
-            cells.forEach((cell, ci) => {
-                if (ci === 0) return;
-                const col = columns[ci];
-                if (!col) return;
-                const label = col.label;
-                const value = cell.textContent.trim();
-                fieldsHtml += [
-                    '<div style="display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #1e293b;">',
-                    '<span style="color: #94a3b8; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; min-width: 80px;">' + label + '</span>',
-                    '<span style="color: #e2e8f0; font-size: 11px;">' + value + '</span>',
-                    '</div>'
-                ].join('');
+        // Title
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Report', pageWidth / 2, y, { align: 'center' });
+        y += 10;
+
+        // Date range
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('From: ' + dateFrom + '  To: ' + dateTo, pageWidth / 2, y, { align: 'center' });
+        y += 10;
+
+        // Process each selected module
+        selectedModules.forEach((module, moduleIndex) => {
+            const moduleRecords = filtered.filter(r => r.module === module);
+            if (moduleRecords.length === 0) return;
+
+            const moduleColumns = getMergedColumnConfig([module]);
+            const visibleColumns = getVisibleColumns(moduleColumns);
+
+            // Add section header
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(moduleLabels[module] + ' (' + moduleRecords.length + ')', leftMargin, y);
+            y += 8;
+
+            // Split data into left and right sections
+            const midPoint = Math.ceil(moduleRecords.length / 2);
+            const leftData = moduleRecords.slice(0, midPoint);
+            const rightData = moduleRecords.slice(midPoint);
+
+            // Left section
+            let leftY = y;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Section 1', leftMargin, leftY);
+            leftY += 6;
+
+            leftData.forEach((record, index) => {
+                if (leftY > pageHeight - 20) {
+                    doc.addPage();
+                    leftY = 20;
+                }
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Record ' + (index + 1) + ':', leftMargin, leftY);
+                leftY += 5;
+
+                visibleColumns.forEach(col => {
+                    if (leftY > pageHeight - 15) {
+                        doc.addPage();
+                        leftY = 20;
+                    }
+                    let value = record[col.key] || '-';
+                    if (value && typeof value === 'object') {
+                        value = value.name || value.order_no || value.invoice_no || '';
+                    }
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(col.label + ':', leftMargin, leftY);
+                    doc.text(String(value), leftMargin + 35, leftY);
+                    leftY += 4;
+                });
+                leftY += 3;
             });
-            recordsHtml += [
-                '<div style="background: ' + (index % 2 === 0 ? '#1e293b' : '#0f172a') + '; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-bottom: 10px;">',
-                '<div style="font-size: 10px; color: #a78bfa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #334155;">',
-                'Record #' + (index + 1) + ' &mdash; ' + srcLabel,
-                '</div>',
-                fieldsHtml,
-                '</div>'
-            ].join('');
+
+            // Right section (new page if needed)
+            let rightY = y;
+            if (leftY > pageHeight / 2) {
+                doc.addPage();
+                rightY = 20;
+            }
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Section 2', rightMargin, rightY);
+            rightY += 6;
+
+            rightData.forEach((record, index) => {
+                if (rightY > pageHeight - 20) {
+                    doc.addPage();
+                    rightY = 20;
+                }
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Record ' + (midPoint + index + 1) + ':', rightMargin, rightY);
+                rightY += 5;
+
+                visibleColumns.forEach(col => {
+                    if (rightY > pageHeight - 15) {
+                        doc.addPage();
+                        rightY = 20;
+                    }
+                    let value = record[col.key] || '-';
+                    if (value && typeof value === 'object') {
+                        value = value.name || value.order_no || value.invoice_no || '';
+                    }
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(col.label + ':', rightMargin, rightY);
+                    doc.text(String(value), rightMargin + 35, rightY);
+                    rightY += 4;
+                });
+                rightY += 3;
+            });
+
+            // Add page break between modules
+            if (moduleIndex < selectedModules.length - 1) {
+                doc.addPage();
+                y = 20;
+            } else {
+                y = rightY + 10;
+            }
+        });
+
+        doc.save('Report_' + selectedModules.join('_').replace(/\s+/g, '_') + '_' + dateFrom + '_to_' + dateTo + '.pdf');
+    } catch (error) {
+        console.error('Error exporting PDF:', error);
+        alert('Error exporting PDF: ' + error.message);
+    }
+}
+
+// =============================================
+// TABLE CONTROL FUNCTIONS
+// =============================================
+function updateTableSearch(module, value) {
+    tableSearchQueries[module] = value;
+    tableCurrentPages[module] = 1; // Reset to first page
+    filterReports();
+}
+
+function changeTablePage(module, page) {
+    tableCurrentPages[module] = page;
+    filterReports();
+}
+
+function toggleTableColumn(module, colKey) {
+    // Use module-specific column visibility
+    const visibilityKey = module + '_' + colKey;
+    columnVisibility[visibilityKey] = columnVisibility[visibilityKey] === false ? true : false;
+    filterReports();
+}
+
+// Override getVisibleColumns to support per-module column visibility
+function getVisibleColumns(columns) {
+    return columns.filter(col => {
+        if (col.key === '__src__') return true;
+        // Check if there's a module-specific visibility setting
+        const module = columns.length > 0 ? columns[0].label : null;
+        if (module) {
+            const visibilityKey = module + '_' + col.key;
+            if (columnVisibility[visibilityKey] !== undefined) {
+                return columnVisibility[visibilityKey] !== false;
+            }
         }
+        return columnVisibility[col.key] !== false;
     });
+}
 
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = [
-        '<div style="padding: 30px; font-family: Inter, Segoe UI, sans-serif; background: #0f172a; color: #fff;">',
-        '<div style="text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #8b5cf6;">',
-        '<h1 style="font-size: 24px; font-weight: bold; margin: 0 0 5px 0; color: #fff;">ERP System Report</h1>',
-        '<p style="font-size: 12px; color: #94a3b8; margin: 0;">Machine Operation Management</p>',
-        '<div style="margin-top: 12px; display: flex; justify-content: center; gap: 20px; font-size: 11px; color: #64748b;">',
-        '<span>Module: <strong style="color: #a78bfa;">' + moduleName + '</strong></span>',
-        (dateFrom ? '<span>From: <strong style="color: #e2e8f0;">' + dateFrom + '</strong></span>' : ''),
-        (dateTo ? '<span>To: <strong style="color: #e2e8f0;">' + dateTo + '</strong></span>' : ''),
-        '<span>Records: <strong style="color: #e2e8f0;">' + rows.length + '</strong></span>',
-        '</div>',
-        '</div>',
-        '<div style="margin-bottom: 20px;">',
-        recordsHtml,
-        '</div>',
-        '<div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #334155; font-size: 10px; color: #64748b; text-align: center;">',
-        '<p style="margin: 0;">Generated on: ' + new Date().toLocaleString() + '</p>',
-        '<p style="margin: 5px 0 0 0;">ERP System v2.0 &mdash; This is a computer-generated document. No signature required.</p>',
-        '</div>',
-        '</div>'
-    ].join('');
+function changeItemsPerPage() {
+    const select = document.getElementById('report-items-per-page');
+    if (select) {
+        itemsPerPage = parseInt(select.value);
+        // Reset all pages
+        tableCurrentPages = {};
+        filterReports();
+    }
+}
 
-    const opt = {
-        margin: 12,
-        filename: 'erp_report_' + new Date().toISOString().split('T')[0] + '.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#0f172a'
-        },
-        jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'landscape'
-        }
-    };
-
-    exportToPDF(wrapper, 'erp_report_' + new Date().toISOString().split('T')[0] + '.pdf');
+function changeTableItemsPerPage(module, value) {
+    itemsPerPage = parseInt(value);
+    tableCurrentPages[module] = 1; // Reset to first page
+    filterReports();
 }
 
 // =============================================
@@ -510,10 +839,10 @@ function updateModuleSelection() {
         textEl.textContent = 'All Modules';
     } else {
         const labels = {
-            'received-orders': 'Received Orders',
-            'completed-orders': 'Completed Orders',
-            'rework': 'Rework Records',
-            'store-request': 'Store Requests'
+            'received-orders': 'Received Order',
+            'completed-orders': 'Completed Order',
+            'rework': 'Rework Recording',
+            'machine-maintenance': 'Machine Maintenance Logs'
         };
         textEl.textContent = selected.map(m => labels[m] || m).join(', ');
     }
