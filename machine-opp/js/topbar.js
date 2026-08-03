@@ -23,11 +23,12 @@ class TopNavigationBar {
             <div class="flex items-center space-x-3">
                 <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/25 relative overflow-hidden group">
                     <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <i class="fa-solid fa-industry text-lg text-white relative z-10"></i>
+                    <!-- <i class="fa-solid fa-industry text-lg text-white relative z-10"></i> -->
+                    <b>&nbsp; V &nbsp;</b>
                 </div>
                 <div class="hidden sm:block">
                     <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
-                        ERP System
+                        V☰CTOR ADVERT & MANUFACTURING
                     </h1>
                     <p class="text-[10px] text-slate-400 font-medium">Machine Operation Management</p>
                 </div>
