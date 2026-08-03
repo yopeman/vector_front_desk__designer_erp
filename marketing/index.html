@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector Master ERP - International Marketing Ultimate Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+Ethiopic:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        /* ================================================
+           AUTH OVERLAY STYLES (teal theme, matches machine-opp)
+           ================================================ */
+        .auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom right, #00ced1, #00b8bb, #00ced1);
+        }
+
+        .auth-overlay.hidden {
+            display: none;
+        }
+
+        .auth-card {
+            background: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 28rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to right, #00ced1, #00b8bb);
+        }
+
+        .auth-input {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.625rem 0.875rem;
+            font-size: 0.875rem;
+            color: #1f2937;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .auth-input:focus {
+            border-color: #00CED1;
+            box-shadow: 0 0 0 2px #e6fffd;
+        }
+
+        .auth-input.error {
+            border-color: #f43f5e;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15);
+        }
+
+        .auth-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .auth-btn {
+            width: 100%;
+            background: linear-gradient(to right, #00CED1, #00b8bb);
+            color: white;
+            font-weight: 700;
+            padding: 0.625rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .auth-btn:hover {
+            opacity: 0.9;
+        }
+
+        .auth-btn:active {
+            transform: scale(0.98);
+        }
+
+        .auth-error {
+            color: #dc2626;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .auth-error.visible {
+            display: block;
+        }
+
+        .auth-toggle {
+            color: #00CED1;
+            font-size: 0.875rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-weight: 500;
+        }
+
+        .auth-toggle:hover {
+            text-decoration: underline;
+        }
+
+        .auth-toggle-password {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .auth-toggle-password:hover {
+            color: #00CED1;
+        }
+
+        .auth-field {
+            position: relative;
+        }
+        :root {
+            --bg-dark: #0b0f19;
+            --panel-bg: #151f32;
+            --input-bg: #0d1527;
+            --text-white: #ffffff;
+            --text-gray: #94a3b8;
+            --primary: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --accent: #8b5cf6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', 'Noto Sans Ethiopic', sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-white); }
+
+        /* App Layout: Sidebar + Main Content */
+        .app-layout { display: flex; min-height: 100vh; }
+
+        /* Navigation Menu Tree (Vertical Sidebar) */
+        .erp-header-tree { display: flex; flex-direction: column; gap: 8px; width: 220px; min-width: 220px; background: var(--panel-bg); padding: 20px 14px; border-right: 1px solid #233554; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+        .menu-node { background: transparent; padding: 12px 14px; border-radius: 10px; text-align: left; cursor: pointer; border: 1px solid transparent; transition: all 0.25s; display: flex; flex-direction: column; }
+        .menu-node:hover, .menu-node.active { background: var(--primary); border-color: var(--text-white); }
+        .menu-node h4 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+        .menu-node span { font-size: 11px; color: var(--text-gray); display: block; }
+        .menu-node.active span, .menu-node:hover span { color: rgba(255,255,255,0.8); }
+
+        .main-content { flex: 1; padding: 25px; min-width: 0; }
+
+        /* Action Controls - Search & Filters Layout */
+        .action-container { background: var(--panel-bg); padding: 15px; border-radius: 14px; display: flex; gap: 15px; align-items: center; margin-bottom: 25px; border: 1px solid #233554; }
+        .search-group { flex: 1; display: flex; gap: 10px; align-items: center; }
+        .search-input-field { flex: 2; padding: 12px 15px; background: var(--input-bg); border: 1px solid #233554; color: var(--text-white); border-radius: 8px; font-size: 13px; outline: none; }
+        
+        .filter-tags-wrapper { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .filter-tag { background: #1e2d4a; color: var(--text-gray); padding: 8px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #233554; transition: all 0.2s; }
+        .filter-tag:hover, .filter-tag.active-tag { background: var(--primary); color: white; border-color: var(--text-white); }
+
+        .add-action-btn { background: var(--success); color: white; padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+
+        /* Views Layout */
+        .view-section { display: none; }
+        .view-section.active-view { display: block; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .panel-card { background: var(--panel-bg); border-radius: 16px; padding: 22px; border: 1px solid #233554; }
+        .panel-title { font-size: 15px; font-weight: 600; color: var(--text-gray); margin-bottom: 15px; border-bottom: 1px solid #233554; padding-bottom: 8px; display: flex; justify-content: space-between; }
+        
+        /* Presence Interactive Styles */
+        .presence-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .presence-btn { padding: 12px; border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; text-align: center;}
+        .presence-btn.in { background: var(--primary); }
+        .presence-btn.out { background: var(--danger); }
+        .clock-counter { background: var(--input-bg); padding: 10px; text-align: center; border-radius: 8px; color: var(--warning); font-size: 18px; font-weight: bold; }
+
+        /* Tables Data styling */
+        .table-container { width: 100%; overflow-x: auto; background: var(--panel-bg); border-radius: 12px; border: 1px solid #233554; margin-top: 15px;}
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+        .data-table th { background: #1e2d4a; padding: 14px; color: var(--text-white); font-weight: 600; border-bottom: 2px solid #233554; }
+        .data-table td { padding: 14px; border-bottom: 1px solid #233554; color: var(--text-gray); }
+        .data-table tr:hover { background: #1a263b; }
+        .status-pill { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .status-pill.pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .status-pill.success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+        /* Popup Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 8, 16, 0.85); justify-content: center; align-items: center; z-index: 2000; overflow-y: auto; padding: 20px; }
+        .modal-body { background: var(--panel-bg); border-radius: 16px; width: 100%; max-width: 680px; padding: 30px; border: 1px solid #334155; position: relative; }
+        .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-gray); font-size: 24px; cursor: pointer; }
+        
+        .form-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; border-bottom: 1px solid #233554; padding-bottom: 10px; color: var(--text-white); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-gray); margin-bottom: 6px; }
+        .input-field { width: 100%; padding: 11px; background: var(--input-bg); border: 1px solid #233554; color: white; border-radius: 6px; font-size: 13px; outline: none;}
+        
+        /* Media Feature Box Styles */
+        .media-box { display: flex; gap: 10px; background: var(--input-bg); padding: 12px; border-radius: 8px; margin-top: 15px; align-items: center; justify-content: space-between; border: 1px dashed #233554; }
+        .media-btn { padding: 8px 14px; background: #233554; border: none; color: white; border-radius: 6px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }
+        .media-btn.record { background: #ef4444; color: white; }
+        .media-btn.file-btn { background: #8b5cf6; color: white; }
+        .media-btn.active-status { background: var(--success) !important; color: white; animation: blink 1.2s infinite; }
+
+        /* Form Buttons Layout (Separated) */
+        .flex-buttons { display: flex; justify-content: flex-end; gap: 12px; margin-top: 25px; border-top: 1px solid #233554; padding-top: 15px; }
+        .action-trigger { padding: 12px 22px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; color: white; transition: background 0.2s; }
+        .btn-register { background: var(--primary); }
+        .btn-register:hover { background: #1d4ed8; }
+        .btn-pdf { background: var(--warning); color: #0b0f19; }
+        .btn-pdf:hover { background: #d97706; }
+
+        @keyframes blink { 0% {opacity: 0.6;} 50% {opacity: 1;} 100% {opacity: 0.6;} }
+    </style>
+</head>
+<body>
+
+    <div class="app-layout">
+    <div class="erp-header-tree">
+        <div class="menu-node active" id="node-dashboard" onclick="switchView('dashboard')">
+            <h4>Dashboard</h4><span>Overview</span>
+        </div>
+        <div class="menu-node" id="node-marketRequest" onclick="switchView('marketRequest')">
+            <h4>Market Request</h4><span>Marketing</span>
+        </div>
+        <div class="menu-node" id="node-clientRegistry" onclick="switchView('clientRegistry')">
+            <h4>Client Registry</h4><span>Customers</span>
+        </div>
+        <div class="menu-node" id="node-invoice" onclick="switchView('invoice')">
+            <h4>Invoice</h4><span>Billing</span>
+        </div>
+        <div class="menu-node" id="node-research" onclick="switchView('research')">
+            <h4>Research Login</h4><span>Research</span>
+        </div>
+        <div class="menu-node" id="node-digitalLog" onclick="switchView('digitalLog')">
+            <h4>Digital Log</h4><span>Content</span>
+        </div>
+        <div class="menu-node" id="node-tender" onclick="switchView('tender')">
+            <h4>Tender</h4><span>Procurement</span>
+        </div>
+        <div class="menu-node" id="node-feedback" onclick="switchView('feedback')">
+            <h4>Feed Back</h4><span>Reviews</span>
+        </div>
+        <div class="menu-node" id="node-leave" onclick="switchView('leave')">
+            <h4>Leave Request</h4><span>HR</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+    <div class="action-container">
+        <div class="search-group">
+            <input type="text" class="search-input-field" id="mainSearchInput" placeholder="🔍 Search here... (number, name, or sector)" onkeyup="filterDataBySearch()">
+            <div class="filter-tags-wrapper">
+                <div class="filter-tag active-tag" id="tag-all" onclick="setSearchFilter('all')">All</div>
+                <div class="filter-tag" id="tag-date" onclick="setSearchFilter('date')">Date</div>
+                <div class="filter-tag" id="tag-name" onclick="setSearchFilter('name')">Name</div>
+                <div class="filter-tag" id="tag-sector" onclick="setSearchFilter('sector')">Sector</div>
+                <div class="filter-tag" id="tag-type" onclick="setSearchFilter('type')">Type</div>
+            </div>
+        </div>
+        <button class="add-action-btn" onclick="triggerCurrentForm()">
+            <span>+</span> Add New
+        </button>
+    </div>
+
+    <div id="view-dashboard" class="view-section active-view">
+        <div class="dashboard-grid">
+            <div class="panel-card">
+                <div class="panel-title">Presence</div>
+                <div class="presence-grid">
+                    <button class="presence-btn in" onclick="toggleClock(true)">Clock In</button>
+                    <button class="presence-btn out" onclick="toggleClock(false)">Clock Out</button>
+                </div>
+                <div class="presence-grid" style="font-size:12px; text-align:center; color: var(--text-gray);">
+                    <div id="clockInTime">In: --:--:--</div><div id="clockOutTime">Out: --:--:--</div>
+                </div>
+                <div class="clock-counter" id="livePresenceTimer">00:00:00</div>
+            </div>
+            <div class="panel-card">
+                <div class="panel-title">Order Status</div>
+                <div style="height:120px; background:var(--input-bg); border-radius:8px; display:flex; align-items:flex-end; padding:15px; gap:20px;">
+                    <div style="flex:1; height:85%; background:var(--primary); position:relative;"><span style="position:absolute; top:-20px; font-size:11px; width:100%; text-align:center;">85%</span></div>
+                    <div style="flex:1; height:40%; background:var(--success); position:relative;"><span style="position:absolute; top:-20px; font-size:11px; width:100%; text-align:center;">40%</span></div>
+                </div>
+            </div>
+            <div class="panel-card">
+                <div class="panel-title">Notification</div>
+                <p style="font-size:12px; color:var(--warning); line-height:1.6;">⚠️ Note: When the client's payment is completed, the status will automatically update and the client will be included in the list.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-marketRequest" class="view-section">
+        <h3>Market Request List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Request Number</th><th>Request Type</th><th>Priority</th><th>Assigned To</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="marketRequestTableBody">
+                    <tr><td colspan="8" style="text-align:center; color:var(--text-gray);">Loading market requests...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-clientRegistry" class="view-section">
+        <h3>Client & Leads Registry List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Client Name</th><th>Type</th><th>Business Sector</th><th>TIN Number</th><th>Address</th><th>Discovery</th><th>Level</th></tr></thead>
+                <tbody id="clientTableBody">
+                    <tr><td>2026-06-05</td><td>Vector Advert Corp</td><td>organization</td><td>advertising</td><td>0059144267</td><td>Addis Ababa</td><td>telegram</td><td>premium</td></tr>
+                    <tr><td>2026-06-06</td><td>Abyssinia Trading</td><td>organization</td><td>manufacturing</td><td>0043128954</td><td>Bole, Block 4</td><td>walk in</td><td>standard</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-invoice" class="view-section">
+        <h3>Invoice List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Invoice Number</th><th>Client Name</th><th>Reference Number</th><th>Item / Service</th><th>Subtotal (Excl. VAT)</th><th>VAT (15%)</th><th>Grand Total</th></tr></thead>
+                <tbody id="invoiceTableBody">
+                    <tr><td>2026-06-09</td><td>INV-201</td><td>Abyssinia Hotel</td><td>REF-990</td><td>Marketing Service</td><td>10,000 ETB</td><td>1,500 ETB</td><td>11,500 ETB</td></tr>
+                    <tr><td>2026-06-09</td><td>INV-202</td><td>Rama IT Solutions</td><td>REF-441</td><td>ERP Customization</td><td>25,000 ETB</td><td>3,750 ETB</td><td>28,750 ETB</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-research" class="view-section">
+        <h3>Research Login List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Research Number</th><th>Title</th><th>Reason</th><th>Objective</th><th>Methodology</th></tr></thead>
+                <tbody id="researchTableBody">
+                    <tr><td>2026-06-01</td><td>RES-701</td><td>Competitor Study</td><td>Analyze competitors</td><td>Market Share</td><td>Surveys</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-digitalLog" class="view-section">
+        <h3>Digital Log List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Content Number</th><th>Content Title</th><th>Content Script / Idea</th><th>Shared To</th></tr></thead>
+                <tbody id="digitalLogTableBody">
+                    <tr><td>2026-06-08</td><td>LOG-05</td><td>TikTok Promo Video</td><td>Short video script prepared to promote Vector Master ERP.</td><td>marketing manager</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-tender" class="view-section">
+        <h3>Tender List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Company Name</th><th>Tender No</th><th>Item/Service</th><th>CPO Amount</th><th>Total Price</th><th>VAT Status</th></tr></thead>
+                <tbody id="tenderTableBody">
+                    <tr><td>2026-05-20</td><td>Gov Telecom</td><td>TEN-401</td><td>Network Setup</td><td>50,000 ETB</td><td>57,500 ETB</td><td>With VAT</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-feedback" class="view-section">
+        <h3>Feedback List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>Company Name</th><th>Project Name</th><th>Project Number</th><th>Overall Evaluation</th><th>Service Quality</th><th>Grade</th></tr></thead>
+                <tbody id="feedbackTableBody">
+                    <tr><td>2026-06-02</td><td>Commercial Bank</td><td>App Campaign</td><td>PRJ-77</td><td>Excellent (100)</td><td>Very Satisfied (100)</td><td>A (95%+)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="view-leave" class="view-section">
+        <h3>Leave & Requests List</h3>
+        <div class="table-container">
+            <table class="data-table">
+                <thead><tr><th>Date</th><th>From Date - To Date</th><th>Leave Type / Reason</th><th>Other Request Letter</th><th>Remarks</th><th>Status</th></tr></thead>
+                <tbody id="leaveTableBody">
+                    <tr><td>2026-06-09</td><td>2026-07-01 - 2026-07-15</td><td>Annual Leave</td><td>None</td><td>Annual Vacation</td><td><span class="status-pill pending">Pending</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    </div>
+    </div>
+
+
+    <div id="formModal-marketRequest" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Market Request Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="mkt_date" class="input-field" value="2026-06-09"></div>
+                    <div class="form-group"><label>Request Number</label><input type="text" id="mkt_no" class="input-field" value="REQ-002"></div>
+                </div>
+                <div class="form-group"><label>Request Type</label><input type="text" id="mkt_type" class="input-field" value="Advertising and Branding Work"></div>
+                <div class="form-group"><label>Description</label><textarea id="mkt_desc" class="input-field" rows="2">Prepare a new campaign advertisement for Vector Master</textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Priority</label><select id="mkt_priority" class="input-field"><option selected>high</option><option>medium</option><option>low</option></select></div>
+                    <div class="form-group"><label>Assigned To</label><input type="text" id="mkt_assign" class="input-field" value="Abebe K."></div>
+                </div>
+                <div class="form-group"><label>Due Date</label><input type="date" id="mkt_due" class="input-field" value="2026-06-15"></div>
+                
+                <div class="media-box">
+                    <div>
+                        <button type="button" class="media-btn file-btn" onclick="document.getElementById('mkt_file').click()">📎 Attach File</button>
+                        <input type="file" id="mkt_file" style="display:none;" onchange="fileAttachedNotice('mkt_file_lbl')">
+                        <span id="mkt_file_lbl" style="font-size:11px; margin-left:5px; color:var(--text-gray);"></span>
+                        <button type="button" id="btnMktVoice" class="media-btn record" onclick="toggleVoiceRecording('btnMktVoice')">🎤 Record Voice</button>
+                    </div>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveMarketRequest()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Market Request')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="formModal-clientRegistry" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Register Client Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="cli_date" class="input-field" value="2026-06-05"></div>
+                    <div class="form-group"><label>Client/Company Name</label><input type="text" id="cli_name" class="input-field" value="Vector Advert Corp"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Customer Type</label><select id="cli_type" class="input-field"><option selected>organization</option><option>personal</option></select></div>
+                    <div class="form-group"><label>Business Sector</label><select id="cli_sector" class="input-field"><option selected>advertising</option><option>manufacturing</option><option>financial</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>TIN Number</label><input type="text" id="cli_tin" class="input-field" value="0059144267"></div>
+                    <div class="form-group"><label>Discovery</label><select id="cli_discovery" class="input-field"><option selected>telegram</option><option>tiktok</option><option>facebook</option></select></div>
+                </div>
+
+                <div class="media-box">
+                    <button type="button" class="media-btn file-btn" onclick="document.getElementById('cli_file').click()">📎 Attach Business License Document</button>
+                    <input type="file" id="cli_file" style="display:none;" onchange="fileAttachedNotice('cli_file_lbl')">
+                    <span id="cli_file_lbl" style="font-size:11px; color:var(--text-gray);"></span>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveClient()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Client Registry')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="formModal-invoice" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Invoice Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="inv_date" class="input-field" value="2026-06-09"></div>
+                    <div class="form-group"><label>Invoice Number</label><input type="text" id="inv_no" class="input-field" value="INV-201"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Client Name</label><input type="text" id="inv_client" class="input-field" value="Abyssinia Hotel"></div>
+                    <div class="form-group"><label>Reference Number</label><input type="text" id="inv_ref" class="input-field" value="REF-990"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Item / Service Type (Text)</label><input type="text" id="inv_item" class="input-field" value="Marketing & Software ERP Integration Service"></div>
+                    <div class="form-group"><label>Subtotal Amount (Excl. VAT)</label><input type="number" id="inv_subtotal" class="input-field" oninput="calculateInvoiceTotal()" value="10000"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Company TIN Number</label><input type="text" id="inv_tin" class="input-field" value="0043128954"></div>
+                    <div class="form-group"><label>Payment Term</label><input type="text" id="inv_term" class="input-field" value="Bank Transfer / 100% Advanced"></div>
+                </div>
+
+                <div class="form-group" style="margin-top:10px;">
+                    <label style="cursor:pointer; color:var(--success); font-weight:600;">
+                        <input type="checkbox" id="inv_vat_toggle" checked onchange="calculateInvoiceTotal()" style="width:18px; height:18px; vertical-align:middle; margin-right:8px;">
+                        🟦 Include 15% VAT
+                    </label>
+                </div>
+                
+                <div style="background:var(--input-bg); padding:15px; border-radius:8px; margin-top:10px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>VAT Amount (15%):</span><span id="displayVatAmount">1,500</span> ETB</div>
+                    <div style="display:flex; justify-content:space-between; font-weight:700; color:var(--warning);"><span>GRAND TOTAL:</span><span id="displayGrandTotal">11,500</span> ETB</div>
+                </div>
+
+                <div class="media-box">
+                    <div>
+                        <button type="button" class="media-btn file-btn" onclick="document.getElementById('inv_file').click()">📎 Attach Stamp/Signature</button>
+                        <input type="file" id="inv_file" style="display:none;" onchange="fileAttachedNotice('inv_file_lbl')">
+                        <span id="inv_file_lbl" style="font-size:11px; color:var(--text-gray);"></span>
+                        <button type="button" id="btnInvVoice" class="media-btn record" onclick="toggleVoiceRecording('btnInvVoice')">🎤 Voice Note</button>
+                    </div>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveInvoice()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Invoice')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="formModal-research" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Research Login Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="res_date" class="input-field" value="2026-06-01"></div>
+                    <div class="form-group"><label>Research Number</label><input type="text" id="res_no" class="input-field" value="RES-701"></div>
+                </div>
+                <div class="form-group"><label>Research Title</label><input type="text" id="res_title" class="input-field" value="Competitor Study"></div>
+                <div class="form-group"><label>Research Reason</label><input type="text" id="res_reason" class="input-field" value="Analyze competitors and market share"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Objective</label><input type="text" id="res_obj" class="input-field" value="Identify Gaps"></div>
+                    <div class="form-group"><label>Methodology</label><input type="text" id="res_method" class="input-field" value="Surveys & Data Mining"></div>
+                </div>
+
+                <div class="media-box">
+                    <button type="button" class="media-btn file-btn" onclick="document.getElementById('res_file').click()">📎 Attach Research Document</button>
+                    <input type="file" id="res_file" style="display:none;" onchange="fileAttachedNotice('res_file_lbl')">
+                    <span id="res_file_lbl" style="font-size:11px; color:var(--text-gray);"></span>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveResearch()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Research Login')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="formModal-digitalLog" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Digital Log Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="log_date" class="input-field" value="2026-06-08"></div>
+                    <div class="form-group"><label>Content Number</label><input type="text" id="log_no" class="input-field" value="LOG-05"></div>
+                </div>
+                <div class="form-group"><label>Content Title</label><input type="text" id="log_title" class="input-field" value="TikTok Promo Video & Product Pitch"></div>
+                
+                <div class="form-group"><label>Content Script / Idea Description (Text Script)</label>
+                    <textarea id="log_script" class="input-field" rows="3">Short video script idea and marketing strategy description prepared to promote Vector Master ERP to the international market.</textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group"><label>Social Media Channel</label><input type="text" id="log_channel" class="input-field" value="TikTok & Telegram Official"></div>
+                    <div class="form-group"><label>Share To</label><select id="log_share" class="input-field"><option selected>marketing manager</option><option>management</option></select></div>
+                </div>
+
+                <div class="media-box">
+                    <div>
+                        <button type="button" class="media-btn file-btn" onclick="document.getElementById('log_file').click()">📎 Attach Media File</button>
+                        <input type="file" id="log_file" style="display:none;" onchange="fileAttachedNotice('log_file_lbl')">
+                        <span id="log_file_lbl" style="font-size:11px; color:var(--text-gray);"></span>
+                        <button type="button" id="btnLogVoice" class="media-btn record" onclick="toggleVoiceRecording('btnLogVoice')">🎤 Record Voice Script</button>
+                    </div>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveDigitalLog()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Digital Log')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="formModal-tender" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Tender Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="ten_date" class="input-field" value="2026-05-20"></div>
+                    <div class="form-group"><label>Company Name</label><input type="text" id="ten_company" class="input-field" value="Gov Telecom"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Tender No</label><input type="text" id="ten_no" class="input-field" value="TEN-401"></div>
+                    <div class="form-group"><label>Item/Service</label><input type="text" id="ten_item" class="input-field" value="Network Hardware Setup"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>CPO Amount</label><input type="text" id="ten_cpo" class="input-field" value="50,000 ETB"></div>
+                    <div class="form-group"><label>Total Price</label><input type="text" id="ten_total" class="input-field" value="57,500 ETB"></div>
+                </div>
+
+                <div class="media-box">
+                    <button type="button" class="media-btn file-btn" onclick="document.getElementById('ten_file').click()">📎 Attach Tender Document/CPO</button>
+                    <input type="file" id="ten_file" style="display:none;" onchange="fileAttachedNotice('ten_file_lbl')">
+                    <span id="ten_file_lbl" style="font-size:11px; color:var(--text-gray);"></span>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveTender()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Tender')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="formModal-feedback" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Feedback Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="fb_date" class="input-field" value="2026-06-02"></div>
+                    <div class="form-group"><label>Client Name</label><input type="text" id="fb_client" class="input-field" value="Commercial Bank of Ethiopia"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Project Name</label><input type="text" id="fb_proj" class="input-field" value="Mobile App Marketing Campaign"></div>
+                    <div class="form-group"><label>Project Number</label><input type="text" id="fb_proj_no" class="input-field" value="PRJ-77"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Overall Evaluation (0-100)</label><input type="number" id="fb_score1" class="input-field" value="100"></div>
+                    <div class="form-group"><label>Service Quality (0-100)</label><input type="number" id="fb_score2" class="input-field" value="100"></div>
+                </div>
+
+                <div class="media-box">
+                    <button type="button" class="media-btn file-btn" onclick="document.getElementById('fb_file').click()">📎 Attach Signed Form</button>
+                    <input type="file" id="fb_file" style="display:none;" onchange="fileAttachedNotice('fb_file_lbl')">
+                    <span id="fb_file_lbl" style="font-size:11px; color:var(--text-gray);"></span>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveFeedback()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Feedback')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="formModal-leave" class="modal-overlay">
+        <div class="modal-body">
+            <button class="close-btn" onclick="closeAllModals()">&times;</button>
+            <div class="form-title">Leave Request Form</div>
+            <form>
+                <div class="form-row">
+                    <div class="form-group"><label>Date</label><input type="date" id="leave_date" class="input-field" value="2026-06-09"></div>
+                    <div class="form-group"><label>Reason Type</label>
+                        <select id="leave_reason" class="input-field"><option selected>Annual Leave</option><option>Medical Leave</option></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>From Date</label><input type="date" id="leave_start" class="input-field" value="2026-07-01"></div>
+                    <div class="form-group"><label>To Date</label><input type="date" id="leave_end" class="input-field" value="2026-07-15"></div>
+                </div>
+                <div class="form-group"><label>Remarks</label><input type="text" id="leave_rem" class="input-field" value="Annual Vacation Plan"></div>
+
+                <div class="media-box">
+                    <button type="button" class="media-btn file-btn" onclick="document.getElementById('leave_file').click()">📎 Attach Letter/Application</button>
+                    <input type="file" id="leave_file" style="display:none;" onchange="fileAttachedNotice('leave_file_lbl')">
+                    <span id="leave_file_lbl" style="font-size:11px; color:var(--text-gray);"></span>
+                </div>
+
+                <div class="flex-buttons">
+                    <button type="button" class="action-trigger btn-register" onclick="saveLeave()">Save</button>
+                    <button type="button" class="action-trigger btn-pdf" onclick="downloadFormPDF('Leave Request')">Download PDF</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- Supabase client initialization -->
+    <script src="js/supabase.js"></script>
+    <!-- Auth system -->
+    <script src="js/auth.js"></script>
+    <!-- Auth overlay (injects login UI) -->
+    <script src="js/auth-overlay.js"></script>
+
+    <script>
+        let currentActiveView = 'dashboard';
+        let liveTimer;
+        let secondsCounter = 0;
+        let activeFilterType = 'all';
+        let editingMarketRequestId = null;
+        let marketRequestsCache = [];
+        let usersCache = [];
+
+        function switchView(viewId) {
+            currentActiveView = viewId;
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
+            document.querySelectorAll('.menu-node').forEach(n => n.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active-view');
+            document.getElementById('node-' + viewId).classList.add('active');
+
+            // Load market requests from Supabase whenever the view is shown
+            if (viewId === 'marketRequest') {
+                loadMarketRequests();
+            }
+        }
+
+        function triggerCurrentForm() {
+            if(currentActiveView === 'dashboard') {
+                document.getElementById('formModal-clientRegistry').style.display = 'flex';
+            } else if (currentActiveView === 'marketRequest') {
+                openNewMarketRequestForm();
+            } else {
+                const modal = document.getElementById('formModal-' + currentActiveView);
+                if(modal) modal.style.display = 'flex';
+            }
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        }
+
+        function setSearchFilter(filterType) {
+            activeFilterType = filterType;
+            document.querySelectorAll('.filter-tag').forEach(tag => tag.classList.remove('active-tag'));
+            document.getElementById('tag-' + filterType).classList.add('active-tag');
+            filterDataBySearch();
+        }
+
+        function filterDataBySearch() {
+            const query = document.getElementById('mainSearchInput').value.toLowerCase();
+            if(currentActiveView === 'dashboard') return;
+            
+            const tableBody = document.querySelector(`#view-${currentActiveView} tbody`);
+            if(!tableBody) return;
+            
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(query) ? '' : 'none';
+            });
+        }
+
+        function toggleClock(inbound) {
+            const time = new Date().toLocaleTimeString();
+            if(inbound) {
+                document.getElementById('clockInTime').innerText = "In: " + time;
+                clearInterval(liveTimer);
+                liveTimer = setInterval(() => {
+                    secondsCounter++;
+                    let h = Math.floor(secondsCounter / 3600).toString().padStart(2, '0');
+                    let m = Math.floor((secondsCounter % 3600) / 60).toString().padStart(2, '0');
+                    let s = (secondsCounter % 60).toString().padStart(2, '0');
+                    document.getElementById('livePresenceTimer').innerText = `${h}:${m}:${s}`;
+                }, 1000);
+            } else {
+                document.getElementById('clockOutTime').innerText = "Out: " + time;
+                clearInterval(liveTimer);
+            }
+        }
+
+        // Voice Recording Interface Simulator
+        function toggleVoiceRecording(buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (!btn.classList.contains('active-status')) {
+                btn.classList.add('active-status');
+                btn.innerText = "🛑 Recording voice...";
+            } else {
+                btn.classList.remove('active-status');
+                btn.innerText = "🎤 Record Voice";
+                alert("Voice message has been successfully recorded!");
+            }
+        }
+
+        // File Selection Label Trigger
+        function fileAttachedNotice(labelId) {
+            document.getElementById(labelId).innerText = "✓ File attached";
+            document.getElementById(labelId).style.color = "#10b981";
+        }
+
+        function calculateInvoiceTotal() {
+            const sub = parseFloat(document.getElementById('inv_subtotal').value) || 0;
+            const vat = document.getElementById('inv_vat_toggle').checked ? sub * 0.15 : 0;
+            document.getElementById('displayVatAmount').innerText = vat.toLocaleString();
+            document.getElementById('displayGrandTotal').innerText = (sub + vat).toLocaleString();
+        }
+
+        // ============================================================
+        // MARKET REQUEST CRUD (create, read/list, update)
+        // ============================================================
+
+        // Load users into cache for "Assigned To" name resolution
+        async function loadUsersCache() {
+            const { data, error } = await window.supabase
+                .from('users')
+                .select('id, username, email');
+            if (error) { console.error('Error loading users:', error); return; }
+            usersCache = data || [];
+        }
+
+        function getUserName(userId) {
+            if (!userId) return '—';
+            const u = usersCache.find(x => x.id === userId);
+            return u ? (u.username || u.email || '—') : '—';
+        }
+
+        // Load market requests from Supabase and render the table
+        async function loadMarketRequests() {
+            const tbody = document.getElementById('marketRequestTableBody');
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-gray);">Loading market requests...</td></tr>';
+
+            await loadUsersCache();
+
+            const { data, error } = await window.supabase
+                .from('mrk_market_requests')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--danger);">Error loading: ${error.message}</td></tr>`;
+                return;
+            }
+
+            marketRequestsCache = data || [];
+            renderMarketRequests();
+        }
+
+        function renderMarketRequests() {
+            const tbody = document.getElementById('marketRequestTableBody');
+            if (marketRequestsCache.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-gray);">No market requests found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = marketRequestsCache.map(r => {
+                const statusClass = r.status === 'approved' ? 'success' : (r.status === 'rejected' ? 'pending' : 'pending');
+                const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+                return `<tr>
+                    <td>${r.request_date || '—'}</td>
+                    <td>${r.request_no || '—'}</td>
+                    <td>${r.request_type || '—'}</td>
+                    <td>${r.priority || '—'}</td>
+                    <td>${getUserName(r.assigned_to)}</td>
+                    <td>${r.due_date || '—'}</td>
+                    <td><span class="status-pill ${statusClass}">${statusLabel}</span></td>
+                    <td>
+                        <button class="action-trigger btn-register" style="padding:6px 12px; font-size:11px; margin-right:5px;" onclick="editMarketRequest('${r.id}')">✏️ Edit</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        // Open the form in "create" mode (reset fields)
+        function openNewMarketRequestForm() {
+            editingMarketRequestId = null;
+            document.getElementById('mkt_date').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('mkt_no').value = '';
+            document.getElementById('mkt_type').value = '';
+            document.getElementById('mkt_desc').value = '';
+            document.getElementById('mkt_priority').value = 'medium';
+            document.getElementById('mkt_assign').value = '';
+            document.getElementById('mkt_due').value = '';
+            document.getElementById('formModal-marketRequest').style.display = 'flex';
+        }
+
+        // Open the form in "edit" mode, pre-filled with the record's data
+        async function editMarketRequest(id) {
+            const { data, error } = await window.supabase
+                .from('mrk_market_requests')
+                .select('*')
+                .eq('id', id)
+                .maybeSingle();
+            if (error || !data) { alert("Error loading market request: " + (error?.message || 'not found')); return; }
+
+            editingMarketRequestId = id;
+            document.getElementById('mkt_date').value = data.request_date || '';
+            document.getElementById('mkt_no').value = data.request_no || '';
+            document.getElementById('mkt_type').value = data.request_type || '';
+            document.getElementById('mkt_desc').value = data.description || '';
+            document.getElementById('mkt_priority').value = data.priority || 'medium';
+            document.getElementById('mkt_assign').value = data.assigned_to || '';
+            document.getElementById('mkt_due').value = data.due_date || '';
+            document.getElementById('formModal-marketRequest').style.display = 'flex';
+        }
+
+        // Create or update a market request
+        async function saveMarketRequest() {
+            const user = await getCurrentUser();
+            if (!user) { alert("Please sign in first."); return; }
+
+            const date = document.getElementById('mkt_date').value;
+            const no = document.getElementById('mkt_no').value;
+            const type = document.getElementById('mkt_type').value;
+            const prio = document.getElementById('mkt_priority').value;
+            const assign = document.getElementById('mkt_assign').value;
+            const due = document.getElementById('mkt_due').value;
+
+            if (!no || !type) { alert("Request Number and Request Type are required."); return; }
+
+            const payload = {
+                request_no: no,
+                request_date: date,
+                request_type: type,
+                description: document.getElementById('mkt_desc').value,
+                priority: prio,
+                due_date: due,
+            };
+
+            let error;
+            if (editingMarketRequestId) {
+                // UPDATE existing record
+                ({ error } = await window.supabase
+                    .from('mrk_market_requests')
+                    .update(payload)
+                    .eq('id', editingMarketRequestId));
+            } else {
+                // CREATE new record
+                payload.created_by = user.id;
+                ({ error } = await window.supabase
+                    .from('mrk_market_requests')
+                    .insert(payload));
+            }
+
+            if (error) { alert("Error saving market request: " + error.message); return; }
+
+            alert(editingMarketRequestId ? "Market request updated successfully!" : "Market request has been registered in the list!");
+            closeAllModals();
+            editingMarketRequestId = null;
+            loadMarketRequests();
+        }
+
+        async function saveClient() {
+            const user = await getCurrentUser();
+            if (!user) { alert("Please sign in first."); return; }
+
+            const date = document.getElementById('cli_date').value;
+            const name = document.getElementById('cli_name').value;
+            const type = document.getElementById('cli_type').value;
+            const sector = document.getElementById('cli_sector').value;
+            const tin = document.getElementById('cli_tin').value;
+            const disc = document.getElementById('cli_discovery').value;
+
+            const { error } = await window.supabase
+                .from('mrk_clients')
+                .insert({
+                    client_date: date,
+                    client_name: name,
+                    client_type: type,
+                    business_sector: sector,
+                    tin_number: tin,
+                    discovery: disc,
+                    created_by: user.id,
+                });
+
+            if (error) { alert("Error saving client: " + error.message); return; }
+
+            document.getElementById('clientTableBody').innerHTML += `<tr><td>${date}</td><td>${name}</td><td>${type}</td><td>${sector}</td><td>${tin}</td><td>Addis Ababa</td><td>${disc}</td><td>premium</td></tr>`;
+            alert("Client has been registered successfully!");
+            closeAllModals();
+        }
+
+        async function saveInvoice() {
+            const user = await getCurrentUser();
+            if (!user) { alert("Please sign in first."); return; }
+
+            const date = document.getElementById('inv_date').value;
+            const no = document.getElementById('inv_no').value;
+            const client = document.getElementById('inv_client').value;
+            const ref = document.getElementById('inv_ref').value;
+            const item = document.getElementById('inv_item').value;
+            const sub = parseFloat(document.getElementById('inv_subtotal').value) || 0;
+            const vatIncluded = document.getElementById('inv_vat_toggle').checked;
+            const vat = document.getElementById('displayVatAmount').innerText;
+            const tot = document.getElementById('displayGrandTotal').innerText;
+
+            const { error } = await window.supabase
+                .from('mrk_invoices')
+                .insert({
+                    invoice_date: date,
+                    invoice_no: no,
+                    client_name: client,
+                    reference_no: ref,
+                    item_service: item,
+                    subtotal: sub,
+                    vat_included: vatIncluded,
+                    company_tin: document.getElementById('inv_tin').value,
+                    payment_term: document.getElementById('inv_term').value,
+                    created_by: user.id,
+                });
+
+            if (error) { alert("Error saving invoice: " + error.message); return; }
+
+            document.getElementById('invoiceTableBody').innerHTML += `<tr><td>${date}</td><td>${no}</td><td>${client}</td><td>${ref}</td><td>${item}</td><td>${sub} ETB</td><td>${vat} ETB</td><td>${tot} ETB</td></tr>`;
+            alert("New invoice has been added to the list!");
+            closeAllModals();
+        }
+
+        async function saveDigitalLog() {
+            const user = await getCurrentUser();
+            if (!user) { alert("Please sign in first."); return; }
+
+            const date = document.getElementById('log_date').value;
+            const no = document.getElementById('log_no').value;
+            const title = document.getElementById('log_title').value;
+            const script = document.getElementById('log_script').value;
+            const share = document.getElementById('log_share').value;
+
+            const { error } = await window.supabase
+                .from('mrk_digital_logs')
+                .insert({
+                    log_date: date,
+                    content_no: no,
+                    content_title: title,
+                    content_script: script,
+                    social_channel: document.getElementById('log_channel').value,
+                    share_to: share,
+                    created_by: user.id,
+                });
+
+            if (error) { alert("Error saving digital log: " + error.message); return; }
+
+            document.getElementById('digitalLogTableBody').innerHTML += `<tr><td>${date}</td><td>${no}</td><td>${title}</td><td>${script.substring(0,35)}...</td><td>${share}</td></tr>`;
+            alert("Digital log information has been saved!");
+            closeAllModals();
+        }
+
+        async function saveResearch() {
+            const user = await getCurrentUser();
+            if (!user) { alert("Please sign in first."); return; }
+
+            const date = document.getElementById('res_date').value;
+            const no = document.getElementById('res_no').value;
+            const title = document.getElementById('res_title').value;
+            const reason = document.getElementById('res_reason').value;
+            const obj = document.getElementById('res_obj').value;
+            const method = document.getElementById('res_method').value;
+
+            const { error } = await window.supabase
+                .from('mrk_research_logins')
+                .insert({
+                    research_date: date,
+                    research_no: no,
+                    title: title,
+                    reason: reason,
+                    objective: obj,
+                    methodology: method,
+                    created_by: user.id,
+                });
+
+            if (error) { alert("Error saving research: " + error.message); return; }
+
+            document.getElementById('researchTableBody').innerHTML += `<tr><td>${date}</td><td>${no}</td><td>${title}</td><td>${reason}</td><td>${obj}</td><td>${method}</td></tr>`;
+            alert("Research information has been added to the table!");
+            closeAllModals();
+        }
+
+        async function saveTender() {
+            const user = await getCurrentUser();
+            if (!user) { alert("Please sign in first."); return; }
+
+            const date = document.getElementById('ten_date').value;
+            const comp = document.getElementById('ten_company').value;
+            const no = document.getElementById('ten_no').value;
+            const item = document.getElementById('ten_item').value;
+            const cpo = document.getElementById('ten_cpo').value;
+            const tot = document.getElementById('ten_total').value;
+
+            const { error } = await window.supabase
+                .from('mrk_tenders')
+                .insert({
+                    tender_date: date,
+                    company_name: comp,
+                    tender_no: no,
+                    item_service: item,
+                    cpo_amount: parseFloat(cpo.replace(/[^0-9.]/g, '')) || null,
+                    total_price: parseFloat(tot.replace(/[^0-9.]/g, '')) || null,
+                    created_by: user.id,
+                });
+
+            if (error) { alert("Error saving tender: " + error.message); return; }
+
+            document.getElementById('tenderTableBody').innerHTML += `<tr><td>${date}</td><td>${comp}</td><td>${no}</td><td>${item}</td><td>${cpo}</td><td>${tot}</td><td>With VAT</td></tr>`;
+            alert("Tender information has been registered!");
+            closeAllModals();
+        }
+
+        async function saveFeedback() {
+            const user = await getCurrentUser();
+            if (!user) { alert("Please sign in first."); return; }
+
+            const date = document.getElementById('fb_date').value;
+            const client = document.getElementById('fb_client').value;
+            const proj = document.getElementById('fb_proj').value;
+            const no = document.getElementById('fb_proj_no').value;
+            const s1 = parseInt(document.getElementById('fb_score1').value) || 0;
+            const s2 = parseInt(document.getElementById('fb_score2').value) || 0;
+
+            const { error } = await window.supabase
+                .from('mrk_feedbacks')
+                .insert({
+                    feedback_date: date,
+                    client_name: client,
+                    project_name: proj,
+                    project_no: no,
+                    overall_score: s1,
+                    service_score: s2,
+                    created_by: user.id,
+                });
+
+            if (error) { alert("Error saving feedback: " + error.message); return; }
+
+            document.getElementById('feedbackTableBody').innerHTML += `<tr><td>${date}</td><td>${client}</td><td>${proj}</td><td>${no}</td><td>Excellent (${s1})</td><td>Very Satisfied (${s2})</td><td>A</td></tr>`;
+            alert("Client feedback has been recorded!");
+            closeAllModals();
+        }
+
+        function saveLeave() {
+            const date = document.getElementById('leave_date').value;
+            const start = document.getElementById('leave_start').value;
+            const end = document.getElementById('leave_end').value;
+            const reason = document.getElementById('leave_reason').value;
+            const rem = document.getElementById('leave_rem').value;
+
+            document.getElementById('leaveTableBody').innerHTML += `<tr><td>${date}</td><td>${start} - ${end}</td><td>${reason}</td><td>Attached</td><td>${rem}</td><td><span class="status-pill pending">Pending</span></td></tr>`;
+            alert("Leave request has been sent to the manager!");
+            closeAllModals();
+        }
+
+        // ACTION 2: PDF DOWNLOAD GENERATION TRIGGER
+        function downloadFormPDF(formName) {
+            alert(`The complete document for [ ${formName} ] has been converted to PDF and download has started!`);
+        }
+
+        window.onclick = function(e) { if (e.target.classList.contains('modal-overlay')) closeAllModals(); }
+    </script>
+</body>
+</html>
