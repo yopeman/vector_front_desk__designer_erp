@@ -232,7 +232,7 @@ function getMergedColumnConfig(selectedModules) {
     const merged = [];
     selectedModules.forEach(mod => {
         const cols = reportColumnConfigs[mod] || [];
-        merged.push({ key: '__src__', label: moduleLabels[mod] || mod, cls: 'text-center w-16', isSource: true });
+        merged.push({ key: '__src__', label: moduleLabels[mod] || mod, cls: 'text-center w-16', isSource: true, moduleKey: mod });
         cols.forEach(col => {
             merged.push(col);
         });
@@ -345,6 +345,7 @@ async function filterReports() {
 
         const moduleColumns = getMergedColumnConfig([module]);
         const visibleColumns = getVisibleColumns(moduleColumns);
+        const allColumns = moduleColumns.filter(col => col.key !== '__src__' && col.key !== 'no');
 
         // Get or initialize table state
         const tableSearch = tableSearchQueries[module] || '';
@@ -392,18 +393,21 @@ async function filterReports() {
                            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-violet-500 placeholder-slate-500">
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    ${visibleColumns.filter(col => col.key !== '__src__' && col.key !== 'no').map(col => `
+                    ${allColumns.map(col => {
+                        const visibilityKey = module + '_' + col.key;
+                        const isVisible = columnVisibility[visibilityKey] !== false;
+                        return `
                         <button type="button" 
                                 onclick="toggleTableColumn('${module}', '${col.key}')"
                                 class="flex items-center gap-1 px-2 py-1 rounded text-xs border cursor-pointer transition-colors ${
-                                    columnVisibility[col.key] !== false
+                                    isVisible
                                         ? 'bg-violet-500/10 border-violet-500/30 text-violet-400'
                                         : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'
                                 }">
-                            <i class="fa-solid ${columnVisibility[col.key] !== false ? 'fa-eye' : 'fa-eye-slash'} text-[10px]"></i>
+                            <i class="fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'} text-[10px]"></i>
                             <span>${col.label}</span>
                         </button>
-                    `).join('')}
+                    `}).join('')}
                 </div>
             </div>
         `;
@@ -794,7 +798,8 @@ function getVisibleColumns(columns) {
     return columns.filter(col => {
         if (col.key === '__src__') return true;
         // Check if there's a module-specific visibility setting
-        const module = columns.length > 0 ? columns[0].label : null;
+        const sourceCol = columns.find(c => c.isSource && c.moduleKey);
+        const module = sourceCol ? sourceCol.moduleKey : null;
         if (module) {
             const visibilityKey = module + '_' + col.key;
             if (columnVisibility[visibilityKey] !== undefined) {
