@@ -18,27 +18,26 @@ class TopNavigationBar {
 
     render() {
         const header = document.createElement('header');
-        header.className = 'glass-heavy border-b border-slate-700/40 sticky top-0 z-50 px-4 lg:px-6 py-2.5 flex items-center justify-between shadow-xl shadow-black/10 gap-3';
+        header.className = 'bg-[#00CED1] border-b border-white/20 sticky top-0 z-50 px-4 lg:px-6 py-2.5 flex items-center justify-between shadow-xl shadow-black/10 gap-3';
         header.innerHTML = `
             <div class="flex items-center space-x-3">
-                <div class="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/25 relative overflow-hidden group">
+                <div class="p-2 bg-white/20 rounded-xl shadow-lg shadow-black/10 relative overflow-hidden group border border-white/30">
                     <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <!-- <i class="fa-solid fa-industry text-lg text-white relative z-10"></i> -->
-                    <b>&nbsp; V &nbsp;</b>
+                    <b class="text-white">&nbsp; V &nbsp;</b>
                 </div>
                 <div class="hidden sm:block">
                     <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
                         V☰CTOR ADVERT & MANUFACTURING
                     </h1>
-                    <p class="text-[10px] text-slate-400 font-medium">Machine Operation Management</p>
+                    <p class="text-[10px] text-white/80 font-medium">Machine Operation Management</p>
                 </div>
             </div>
 
             <div class="flex items-center gap-1.5">
                 <!-- Notification Bell -->
                 <div class="relative" id="notif-dropdown-container">
-                    <button onclick="topNav.toggleNotifDropdown()" id="notif-bell-btn" class="relative p-2 rounded-xl hover:bg-slate-700/40 transition-colors group" aria-label="Notifications">
-                        <i class="fa-solid fa-bell text-slate-400 group-hover:text-white transition-colors text-sm"></i>
+                    <button onclick="topNav.toggleNotifDropdown()" id="notif-bell-btn" class="relative p-2 rounded-xl hover:bg-white/15 transition-colors group" aria-label="Notifications">
+                        <i class="fa-solid fa-bell text-white group-hover:text-white transition-colors text-sm"></i>
                         <span id="notif-badge" class="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">0</span>
                     </button>
                     <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700/50 rounded-2xl shadow-2xl shadow-black/40 z-50 overflow-hidden">
@@ -57,8 +56,8 @@ class TopNavigationBar {
 
                 <!-- Message Icon -->
                 <div class="relative" id="msg-dropdown-container">
-                    <button onclick="topNav.toggleMsgDropdown()" id="msg-bell-btn" class="relative p-2 rounded-xl hover:bg-slate-700/40 transition-colors group" aria-label="Messages">
-                        <i class="fa-solid fa-envelope text-slate-400 group-hover:text-white transition-colors text-sm"></i>
+                    <button onclick="topNav.toggleMsgDropdown()" id="msg-bell-btn" class="relative p-2 rounded-xl hover:bg-white/15 transition-colors group" aria-label="Messages">
+                        <i class="fa-solid fa-envelope text-white group-hover:text-white transition-colors text-sm"></i>
                         <span id="msg-badge" class="absolute -top-0.5 -right-0.5 min-w-[1.25rem] h-5 px-1 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">0</span>
                     </button>
                     <div id="msg-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700/50 rounded-2xl shadow-2xl shadow-black/40 z-50 overflow-hidden">
@@ -75,15 +74,15 @@ class TopNavigationBar {
                     </div>
                 </div>
 
-                <div class="w-px h-6 bg-slate-700/50 mx-1"></div>
+                <div class="w-px h-6 bg-white/30 mx-1"></div>
 
                 <!-- User Info & Logout -->
                 <div class="flex items-center gap-2.5">
                     <div id="user-info-badge" class="user-info-badge hidden items-center gap-2">
                         <div class="user-avatar-sm" id="topbar-avatar">-</div>
-                        <span id="topbar-username" class="text-xs font-medium text-slate-300 hidden lg:inline">-</span>
+                        <span id="topbar-username" class="text-xs font-medium text-white hidden lg:inline">-</span>
                     </div>
-                    <button id="logout-btn" class="logout-btn hidden px-2.5 py-1.5 text-[11px] font-semibold bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-1.5" onclick="topNav.handleLogout()">
+                    <button id="logout-btn" class="logout-btn hidden px-2.5 py-1.5 text-[11px] font-semibold bg-rose-500/10 text-black rounded-lg border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-1.5" onclick="topNav.handleLogout()">
                         <i class="fa-solid fa-right-from-bracket text-[10px]"></i>
                         <span class="hidden sm:inline">Logout</span>
                     </button>

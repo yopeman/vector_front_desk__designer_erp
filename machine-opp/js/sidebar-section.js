@@ -11,75 +11,75 @@ class SidebarSection {
     render() {
         const container = document.getElementById('sidebar-container');
         if (container) {
-            container.innerHTML = `<aside class="w-[18rem] bg-slate-800/30 border-r border-slate-700/30 p-5 flex flex-col justify-between overflow-y-auto relative">
+            container.innerHTML = `<aside class="w-[18rem] bg-[#00CED1] border-r border-white/20 p-5 flex flex-col justify-between overflow-y-auto relative">
             <!-- Subtle gradient overlay at bottom of sidebar -->
-            <div class="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
             
             <div class="space-y-6">
                 <!-- Main Modules Section -->
                 <div>
                     <div class="flex items-center justify-between px-3 mb-3">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em]">Navigation</span>
-                        <span class="text-[10px] text-slate-600 font-mono">10 modules</span>
+                        <span class="text-[10px] font-bold text-white/80 uppercase tracking-[0.15em]">Navigation</span>
+                        <span class="text-[10px] text-white/60 font-mono">10 modules</span>
                     </div>
                     <nav class="space-y-0.5" id="main-nav">
-                        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all active-tab">
+                        <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all active-tab">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-chart-pie w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Dashboard</span>
                         </button>
-                        <button onclick="switchTab('received-orders')" id="tab-received-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('received-orders')" id="tab-received-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-list-check w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Received Order</span>
                         </button>
-                        <button onclick="switchTab('rework-login')" id="tab-rework-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('rework-login')" id="tab-rework-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-arrows-rotate w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Rework Recording</span>
                         </button>
-                        <button onclick="switchTab('completed-orders')" id="tab-completed-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('completed-orders')" id="tab-completed-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-circle-check w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Completed Order</span>
                         </button>
-                        <button onclick="switchTab('machine-login')" id="tab-machine-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('machine-login')" id="tab-machine-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-desktop w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Machine Maintenance</span>
                         </button>
-                        <!-- <button onclick="switchTab('store-request')" id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all"> -->
-                        <button onclick="window.location.href = 'https://vectoradvert.com/store'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <!-- <button onclick="switchTab('store-request')" id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all"> -->
+                        <button onclick="window.location.href = 'https://vectoradvert.com/store'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-boxes-stacked w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Store Request</span>
                         </button>
-                        <button onclick="switchTab('reports')" id="tab-reports" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('reports')" id="tab-reports" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-chart-simple w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Report</span>
                         </button>
-                        <button onclick="switchTab('messages')" id="tab-messages" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('messages')" id="tab-messages" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-envelope w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Message</span>
                         </button>
-                        <button onclick="switchTab('notifications')" id="tab-notifications" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('notifications')" id="tab-notifications" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-bell w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Notification</span>
                         </button>
-                        <button onclick="switchTab('notes')" id="tab-notes" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('notes')" id="tab-notes" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-sticky-note w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Note</span>
                         </button>
-                        <button onclick="window.location.href='https://vectoradvert.com/hr'" id="tab-hr-requests" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="window.location.href='https://vectoradvert.com/hr'" id="tab-hr-requests" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-users-gear w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">HR Request</span>
                         </button>
-                        <button onclick="switchTab('settings')" id="tab-settings" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                        <button onclick="switchTab('settings')" id="tab-settings" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-gear w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Setting</span>
