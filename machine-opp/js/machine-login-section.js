@@ -204,16 +204,22 @@ class MachineloginSection {
 // Initialize section
 document.addEventListener('DOMContentLoaded', async () => {
     new MachineloginSection();
-    // Load machine data from database and render first machine
+    // Load machine data from database but do not select any machine by default
     if (typeof fetchMachinesAndChecklists === 'function') {
         await fetchMachinesAndChecklists();
         
-        // Switch to first available machine from database
-        const machineKeys = typeof machineData !== 'undefined' ? Object.keys(machineData) : [];
-        const firstMachineKey = machineKeys[0];
-        
-        if (firstMachineKey && typeof switchMachine === 'function') {
-            switchMachine(firstMachineKey);
+        // Show message that no machine is selected
+        const container = document.getElementById('checklist-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="col-span-3 bg-slate-800/40 border border-slate-700/50 rounded-2xl p-8 text-center">
+                    <div class="w-16 h-16 rounded-full bg-slate-700/50 flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-screwdriver-wrench text-slate-400 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">No Machine Selected</h3>
+                    <p class="text-sm text-slate-400">Please select a machine from the tabs above to view and manage its maintenance checklists.</p>
+                </div>
+            `;
         }
     }
 });

@@ -121,7 +121,6 @@ function renderMachineTabs() {
 
     container.innerHTML = machineKeys.map((key, idx) => {
         const machine = machineData[key];
-        const isFirst = idx === 0;
         const icon = machineIcons[machine.machine_type] || 'fa-gears';
         const displayName = (machine.name || key).toUpperCase();
         const status = machine.status || 'active';
@@ -129,11 +128,11 @@ function renderMachineTabs() {
         const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
         
         return `
-            <button onclick="switchMachine('${key}')" id="machinetab-${key}" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all ${isFirst ? colors.bg + ' ' + colors.text + ' shadow-lg ' + colors.shadow : 'bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105'} ${colors.hover} hover:scale-105">
+            <button onclick="switchMachine('${key}')" id="machinetab-${key}" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105 hover:scale-105">
                 <div class="flex flex-col items-center gap-1.5">
                     <i class="fa-solid ${icon} text-lg group-hover:scale-110 transition-transform"></i>
                     <span class="text-xs font-semibold">${displayName}</span>
-                    <span class="text-[8px] uppercase tracking-wider ${isFirst ? 'text-white/80' : 'text-slate-500'}">${statusLabel}</span>
+                    <span class="text-[8px] uppercase tracking-wider text-slate-500">${statusLabel}</span>
                 </div>
                 <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
             </button>
@@ -200,7 +199,6 @@ function filterMachinesByStatus(status) {
 
     container.innerHTML = filteredKeys.map((key, idx) => {
         const machine = machineData[key];
-        const isFirst = idx === 0;
         const icon = machineIcons[machine.machine_type] || 'fa-gears';
         const displayName = (machine.name || key).toUpperCase();
         const machineStatus = machine.status || 'active';
@@ -208,11 +206,11 @@ function filterMachinesByStatus(status) {
         const statusLabel = machineStatus.charAt(0).toUpperCase() + machineStatus.slice(1);
         
         return `
-            <button onclick="switchMachine('${key}')" id="machinetab-${key}" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all ${isFirst ? colors.bg + ' ' + colors.text + ' shadow-lg ' + colors.shadow : 'bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105'} ${colors.hover} hover:scale-105">
+            <button onclick="switchMachine('${key}')" id="machinetab-${key}" class="machine-tab-btn group relative px-4 py-3 rounded-xl text-sm font-medium transition-all bg-slate-800 text-slate-300 hover:bg-slate-700/60 hover:scale-105 hover:scale-105">
                 <div class="flex flex-col items-center gap-1.5">
                     <i class="fa-solid ${icon} text-lg group-hover:scale-110 transition-transform"></i>
                     <span class="text-xs font-semibold">${displayName}</span>
-                    <span class="text-[8px] uppercase tracking-wider ${isFirst ? 'text-white/80' : 'text-slate-500'}">${statusLabel}</span>
+                    <span class="text-[8px] uppercase tracking-wider text-slate-500">${statusLabel}</span>
                 </div>
                 <div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
             </button>
