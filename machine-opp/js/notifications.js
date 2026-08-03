@@ -1,65 +1,137 @@
 // =============================================
-// NOTIFICATIONS MODULE
+// NOTIFICATIONS MODULE - REAL SUPABASE INTEGRATION
 // =============================================
 
-
+// Global state (notificationsData and currentUserId are declared in mock-data.js)
+let readNotificationsData = [];
+let notificationsChannel = null;
 
 // =============================================
 // INITIALIZE NOTIFICATIONS DATA
 // =============================================
-function initNotificationsData() {
-    const now = new Date();
-    const timeStr = (h, m) => `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-    const h = now.getHours();
-    const m = now.getMinutes();
-
-    notificationsData = [
-        {
-            id: notifIdCounter++,
-            title: 'System Update Complete',
-            message: 'The ERP system has been updated to version 2.0. All modules are now available.',
-            priority: 'normal',
-            category: 'system',
-            read: false,
-            createdAt: `${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${timeStr(h, m - 30)}`
-        },
-        {
-            id: notifIdCounter++,
-            title: 'Urgent: CNC Maintenance Required',
-            message: 'CNC Machine #01 has exceeded 500 operating hours. Schedule maintenance immediately.',
-            priority: 'high',
-            category: 'maintenance',
-            read: false,
-            createdAt: `${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${timeStr(h, m - 60)}`
-        },
-        {
-            id: notifIdCounter++,
-            title: 'New Order Received',
-            message: 'Order #0006/09 has been received from Abeba. UV print job for acrylic signage.',
-            priority: 'normal',
-            category: 'order',
-            read: false,
-            createdAt: `${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${timeStr(h, m - 120)}`
-        },
-        {
-            id: notifIdCounter++,
-            title: 'Store Request Approved',
-            message: 'The store request for brass sheets (Order #0004/09) has been approved and dispatched.',
-            priority: 'low',
-            category: 'store',
-            read: true,
-            createdAt: `${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${timeStr(h, m - 180)}`
-        },
-        {
-            id: notifIdCounter++,
-            title: 'HR: Leave Request Update',
-            message: 'Your leave request has been processed and approved by the HR department.',
-            priority: 'normal',
-            category: 'hr',
-            read: true,
-            createdAt: `${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${timeStr(h, m - 240)}`
+async function initNotificationsData() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            console.error('No authenticated user found');
+            return;
         }
-    ];
+        currentUserId = user.id;
+        await fetchNotifications();
+        await fetchReadNotifications();
+        setupNotificationsSubscription();
+    } catch (error) {
+        console.error('Error initializing notifications:', error);
+    }
+}
+
+// =============================================
+// FETCH NOTIFICATIONS FROM SUPABASE
+// =============================================
+async function fetchNotifications() {
+    try {
+        const { data, error } = await window.supabase
+            .from('notifications')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        notificationsData = (data || []).map(notif => ({
+            id: notif.id,
+            title: notif.title,
+            message: notif.body,
+            priority: notif.priority || 'normal',
+            category: notif.category || 'general',
+            icon: notif.icon,
+            color: notif.color,
+            read: false, // Will be determined by read_notifications
+            createdAt: formatNotificationTime(notif.created_at)
+        }));
+
+        renderNotifications();
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+    }
+}
+
+// =============================================
+// FETCH READ NOTIFICATIONS FROM SUPABASE
+// =============================================
+async function fetchReadNotifications() {
+    try {
+        const { data, error } = await window.supabase
+            .from('read_notifications')
+            .select('*')
+            .eq('user_id', currentUserId);
+
+        if (error) throw error;
+
+        readNotificationsData = data || [];
+
+        // Update read status in notificationsData
+        notificationsData.forEach(notif => {
+            const readRecord = readNotificationsData.find(rn => rn.notification_id === notif.id);
+            notif.read = readRecord ? readRecord.is_read : false;
+        });
+
+        renderNotifications();
+    } catch (error) {
+        console.error('Error fetching read notifications:', error);
+    }
+}
+
+function formatNotificationTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+// =============================================
+// SETUP REALTIME SUBSCRIPTION
+// =============================================
+function setupNotificationsSubscription() {
+    if (notificationsChannel) {
+        window.supabase.removeChannel(notificationsChannel);
+    }
+
+    notificationsChannel = window.supabase
+        .channel('notifications-channel')
+        .on(
+            'postgres_changes',
+            {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'notifications'
+            },
+            async (payload) => {
+                const newNotif = {
+                    id: payload.new.id,
+                    title: payload.new.title,
+                    message: payload.new.body,
+                    priority: payload.new.priority || 'normal',
+                    category: payload.new.category || 'general',
+                    icon: payload.new.icon,
+                    color: payload.new.color,
+                    read: false,
+                    createdAt: formatNotificationTime(payload.new.created_at)
+                };
+                notificationsData.unshift(newNotif);
+                renderNotifications();
+                showNotification(payload.new.title, payload.new.body);
+            }
+        )
+        .subscribe();
 }
 
 // =============================================
@@ -230,23 +302,87 @@ function resetNotifFilters() {
 // =============================================
 // NOTIFICATION ACTIONS
 // =============================================
-function toggleNotifRead(index) {
-    if (notificationsData[index]) {
-        notificationsData[index].read = !notificationsData[index].read;
-        renderNotifications();
+async function toggleNotifRead(notifId) {
+    try {
+        const existing = readNotificationsData.find(
+            rn => rn.notification_id === notifId && rn.user_id === currentUserId
+        );
+
+        if (existing) {
+            const { error } = await window.supabase
+                .from('read_notifications')
+                .update({ is_read: !existing.is_read, read_at: new Date().toISOString() })
+                .eq('id', existing.id);
+            if (error) throw error;
+        } else {
+            const { error } = await window.supabase
+                .from('read_notifications')
+                .insert({
+                    user_id: currentUserId,
+                    notification_id: notifId,
+                    is_read: true,
+                    read_at: new Date().toISOString(),
+                });
+            if (error) throw error;
+        }
+
+        await fetchReadNotifications();
+    } catch (error) {
+        console.error('Error toggling notification read status:', error);
     }
 }
 
-function markAllNotifRead() {
-    notificationsData.forEach(n => n.read = true);
-    renderNotifications();
-    renderNotifDropdown();
+async function markAllNotifRead() {
+    try {
+        const unreadNotifs = notificationsData.filter(n => !n.read);
+
+        await Promise.all(
+            unreadNotifs.map(async (notif) => {
+                const existing = readNotificationsData.find(
+                    rn => rn.notification_id === notif.id && rn.user_id === currentUserId
+                );
+
+                if (existing) {
+                    await window.supabase
+                        .from('read_notifications')
+                        .update({ is_read: true, read_at: new Date().toISOString() })
+                        .eq('id', existing.id);
+                } else {
+                    await window.supabase
+                        .from('read_notifications')
+                        .insert({
+                            user_id: currentUserId,
+                            notification_id: notif.id,
+                            is_read: true,
+                            read_at: new Date().toISOString(),
+                        });
+                }
+            })
+        );
+
+        await fetchReadNotifications();
+        renderNotifDropdown();
+    } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+    }
 }
 
-function deleteNotification(index) {
+async function deleteNotification(notifId) {
     if (!confirm('Delete this notification?')) return;
-    notificationsData.splice(index, 1);
-    renderNotifications();
+    
+    try {
+        const { error } = await window.supabase
+            .from('notifications')
+            .delete()
+            .eq('id', notifId);
+
+        if (error) throw error;
+
+        notificationsData = notificationsData.filter(n => n.id !== notifId);
+        renderNotifications();
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+    }
 }
 
 // =============================================
@@ -274,7 +410,7 @@ function closeNotificationModal(event) {
     document.body.classList.remove('modal-open');
 }
 
-function saveNotification() {
+async function saveNotification() {
     const title = document.getElementById('notif-title').value.trim();
     const message = document.getElementById('notif-message').value.trim();
     const priority = document.getElementById('notif-priority').value;
@@ -285,29 +421,33 @@ function saveNotification() {
         return;
     }
 
-    const now = new Date();
-    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    try {
+        const { error } = await window.supabase
+            .from('notifications')
+            .insert({
+                title: title,
+                body: message,
+                priority: priority,
+                category: category,
+                icon: 'fa-bell',
+                color: '#2563eb',
+            });
 
-    notificationsData.unshift({
-        id: notifIdCounter++,
-        title,
-        message,
-        priority,
-        category,
-        read: false,
-        createdAt: `${dateStr} ${timeStr}`
-    });
+        if (error) throw error;
 
-    closeNotificationModal();
-    renderNotifications();
-    alert('Notification sent successfully!');
+        closeNotificationModal();
+        await fetchNotifications();
+        alert('Notification sent successfully!');
+    } catch (error) {
+        console.error('Error saving notification:', error);
+        alert('Error saving notification: ' + error.message);
+    }
 }
 
 // =============================================
 // NOTIFICATION DROPDOWN
 // =============================================
-function renderNotifDropdown() {
+async function renderNotifDropdown() {
     const list = document.getElementById('notif-dropdown-list');
     const badge = document.getElementById('notif-badge');
     if (!list) return;
@@ -342,7 +482,7 @@ function renderNotifDropdown() {
         const colorClass = priorityColors[n.priority] || priorityColors.normal;
         const iconClass = priorityIcons[n.priority] || priorityIcons.normal;
         return `
-            <div class="notif-dropdown-item ${n.read ? '' : 'unread'}" onclick="markNotifRead(${n.id})">
+            <div class="notif-dropdown-item ${n.read ? '' : 'unread'}" onclick="toggleNotifRead('${n.id}')">
                 <div class="notif-icon ${colorClass}"><i class="fa-solid ${iconClass}"></i></div>
                 <div class="notif-content">
                     <div class="notif-title">${n.title}</div>
@@ -352,4 +492,16 @@ function renderNotifDropdown() {
             </div>
         `;
     }).join('');
+}
+
+// Helper function to show notifications
+function showNotification(title, message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-pulse';
+    toast.innerHTML = `
+        <div class="font-semibold">${title}</div>
+        <div class="text-sm">${message}</div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }

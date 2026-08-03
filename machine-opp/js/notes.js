@@ -1,8 +1,67 @@
 // =============================================
-// NOTES MODULE
+// NOTES MODULE - REAL SUPABASE INTEGRATION
 // =============================================
 
+// Global state (notesData, currentNoteFilter, tempNoteChecklist, selectedNoteColor, and currentUserId are declared in mock-data.js)
 
+// =============================================
+// INITIALIZE NOTES DATA
+// =============================================
+async function initNotesData() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            console.error('No authenticated user found');
+            return;
+        }
+        currentUserId = user.id;
+        await fetchNotes();
+    } catch (error) {
+        console.error('Error initializing notes:', error);
+    }
+}
+
+// =============================================
+// FETCH NOTES FROM SUPABASE
+// =============================================
+async function fetchNotes() {
+    try {
+        const { data, error } = await window.supabase
+            .from('notes')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .order('pinned', { ascending: false })
+            .order('updated_at', { ascending: false });
+
+        if (error) throw error;
+
+        notesData = (data || []).map(note => ({
+            id: note.id,
+            title: note.title || 'Untitled',
+            content: note.content || '',
+            color: note.color || 'slate',
+            pinned: note.pinned || false,
+            checklist: note.checklist || [],
+            entity_type: note.entity_type,
+            entity_id: note.entity_id,
+            createdAt: formatNoteTime(note.created_at),
+            updatedAt: formatNoteTime(note.updated_at)
+        }));
+
+        renderNotes();
+    } catch (error) {
+        console.error('Error fetching notes:', error);
+    }
+}
+
+function formatNoteTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: false
+    });
+}
 
 // =============================================
 // RENDER NOTES
@@ -33,8 +92,7 @@ function renderNotes() {
         if (empty) empty.classList.add('hidden');
     }
 
-    filtered.forEach((note, idx) => {
-        const realIndex = notesData.indexOf(note);
+    filtered.forEach((note) => {
         const card = document.createElement('div');
         card.className = `note-card bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 flex flex-col gap-3 transition-all hover:-translate-y-0.5 hover:shadow-xl relative overflow-hidden`;
 
@@ -67,7 +125,7 @@ function renderNotes() {
             note.checklist.forEach((item, i) => {
                 checklistHtml += `
                     <label class="flex items-start gap-2 text-xs text-slate-300 cursor-pointer">
-                        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleNoteChecklist(${realIndex}, ${i})" class="mt-0.5 rounded border-slate-600 text-blue-500 focus:ring-blue-500/30 bg-slate-900">
+                        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleNoteChecklist('${note.id}', ${i})" class="mt-0.5 rounded border-slate-600 text-blue-500 focus:ring-blue-500/30 bg-slate-900">
                         <span class="${item.done ? 'line-through text-slate-500' : ''}">${escapeHtml(item.text)}</span>
                     </label>
                 `;
@@ -81,13 +139,13 @@ function renderNotes() {
 
         card.innerHTML = `
             <div class="absolute top-3 right-3 flex items-center gap-1.5">
-                <button onclick="togglePinNote(${realIndex})" class="w-8 h-8 rounded-lg bg-slate-900/80 border border-slate-700/50 text-slate-400 hover:text-amber-400 hover:border-amber-500/30 transition-all flex items-center justify-center" title="Pin note">
+                <button onclick="togglePinNote('${note.id}')" class="w-8 h-8 rounded-lg bg-slate-900/80 border border-slate-700/50 text-slate-400 hover:text-amber-400 hover:border-amber-500/30 transition-all flex items-center justify-center" title="Pin note">
                     <i class="fa-solid fa-thumbtack text-[10px] ${note.pinned ? 'text-amber-400' : ''}"></i>
                 </button>
-                <button onclick="editNote(${realIndex})" class="w-8 h-8 rounded-lg bg-slate-900/80 border border-slate-700/50 text-slate-400 hover:text-blue-400 hover:border-blue-500/30 transition-all flex items-center justify-center" title="Edit note">
+                <button onclick="editNote('${note.id}')" class="w-8 h-8 rounded-lg bg-slate-900/80 border border-slate-700/50 text-slate-400 hover:text-blue-400 hover:border-blue-500/30 transition-all flex items-center justify-center" title="Edit note">
                     <i class="fa-solid fa-pen text-[10px]"></i>
                 </button>
-                <button onclick="deleteNote(${realIndex})" class="w-8 h-8 rounded-lg bg-slate-900/80 border border-slate-700/50 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-all flex items-center justify-center" title="Delete note">
+                <button onclick="deleteNote('${note.id}')" class="w-8 h-8 rounded-lg bg-slate-900/80 border border-slate-700/50 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-all flex items-center justify-center" title="Delete note">
                     <i class="fa-solid fa-trash text-[10px]"></i>
                 </button>
             </div>
@@ -146,7 +204,7 @@ function clearNotesSearch() {
 // =============================================
 // NOTE MODAL OPERATIONS
 // =============================================
-function openNoteModal(noteIndex) {
+function openNoteModal(noteId) {
     const modal = document.getElementById('note-modal');
     const titleInput = document.getElementById('note-title');
     const contentInput = document.getElementById('note-content');
@@ -157,24 +215,26 @@ function openNoteModal(noteIndex) {
     document.querySelectorAll('.note-color-btn').forEach(b => b.classList.remove('ring-2', 'ring-white'));
     document.querySelector('.note-color-btn[data-color="slate"]')?.classList.add('ring-2', 'ring-white');
 
-    if (noteIndex !== undefined && noteIndex !== null && notesData[noteIndex]) {
-        const note = notesData[noteIndex];
-        titleInput.value = note.title;
-        contentInput.value = note.content;
-        selectedNoteColor = note.color || 'slate';
-        tempNoteChecklist = [...(note.checklist || [])];
-        modalTitle.textContent = 'Edit Note';
-        modal.setAttribute('data-edit-index', noteIndex);
-        document.querySelectorAll('.note-color-btn').forEach(b => {
-            if (b.getAttribute('data-color') === selectedNoteColor) {
-                b.classList.add('ring-2', 'ring-white');
-            }
-        });
+    if (noteId) {
+        const note = notesData.find(n => n.id === noteId);
+        if (note) {
+            titleInput.value = note.title;
+            contentInput.value = note.content;
+            selectedNoteColor = note.color || 'slate';
+            tempNoteChecklist = [...(note.checklist || [])];
+            modalTitle.textContent = 'Edit Note';
+            modal.setAttribute('data-edit-id', noteId);
+            document.querySelectorAll('.note-color-btn').forEach(b => {
+                if (b.getAttribute('data-color') === selectedNoteColor) {
+                    b.classList.add('ring-2', 'ring-white');
+                }
+            });
+        }
     } else {
         titleInput.value = '';
         contentInput.value = '';
         modalTitle.textContent = 'Add Note';
-        modal.removeAttribute('data-edit-index');
+        modal.removeAttribute('data-edit-id');
     }
 
     renderNoteChecklistPreview();
@@ -231,11 +291,11 @@ function renderNoteChecklistPreview() {
     });
 }
 
-function saveNoteFromModal() {
+async function saveNoteFromModal() {
     const title = document.getElementById('note-title').value.trim();
     const content = document.getElementById('note-content').value.trim();
     const modal = document.getElementById('note-modal');
-    const editIndex = modal.getAttribute('data-edit-index');
+    const editId = modal.getAttribute('data-edit-id');
 
     if (!title && !content) {
         alert('Please add a title or content for the note.');
@@ -244,50 +304,101 @@ function saveNoteFromModal() {
 
     const color = selectedNoteColor || 'slate';
 
-    if (editIndex !== null) {
-        const note = notesData[parseInt(editIndex)];
-        note.title = title;
-        note.content = content;
-        note.color = color;
-        note.checklist = [...tempNoteChecklist];
-    } else {
-        const now = new Date();
-        const createdAt = now.toLocaleString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', hour12: false
-        });
-        notesData.unshift({
-            id: notesIdCounter++,
-            title: title || 'Untitled Note',
-            content: content || '',
-            color,
-            checklist: [...tempNoteChecklist],
-            pinned: false,
-            createdAt
-        });
+    try {
+        if (editId) {
+            const { error } = await window.supabase
+                .from('notes')
+                .update({
+                    title: title || 'Untitled Note',
+                    content: content || '',
+                    color: color,
+                    checklist: tempNoteChecklist,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', editId);
+
+            if (error) throw error;
+        } else {
+            const { error } = await window.supabase
+                .from('notes')
+                .insert({
+                    user_id: currentUserId,
+                    title: title || 'Untitled Note',
+                    content: content || '',
+                    color: color,
+                    checklist: tempNoteChecklist,
+                    pinned: false,
+                });
+
+            if (error) throw error;
+        }
+
+        tempNoteChecklist = [];
+        closeNoteModal();
+        await fetchNotes();
+    } catch (error) {
+        console.error('Error saving note:', error);
+        alert('Error saving note: ' + error.message);
     }
-
-    tempNoteChecklist = [];
-    closeNoteModal();
-    renderNotes();
 }
 
-function editNote(index) {
-    openNoteModal(index);
+function editNote(noteId) {
+    openNoteModal(noteId);
 }
 
-function deleteNote(index) {
+async function deleteNote(noteId) {
     if (!confirm('Delete this note?')) return;
-    notesData.splice(index, 1);
-    renderNotes();
+    
+    try {
+        const { error } = await window.supabase
+            .from('notes')
+            .delete()
+            .eq('id', noteId);
+
+        if (error) throw error;
+
+        notesData = notesData.filter(n => n.id !== noteId);
+        renderNotes();
+    } catch (error) {
+        console.error('Error deleting note:', error);
+        alert('Error deleting note: ' + error.message);
+    }
 }
 
-function togglePinNote(index) {
-    notesData[index].pinned = !notesData[index].pinned;
-    renderNotes();
+async function togglePinNote(noteId) {
+    try {
+        const note = notesData.find(n => n.id === noteId);
+        if (!note) return;
+
+        const { error } = await window.supabase
+            .from('notes')
+            .update({ pinned: !note.pinned })
+            .eq('id', noteId);
+
+        if (error) throw error;
+
+        await fetchNotes();
+    } catch (error) {
+        console.error('Error toggling pin:', error);
+    }
 }
 
-function toggleNoteChecklist(noteIndex, itemIndex) {
-    notesData[noteIndex].checklist[itemIndex].done = !notesData[noteIndex].checklist[itemIndex].done;
-    renderNotes();
+async function toggleNoteChecklist(noteId, itemIndex) {
+    try {
+        const note = notesData.find(n => n.id === noteId);
+        if (!note) return;
+
+        note.checklist[itemIndex].done = !note.checklist[itemIndex].done;
+
+        const { error } = await window.supabase
+            .from('notes')
+            .update({ checklist: note.checklist, updated_at: new Date().toISOString() })
+            .eq('id', noteId);
+
+        if (error) throw error;
+
+        renderNotes();
+    } catch (error) {
+        console.error('Error toggling checklist item:', error);
+    }
 }

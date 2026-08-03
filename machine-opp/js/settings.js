@@ -1,6 +1,8 @@
 // =============================================
-// SETTINGS MODULE
+// SETTINGS MODULE - REAL SUPABASE INTEGRATION
 // =============================================
+
+// Global state (currentUserId is declared in mock-data.js)
 
 // =============================================
 // SETTINGS TAB SWITCHING
@@ -20,52 +22,75 @@ function switchSettingsTab(tabId) {
 }
 
 // =============================================
+// INITIALIZE SETTINGS
+// =============================================
+async function initSettings() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            console.error('No authenticated user found');
+            return;
+        }
+        currentUserId = user.id;
+        await loadProfile();
+        loadAppearanceSettings();
+        loadNotificationSettings();
+    } catch (error) {
+        console.error('Error initializing settings:', error);
+    }
+}
+
+// =============================================
 // PROFILE MANAGEMENT
 // =============================================
-function loadProfile() {
-    const profile = Auth.getProfile();
-    if (profile) {
-        document.getElementById('settings-profile-name').value = profile.name || '';
-        document.getElementById('settings-profile-title').value = profile.title || '';
-        document.getElementById('settings-profile-email').value = profile.email || '';
-        document.getElementById('settings-profile-phone').value = profile.phone || '';
-    } else {
-        const user = Auth.getCurrentUser();
-        if (user) {
-            document.getElementById('settings-profile-name').value = user.name || '';
-            document.getElementById('settings-profile-title').value = user.title || '';
-            document.getElementById('settings-profile-email').value = user.email || '';
+async function loadProfile() {
+    try {
+        const { data, error } = await window.supabase
+            .from('users')
+            .select('id, username, email, phone')
+            .eq('id', currentUserId)
+            .single();
+
+        if (error) throw error;
+
+        if (data) {
+            document.getElementById('settings-profile-name').value = data.username || '';
+            document.getElementById('settings-profile-email').value = data.email || '';
+            document.getElementById('settings-profile-phone').value = data.phone || '';
         }
+    } catch (error) {
+        console.error('Error loading profile:', error);
     }
 }
 
 async function saveProfile() {
-    const name = document.getElementById('settings-profile-name').value.trim();
-    const title = document.getElementById('settings-profile-title').value.trim();
+    const username = document.getElementById('settings-profile-name').value.trim();
     const email = document.getElementById('settings-profile-email').value.trim();
     const phone = document.getElementById('settings-profile-phone').value.trim();
 
-    if (!name) {
-        alert('Please enter your full name.');
+    if (!username) {
+        alert('Please enter your username.');
         return;
     }
 
-    const user = Auth.getCurrentUser();
-    if (!user) {
-        alert('You must be logged in to save profile.');
-        return;
+    try {
+        const { error } = await window.supabase
+            .from('users')
+            .update({
+                username: username,
+                email: email,
+                phone: phone,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', currentUserId);
+
+        if (error) throw error;
+
+        alert('Profile saved successfully!');
+    } catch (error) {
+        console.error('Error saving profile:', error);
+        alert('Error saving profile: ' + error.message);
     }
-
-    const result = await Auth.updateUserProfile(user.id, { name, title, email });
-    if (!result.success) {
-        alert(result.error);
-        return;
-    }
-
-    const profile = { name, title, email, phone };
-    Auth.saveProfile(profile);
-
-    alert('Profile saved successfully!');
 }
 
 function resetProfileForm() {
@@ -85,29 +110,46 @@ async function updatePassword() {
         return;
     }
 
-    const user = Auth.getCurrentUser();
-    if (!user) {
-        alert('You must be logged in to change password.');
-        return;
-    }
-
-    const result = await Auth.changePassword(user.id, currentPwd, newPwd);
-    if (!result.success) {
-        alert(result.error);
-        return;
-    }
-
     if (newPwd !== confirmPwd) {
         alert('New password and confirm password do not match.');
         return;
     }
 
-    document.getElementById('settings-current-password').value = '';
-    document.getElementById('settings-new-password').value = '';
-    document.getElementById('settings-confirm-password').value = '';
-    document.getElementById('settings-password-strength').classList.add('hidden');
+    if (newPwd.length < 6) {
+        alert('Password must be at least 6 characters.');
+        return;
+    }
 
-    alert('Password updated successfully!');
+    try {
+        // Verify current password by attempting to sign in
+        const { data: { user } } = await window.supabase.auth.getUser();
+        const { error: signInError } = await window.supabase.auth.signInWithPassword({
+            email: user.email,
+            password: currentPwd,
+        });
+
+        if (signInError) {
+            alert('Current password is incorrect');
+            return;
+        }
+
+        // Current password is correct, now update to new password
+        const { error } = await window.supabase.auth.updateUser({
+            password: newPwd,
+        });
+
+        if (error) throw error;
+
+        document.getElementById('settings-current-password').value = '';
+        document.getElementById('settings-new-password').value = '';
+        document.getElementById('settings-confirm-password').value = '';
+        document.getElementById('settings-password-strength').classList.add('hidden');
+
+        alert('Password updated successfully!');
+    } catch (error) {
+        console.error('Error updating password:', error);
+        alert('Error updating password: ' + error.message);
+    }
 }
 
 function resetPasswordForm() {
@@ -307,6 +349,9 @@ document.addEventListener('click', function(e) {
 // INITIALIZATION ON DOM LOAD
 // =============================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize settings when DOM is loaded
+    initSettings();
+
     // Password strength checker
     const newPwdInput = document.getElementById('settings-new-password');
     if (newPwdInput) {

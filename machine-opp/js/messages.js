@@ -1,67 +1,138 @@
 // =============================================
-// MESSAGES MODULE
+// MESSAGES MODULE - REAL SUPABASE INTEGRATION
 // =============================================
 
-
-
-function getAvatarColor(index) {
-    return avatarColors[index % avatarColors.length];
-}
-
-function createMsgUser(name, avatarInitials, online, messages) {
-    const id = msgUserIdCounter++;
-    return {
-        id,
-        name,
-        avatarInitials,
-        online,
-        avatarColor: getAvatarColor(id),
-        messages
-    };
-}
-
-function createMsg(text, sender, time) {
-    return { id: msgIdCounter++, text, sender, time };
-}
+// Global state (messagesData, selectedMsgUserId, and currentUserId are declared in mock-data.js)
+let messagesUsers = [];
+let messagesChannel = null;
 
 // =============================================
 // INITIALIZE MESSAGES DATA
 // =============================================
-function initMessagesData() {
-    const now = new Date();
-    const timeStr = (h, m) => `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-    const h = now.getHours();
-    const m = now.getMinutes();
+async function initMessagesData() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            console.error('No authenticated user found');
+            return;
+        }
+        currentUserId = user.id;
+        await fetchUsers();
+    } catch (error) {
+        console.error('Error initializing messages:', error);
+    }
+}
 
-    messagesData = [
-        createMsgUser('Abeba', 'AB', true, [
-            createMsg('Hey, the uv print job is ready for review', 'them', timeStr(h, m - 12)),
-            createMsg('Great, I will check it now', 'me', timeStr(h, m - 10)),
-            createMsg('Please confirm the color settings before printing', 'them', timeStr(h, m - 8)),
-            createMsg('Yes, Transparent Glossy 4mm is correct', 'me', timeStr(h, m - 5))
-        ]),
-        createMsgUser('Tigist', 'TG', true, [
-            createMsg('The cnc machine needs calibration after the shift', 'them', timeStr(h, m - 20)),
-            createMsg('I will handle that before the next job', 'me', timeStr(h, m - 18)),
-        ]),
-        createMsgUser('Biruk', 'BR', false, [
-            createMsg('Metal nameplate order is ready for delivery', 'them', timeStr(h, m - 45)),
-            createMsg('Thanks, I will update the status', 'me', timeStr(h, m - 40)),
-        ]),
-        createMsgUser('Meron', 'ME', true, [
-            createMsg('The fiber cut steel bracket passed QA', 'them', timeStr(h, m - 60)),
-            createMsg('Excellent! Moving to the next phase', 'me', timeStr(h, m - 55)),
-            createMsg('Client needs the dimensions confirmed', 'them', timeStr(h, m - 50)),
-            createMsg('Length 500mm, width 300mm, height 8mm confirmed', 'me', timeStr(h, m - 48)),
-        ]),
-        createMsgUser('Operations Supervisor', 'OS', true, [
-            createMsg('Please ensure all checklists are completed before switching shifts', 'them', timeStr(h, m - 90)),
-            createMsg('Noted, I will make sure everything is in order', 'me', timeStr(h, m - 85)),
-        ]),
-        createMsgUser('Addis', 'AD', false, [
-            createMsg('The store request for brass sheets has been approved', 'them', timeStr(h, m - 120)),
-        ]),
+// =============================================
+// FETCH USERS FROM SUPABASE
+// =============================================
+async function fetchUsers() {
+    try {
+        const { data, error } = await window.supabase
+            .from('users')
+            .select('id, username, email, role')
+            .order('username', { ascending: true });
+
+        if (error) throw error;
+
+        messagesUsers = data || [];
+        messagesData = messagesUsers.map(user => ({
+            id: user.id,
+            name: user.username,
+            avatarInitials: (user.username || '?').substring(0, 2).toUpperCase(),
+            online: true, // Default to online since we don't have online status tracking
+            avatarColor: getAvatarColorForUser(user.id),
+            messages: []
+        }));
+
+        renderUserList();
+    } catch (error) {
+        console.error('Error fetching users:', error);
+    }
+}
+
+function getAvatarColorForUser(userId) {
+    const colors = [
+        'bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500',
+        'bg-purple-500', 'bg-cyan-500', 'bg-indigo-500', 'bg-pink-500'
     ];
+    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+}
+
+// =============================================
+// FETCH MESSAGES FROM SUPABASE
+// =============================================
+async function fetchMessages(otherUserId) {
+    try {
+        const { data, error } = await window.supabase
+            .from('messages')
+            .select('*, sender:users!messages_sender_id_fkey(username, email), receiver:users!messages_receiver_id_fkey(username, email)')
+            .or(`and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUserId})`)
+            .order('sent_at', { ascending: true });
+
+        if (error) throw error;
+
+        // Update the user's messages in the local state
+        const userIndex = messagesData.findIndex(u => u.id === otherUserId);
+        if (userIndex !== -1) {
+            messagesData[userIndex].messages = (data || []).map(msg => ({
+                id: msg.id,
+                text: msg.text,
+                sender: msg.sender_id === currentUserId ? 'me' : 'them',
+                time: formatMessageTime(msg.sent_at || msg.created_at),
+                attached_file_ids: msg.attached_file_ids || [],
+                senderData: msg.sender,
+                receiverData: msg.receiver
+            }));
+        }
+
+        renderChatMessages();
+        renderUserList();
+    } catch (error) {
+        console.error('Error fetching messages:', error);
+    }
+}
+
+function formatMessageTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (isToday) return timeStr;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + timeStr;
+}
+
+// =============================================
+// SETUP REALTIME SUBSCRIPTION
+// =============================================
+function setupMessagesSubscription(otherUserId) {
+    if (messagesChannel) {
+        window.supabase.removeChannel(messagesChannel);
+    }
+
+    messagesChannel = window.supabase
+        .channel('messages-channel')
+        .on(
+            'postgres_changes',
+            {
+                event: '*',
+                schema: 'public',
+                table: 'messages',
+                filter: `or(and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUserId}))`
+            },
+            async (payload) => {
+                if (payload.eventType === 'INSERT') {
+                    await fetchMessages(otherUserId);
+                    if (payload.new.sender_id !== currentUserId) {
+                        // Show notification for new message
+                        showNotification('New Message', `You have a new message`);
+                    }
+                }
+            }
+        )
+        .subscribe();
 }
 
 // =============================================
@@ -121,7 +192,7 @@ function clearUserSearch() {
 // =============================================
 // CHAT FUNCTIONS
 // =============================================
-function openChat(userId) {
+async function openChat(userId) {
     const user = messagesData.find(u => u.id === userId);
     if (!user) return;
     selectedMsgUserId = userId;
@@ -142,7 +213,12 @@ function openChat(userId) {
     if (name) name.textContent = user.name;
     if (status) status.textContent = user.online ? 'Online' : 'Offline';
 
-    renderChatMessages();
+    // Fetch messages from Supabase
+    await fetchMessages(userId);
+    
+    // Setup realtime subscription
+    setupMessagesSubscription(userId);
+
     renderUserList();
 
     setTimeout(() => {
@@ -176,7 +252,7 @@ function renderChatMessages() {
     }, 10);
 }
 
-function sendMessage() {
+async function sendMessage() {
     if (!selectedMsgUserId) return;
     const input = document.getElementById('msg-chat-input');
     if (!input) return;
@@ -184,42 +260,31 @@ function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
 
-    const user = messagesData.find(u => u.id === selectedMsgUserId);
-    if (!user) return;
+    try {
+        const { error } = await window.supabase
+            .from('messages')
+            .insert([
+                {
+                    sender_id: currentUserId,
+                    receiver_id: selectedMsgUserId,
+                    text: text,
+                    sent_at: new Date().toISOString(),
+                },
+            ]);
 
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        if (error) throw error;
 
-    user.messages.push(createMsg(text, 'me', time));
-    input.value = '';
-    renderChatMessages();
-    renderUserList();
+        input.value = '';
+        await fetchMessages(selectedMsgUserId);
 
-    setTimeout(() => {
-        const chatBody = document.getElementById('msg-chat-body');
-        if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
-    }, 10);
-
-    // Simulate reply after 1.2 seconds
-    setTimeout(() => {
-        const now2 = new Date();
-        const replyTime = `${String(now2.getHours()).padStart(2,'0')}:${String(now2.getMinutes()).padStart(2,'0')}`;
-        const replies = [
-            'Got it, thanks!',
-            'I will check on that right away.',
-            'Sounds good, let me know if there are any changes.',
-            'Understood, proceeding with it.',
-            'Will do, sending an update shortly.'
-        ];
-        const reply = replies[Math.floor(Math.random() * replies.length)];
-        user.messages.push(createMsg(reply, 'them', replyTime));
-        renderChatMessages();
-        renderUserList();
         setTimeout(() => {
             const chatBody = document.getElementById('msg-chat-body');
             if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
         }, 10);
-    }, 1200);
+    } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Error sending message: ' + error.message);
+    }
 }
 
 function closeChat() {
@@ -228,56 +293,96 @@ function closeChat() {
     const emptyState = document.getElementById('msg-empty-state');
     if (chatContainer) { chatContainer.classList.remove('open'); chatContainer.classList.add('hidden-chat'); }
     if (emptyState) emptyState.classList.add('active');
+    
+    // Remove realtime subscription
+    if (messagesChannel) {
+        window.supabase.removeChannel(messagesChannel);
+        messagesChannel = null;
+    }
+    
     renderUserList();
 }
 
 // =============================================
 // MESSAGE DROPDOWN
 // =============================================
-function renderMsgDropdown() {
+async function renderMsgDropdown() {
     const list = document.getElementById('msg-dropdown-list');
     const badge = document.getElementById('msg-badge');
     if (!list) return;
     
-    const unread = messagesData.reduce((count, u) => {
-        return count + u.messages.filter(m => m.sender === 'them' && !m.read).length;
-    }, 0);
-    
-    if (badge) {
-        if (unread > 0) {
-            badge.textContent = unread > 99 ? '99+' : unread;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
+    // Fetch recent messages from Supabase
+    try {
+        const { data, error } = await window.supabase
+            .from('messages')
+            .select('*, sender:users!messages_sender_id_fkey(username), receiver:users!messages_receiver_id_fkey(username)')
+            .eq('receiver_id', currentUserId)
+            .eq('is_read', false)
+            .order('sent_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+
+        const unread = data || [];
+        
+        if (badge) {
+            if (unread.length > 0) {
+                badge.textContent = unread.length > 99 ? '99+' : unread.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
-    }
-    
-    if (messagesData.length === 0) {
-        list.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs">No messages</div>';
-        return;
-    }
-    
-    list.innerHTML = messagesData.slice(0, 10).map(u => {
-        const lastMsg = u.messages[u.messages.length - 1];
-        const unreadCount = u.messages.filter(m => m.sender === 'them' && !m.read).length;
-        return `
-            <div class="msg-dropdown-item ${unreadCount > 0 ? 'unread' : ''}" onclick="openChat(${u.id})">
-                <div class="msg-avatar ${u.avatarColor} text-white text-xs font-bold flex items-center justify-center">${u.avatarInitials}</div>
-                <div class="msg-content">
-                    <div class="msg-title">${u.name} ${unreadCount > 0 ? '<span class="text-blue-400 font-semibold">(' + unreadCount + ')</span>' : ''}</div>
-                    <div class="msg-preview">${lastMsg ? lastMsg.text : ''}</div>
-                    <div class="msg-time">${lastMsg ? lastMsg.time : ''}</div>
+        
+        if (unread.length === 0) {
+            list.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs">No messages</div>';
+            return;
+        }
+        
+        list.innerHTML = unread.map(msg => {
+            const senderName = msg.sender?.username || 'Unknown';
+            const senderInitials = senderName.substring(0, 2).toUpperCase();
+            const senderColor = getAvatarColorForUser(msg.sender_id);
+            return `
+                <div class="msg-dropdown-item unread" onclick="openChat('${msg.sender_id}')">
+                    <div class="msg-avatar ${senderColor} text-white text-xs font-bold flex items-center justify-center">${senderInitials}</div>
+                    <div class="msg-content">
+                        <div class="msg-title">${senderName}</div>
+                        <div class="msg-preview">${msg.text || ''}</div>
+                        <div class="msg-time">${formatMessageTime(msg.sent_at || msg.created_at)}</div>
+                    </div>
                 </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error rendering message dropdown:', error);
+    }
 }
 
-function markAllMsgRead() {
-    messagesData.forEach(u => {
-        u.messages.forEach(m => {
-            if (m.sender === 'them') m.read = true;
-        });
-    });
-    renderMsgDropdown();
+async function markAllMsgRead() {
+    try {
+        const { error } = await window.supabase
+            .from('messages')
+            .update({ is_read: true })
+            .eq('receiver_id', currentUserId)
+            .eq('is_read', false);
+
+        if (error) throw error;
+        renderMsgDropdown();
+    } catch (error) {
+        console.error('Error marking messages as read:', error);
+    }
+}
+
+// Helper function to show notifications
+function showNotification(title, message) {
+    // Create a simple notification toast
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 animate-pulse';
+    toast.innerHTML = `
+        <div class="font-semibold">${title}</div>
+        <div class="text-sm">${message}</div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }

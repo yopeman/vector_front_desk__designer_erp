@@ -17,9 +17,6 @@ class NotificationsSection {
                         </h2>
                         <p class="text-sm text-slate-400 mt-1">Manage system notifications, mark as read/unread, search, filter, and delete.</p>
                     </div>
-                    <button onclick="openNotificationModal()" class="bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-400 hover:to-pink-400 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-rose-500/15 w-fit">
-                        <i class="fa-solid fa-plus text-xs"></i> Create Notification
-                    </button>
                 </div>
 
                 <!-- Stats Summary Cards -->

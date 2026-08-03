@@ -74,6 +74,11 @@ class SidebarSection {
                             <i class="fa-solid fa-sticky-note w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Note</span>
                         </button>
+                        <button onclick="window.location.href='https://vectoradvert.com/hr'" id="tab-hr-requests" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
+                            <span class="active-indicator"></span>
+                            <i class="fa-solid fa-users-gear w-5 text-left text-base shrink-0"></i>
+                            <span class="truncate font-medium">HR Request</span>
+                        </button>
                         <button onclick="switchTab('settings')" id="tab-settings" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-slate-400 rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-gear w-5 text-left text-base shrink-0"></i>
@@ -86,7 +91,7 @@ class SidebarSection {
                 <div class="section-divider"></div>
 
                 <!-- HR Leave Submenu - Modernized with Collapsible -->
-                <div>
+                <!-- <div>
                     <button onclick="toggleHRSubmenu()" class="w-full flex items-center justify-between px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em] hover:text-slate-300 transition-colors group">
                         <span class="flex items-center gap-2">
                             <i class="fa-solid fa-users-gear text-slate-600 group-hover:text-slate-400 transition-colors"></i>
@@ -111,7 +116,7 @@ class SidebarSection {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
         </aside>`;
         }

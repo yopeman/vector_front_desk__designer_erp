@@ -49,22 +49,22 @@ function switchTab(targetId) {
         'store-request': () => {
             if (typeof renderStoreItemsTable === 'function') renderStoreItemsTable();
         },
-        'notes': () => {
-            if (typeof renderNotes === 'function') renderNotes();
+        'notes': async () => {
+            if (typeof fetchNotes === 'function') await fetchNotes();
         },
-        'messages': () => {
+        'messages': async () => {
             if (typeof renderUserList === 'function') renderUserList();
-            if (typeof renderChatMessages === 'function') renderChatMessages();
+            if (typeof renderMsgDropdown === 'function') await renderMsgDropdown();
         },
-        'notifications': () => {
+        'notifications': async () => {
             if (typeof renderNotifications === 'function') renderNotifications();
-            if (typeof renderNotifDropdown === 'function') renderNotifDropdown();
+            if (typeof renderNotifDropdown === 'function') await renderNotifDropdown();
         },
         'reports': () => {
             if (typeof filterReports === 'function') filterReports();
         },
-        'settings': () => {
-            if (typeof loadProfile === 'function') loadProfile();
+        'settings': async () => {
+            if (typeof loadProfile === 'function') await loadProfile();
             if (typeof loadNotificationSettings === 'function') loadNotificationSettings();
             if (typeof loadAppearanceSettings === 'function') loadAppearanceSettings();
         }
@@ -511,249 +511,7 @@ function checkAuthOnLoad() {
 // =============================================
 // SETTINGS FUNCTIONS
 // =============================================
-function switchSettingsTab(tabId) {
-    document.querySelectorAll('.settings-content').forEach(el => el.classList.add('hidden'));
-    const targetContent = document.getElementById(`settings-content-${tabId}`);
-    if (targetContent) targetContent.classList.remove('hidden');
-
-    document.querySelectorAll('.settings-tab-btn').forEach(btn => {
-        btn.className = 'settings-tab-btn px-4 py-2.5 text-xs font-semibold rounded-lg transition-all bg-slate-800/80 text-slate-400 hover:text-slate-200';
-    });
-    const targetTab = document.getElementById(`settings-tab-${tabId}`);
-    if (targetTab) {
-        targetTab.className = 'settings-tab-btn px-4 py-2.5 text-xs font-semibold rounded-lg transition-all bg-blue-600 text-white shadow-md';
-    }
-}
-
-// Profile Management
-function loadProfile() {
-    const profile = Auth.getProfile();
-    if (profile) {
-        document.getElementById('settings-profile-name').value = profile.name || '';
-        document.getElementById('settings-profile-title').value = profile.title || '';
-        document.getElementById('settings-profile-email').value = profile.email || '';
-        document.getElementById('settings-profile-phone').value = profile.phone || '';
-    } else {
-        const user = Auth.getCurrentUser();
-        if (user) {
-            document.getElementById('settings-profile-name').value = user.name || '';
-            document.getElementById('settings-profile-title').value = user.title || '';
-            document.getElementById('settings-profile-email').value = user.email || '';
-        }
-    }
-}
-
-async function saveProfile() {
-    const name = document.getElementById('settings-profile-name').value.trim();
-    const title = document.getElementById('settings-profile-title').value.trim();
-    const email = document.getElementById('settings-profile-email').value.trim();
-    const phone = document.getElementById('settings-profile-phone').value.trim();
-
-    if (!name) {
-        alert('Please enter your full name.');
-        return;
-    }
-
-    const user = Auth.getCurrentUser();
-    if (!user) {
-        alert('You must be logged in to save profile.');
-        return;
-    }
-
-    const result = await Auth.updateUserProfile(user.id, { name, title, email });
-    if (!result.success) {
-        alert(result.error);
-        return;
-    }
-
-    const profile = { name, title, email, phone };
-    Auth.saveProfile(profile);
-
-    alert('Profile saved successfully!');
-}
-
-function resetProfileForm() {
-    loadProfile();
-}
-
-// Password Management
-function togglePasswordVisibility(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    const icon = btn.querySelector('i');
-    if (input.type === 'password') {
-        input.type = 'text';
-        if (icon) icon.className = 'fa-solid fa-eye-slash text-xs';
-    } else {
-        input.type = 'password';
-        if (icon) icon.className = 'fa-solid fa-eye text-xs';
-    }
-}
-
-async function updatePassword() {
-    const currentPwd = document.getElementById('settings-current-password').value;
-    const newPwd = document.getElementById('settings-new-password').value;
-    const confirmPwd = document.getElementById('settings-confirm-password').value;
-
-    if (!currentPwd) {
-        alert('Please enter your current password.');
-        return;
-    }
-
-    const user = Auth.getCurrentUser();
-    if (!user) {
-        alert('You must be logged in to change password.');
-        return;
-    }
-
-    const result = await Auth.changePassword(user.id, currentPwd, newPwd);
-    if (!result.success) {
-        alert(result.error);
-        return;
-    }
-
-    if (newPwd !== confirmPwd) {
-        alert('New password and confirm password do not match.');
-        return;
-    }
-
-    document.getElementById('settings-current-password').value = '';
-    document.getElementById('settings-new-password').value = '';
-    document.getElementById('settings-confirm-password').value = '';
-    document.getElementById('settings-password-strength').classList.add('hidden');
-
-    alert('Password updated successfully!');
-}
-
-function resetPasswordForm() {
-    document.getElementById('settings-current-password').value = '';
-    document.getElementById('settings-new-password').value = '';
-    document.getElementById('settings-confirm-password').value = '';
-    document.getElementById('settings-password-strength').classList.add('hidden');
-}
-
-function checkPasswordStrength(password) {
-    const strengthEl = document.getElementById('settings-password-strength');
-    const barEl = document.getElementById('settings-password-strength-bar');
-    const textEl = document.getElementById('settings-password-strength-text');
-
-    if (!password) {
-        strengthEl.classList.add('hidden');
-        return;
-    }
-
-    strengthEl.classList.remove('hidden');
-    let score = 0;
-
-    if (password.length >= 6) score += 20;
-    if (password.length >= 10) score += 10;
-    if (/[a-z]/.test(password)) score += 15;
-    if (/[A-Z]/.test(password)) score += 15;
-    if (/[0-9]/.test(password)) score += 20;
-    if (/[^a-zA-Z0-9]/.test(password)) score += 20;
-
-    barEl.style.width = score + '%';
-
-    if (score < 30) {
-        barEl.className = 'h-full rounded-full transition-all duration-500 bg-rose-500';
-        textEl.textContent = 'Weak';
-        textEl.className = 'font-semibold text-rose-400';
-    } else if (score < 60) {
-        barEl.className = 'h-full rounded-full transition-all duration-500 bg-amber-500';
-        textEl.textContent = 'Medium';
-        textEl.className = 'font-semibold text-amber-400';
-    } else if (score < 80) {
-        barEl.className = 'h-full rounded-full transition-all duration-500 bg-blue-500';
-        textEl.textContent = 'Strong';
-        textEl.className = 'font-semibold text-blue-400';
-    } else {
-        barEl.className = 'h-full rounded-full transition-all duration-500 bg-emerald-500';
-        textEl.textContent = 'Very Strong';
-        textEl.className = 'font-semibold text-emerald-400';
-    }
-}
-
-// Notification Channels
-function loadNotificationSettings() {
-    const saved = localStorage.getItem('erp_notification_channels');
-    if (saved) {
-        try {
-            const channels = JSON.parse(saved);
-            document.getElementById('settings-notif-email').checked = channels.email !== false;
-            document.getElementById('settings-notif-push').checked = channels.push !== false;
-            document.getElementById('settings-notif-sms').checked = channels.sms === true;
-            document.getElementById('settings-notif-inapp').checked = channels.inapp !== false;
-        } catch(e) {}
-    }
-}
-
-function saveNotificationSettings() {
-    const channels = {
-        email: document.getElementById('settings-notif-email').checked,
-        push: document.getElementById('settings-notif-push').checked,
-        sms: document.getElementById('settings-notif-sms').checked,
-        inapp: document.getElementById('settings-notif-inapp').checked
-    };
-    localStorage.setItem('erp_notification_channels', JSON.stringify(channels));
-}
-
-// Appearance Settings
-function setTheme(theme) {
-    localStorage.setItem('erp_theme', theme);
-
-    document.querySelectorAll('.theme-btn').forEach(btn => {
-        btn.className = 'theme-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-slate-700 bg-slate-900/60 hover:border-blue-500/50 transition-all';
-    });
-    const activeBtn = document.getElementById(`settings-theme-${theme}`);
-    if (activeBtn) {
-        activeBtn.className = 'theme-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-blue-500 bg-blue-500/10 transition-all';
-        const span = activeBtn.querySelector('span:last-child');
-        if (span) span.className = 'text-xs font-medium text-blue-400';
-    }
-
-    if (theme === 'light') {
-        // Light theme implementation can be added here
-    } else if (theme === 'dark') {
-        document.body.className = document.body.className.replace(/bg-white/g, 'bg-slate-900').replace(/text-slate-900/g, 'text-slate-100');
-        document.body.classList.add('theme-dark');
-        document.body.classList.remove('theme-light', 'theme-system');
-    } else {
-        document.body.classList.add('theme-system');
-        document.body.classList.remove('theme-light', 'theme-dark');
-    }
-}
-
-function setTextSize(size) {
-    localStorage.setItem('erp_text_size', size);
-
-    document.querySelectorAll('.textsize-btn').forEach(btn => {
-        btn.className = 'textsize-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-slate-700 bg-slate-900/60 hover:border-blue-500/50 transition-all';
-    });
-    const activeBtn = document.getElementById(`textsize-${size}`);
-    if (activeBtn) {
-        activeBtn.className = 'textsize-btn flex flex-col items-center gap-2 p-4 rounded-xl border-2 border-blue-500 bg-blue-500/10 transition-all';
-        const spans = activeBtn.querySelectorAll('span');
-        if (spans.length > 1) spans[1].className = 'text-xs text-blue-400';
-    }
-
-    const root = document.documentElement;
-    root.classList.remove('text-sm', 'text-base', 'text-lg');
-    if (size === 'small') {
-        root.style.fontSize = '14px';
-    } else if (size === 'medium') {
-        root.style.fontSize = '16px';
-    } else if (size === 'large') {
-        root.style.fontSize = '18px';
-    }
-}
-
-function loadAppearanceSettings() {
-    const theme = localStorage.getItem('erp_theme') || 'dark';
-    setTheme(theme);
-
-    const textSize = localStorage.getItem('erp_text_size') || 'medium';
-    setTextSize(textSize);
-}
+// Settings functions are now in settings.js with Supabase integration
 
 // =============================================
 // MODULE DROPDOWN (FOR REPORTS)
@@ -826,24 +584,19 @@ window.onload = async function() {
     // Completed Orders initialization
     if (typeof renderCompletedOrdersTable === 'function') renderCompletedOrdersTable();
     
-    // Notes initialization
-    if (typeof renderNotes === 'function') renderNotes();
+    // Notes initialization with Supabase
+    if (typeof initNotesData === 'function') await initNotesData();
     if (typeof setNotesFilter === 'function') setNotesFilter('all');
     
-    // Notifications initialization
-    if (typeof initNotificationsData === 'function') initNotificationsData();
-    if (typeof renderNotifications === 'function') renderNotifications();
-    if (typeof renderNotifDropdown === 'function') renderNotifDropdown();
+    // Notifications initialization with Supabase
+    if (typeof initNotificationsData === 'function') await initNotificationsData();
     
-    // Messages initialization
-    if (typeof initMessagesData === 'function') initMessagesData();
-    if (typeof renderUserList === 'function') renderUserList();
-    if (typeof renderMsgDropdown === 'function') renderMsgDropdown();
+    // Messages initialization with Supabase
+    if (typeof initMessagesData === 'function') await initMessagesData();
+    if (typeof renderMsgDropdown === 'function') await renderMsgDropdown();
     
-    // Settings initialization
-    if (typeof loadProfile === 'function') loadProfile();
-    if (typeof loadNotificationSettings === 'function') loadNotificationSettings();
-    if (typeof loadAppearanceSettings === 'function') loadAppearanceSettings();
+    // Settings initialization with Supabase
+    if (typeof initSettings === 'function') await initSettings();
     
     // Messages UI state
     const chatContainer = document.getElementById('msg-chat-container');
