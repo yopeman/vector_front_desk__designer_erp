@@ -224,13 +224,9 @@ function renderNotifications() {
                         <i class="${catIcon} text-[8px]"></i>
                         ${notif.priority} · ${notif.category}
                     </span>
-                    <button onclick="toggleNotifRead(${realIndex})" class="text-[10px] text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-blue-500/10" title="${notif.read ? 'Mark as unread' : 'Mark as read'}">
+                    <button onclick="toggleNotifRead('${notif.id}')" class="text-[10px] text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-blue-500/10" title="${notif.read ? 'Mark as unread' : 'Mark as read'}">
                         <i class="fa-solid ${notif.read ? 'fa-envelope' : 'fa-envelope-open'} text-[10px]"></i>
                         ${notif.read ? 'Unread' : 'Read'}
-                    </button>
-                    <button onclick="deleteNotification(${realIndex})" class="text-[10px] text-slate-500 hover:text-rose-400 transition-colors flex items-center gap-1 px-2 py-0.5 rounded-md hover:bg-rose-500/10" title="Delete notification">
-                        <i class="fa-solid fa-trash text-[10px]"></i>
-                        Delete
                     </button>
                 </div>
             </div>
@@ -369,6 +365,7 @@ async function markAllNotifRead() {
 
 async function deleteNotification(notifId) {
     if (!confirm('Delete this notification?')) return;
+    return
     
     try {
         const { error } = await window.supabase

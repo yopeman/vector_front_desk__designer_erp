@@ -30,6 +30,7 @@ export default function DesignerPage() {
   const [fileUrls, setFileUrls] = useState({});
   const [showProductionOrderModal, setShowProductionOrderModal] = useState(false);
   const [productionOrders, setProductionOrders] = useState([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   // Reports state
   const [reportDateFrom, setReportDateFrom] = useState(() => {
@@ -68,6 +69,58 @@ export default function DesignerPage() {
     fetchCustomerApprovalVersions();
     fetchMyTasks();
     fetchProductionOrders();
+  }, [user?.id]);
+
+  // Fetch unread notification count and subscribe to realtime updates
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('read_notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false);
+
+        if (error) throw error;
+        setUnreadNotificationCount(count || 0);
+      } catch (error) {
+        console.error('Error fetching unread notification count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    const channel = supabase
+      .channel('notifications-badge-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications'
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'read_notifications'
+        },
+        () => {
+          fetchUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   useEffect(() => {
@@ -696,7 +749,9 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'notifications-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-bell w-4"></i> Notifications</div>
-              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+              {unreadNotificationCount > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{unreadNotificationCount}</span>
+              )}
             </button>
             <button 
               onClick={() => handleSectionChange('notes-section')}
