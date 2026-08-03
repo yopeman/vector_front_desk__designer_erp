@@ -10,6 +10,14 @@
 async function getReportData() {
     const records = [];
 
+    // Ensure data is fetched from Supabase
+    if (typeof fetchReceivedOrders === 'function') {
+        await fetchReceivedOrders();
+    }
+    if (typeof fetchCompletedOrders === 'function') {
+        await fetchCompletedOrders();
+    }
+
     // Add received orders
     ordersData.forEach(order => {
         records.push({
@@ -44,7 +52,7 @@ async function getReportData() {
         });
     });
 
-    // Add rework records
+    // Add rework records (not yet integrated with Supabase)
     reworkData.forEach(entry => {
         records.push({
             module: 'rework',

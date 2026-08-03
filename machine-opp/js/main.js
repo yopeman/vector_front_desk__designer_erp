@@ -24,9 +24,9 @@ function switchTab(targetId) {
 
     // Refetch/refresh data when switching tabs
     const refreshFunctions = {
-        'dashboard': () => {
-            if (typeof updateDashboardStats === 'function') updateDashboardStats();
-            if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+        'dashboard': async () => {
+            if (typeof updateDashboardStats === 'function') await updateDashboardStats();
+            if (typeof renderDashboardCharts === 'function') await renderDashboardCharts();
         },
         'received-orders': async () => {
             if (typeof fetchReceivedOrders === 'function') {
@@ -569,8 +569,8 @@ window.onload = async function() {
     if (typeof checkAuthOnLoad === 'function') checkAuthOnLoad();
     
     // Dashboard initialization
-    if (typeof updateDashboardStats === 'function') updateDashboardStats();
-    if (typeof renderDashboardCharts === 'function') renderDashboardCharts();
+    if (typeof updateDashboardStats === 'function') await updateDashboardStats();
+    if (typeof renderDashboardCharts === 'function') await renderDashboardCharts();
     
     // Received Orders initialization
     if (typeof renderOrdersTable === 'function') renderOrdersTable();

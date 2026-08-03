@@ -16,30 +16,6 @@ class DashboardSection {
                      </div>
                  </div>
 
-                 <!-- Presence & Clock Section -->
-                 <div class="clock-panel flex items-center space-x-5 px-5 py-3 rounded-2xl shadow-lg shadow-black/5">
-                     <div class="flex items-center space-x-2.5">
-                         <span class="relative flex h-2.5 w-2.5">
-                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                             <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                         </span>
-                         <span class="text-[11px] font-medium text-slate-400">Presence</span>
-                     </div>
-                     <div class="flex items-center gap-2">
-                         <button onclick="toggleClock('in')" id="btnClockIn" class="clock-btn px-3.5 py-1.5 text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all flex items-center gap-1.5">
-                             <i class="fa-solid fa-sign-in-alt text-[10px]"></i> Clock In
-                         </button>
-                         <span id="clockInTime" class="text-xs font-mono text-slate-300 min-w-[5rem] text-center tabular-nums bg-slate-900/60 px-2 py-1 rounded-lg border border-slate-700/40">--:--:--</span>
-                     </div>
-                     <div class="w-px h-8 bg-slate-700/40"></div>
-                     <div class="flex items-center gap-2">
-                         <button onclick="toggleClock('out')" id="btnClockOut" class="clock-btn px-3.5 py-1.5 text-[11px] font-semibold bg-rose-500/10 text-rose-400 rounded-lg border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-1.5">
-                             <i class="fa-solid fa-sign-out-alt text-[10px]"></i> Clock Out
-                         </button>
-                         <span id="clockOutTime" class="text-xs font-mono text-slate-300 min-w-[5rem] text-center tabular-nums bg-slate-900/60 px-2 py-1 rounded-lg border border-slate-700/40">--:--:--</span>
-                     </div>
-                 </div>
-
                  <!-- Summary Cards -->
                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-stats-container">
                      <div class="stat-card bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-5 flex items-center gap-4">
@@ -69,13 +45,13 @@ class DashboardSection {
                              <p class="text-2xl font-bold text-white mt-0.5" id="dash-stats-completed">0</p>
                          </div>
                      </div>
-                     <div class="stat-card bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-2xl p-5 flex items-center gap-4">
-                         <div class="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                             <i class="fa-solid fa-box text-amber-400 text-xl"></i>
+                     <div class="stat-card bg-gradient-to-br from-violet-500/10 to-violet-600/5 border border-violet-500/20 rounded-2xl p-5 flex items-center gap-4">
+                         <div class="w-12 h-12 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
+                             <i class="fa-solid fa-wrench text-violet-400 text-xl"></i>
                          </div>
                          <div>
-                             <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Store Items</p>
-                             <p class="text-2xl font-bold text-white mt-0.5" id="dash-stats-store">0</p>
+                             <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Maintenance</p>
+                             <p class="text-2xl font-bold text-white mt-0.5" id="dash-stats-maintenance">0</p>
                          </div>
                      </div>
                  </div>
@@ -96,11 +72,11 @@ class DashboardSection {
                              <canvas id="chart-module" width="220" height="220"></canvas>
                          </div>
                      </div>
-                     <!-- Store Items Chart -->
+                     <!-- Machine Maintenance Chart -->
                      <div class="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50">
-                         <h3 class="text-sm font-semibold text-white mb-4">Store Items by Category</h3>
+                         <h3 class="text-sm font-semibold text-white mb-4">Maintenance by Status</h3>
                          <div class="flex items-center justify-center">
-                             <canvas id="chart-store" width="220" height="220"></canvas>
+                             <canvas id="chart-maintenance" width="220" height="220"></canvas>
                          </div>
                      </div>
                  </div>
@@ -125,13 +101,13 @@ class DashboardSection {
                              <p class="text-[11px] text-slate-400 mt-0.5">Review finished work</p>
                          </div>
                      </a>
-                     <a href="#" onclick="switchTab('store-request'); return false;" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
-                         <div class="w-11 h-11 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
-                             <i class="fa-solid fa-box text-amber-400 text-lg"></i>
+                     <a href="#" onclick="switchTab('machine-login'); return false;" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
+                         <div class="w-11 h-11 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
+                             <i class="fa-solid fa-wrench text-violet-400 text-lg"></i>
                          </div>
                          <div>
-                             <p class="text-sm font-semibold text-white group-hover:text-amber-400 transition-colors">Store</p>
-                             <p class="text-[11px] text-slate-400 mt-0.5">Manage inventory</p>
+                             <p class="text-sm font-semibold text-white group-hover:text-violet-400 transition-colors">Machine Maintenance</p>
+                             <p class="text-[11px] text-slate-400 mt-0.5">Checklists & logs</p>
                          </div>
                      </a>
                      <a href="#" onclick="switchTab('notifications'); return false;" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-rose-500/30 hover:bg-rose-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
@@ -161,7 +137,7 @@ class DashboardSection {
                              <p class="text-[11px] text-slate-400 mt-0.5">Quick notes & checklist</p>
                          </div>
                      </a>
-                     <a href="#" onclick="return false;" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-teal-500/30 hover:bg-teal-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
+                     <a href="https://vectoradvert.com/hr" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-teal-500/30 hover:bg-teal-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
                          <div class="w-11 h-11 rounded-xl bg-teal-500/15 flex items-center justify-center shrink-0">
                              <i class="fa-solid fa-users text-teal-400 text-lg"></i>
                          </div>
