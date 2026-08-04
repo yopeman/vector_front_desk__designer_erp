@@ -10,10 +10,11 @@ class TopNavigationBar {
         this.init();
     }
 
-    init() {
+    async init() {
         this.render();
         this.attachEventListeners();
-        this.checkAuthState();
+        await this.checkAuthState();
+        await this.initializeDropdowns();
     }
 
     render() {
@@ -139,6 +140,11 @@ class TopNavigationBar {
         const dropdown = document.getElementById('notif-dropdown');
         dropdown.classList.toggle('hidden');
         this.closeMsgDropdown();
+        if (!dropdown.classList.contains('hidden')) {
+            if (typeof renderNotifDropdown === 'function') {
+                renderNotifDropdown();
+            }
+        }
     }
 
     closeNotifDropdown() {
@@ -152,6 +158,11 @@ class TopNavigationBar {
         const dropdown = document.getElementById('msg-dropdown');
         dropdown.classList.toggle('hidden');
         this.closeNotifDropdown();
+        if (!dropdown.classList.contains('hidden')) {
+            if (typeof renderMsgDropdown === 'function') {
+                renderMsgDropdown();
+            }
+        }
     }
 
     closeMsgDropdown() {
@@ -210,6 +221,25 @@ class TopNavigationBar {
         }
         
         console.log('Logged out successfully');
+    }
+
+    async initializeDropdowns() {
+        // Initialize notifications data
+        if (typeof initNotificationsData === 'function') {
+            await initNotificationsData();
+        }
+        // Initialize messages data
+        if (typeof initMessagesData === 'function') {
+            await initMessagesData();
+        }
+        // Initialize notification dropdown
+        if (typeof renderNotifDropdown === 'function') {
+            renderNotifDropdown();
+        }
+        // Initialize message dropdown
+        if (typeof renderMsgDropdown === 'function') {
+            renderMsgDropdown();
+        }
     }
 
     updateNotificationBadge(count) {

@@ -465,4 +465,5 @@ window.clearNotifSearch = clearNotifSearch;
 window.resetNotifFilters = resetNotifFilters;
 window.markAllRead = MarketingNotifications.markAllRead;
 window.markAllNotifRead = MarketingNotifications.markAllRead;
+window.renderNotifDropdown = MarketingNotifications.renderDropdown;
 window.MarketingNotifications = MarketingNotifications;

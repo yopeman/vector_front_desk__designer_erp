@@ -378,7 +378,7 @@ async function markAllMsgRead() {
         const { error } = await window.supabase
             .from('messages')
             .update({ is_read: true })
-            .eq('receiver_id', currentUserId)
+            .eq('receiver_id', MarketingMessages.currentUserId)
             .eq('is_read', false);
 
         if (error) throw error;
@@ -413,3 +413,5 @@ window.clearUserSearch = clearUserSearch;
 window.openChat = openChat;
 window.closeChat = closeChat;
 window.sendMessage = sendMessage;
+window.markAllMsgRead = markAllMsgRead;
+window.renderMsgDropdown = renderMsgDropdown;
