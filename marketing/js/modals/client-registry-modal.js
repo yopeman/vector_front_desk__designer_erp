@@ -18,6 +18,16 @@ export const clientRegistryModal = `
                 <div class="form-group"><label>Discovery</label><select id="cli_discovery" class="input-field"><option selected>telegram</option><option>tiktok</option><option>facebook</option></select></div>
             </div>
 
+            <div id="clientExistingAttachments" style="display:none; margin-bottom:15px; padding:12px; background:var(--input-bg); border-radius:8px; border:1px solid #233554;">
+                <div style="font-size:12px; color:var(--text-gray); margin-bottom:8px;">Existing Attachment:</div>
+                <div id="clientExistingFileLink" style="display:none; margin-bottom:8px;">
+                    <a id="clientFileLink" href="#" target="_blank" style="color:var(--primary); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-file"></i>
+                        <span id="clientFileLinkText">Open attached file</span>
+                    </a>
+                </div>
+            </div>
+
             <div class="media-box">
                 <button type="button" class="media-btn file-btn" onclick="document.getElementById('cli_file').click()">📎 Attach Business License Document</button>
                 <input type="file" id="cli_file" style="display:none;" onchange="handleFileSelect(event)">

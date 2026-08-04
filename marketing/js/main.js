@@ -12,17 +12,22 @@ function switchView(viewId) {
     document.getElementById('view-' + viewId).classList.add('active-view');
     document.getElementById('node-' + viewId).classList.add('active');
 
-    // Load market requests from Supabase whenever the view is shown
+    // Load data from Supabase whenever the view is shown
     if (viewId === 'marketRequest') {
         loadMarketRequests();
+    } else if (viewId === 'clientRegistry') {
+        loadClients();
     }
 }
 
 function triggerCurrentForm() {
     if(currentActiveView === 'dashboard') {
         document.getElementById('formModal-clientRegistry').style.display = 'flex';
+        openNewClientForm();
     } else if (currentActiveView === 'marketRequest') {
         openNewMarketRequestForm();
+    } else if (currentActiveView === 'clientRegistry') {
+        openNewClientForm();
     } else {
         const modal = document.getElementById('formModal-' + currentActiveView);
         if(modal) modal.style.display = 'flex';

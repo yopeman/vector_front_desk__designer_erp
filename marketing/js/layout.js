@@ -92,10 +92,9 @@ const layoutHTML = `
     <h3>Client & Leads Registry List</h3>
     <div class="table-container">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Client Name</th><th>Type</th><th>Business Sector</th><th>TIN Number</th><th>Address</th><th>Discovery</th><th>Level</th></tr></thead>
+            <thead><tr><th>Date</th><th>Client Name</th><th>Type</th><th>Business Sector</th><th>TIN Number</th><th>Address</th><th>Discovery</th><th>Level</th><th>Actions</th></tr></thead>
             <tbody id="clientTableBody">
-                <tr><td>2026-06-05</td><td>Vector Advert Corp</td><td>organization</td><td>advertising</td><td>0059144267</td><td>Addis Ababa</td><td>telegram</td><td>premium</td></tr>
-                <tr><td>2026-06-06</td><td>Abyssinia Trading</td><td>organization</td><td>manufacturing</td><td>0043128954</td><td>Bole, Block 4</td><td>walk in</td><td>standard</td></tr>
+                <tr><td colspan="9" style="text-align:center; color:var(--text-gray);">Loading clients...</td></tr>
             </tbody>
         </table>
     </div>
