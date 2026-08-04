@@ -2,6 +2,33 @@
 // REPORTS MODULE - MARKETING ERP
 // =============================================
 
+// Define functions immediately to make them available for onclick handlers
+function toggleModuleDropdown() {
+    const dropdown = document.getElementById('report-module-options');
+    if (dropdown) dropdown.classList.toggle('hidden');
+}
+
+function clearDateFrom() {
+    const input = document.getElementById('report-date-from');
+    if (input) {
+        input.value = '';
+        if (typeof filterReports === 'function') filterReports();
+    }
+}
+
+function clearDateTo() {
+    const input = document.getElementById('report-date-to');
+    if (input) {
+        input.value = '';
+        if (typeof filterReports === 'function') filterReports();
+    }
+}
+
+// Expose to global scope immediately
+window.toggleModuleDropdown = toggleModuleDropdown;
+window.clearDateFrom = clearDateFrom;
+window.clearDateTo = clearDateTo;
+
 // Global state
 let reportColumnConfigs = {
     'market-requests': [
@@ -104,6 +131,7 @@ async function getReportData() {
                     module: 'market-requests',
                     moduleLabel: 'Market Request',
                     date: formatDate(req.created_at),
+                    dateRaw: req.created_at,
                     requestNum: req.request_no || '-',
                     title: req.request_type || '-',
                     priority: req.priority || '-',
@@ -138,6 +166,7 @@ async function getReportData() {
                     module: 'clients',
                     moduleLabel: 'Client',
                     date: formatDate(client.created_at),
+                    dateRaw: client.created_at,
                     clientName: client.client_name || '-',
                     type: client.client_type || '-',
                     sector: client.business_sector || '-',
@@ -174,6 +203,7 @@ async function getReportData() {
                     module: 'invoices',
                     moduleLabel: 'Invoice',
                     date: formatDate(inv.created_at),
+                    dateRaw: inv.created_at,
                     invoiceNum: inv.invoice_no || '-',
                     clientName: inv.client_name || '-',
                     item: inv.item_service || '-',
@@ -188,6 +218,140 @@ async function getReportData() {
         }
     } catch (error) {
         console.error('Error fetching invoices:', error);
+    }
+
+    // Add research logins
+    try {
+        const { data: research, error } = await window.supabase
+            .from('mrk_research_logins')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            if (error.code === '42P01') {
+                console.warn('mrk_research_logins table does not exist yet');
+            } else {
+                throw error;
+            }
+        }
+
+        if (research) {
+            research.forEach(r => {
+                records.push({
+                    module: 'research',
+                    moduleLabel: 'Research',
+                    date: formatDate(r.created_at),
+                    dateRaw: r.created_at,
+                    researchNum: r.research_no || '-',
+                    title: r.title || '-',
+                    reason: r.reason || '-',
+                    objective: r.objective || '-'
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching research logins:', error);
+    }
+
+    // Add digital logs
+    try {
+        const { data: digital, error } = await window.supabase
+            .from('mrk_digital_logs')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            if (error.code === '42P01') {
+                console.warn('mrk_digital_logs table does not exist yet');
+            } else {
+                throw error;
+            }
+        }
+
+        if (digital) {
+            digital.forEach(d => {
+                records.push({
+                    module: 'digital-logs',
+                    moduleLabel: 'Digital Log',
+                    date: formatDate(d.created_at),
+                    dateRaw: d.created_at,
+                    contentNum: d.content_no || '-',
+                    title: d.content_title || '-',
+                    script: d.content_script || '-',
+                    sharedTo: d.share_to || '-'
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching digital logs:', error);
+    }
+
+    // Add tenders
+    try {
+        const { data: tenders, error } = await window.supabase
+            .from('mrk_tenders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            if (error.code === '42P01') {
+                console.warn('mrk_tenders table does not exist yet');
+            } else {
+                throw error;
+            }
+        }
+
+        if (tenders) {
+            tenders.forEach(t => {
+                records.push({
+                    module: 'tenders',
+                    moduleLabel: 'Tender',
+                    date: formatDate(t.created_at),
+                    dateRaw: t.created_at,
+                    companyName: t.company_name || '-',
+                    tenderNo: t.tender_no || '-',
+                    item: t.item_service || '-',
+                    cpoAmount: t.cpo_amount || 0,
+                    totalPrice: t.total_price || 0
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching tenders:', error);
+    }
+
+    // Add feedback
+    try {
+        const { data: feedback, error } = await window.supabase
+            .from('mrk_feedbacks')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            if (error.code === '42P01') {
+                console.warn('mrk_feedbacks table does not exist yet');
+            } else {
+                throw error;
+            }
+        }
+
+        if (feedback) {
+            feedback.forEach(f => {
+                records.push({
+                    module: 'feedback',
+                    moduleLabel: 'Feedback',
+                    date: formatDate(f.created_at),
+                    dateRaw: f.created_at,
+                    companyName: f.client_name || '-',
+                    projectName: f.project_name || '-',
+                    projectNum: f.project_no || '-',
+                    evaluation: f.overall_score || '-',
+                    grade: f.grade || '-'
+                });
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching feedbacks:', error);
     }
 
     return records;
@@ -212,13 +376,17 @@ function renderReportHeader(columns) {
 async function filterReports() {
     const selectedModules = getSelectedModules();
     const searchVal = document.getElementById('report-search').value.toLowerCase();
-    const dateFrom = document.getElementById('report-date-from').value;
-    const dateTo = document.getElementById('report-date-to').value;
+    const dateFrom = document.getElementById('report-date-from').value || '';
+    const dateTo = document.getElementById('report-date-to').value || '';
     const noResults = document.getElementById('report-no-results');
 
     const clearBtn = document.getElementById('report-search-clear');
     const filterCount = document.getElementById('report-filter-count');
     const activeModule = document.getElementById('report-active-module');
+
+    // Clear tables container at the start to ensure fresh render
+    const tablesContainer = document.getElementById('report-tables-container');
+    if (tablesContainer) tablesContainer.innerHTML = '';
 
     if (searchVal.length > 0) {
         clearBtn.classList.add('visible');
@@ -235,8 +403,6 @@ async function filterReports() {
     }
 
     if (selectedModules.length === 0) {
-        const tablesContainer = document.getElementById('report-tables-container');
-        if (tablesContainer) tablesContainer.innerHTML = '';
         noResults.classList.remove('hidden');
         filterCount.textContent = '0';
         await updateReportStats();
@@ -247,8 +413,6 @@ async function filterReports() {
     const columns = getVisibleColumns(allColumns);
 
     if (columns.length === 0) {
-        const tablesContainer = document.getElementById('report-tables-container');
-        if (tablesContainer) tablesContainer.innerHTML = '';
         noResults.classList.remove('hidden');
         filterCount.textContent = '0';
         await updateReportStats();
@@ -268,6 +432,37 @@ async function filterReports() {
         );
     }
 
+    // Date filtering
+    if (dateFrom || dateTo) {
+        filtered = filtered.filter(r => {
+            const dateValue = r.dateRaw || r.date;
+            if (!dateValue || dateValue === '-') {
+                // Skip records without dates when date filtering is active
+                return false;
+            }
+
+            const recordDate = new Date(dateValue);
+            if (isNaN(recordDate.getTime())) {
+                console.warn('Invalid date for record:', r, dateValue);
+                return false;
+            }
+
+            if (dateFrom) {
+                const fromDate = new Date(dateFrom);
+                fromDate.setHours(0, 0, 0, 0); // Start of day
+                if (recordDate < fromDate) return false;
+            }
+
+            if (dateTo) {
+                const toDate = new Date(dateTo);
+                toDate.setHours(23, 59, 59, 999); // End of day
+                if (recordDate > toDate) return false;
+            }
+
+            return true;
+        });
+    }
+
     if (filtered.length === 0) {
         noResults.classList.remove('hidden');
         filterCount.textContent = '0';
@@ -278,7 +473,6 @@ async function filterReports() {
     noResults.classList.add('hidden');
     filterCount.textContent = filtered.length;
 
-    const tablesContainer = document.getElementById('report-tables-container');
     tablesContainer.innerHTML = '';
 
     selectedModules.forEach(module => {
@@ -428,11 +622,6 @@ function toggleColumnVisibility(colKey) {
 // =============================================
 // MODULE SELECTION
 // =============================================
-function toggleModuleDropdown() {
-    const dropdown = document.getElementById('report-module-options');
-    if (dropdown) dropdown.classList.toggle('hidden');
-}
-
 function updateModuleSelection() {
     const checkboxes = document.querySelectorAll('.module-checkbox');
     const selected = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
@@ -466,6 +655,5 @@ document.addEventListener('click', function(e) {
 window.filterReports = filterReports;
 window.clearReportSearch = clearReportSearch;
 window.resetReportFilters = resetReportFilters;
-window.toggleModuleDropdown = toggleModuleDropdown;
 window.updateModuleSelection = updateModuleSelection;
 window.toggleColumnVisibility = toggleColumnVisibility;

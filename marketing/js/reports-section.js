@@ -124,13 +124,19 @@ class ReportsSection {
                         <!-- Date From -->
                         <div class="date-wrapper">
                             <label>From Date</label>
-                            <input type="date" id="report-date-from" onchange="filterReports()" class="date-input">
+                            <input type="date" id="report-date-from" oninput="filterReports()" onchange="filterReports()" onblur="filterReports()" class="date-input">
+                            <button onclick="clearDateFrom()" class="date-clear">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
 
                         <!-- Date To -->
                         <div class="date-wrapper">
                             <label>To Date</label>
-                            <input type="date" id="report-date-to" onchange="filterReports()" class="date-input">
+                            <input type="date" id="report-date-to" oninput="filterReports()" onchange="filterReports()" onblur="filterReports()" class="date-input">
+                            <button onclick="clearDateTo()" class="date-clear">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
                     </div>
 

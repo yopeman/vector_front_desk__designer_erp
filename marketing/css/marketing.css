@@ -1753,6 +1753,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     display: flex;
     flex-direction: column;
     gap: 4px;
+    position: relative;
 }
 
 .date-wrapper label {
@@ -1763,6 +1764,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
 
 .date-input {
     padding: 10px 12px;
+    padding-right: 36px;
     background: var(--input-bg);
     border: 1px solid #233554;
     border-radius: 8px;
@@ -1773,6 +1775,28 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
 
 .date-input:focus {
     border-color: var(--primary);
+}
+
+.date-clear {
+    position: absolute;
+    right: 8px;
+    top: 28px;
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    color: var(--text-gray);
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.date-clear:hover {
+    color: var(--text-white);
+    background: var(--input-bg);
 }
 
 /* Empty State */
