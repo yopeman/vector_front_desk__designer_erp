@@ -23,6 +23,8 @@ function switchView(viewId) {
         loadResearch();
     } else if (viewId === 'digitalLog') {
         loadDigitalLogs();
+    } else if (viewId === 'tender') {
+        loadTenders();
     }
 }
 
@@ -40,6 +42,8 @@ function triggerCurrentForm() {
         openNewResearchForm();
     } else if (currentActiveView === 'digitalLog') {
         openNewDigitalLogForm();
+    } else if (currentActiveView === 'tender') {
+        openNewTenderForm();
     } else {
         const modal = document.getElementById('formModal-' + currentActiveView);
         if(modal) modal.style.display = 'flex';

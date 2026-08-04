@@ -4,6 +4,8 @@ let editingResearchId = null;
 let researchCache = [];
 let editingDigitalLogId = null;
 let digitalLogCache = [];
+let editingTenderId = null;
+let tenderCache = [];
 
 // Load research from Supabase and render the table
 async function loadResearch() {
@@ -403,6 +405,106 @@ async function saveDigitalLog() {
     loadDigitalLogs();
 }
 
+// Load tenders from Supabase and render the table
+async function loadTenders() {
+    const tbody = document.getElementById('tenderTableBody');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-gray);">Loading tenders...</td></tr>';
+
+    const { data, error } = await window.supabase
+        .from('mrk_tenders')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--danger);">Error loading: ${error.message}</td></tr>`;
+        return;
+    }
+
+    tenderCache = data || [];
+    renderTenders();
+}
+
+function renderTenders() {
+    const tbody = document.getElementById('tenderTableBody');
+    if (tenderCache.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-gray);">No tenders found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = tenderCache.map(t => {
+        return `<tr>
+            <td>${t.tender_date || '—'}</td>
+            <td>${t.company_name || '—'}</td>
+            <td>${t.tender_no || '—'}</td>
+            <td>${t.item_service || '—'}</td>
+            <td>${t.cpo_amount ? t.cpo_amount.toLocaleString() + ' ETB' : '—'}</td>
+            <td>${t.total_price ? t.total_price.toLocaleString() + ' ETB' : '—'}</td>
+            <td>${t.vat_status === 'with_vat' ? 'With VAT' : 'Without VAT'}</td>
+            <td>
+                <button class="action-trigger btn-register" style="padding:6px 12px; font-size:11px;" onclick="editTender('${t.id}')">✏️ Edit</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// Open the form in "create" mode (reset fields)
+function openNewTenderForm() {
+    editingTenderId = null;
+    resetStorageState();
+    document.getElementById('ten_date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('ten_company').value = '';
+    document.getElementById('ten_no').value = '';
+    document.getElementById('ten_item').value = '';
+    document.getElementById('ten_cpo').value = '';
+    document.getElementById('ten_total').value = '';
+    document.getElementById('ten_vat_status').value = 'with_vat';
+    document.getElementById('tenderExistingAttachments').style.display = 'none';
+    document.getElementById('formModal-tender').style.display = 'flex';
+}
+
+// Open the form in "edit" mode, pre-filled with the record's data
+async function editTender(id) {
+    const { data, error } = await window.supabase
+        .from('mrk_tenders')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+    if (error || !data) { alert("Error loading tender: " + (error?.message || 'not found')); return; }
+
+    editingTenderId = id;
+    resetStorageState();
+    document.getElementById('ten_date').value = data.tender_date || '';
+    document.getElementById('ten_company').value = data.company_name || '';
+    document.getElementById('ten_no').value = data.tender_no || '';
+    document.getElementById('ten_item').value = data.item_service || '';
+    document.getElementById('ten_cpo').value = data.cpo_amount || '';
+    document.getElementById('ten_total').value = data.total_price || '';
+    document.getElementById('ten_vat_status').value = data.vat_status || 'with_vat';
+
+    // Show existing attachment
+    const existingAttachmentsDiv = document.getElementById('tenderExistingAttachments');
+    const existingFileLink = document.getElementById('tenderExistingFileLink');
+    const fileLink = document.getElementById('tenderFileLink');
+
+    if (data.file_url) {
+        existingAttachmentsDiv.style.display = 'block';
+        existingFileLink.style.display = 'block';
+        const filePath = data.file_url.split('/documents/')[1]?.split('?')[0];
+        if (filePath) {
+            const freshUrl = await getFileUrl(filePath);
+            fileLink.href = freshUrl || data.file_url;
+        } else {
+            fileLink.href = data.file_url;
+        }
+        document.getElementById('tenderFileLinkText').textContent = 'Open attached file';
+    } else {
+        existingAttachmentsDiv.style.display = 'none';
+    }
+
+    document.getElementById('formModal-tender').style.display = 'flex';
+}
+
+// Create or update tender
 async function saveTender() {
     const user = await getCurrentUser();
     if (!user) { alert("Please sign in first."); return; }
@@ -411,26 +513,77 @@ async function saveTender() {
     const comp = document.getElementById('ten_company').value;
     const no = document.getElementById('ten_no').value;
     const item = document.getElementById('ten_item').value;
-    const cpo = document.getElementById('ten_cpo').value;
-    const tot = document.getElementById('ten_total').value;
+    const cpo = parseFloat(document.getElementById('ten_cpo').value.replace(/[^0-9.]/g, '')) || null;
+    const tot = parseFloat(document.getElementById('ten_total').value.replace(/[^0-9.]/g, '')) || null;
+    const vatStatus = document.getElementById('ten_vat_status').value;
 
-    const { error } = await window.supabase
-        .from('mrk_tenders')
-        .insert({
-            tender_date: date,
-            company_name: comp,
-            tender_no: no,
-            item_service: item,
-            cpo_amount: parseFloat(cpo.replace(/[^0-9.]/g, '')) || null,
-            total_price: parseFloat(tot.replace(/[^0-9.]/g, '')) || null,
-            created_by: user.id,
-        });
+    if (!comp) { alert("Company Name is required."); return; }
+    if (!no) { alert("Tender Number is required."); return; }
+
+    const payload = {
+        tender_date: date,
+        company_name: comp,
+        tender_no: no,
+        item_service: item,
+        cpo_amount: cpo,
+        total_price: tot,
+        vat_status: vatStatus,
+    };
+
+    const { attachedFiles } = getStorageState();
+
+    // Upload attached file if present
+    if (attachedFiles.length > 0) {
+        try {
+            const file = attachedFiles[0];
+            const fileName = `tender_${Date.now()}_${file.name}`;
+            const { data: uploadData, error: uploadError } = await window.supabase.storage
+                .from('documents')
+                .upload(fileName, file);
+
+            if (uploadError) {
+                if (uploadError.message.includes('Bucket not found')) {
+                    alert('Storage bucket "documents" does not exist. Please create it in Supabase dashboard (Storage → Create new bucket → name it "documents")');
+                    return;
+                }
+                throw uploadError;
+            }
+
+            const fileUrl = await getFileUrl(uploadData.path);
+            if (fileUrl) {
+                payload.file_url = fileUrl;
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Error uploading file: ' + error.message);
+            return;
+        }
+    }
+
+    let error;
+    if (editingTenderId) {
+        // UPDATE existing record
+        ({ error } = await window.supabase
+            .from('mrk_tenders')
+            .update(payload)
+            .eq('id', editingTenderId));
+    } else {
+        // CREATE new record
+        payload.created_by = user.id;
+        ({ error } = await window.supabase
+            .from('mrk_tenders')
+            .insert(payload));
+    }
 
     if (error) { alert("Error saving tender: " + error.message); return; }
 
-    document.getElementById('tenderTableBody').innerHTML += `<tr><td>${date}</td><td>${comp}</td><td>${no}</td><td>${item}</td><td>${cpo}</td><td>${tot}</td><td>With VAT</td></tr>`;
-    alert("Tender information has been registered!");
+    // Reset attachments
+    resetStorageState();
+
+    alert(editingTenderId ? "Tender updated successfully!" : "Tender information has been registered!");
     closeAllModals();
+    editingTenderId = null;
+    loadTenders();
 }
 
 async function saveFeedback() {

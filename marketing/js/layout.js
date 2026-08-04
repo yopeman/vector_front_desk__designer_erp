@@ -140,9 +140,9 @@ const layoutHTML = `
     <h3>Tender List</h3>
     <div class="table-container">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Company Name</th><th>Tender No</th><th>Item/Service</th><th>CPO Amount</th><th>Total Price</th><th>VAT Status</th></tr></thead>
+            <thead><tr><th>Date</th><th>Company Name</th><th>Tender No</th><th>Item/Service</th><th>CPO Amount</th><th>Total Price</th><th>VAT Status</th><th>Actions</th></tr></thead>
             <tbody id="tenderTableBody">
-                <tr><td>2026-05-20</td><td>Gov Telecom</td><td>TEN-401</td><td>Network Setup</td><td>50,000 ETB</td><td>57,500 ETB</td><td>With VAT</td></tr>
+                <tr><td colspan="8" style="text-align:center; color:var(--text-gray);">Loading tenders...</td></tr>
             </tbody>
         </table>
     </div>

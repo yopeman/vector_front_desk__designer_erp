@@ -18,6 +18,18 @@ export const tenderModal = `
                 <div class="form-group"><label>Total Price</label><input type="text" id="ten_total" class="input-field" value="57,500 ETB"></div>
             </div>
 
+            <div class="form-group"><label>VAT Status</label><select id="ten_vat_status" class="input-field"><option selected>with_vat</option><option>without_vat</option></select></div>
+
+            <div id="tenderExistingAttachments" style="display:none; margin-bottom:15px; padding:12px; background:var(--input-bg); border-radius:8px; border:1px solid #233554;">
+                <div style="font-size:12px; color:var(--text-gray); margin-bottom:8px;">Existing Attachment:</div>
+                <div id="tenderExistingFileLink" style="display:none; margin-bottom:8px;">
+                    <a id="tenderFileLink" href="#" target="_blank" style="color:var(--primary); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-file"></i>
+                        <span id="tenderFileLinkText">Open attached file</span>
+                    </a>
+                </div>
+            </div>
+
             <div class="media-box">
                 <button type="button" class="media-btn file-btn" onclick="document.getElementById('ten_file').click()">📎 Attach Tender Document/CPO</button>
                 <input type="file" id="ten_file" style="display:none;" onchange="handleFileSelect(event)">
