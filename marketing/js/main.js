@@ -21,6 +21,8 @@ function switchView(viewId) {
         loadInvoices();
     } else if (viewId === 'research') {
         loadResearch();
+    } else if (viewId === 'digitalLog') {
+        loadDigitalLogs();
     }
 }
 
@@ -36,6 +38,8 @@ function triggerCurrentForm() {
         openNewInvoiceForm();
     } else if (currentActiveView === 'research') {
         openNewResearchForm();
+    } else if (currentActiveView === 'digitalLog') {
+        openNewDigitalLogForm();
     } else {
         const modal = document.getElementById('formModal-' + currentActiveView);
         if(modal) modal.style.display = 'flex';

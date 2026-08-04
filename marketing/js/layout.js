@@ -128,9 +128,9 @@ const layoutHTML = `
     <h3>Digital Log List</h3>
     <div class="table-container">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Content Number</th><th>Content Title</th><th>Content Script / Idea</th><th>Shared To</th></tr></thead>
+            <thead><tr><th>Date</th><th>Content Number</th><th>Content Title</th><th>Content Script / Idea</th><th>Shared To</th><th>Actions</th></tr></thead>
             <tbody id="digitalLogTableBody">
-                <tr><td>2026-06-08</td><td>LOG-05</td><td>TikTok Promo Video</td><td>Short video script prepared to promote Vector Master ERP.</td><td>marketing manager</td></tr>
+                <tr><td colspan="6" style="text-align:center; color:var(--text-gray);">Loading digital logs...</td></tr>
             </tbody>
         </table>
     </div>
