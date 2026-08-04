@@ -12,10 +12,13 @@ export const marketRequestModal = `
             <div class="form-group"><label>Request Type</label><input type="text" id="mkt_type" class="input-field" value="Advertising and Branding Work"></div>
             <div class="form-group"><label>Description</label><textarea id="mkt_desc" class="input-field" rows="2">Prepare a new campaign advertisement for Vector Master</textarea></div>
             <div class="form-row">
-                <div class="form-group"><label>Priority</label><select id="mkt_priority" class="input-field"><option selected>high</option><option>medium</option><option>low</option></select></div>
-                <div class="form-group"><label>Assigned To</label><input type="text" id="mkt_assign" class="input-field" value="Abebe K."></div>
+                <div class="form-group" id="mkt_priority_group" style="display:none;"><label>Priority</label><select id="mkt_priority" class="input-field"><option selected>high</option><option>medium</option><option>low</option></select></div>
+                <div class="form-group" id="mkt_status_group" style="display:none;"><label>Status</label><select id="mkt_status" class="input-field"><option selected>pending</option><option>approved</option><option>rejected</option></select></div>
             </div>
-            <div class="form-group"><label>Due Date</label><input type="date" id="mkt_due" class="input-field" value="2026-06-15"></div>
+            <div class="form-row">
+                <div class="form-group"><label>Assigned To</label><input type="text" id="mkt_assign" class="input-field" value="Abebe K."></div>
+                <div class="form-group"><label>Due Date</label><input type="date" id="mkt_due" class="input-field" value="2026-06-15"></div>
+            </div>
             
             <div id="existingAttachments" style="display:none; margin-bottom:15px; padding:12px; background:var(--input-bg); border-radius:8px; border:1px solid #233554;">
                 <div style="font-size:12px; color:var(--text-gray); margin-bottom:8px;">Existing Attachments:</div>

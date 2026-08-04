@@ -65,6 +65,19 @@ function renderMarketRequests() {
     }).join('');
 }
 
+// Helper function to show/hide admin-only fields based on user role
+function updateAdminFieldsVisibility() {
+    const user = MarketingAuth.getCurrentUser();
+    const priorityGroup = document.getElementById('mkt_priority_group');
+    const statusGroup = document.getElementById('mkt_status_group');
+    if (priorityGroup) {
+        priorityGroup.style.display = (user && user.role === 'admin_marketer') ? 'block' : 'none';
+    }
+    if (statusGroup) {
+        statusGroup.style.display = (user && user.role === 'admin_marketer') ? 'block' : 'none';
+    }
+}
+
 // Open the form in "create" mode (reset fields)
 function openNewMarketRequestForm() {
     editingMarketRequestId = null;
@@ -74,11 +87,13 @@ function openNewMarketRequestForm() {
     document.getElementById('mkt_type').value = '';
     document.getElementById('mkt_desc').value = '';
     document.getElementById('mkt_priority').value = 'medium';
+    document.getElementById('mkt_status').value = 'pending';
     document.getElementById('mkt_assign').value = '';
     document.getElementById('mkt_due').value = '';
     document.getElementById('mkt_file').value = '';
     document.getElementById('mkt_file_lbl').innerText = '';
     document.getElementById('existingAttachments').style.display = 'none';
+    updateAdminFieldsVisibility();
     document.getElementById('formModal-marketRequest').style.display = 'flex';
 }
 
@@ -98,6 +113,7 @@ async function editMarketRequest(id) {
     document.getElementById('mkt_type').value = data.request_type || '';
     document.getElementById('mkt_desc').value = data.description || '';
     document.getElementById('mkt_priority').value = data.priority || 'medium';
+    document.getElementById('mkt_status').value = data.status || 'pending';
     document.getElementById('mkt_assign').value = data.assigned_to || '';
     document.getElementById('mkt_due').value = data.due_date || '';
     document.getElementById('mkt_file').value = '';
@@ -146,6 +162,7 @@ async function editMarketRequest(id) {
         existingAttachmentsDiv.style.display = 'none';
     }
 
+    updateAdminFieldsVisibility();
     document.getElementById('formModal-marketRequest').style.display = 'flex';
 }
 
@@ -158,6 +175,7 @@ async function saveMarketRequest() {
     const no = document.getElementById('mkt_no').value;
     const type = document.getElementById('mkt_type').value;
     const prio = document.getElementById('mkt_priority').value;
+    const status = document.getElementById('mkt_status').value;
     const assign = document.getElementById('mkt_assign').value;
     const due = document.getElementById('mkt_due').value;
 
@@ -169,6 +187,7 @@ async function saveMarketRequest() {
         request_type: type,
         description: document.getElementById('mkt_desc').value,
         priority: prio,
+        status: status,
         due_date: due,
     };
 
