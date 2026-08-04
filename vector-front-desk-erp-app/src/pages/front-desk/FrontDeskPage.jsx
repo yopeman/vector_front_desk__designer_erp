@@ -122,19 +122,19 @@ export default function FrontDeskPage() {
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Design Status Page Loaded</h2>
               <DesignStatusPage />
             </div>
-          ) : currentPage === 'sales invoices' ? ( // Proforma Invoices
+          ) : currentPage === 'proforma invoices' ? ( // Test Proforma Invoices (test_proforma_invoices table)
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Proforma Invoices Page Loaded</h2>
-              <ProformaInvoicesPage preselectedOrderId={preselectedOrderId} />
-            </div>
-          ) : currentPage === 'proforma invoices' ? ( // Test Proforma Invoices
-            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Test Proforma Invoices Page Loaded</h2>
               <TestProformaInvoicesPage />
             </div>
-          ) : currentPage === 'sales invoices status' ? ( // Sales Invoices
+          ) : currentPage === 'sales invoices' ? ( // Proforma Invoices (invoices table with type Proforma)
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Sales Invoices Page Loaded</h2>
+              <ProformaInvoicesPage preselectedOrderId={preselectedOrderId} />
+            </div>
+          ) : currentPage === 'sales invoices status' ? ( // Sales Invoices (invoices table with type Sales Invoice)
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Sales Invoices Status Page Loaded</h2>
               <SalesInvoicesPage />
             </div>
           ) : currentPage === 'payments' ? ( // Payments

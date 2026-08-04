@@ -23,9 +23,10 @@ const menuItems = [
   { 
     name: 'Sales', 
     submenu: [
-      { name: 'Proforma Invoices', icon: 'fa-file-invoice' },
+      { name: 'Proforma Invoices', icon: 'fa-flask' },
+      { name: 'Sales Invoices', icon: 'fa-file-invoice' },
       { name: 'Payments', icon: 'fa-credit-card' },
-      { name: 'Sales Invoices', icon: 'fa-file-invoice-dollar' },
+      { name: 'Sales Invoices Status', icon: 'fa-file-invoice-dollar' },
     ] 
   },
   { 
@@ -113,6 +114,12 @@ export default function ReportPage() {
         if (submenu === 'Clients') {
           query = query.eq('client_type', 'client');
         }
+        if (submenu === 'Sales Invoices') {
+          query = query.eq('invoice_type', 'Proforma');
+        }
+        if (submenu === 'Sales Invoices Status') {
+          query = query.eq('invoice_type', 'Sales Invoice');
+        }
 
         if (fromDate && dateField) {
           query = query.gte(dateField, fromDate);
@@ -161,9 +168,10 @@ export default function ReportPage() {
       'Orders': 'orders',
       'Designs': 'designs',
       'Design Status': 'designs',
-      'Proforma Invoices': 'invoices',
-      'Payments': 'payments',
+      'Proforma Invoices': 'test_proforma_invoices',
       'Sales Invoices': 'invoices',
+      'Sales Invoices Status': 'invoices',
+      'Payments': 'payments',
       'Job Orders': 'job_orders',
       'Delivery': 'deliveries',
       'Installation': 'installations',
@@ -183,9 +191,10 @@ export default function ReportPage() {
       'Orders': '*, client:clients(name)',
       'Designs': '*',
       'Design Status': '*, order:orders(order_no), assigned_designer:users(username), design_versions(*)',
-      'Proforma Invoices': '*, order:orders(order_no, client:clients(name))',
-      'Payments': '*, invoice:invoices(invoice_no), client:clients(name)',
+      'Proforma Invoices': '*',
       'Sales Invoices': '*, order:orders(order_no, client:clients(name))',
+      'Sales Invoices Status': '*, order:orders(order_no, client:clients(name))',
+      'Payments': '*, invoice:invoices(invoice_no), client:clients(name)',
       'Job Orders': '*',
       'Delivery': '*',
       'Installation': '*',
@@ -205,9 +214,10 @@ export default function ReportPage() {
       'Orders': 'order_date',
       'Designs': 'created_at',
       'Design Status': 'created_at',
-      'Proforma Invoices': 'issue_date',
-      'Payments': 'payment_date',
+      'Proforma Invoices': 'created_at',
       'Sales Invoices': 'issue_date',
+      'Sales Invoices Status': 'issue_date',
+      'Payments': 'payment_date',
       'Job Orders': 'created_at',
       'Delivery': 'scheduled_date',
       'Installation': 'scheduled_date',
@@ -274,6 +284,21 @@ export default function ReportPage() {
       ],
       'Proforma Invoices': [
         { key: 'invoice_no', label: 'Invoice No' },
+        { key: 'order_no', label: 'Order No' },
+        { key: 'client_name', label: 'Client' },
+        { key: 'created_at', label: 'Created Date' },
+        { key: 'grand_total', label: 'Total' },
+      ],
+      'Sales Invoices': [
+        { key: 'invoice_no', label: 'Invoice No' },
+        { key: 'order', label: 'Order No' },
+        { key: 'client', label: 'Client' },
+        { key: 'issue_date', label: 'Issue Date' },
+        { key: 'grand_total', label: 'Total' },
+        { key: 'status', label: 'Status' },
+      ],
+      'Sales Invoices Status': [
+        { key: 'invoice_no', label: 'Invoice No' },
         { key: 'order', label: 'Order No' },
         { key: 'client', label: 'Client' },
         { key: 'issue_date', label: 'Issue Date' },
@@ -287,14 +312,6 @@ export default function ReportPage() {
         { key: 'amount_paid', label: 'Amount' },
         { key: 'payment_method', label: 'Method' },
         { key: 'processing_status', label: 'Status' },
-      ],
-      'Sales Invoices': [
-        { key: 'invoice_no', label: 'Invoice No' },
-        { key: 'order', label: 'Order No' },
-        { key: 'client', label: 'Client' },
-        { key: 'issue_date', label: 'Issue Date' },
-        { key: 'grand_total', label: 'Total' },
-        { key: 'status', label: 'Status' },
       ],
       'Job Orders': [
         { key: 'job_order_no', label: 'Job Order No' },
