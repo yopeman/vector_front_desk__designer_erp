@@ -25,9 +25,10 @@ const layoutHTML = `
         <h4>Tender</h4><span>Procurement</span>
     </div>
     <div class="menu-node" id="node-feedback" onclick="switchView('feedback')">
-        <h4>Feed Back</h4><span>Reviews</span>
+        <h4>Feedback</h4><span>Reviews</span>
     </div>
-    <div class="menu-node" id="node-leave" onclick="switchView('leave')">
+    <!-- <div class="menu-node" id="node-leave" onclick="switchView('leave')"> -->
+    <div class="menu-node" id="node-leave" onclick="window.location.href='https://vectoradvert.com/hr'">
         <h4>Leave Request</h4><span>HR</span>
     </div>
 </div>
