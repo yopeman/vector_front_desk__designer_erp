@@ -427,10 +427,26 @@
                 </div>
                 <div class="form-group"><label>Due Date</label><input type="date" id="mkt_due" class="input-field" value="2026-06-15"></div>
                 
+                <div id="existingAttachments" style="display:none; margin-bottom:15px; padding:12px; background:var(--input-bg); border-radius:8px; border:1px solid #233554;">
+                    <div style="font-size:12px; color:var(--text-gray); margin-bottom:8px;">Existing Attachments:</div>
+                    <div id="existingFileLink" style="display:none; margin-bottom:8px;">
+                        <a id="fileLink" href="#" target="_blank" style="color:var(--primary); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-file"></i>
+                            <span id="fileLinkText">Open attached file</span>
+                        </a>
+                    </div>
+                    <div id="existingVoiceLink" style="display:none;">
+                        <a id="voiceLink" href="#" target="_blank" style="color:var(--accent); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                            <i class="fa-solid fa-microphone"></i>
+                            <span id="voiceLinkText">Play voice note</span>
+                        </a>
+                    </div>
+                </div>
+
                 <div class="media-box">
                     <div>
                         <button type="button" class="media-btn file-btn" onclick="document.getElementById('mkt_file').click()">📎 Attach File</button>
-                        <input type="file" id="mkt_file" style="display:none;" onchange="fileAttachedNotice('mkt_file_lbl')">
+                        <input type="file" id="mkt_file" style="display:none;" onchange="handleFileSelect(event)">
                         <span id="mkt_file_lbl" style="font-size:11px; margin-left:5px; color:var(--text-gray);"></span>
                         <button type="button" id="btnMktVoice" class="media-btn record" onclick="toggleVoiceRecording('btnMktVoice')">🎤 Record Voice</button>
                     </div>
@@ -706,6 +722,10 @@
         let editingMarketRequestId = null;
         let marketRequestsCache = [];
         let usersCache = [];
+        let attachedFiles = [];
+        let voiceRecordingBlob = null;
+        let mediaRecorder = null;
+        let recordingChunks = [];
 
         function switchView(viewId) {
             currentActiveView = viewId;
@@ -773,23 +793,89 @@
             }
         }
 
-        // Voice Recording Interface Simulator
-        function toggleVoiceRecording(buttonId) {
-            const btn = document.getElementById(buttonId);
-            if (!btn.classList.contains('active-status')) {
-                btn.classList.add('active-status');
-                btn.innerText = "🛑 Recording voice...";
-            } else {
-                btn.classList.remove('active-status');
-                btn.innerText = "🎤 Record Voice";
-                alert("Voice message has been successfully recorded!");
+        // Helper function to get file URL with fallback
+        async function getFileUrl(filePath) {
+            try {
+                console.log('Attempting to get signed URL for:', filePath);
+                const { data, error } = await window.supabase.storage
+                    .from('documents')
+                    .createSignedUrl(filePath, 3600); // 1 hour expiry
+                if (error) {
+                    console.error('Supabase signed URL error:', error);
+                    // Try public URL as fallback
+                    const { data: publicData, error: publicError } = await window.supabase.storage
+                        .from('documents')
+                        .getPublicUrl(filePath);
+                    if (publicError) {
+                        console.error('Public URL error:', publicError);
+                        return null;
+                    }
+                    console.log('Using public URL:', publicData.publicUrl);
+                    return publicData.publicUrl;
+                }
+                console.log('Signed URL generated:', data.signedUrl);
+                return data.signedUrl;
+            } catch (error) {
+                console.error('Error getting file URL:', error);
+                return null;
             }
         }
 
-        // File Selection Label Trigger
-        function fileAttachedNotice(labelId) {
-            document.getElementById(labelId).innerText = "✓ File attached";
-            document.getElementById(labelId).style.color = "#10b981";
+        // Voice Recording using MediaRecorder API
+        async function toggleVoiceRecording(buttonId) {
+            const btn = document.getElementById(buttonId);
+            
+            if (!btn.classList.contains('active-status')) {
+                // Start recording
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    recordingChunks = [];
+                    
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            recordingChunks.push(event.data);
+                        }
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        voiceRecordingBlob = new Blob(recordingChunks, { type: 'audio/webm' });
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                    
+                    mediaRecorder.start();
+                    btn.classList.add('active-status');
+                    btn.innerText = "🛑 Recording voice...";
+                } catch (error) {
+                    console.error('Error accessing microphone:', error);
+                    alert('Could not access microphone. Please ensure microphone permissions are granted.');
+                }
+            } else {
+                // Stop recording
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+                btn.classList.remove('active-status');
+                btn.innerText = "🎤 Record Voice";
+                
+                if (voiceRecordingBlob) {
+                    alert("Voice message has been successfully recorded!");
+                }
+            }
+        }
+
+        // File Selection Handler
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            attachedFiles = [...attachedFiles, ...files];
+            
+            // Update UI to show attached files
+            const labelId = event.target.id.replace('_file', '_file_lbl');
+            const label = document.getElementById(labelId);
+            if (label) {
+                label.innerText = `✓ ${files.length} file(s) attached`;
+                label.style.color = "#10b981";
+            }
         }
 
         function calculateInvoiceTotal() {
@@ -867,6 +953,8 @@
         // Open the form in "create" mode (reset fields)
         function openNewMarketRequestForm() {
             editingMarketRequestId = null;
+            attachedFiles = [];
+            voiceRecordingBlob = null;
             document.getElementById('mkt_date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('mkt_no').value = '';
             document.getElementById('mkt_type').value = '';
@@ -874,6 +962,9 @@
             document.getElementById('mkt_priority').value = 'medium';
             document.getElementById('mkt_assign').value = '';
             document.getElementById('mkt_due').value = '';
+            document.getElementById('mkt_file').value = '';
+            document.getElementById('mkt_file_lbl').innerText = '';
+            document.getElementById('existingAttachments').style.display = 'none';
             document.getElementById('formModal-marketRequest').style.display = 'flex';
         }
 
@@ -887,6 +978,8 @@
             if (error || !data) { alert("Error loading market request: " + (error?.message || 'not found')); return; }
 
             editingMarketRequestId = id;
+            attachedFiles = [];
+            voiceRecordingBlob = null;
             document.getElementById('mkt_date').value = data.request_date || '';
             document.getElementById('mkt_no').value = data.request_no || '';
             document.getElementById('mkt_type').value = data.request_type || '';
@@ -894,6 +987,52 @@
             document.getElementById('mkt_priority').value = data.priority || 'medium';
             document.getElementById('mkt_assign').value = data.assigned_to || '';
             document.getElementById('mkt_due').value = data.due_date || '';
+            document.getElementById('mkt_file').value = '';
+            document.getElementById('mkt_file_lbl').innerText = '';
+
+            // Show existing attachments
+            const existingAttachmentsDiv = document.getElementById('existingAttachments');
+            const existingFileLink = document.getElementById('existingFileLink');
+            const existingVoiceLink = document.getElementById('existingVoiceLink');
+            const fileLink = document.getElementById('fileLink');
+            const voiceLink = document.getElementById('voiceLink');
+
+            if (data.file_url || data.voice_note_url) {
+                existingAttachmentsDiv.style.display = 'block';
+                
+                if (data.file_url) {
+                    existingFileLink.style.display = 'block';
+                    // Extract storage path from URL and get fresh URL
+                    const filePath = data.file_url.split('/documents/')[1]?.split('?')[0];
+                    if (filePath) {
+                        const freshUrl = await getFileUrl(filePath);
+                        fileLink.href = freshUrl || data.file_url;
+                    } else {
+                        fileLink.href = data.file_url;
+                    }
+                    document.getElementById('fileLinkText').textContent = 'Open attached file';
+                } else {
+                    existingFileLink.style.display = 'none';
+                }
+
+                if (data.voice_note_url) {
+                    existingVoiceLink.style.display = 'block';
+                    // Extract storage path from URL and get fresh URL
+                    const voicePath = data.voice_note_url.split('/documents/')[1]?.split('?')[0];
+                    if (voicePath) {
+                        const freshVoiceUrl = await getFileUrl(voicePath);
+                        voiceLink.href = freshVoiceUrl || data.voice_note_url;
+                    } else {
+                        voiceLink.href = data.voice_note_url;
+                    }
+                    document.getElementById('voiceLinkText').textContent = 'Play voice note';
+                } else {
+                    existingVoiceLink.style.display = 'none';
+                }
+            } else {
+                existingAttachmentsDiv.style.display = 'none';
+            }
+
             document.getElementById('formModal-marketRequest').style.display = 'flex';
         }
 
@@ -920,6 +1059,63 @@
                 due_date: due,
             };
 
+            // Upload attached file (single file for now)
+            if (attachedFiles.length > 0) {
+                try {
+                    const file = attachedFiles[0];
+                    const fileName = `${Date.now()}_${file.name}`;
+                    const { data: uploadData, error: uploadError } = await window.supabase.storage
+                        .from('documents')
+                        .upload(fileName, file);
+
+                    if (uploadError) {
+                        if (uploadError.message.includes('Bucket not found')) {
+                            alert('Storage bucket "documents" does not exist. Please create it in Supabase dashboard (Storage → Create new bucket → name it "documents")');
+                            return;
+                        }
+                        throw uploadError;
+                    }
+
+                    // Get URL for the uploaded file using helper
+                    const fileUrl = await getFileUrl(uploadData.path);
+                    if (fileUrl) {
+                        payload.file_url = fileUrl;
+                    }
+                } catch (error) {
+                    console.error('Error uploading file:', error);
+                    alert('Error uploading file: ' + error.message);
+                    return;
+                }
+            }
+
+            // Upload voice recording if present
+            if (voiceRecordingBlob) {
+                try {
+                    const voiceFileName = `${Date.now()}_voice_recording.webm`;
+                    const { data: uploadData, error: uploadError } = await window.supabase.storage
+                        .from('documents')
+                        .upload(voiceFileName, voiceRecordingBlob);
+
+                    if (uploadError) {
+                        if (uploadError.message.includes('Bucket not found')) {
+                            alert('Storage bucket "documents" does not exist. Please create it in Supabase dashboard (Storage → Create new bucket → name it "documents")');
+                            return;
+                        }
+                        throw uploadError;
+                    }
+
+                    // Get URL for the voice recording using helper
+                    const voiceUrl = await getFileUrl(uploadData.path);
+                    if (voiceUrl) {
+                        payload.voice_note_url = voiceUrl;
+                    }
+                } catch (error) {
+                    console.error('Error uploading voice recording:', error);
+                    alert('Error uploading voice recording: ' + error.message);
+                    return;
+                }
+            }
+
             let error;
             if (editingMarketRequestId) {
                 // UPDATE existing record
@@ -936,6 +1132,12 @@
             }
 
             if (error) { alert("Error saving market request: " + error.message); return; }
+
+            // Reset attachments
+            attachedFiles = [];
+            voiceRecordingBlob = null;
+            document.getElementById('mkt_file').value = '';
+            document.getElementById('mkt_file_lbl').innerText = '';
 
             alert(editingMarketRequestId ? "Market request updated successfully!" : "Market request has been registered in the list!");
             closeAllModals();
