@@ -17,6 +17,8 @@ function switchView(viewId) {
         loadMarketRequests();
     } else if (viewId === 'clientRegistry') {
         loadClients();
+    } else if (viewId === 'invoice') {
+        loadInvoices();
     }
 }
 
@@ -28,6 +30,8 @@ function triggerCurrentForm() {
         openNewMarketRequestForm();
     } else if (currentActiveView === 'clientRegistry') {
         openNewClientForm();
+    } else if (currentActiveView === 'invoice') {
+        openNewInvoiceForm();
     } else {
         const modal = document.getElementById('formModal-' + currentActiveView);
         if(modal) modal.style.display = 'flex';

@@ -104,10 +104,9 @@ const layoutHTML = `
     <h3>Invoice List</h3>
     <div class="table-container">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Invoice Number</th><th>Client Name</th><th>Reference Number</th><th>Item / Service</th><th>Subtotal (Excl. VAT)</th><th>VAT (15%)</th><th>Grand Total</th></tr></thead>
+            <thead><tr><th>Date</th><th>Invoice Number</th><th>Client Name</th><th>Reference Number</th><th>Item / Service</th><th>Subtotal (Excl. VAT)</th><th>VAT (15%)</th><th>Grand Total</th><th>Actions</th></tr></thead>
             <tbody id="invoiceTableBody">
-                <tr><td>2026-06-09</td><td>INV-201</td><td>Abyssinia Hotel</td><td>REF-990</td><td>Marketing Service</td><td>10,000 ETB</td><td>1,500 ETB</td><td>11,500 ETB</td></tr>
-                <tr><td>2026-06-09</td><td>INV-202</td><td>Rama IT Solutions</td><td>REF-441</td><td>ERP Customization</td><td>25,000 ETB</td><td>3,750 ETB</td><td>28,750 ETB</td></tr>
+                <tr><td colspan="9" style="text-align:center; color:var(--text-gray);">Loading invoices...</td></tr>
             </tbody>
         </table>
     </div>

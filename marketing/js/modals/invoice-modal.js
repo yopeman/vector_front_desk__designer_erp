@@ -34,6 +34,22 @@ export const invoiceModal = `
                 <div style="display:flex; justify-content:space-between; font-weight:700; color:var(--warning);"><span>GRAND TOTAL:</span><span id="displayGrandTotal">11,500</span> ETB</div>
             </div>
 
+            <div id="invoiceExistingAttachments" style="display:none; margin-bottom:15px; padding:12px; background:var(--input-bg); border-radius:8px; border:1px solid #233554;">
+                <div style="font-size:12px; color:var(--text-gray); margin-bottom:8px;">Existing Attachments:</div>
+                <div id="invoiceExistingFileLink" style="display:none; margin-bottom:8px;">
+                    <a id="invoiceFileLink" href="#" target="_blank" style="color:var(--primary); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-file"></i>
+                        <span id="invoiceFileLinkText">Open attached file</span>
+                    </a>
+                </div>
+                <div id="invoiceExistingVoiceLink" style="display:none;">
+                    <a id="invoiceVoiceLink" href="#" target="_blank" style="color:var(--accent); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span id="invoiceVoiceLinkText">Play voice note</span>
+                    </a>
+                </div>
+            </div>
+
             <div class="media-box">
                 <div>
                     <button type="button" class="media-btn file-btn" onclick="document.getElementById('inv_file').click()">📎 Attach Stamp/Signature</button>
