@@ -13,8 +13,13 @@ class DashboardSection {
             tenders: [],
             feedbacks: []
         };
+        this.charts = {};
         this.render();
         this.loadAnalyticsData();
+    }
+
+    async refreshData() {
+        await this.loadAnalyticsData();
     }
 
     async loadAnalyticsData() {
@@ -100,13 +105,17 @@ class DashboardSection {
         const ctx = document.getElementById('requestStatusChart');
         if (!ctx) return;
 
+        if (this.charts.requestStatus) {
+            this.charts.requestStatus.destroy();
+        }
+
         const statusCounts = {
             pending: this.analyticsData.marketRequests.filter(r => r.status === 'pending').length,
             approved: this.analyticsData.marketRequests.filter(r => r.status === 'approved').length,
             rejected: this.analyticsData.marketRequests.filter(r => r.status === 'rejected').length
         };
 
-        new Chart(ctx, {
+        this.charts.requestStatus = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: ['Pending', 'Approved', 'Rejected'],
@@ -133,12 +142,16 @@ class DashboardSection {
         const ctx = document.getElementById('clientTypeChart');
         if (!ctx) return;
 
+        if (this.charts.clientType) {
+            this.charts.clientType.destroy();
+        }
+
         const typeCounts = {
             organization: this.analyticsData.clients.filter(c => c.client_type === 'organization').length,
             personal: this.analyticsData.clients.filter(c => c.client_type === 'personal').length
         };
 
-        new Chart(ctx, {
+        this.charts.clientType = new Chart(ctx, {
             type: 'pie',
             data: {
                 labels: ['Organization', 'Personal'],
@@ -165,6 +178,10 @@ class DashboardSection {
         const ctx = document.getElementById('monthlyRevenueChart');
         if (!ctx) return;
 
+        if (this.charts.monthlyRevenue) {
+            this.charts.monthlyRevenue.destroy();
+        }
+
         // Group invoices by month
         const monthlyData = {};
         this.analyticsData.invoices.forEach(inv => {
@@ -176,7 +193,7 @@ class DashboardSection {
         const labels = Object.keys(monthlyData).slice(-6);
         const data = labels.map(l => monthlyData[l]);
 
-        new Chart(ctx, {
+        this.charts.monthlyRevenue = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels.length ? labels : ['No Data'],
@@ -212,12 +229,16 @@ class DashboardSection {
         const ctx = document.getElementById('feedbackGradeChart');
         if (!ctx) return;
 
+        if (this.charts.feedbackGrade) {
+            this.charts.feedbackGrade.destroy();
+        }
+
         const gradeCounts = { A: 0, B: 0, C: 0, D: 0 };
         this.analyticsData.feedbacks.forEach(f => {
             if (gradeCounts[f.grade] !== undefined) gradeCounts[f.grade]++;
         });
 
-        new Chart(ctx, {
+        this.charts.feedbackGrade = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: ['Grade A', 'Grade B', 'Grade C', 'Grade D'],
@@ -254,6 +275,10 @@ class DashboardSection {
         const ctx = document.getElementById('digitalChannelChart');
         if (!ctx) return;
 
+        if (this.charts.digitalChannel) {
+            this.charts.digitalChannel.destroy();
+        }
+
         const channelCounts = {};
         this.analyticsData.digitalLogs.forEach(d => {
             const channel = d.social_channel || 'Unspecified';
@@ -264,7 +289,7 @@ class DashboardSection {
         const labels = Object.keys(channelCounts);
         const data = Object.values(channelCounts);
 
-        new Chart(ctx, {
+        this.charts.digitalChannel = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: labels.length ? labels : ['No Data'],
@@ -483,6 +508,7 @@ class DashboardSection {
 }
 
 // Initialize section
+let dashboardInstance;
 document.addEventListener('DOMContentLoaded', () => {
-    new DashboardSection();
+    dashboardInstance = new DashboardSection();
 });

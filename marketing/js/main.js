@@ -20,7 +20,11 @@ function switchView(viewId) {
     }
 
     // Load data from Supabase whenever the view is shown
-    if (viewId === 'marketRequest') {
+    if (viewId === 'dashboard') {
+        if (typeof dashboardInstance !== 'undefined' && dashboardInstance) {
+            dashboardInstance.refreshData();
+        }
+    } else if (viewId === 'marketRequest') {
         loadMarketRequests();
     } else if (viewId === 'clientRegistry') {
         loadClients();
