@@ -25,8 +25,8 @@ class TopNavigationBar {
                 <div class="topbar-logo">
                     <span class="logo-icon">V</span>
                     <div class="logo-text">
-                        <h1>Vector Marketing ERP</h1>
-                        <p>International Marketing Ultimate Edition</p>
+                        <h1>V☰CTOR Advert & Manufacturing</h1>
+                        <p>Marketing Department</p>
                     </div>
                 </div>
             </div>

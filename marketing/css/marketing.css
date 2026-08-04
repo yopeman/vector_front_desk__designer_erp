@@ -150,12 +150,12 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
 .app-layout { display: flex; min-height: 100vh; }
 
 /* Navigation Menu Tree (Vertical Sidebar) */
-.erp-header-tree { display: flex; flex-direction: column; gap: 8px; width: 220px; min-width: 220px; background: var(--panel-bg); padding: 20px 14px; border-right: 1px solid #233554; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.erp-header-tree { display: flex; flex-direction: column; gap: 8px; width: 220px; min-width: 220px; background: #00CED1; padding: 20px 14px; border-right: 1px solid #233554; position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; }
 .menu-node { background: transparent; padding: 12px 14px; border-radius: 10px; text-align: left; cursor: pointer; border: 1px solid transparent; transition: all 0.25s; display: flex; flex-direction: column; }
 .menu-node:hover, .menu-node.active { background: var(--primary); border-color: var(--text-white); }
-.menu-node h4 { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
-.menu-node span { font-size: 11px; color: var(--text-gray); display: block; }
-.menu-node.active span, .menu-node:hover span { color: rgba(255,255,255,0.8); }
+.menu-node h4 { font-size: 13px; font-weight: 600; margin-bottom: 3px; color: white; }
+.menu-node span { font-size: 11px; color: white; display: block; }
+.menu-node.active span, .menu-node:hover span { color: rgba(255,255,255,0.9); }
 
 .main-content { flex: 1; padding: 25px; min-width: 0; }
 
@@ -228,7 +228,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--panel-bg);
+    background: #00CED1;
     border-bottom: 1px solid #233554;
     padding: 12px 20px;
     position: sticky;
@@ -270,7 +270,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
 
 .logo-text p {
     font-size: 10px;
-    color: var(--text-gray);
+    color: white;
     margin: 0;
 }
 
@@ -290,7 +290,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     border: none;
     background: transparent;
     border-radius: 8px;
-    color: var(--text-gray);
+    color: white;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -300,8 +300,8 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
 }
 
 .topbar-icon-btn:hover {
-    background: rgba(37, 99, 235, 0.1);
-    color: var(--primary);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .topbar-badge {
