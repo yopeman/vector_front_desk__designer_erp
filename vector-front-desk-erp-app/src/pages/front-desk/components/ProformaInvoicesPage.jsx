@@ -108,7 +108,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
       const { data: lastInvoice } = await supabase
         .from('invoices')
         .select('invoice_no')
-        .ilike('invoice_no', 'PROF%')
+        .ilike('invoice_no', 'SEL%')
         .order('invoice_no', { ascending: false })
         .limit(1)
         .single();
@@ -118,7 +118,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
         const lastNum = parseInt(lastInvoice.invoice_no.split('-')[1]);
         nextNumber = lastNum + 1;
       }
-      const invoiceNo = `PROF-${String(nextNumber).padStart(5, '0')}`;
+      const invoiceNo = `SEL-${String(nextNumber).padStart(5, '0')}`;
 
       // Insert invoice
       const { data: invoiceData, error: invoiceError } = await supabase
@@ -427,7 +427,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
             onClick={handleOpenNewInvoiceModal}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
           >
-            <i className="fa-solid fa-plus"></i> New Proforma Invoice
+            <i className="fa-solid fa-plus"></i> New Sells Invoice
           </button>
         </div>
       </div>
@@ -547,7 +547,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
 
             <div className="p-8">
               <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-slate-800 mb-2">PROFORMA INVOICE</h1>
+                <h1 className="text-2xl font-bold text-slate-800 mb-2">SELLS INVOICE</h1>
               </div>
 
               <div className="mb-6 p-4 bg-slate-50 rounded-lg">
@@ -658,7 +658,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800">Create Proforma Invoice</h2>
+              <h2 className="text-xl font-bold text-slate-800">Create Sells Invoice</h2>
               <button
                 onClick={() => {
                   setShowNewInvoiceModal(false);
