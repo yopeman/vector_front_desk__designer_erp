@@ -5,13 +5,14 @@ export default function OrdersPage({ onNavigateToProforma }) {
   const [showModal, setShowModal] = useState(false);
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -24,23 +25,43 @@ export default function OrdersPage({ onNavigateToProforma }) {
     total_amount: 0,
     paid_amount: 0,
     balance: 0,
-    reference_po: '',
     sales_officer_id: '',
-    department_id: '',
     currency: 'ETB',
     payment_terms: '',
     special_instructions: '',
     order_items: []
   });
   const [editingId, setEditingId] = useState(null);
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentFileUrls, setAttachmentFileUrls] = useState({});
+  const [currentUserId, setCurrentUserId] = useState('');
 
   useEffect(() => {
     fetchOrders();
     fetchClients();
-    fetchUsers();
     fetchDepartments();
     fetchItems();
+    fetchCurrentUser();
   }, []);
+
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      fetchClients(clientSearchQuery);
+    }, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [clientSearchQuery]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+        setFormData(prev => ({ ...prev, sales_officer_id: user.id }));
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -58,31 +79,25 @@ export default function OrdersPage({ onNavigateToProforma }) {
     }
   };
 
-  const fetchClients = async () => {
+  const fetchClients = async (search = '') => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('clients')
         .select('id, name, client_type')
         .order('name', { ascending: true });
+      
+      if (search) {
+        query = query.ilike('name', `%${search}%`);
+      } else {
+        query = query.limit(10);
+      }
+      
+      const { data, error } = await query;
 
       if (error) throw error;
       setClients(data || []);
     } catch (error) {
       console.error('Error fetching clients:', error);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, username')
-        .order('username', { ascending: true });
-
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
     }
   };
 
@@ -141,12 +156,11 @@ export default function OrdersPage({ onNavigateToProforma }) {
         total_amount: orderTotal,
         paid_amount: formData.paid_amount || 0,
         balance: orderTotal - (formData.paid_amount || 0),
-        reference_po: formData.reference_po,
         sales_officer_id: formData.sales_officer_id,
-        department_id: formData.department_id,
         currency: formData.currency,
         payment_terms: formData.payment_terms,
-        special_instructions: formData.special_instructions
+        special_instructions: formData.special_instructions,
+        attachments: attachments.filter(att => att.file_id).map(att => att.file_id)
       };
 
       // Filter out empty fields
@@ -154,9 +168,7 @@ export default function OrdersPage({ onNavigateToProforma }) {
       if (!submitData.order_no) delete submitData.order_no;
       if (!submitData.order_date) delete submitData.order_date;
       if (!submitData.required_date) delete submitData.required_date;
-      if (!submitData.reference_po) delete submitData.reference_po;
       if (!submitData.sales_officer_id) delete submitData.sales_officer_id;
-      if (!submitData.department_id) delete submitData.department_id;
       if (!submitData.payment_terms) delete submitData.payment_terms;
       if (!submitData.special_instructions) delete submitData.special_instructions;
 
@@ -213,7 +225,7 @@ export default function OrdersPage({ onNavigateToProforma }) {
     }
   };
 
-  const handleEdit = (order) => {
+  const handleEdit = async (order) => {
     setFormData({
       client_id: order.client_id || '',
       order_no: order.order_no || '',
@@ -224,16 +236,40 @@ export default function OrdersPage({ onNavigateToProforma }) {
       total_amount: order.total_amount || 0,
       paid_amount: order.paid_amount || 0,
       balance: order.balance || 0,
-      reference_po: order.reference_po || '',
       sales_officer_id: order.sales_officer_id || '',
-      department_id: order.department_id || '',
       currency: order.currency || 'ETB',
       payment_terms: order.payment_terms || '',
       special_instructions: order.special_instructions || '',
       order_items: order.order_items || []
     });
+    setAttachments([]);
     setEditingId(order.id);
     setShowModal(true);
+    
+    if (order.attachments && order.attachments.length > 0) {
+      const { data: files } = await supabase
+        .from('files')
+        .select('*')
+        .in('id', order.attachments);
+      if (files) {
+        setAttachments(files.map(file => ({
+          description: file.description || '',
+          file: null,
+          file_id: file.id,
+          file_name: file.name,
+          file_path: file.path
+        })));
+
+        const urls = { ...attachmentFileUrls };
+        for (const file of files) {
+          if (file.path) {
+            const url = await getFileUrl(file.path);
+            if (url) urls[file.id] = url;
+          }
+        }
+        setAttachmentFileUrls(urls);
+      }
+    }
   };
 
 
@@ -248,14 +284,14 @@ export default function OrdersPage({ onNavigateToProforma }) {
       total_amount: 0,
       paid_amount: 0,
       balance: 0,
-      reference_po: '',
-      sales_officer_id: '',
-      department_id: '',
+      sales_officer_id: currentUserId,
       currency: 'ETB',
       payment_terms: '',
       special_instructions: '',
       order_items: []
     });
+    setAttachments([]);
+    setAttachmentFileUrls({});
     setEditingId(null);
     setShowModal(false);
   };
@@ -303,6 +339,69 @@ export default function OrdersPage({ onNavigateToProforma }) {
       ...formData,
       order_items: formData.order_items.filter((_, i) => i !== index)
     });
+  };
+
+  const getFileUrl = async (filePath) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600);
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      return null;
+    }
+  };
+
+  const handleSaveAttachment = async (idx) => {
+    const attachment = attachments[idx];
+    if (!attachment.file) {
+      alert('Please select a file to upload');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      
+      const fileName = `${Date.now()}_${attachment.file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, attachment.file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: fileData, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          name: attachment.file.name,
+          path: uploadData.path,
+          mime_type: attachment.file.type,
+          file_size: attachment.file.size,
+          uploaded_by: userId,
+          description: attachment.description
+        })
+        .select()
+        .single();
+
+      if (fileError) throw fileError;
+
+      const newAttachments = [...attachments];
+      newAttachments[idx].file_id = fileData.id;
+      newAttachments[idx].file_name = fileData.name;
+      newAttachments[idx].file_path = fileData.path;
+      setAttachments(newAttachments);
+
+      const url = await getFileUrl(fileData.path);
+      if (url) {
+        setAttachmentFileUrls(prev => ({ ...prev, [fileData.id]: url }));
+      }
+
+    } catch (error) {
+      console.error('Error saving attachment:', error);
+      alert('Error saving attachment: ' + error.message);
+    }
   };
 
   const filteredOrders = orders.filter(order => {
@@ -481,19 +580,38 @@ export default function OrdersPage({ onNavigateToProforma }) {
                 {/* Order Information */}
                 <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
                   <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2">Order Information</h3>
-                  <div>
+                  <div className="relative">
                     <label className="block text-xs font-medium text-slate-500 mb-1">Client <span className="text-red-500">*</span></label>
-                    <select
-                      value={formData.client_id}
-                      onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                    <input
+                      type="text"
+                      value={clientSearchQuery}
+                      onChange={(e) => {
+                        setClientSearchQuery(e.target.value);
+                        setShowClientDropdown(true);
+                      }}
+                      onFocus={() => setShowClientDropdown(true)}
+                      onBlur={() => setTimeout(() => setShowClientDropdown(false), 200)}
+                      placeholder="Search client..."
                       required
                       className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                    >
-                      <option value="">Select client</option>
-                      {clients.map(client => (
-                        <option key={client.id} value={client.id}>{client.name} ({client.client_type})</option>
-                      ))}
-                    </select>
+                    />
+                    {showClientDropdown && clients.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {clients.map(client => (
+                          <div
+                            key={client.id}
+                            onClick={() => {
+                              setFormData({ ...formData, client_id: client.id });
+                              setClientSearchQuery(`${client.name} (${client.client_type})`);
+                              setShowClientDropdown(false);
+                            }}
+                            className="px-3 py-2 text-xs hover:bg-slate-100 cursor-pointer"
+                          >
+                            {client.name} ({client.client_type})
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">Order No</label>
@@ -558,42 +676,6 @@ export default function OrdersPage({ onNavigateToProforma }) {
                 {/* Additional Information */}
                 <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
                   <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider border-b border-slate-200 pb-2">Additional Information</h3>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Reference PO</label>
-                    <input
-                      type="text"
-                      value={formData.reference_po}
-                      onChange={(e) => setFormData({ ...formData, reference_po: e.target.value })}
-                      placeholder="Enter PO reference"
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Sales Officer</label>
-                    <select
-                      value={formData.sales_officer_id}
-                      onChange={(e) => setFormData({ ...formData, sales_officer_id: e.target.value })}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                    >
-                      <option value="">Select sales officer</option>
-                      {users.map(user => (
-                        <option key={user.id} value={user.id}>{user.username}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Department</label>
-                    <select
-                      value={formData.department_id}
-                      onChange={(e) => setFormData({ ...formData, department_id: e.target.value })}
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                    >
-                      <option value="">Select department</option>
-                      {departments.map(dept => (
-                        <option key={dept.id} value={dept.id}>{dept.name}</option>
-                      ))}
-                    </select>
-                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Currency</label>
@@ -772,6 +854,107 @@ export default function OrdersPage({ onNavigateToProforma }) {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Attachments */}
+              <div className="mt-6 bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Attachments</h3>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments([...attachments, { description: '', file: null, file_id: null }])}
+                    className="flex items-center gap-1 text-blue-600 text-xs font-semibold cursor-pointer bg-transparent border-none hover:text-blue-800"
+                  >
+                    <i className="fa-solid fa-plus"></i> Add Attachment
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {attachments.length === 0 ? (
+                    <div className="text-xs text-slate-400 italic py-4">No attachments added yet. Click "+ Add Attachment" to add.</div>
+                  ) : (
+                    attachments.map((att, idx) => (
+                      <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
+                          <input
+                            type="text"
+                            value={att.description || ''}
+                            onChange={(e) => {
+                              const newAtts = [...attachments];
+                              newAtts[idx].description = e.target.value;
+                              setAttachments(newAtts);
+                            }}
+                            placeholder="Write description here"
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-slate-500 mb-1">Upload file (file chooser)</label>
+                            <input
+                              type="file"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const newAtts = [...attachments];
+                                  newAtts[idx].file = file;
+                                  setAttachments(newAtts);
+                                }
+                              }}
+                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveAttachment(idx)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium cursor-pointer border-none mt-5"
+                          >
+                            (+ save)
+                          </button>
+                        </div>
+                        {att.file_id && (
+                          <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg">
+                            {attachmentFileUrls[att.file_id] ? (
+                              <a
+                                href={attachmentFileUrls[att.file_id]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 no-underline flex items-center gap-1"
+                              >
+                                <i className="fa-solid fa-check text-green-700 mr-1"></i>
+                                {att.file_name || att.file?.name || 'File saved'}
+                                <i className="fa-solid fa-external-link text-blue-400 text-[10px]"></i>
+                              </a>
+                            ) : (
+                              <span className="text-xs text-green-700">
+                                <i className="fa-solid fa-check mr-1"></i>
+                                {att.file_name || att.file?.name || 'File saved'}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                              className="text-red-500 hover:text-red-700 text-xs font-medium cursor-pointer bg-transparent border-none"
+                            >
+                              <i className="fa-solid fa-trash"></i> Remove
+                            </button>
+                          </div>
+                        )}
+                        {!att.file_id && (
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setAttachments(attachments.filter((_, i) => i !== idx))}
+                              className="text-red-500 hover:text-red-700 text-xs font-medium cursor-pointer bg-transparent border-none"
+                            >
+                              <i className="fa-solid fa-trash"></i> Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
 
               {/* Footer */}
