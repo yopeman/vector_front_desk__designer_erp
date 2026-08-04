@@ -29,6 +29,45 @@ window.toggleModuleDropdown = toggleModuleDropdown;
 window.clearDateFrom = clearDateFrom;
 window.clearDateTo = clearDateTo;
 
+// Per-table search and column functions
+function filterTableBySearch(module) {
+    const searchInput = document.getElementById(`table-search-${module}`);
+    if (!searchInput) return;
+
+    const searchValue = searchInput.value.toLowerCase();
+    const tableWrapper = searchInput.closest('.report-table-wrapper');
+    if (!tableWrapper) return;
+
+    const table = tableWrapper.querySelector('table');
+    if (!table) return;
+
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchValue) ? '' : 'none';
+    });
+}
+
+function toggleColumnDropdown(module) {
+    const dropdown = document.getElementById(`column-dropdown-${module}`);
+    if (dropdown) dropdown.classList.toggle('hidden');
+}
+
+function closeColumnDropdown(module) {
+    const dropdown = document.getElementById(`column-dropdown-${module}`);
+    if (dropdown) dropdown.classList.add('hidden');
+}
+
+function toggleTableColumn(module, colKey) {
+    columnVisibility[colKey] = columnVisibility[colKey] === false ? true : false;
+    filterReports();
+}
+
+window.filterTableBySearch = filterTableBySearch;
+window.toggleColumnDropdown = toggleColumnDropdown;
+window.closeColumnDropdown = closeColumnDropdown;
+window.toggleTableColumn = toggleTableColumn;
+
 // Global state
 let reportColumnConfigs = {
     'market-requests': [
@@ -488,7 +527,18 @@ async function filterReports() {
         const tableHeader = document.createElement('div');
         tableHeader.className = 'table-header';
         tableHeader.innerHTML = `
-            <h3>${moduleLabels[module] || module} (${moduleRecords.length} records)</h3>
+            <div class="table-header-left">
+                <h3>${moduleLabels[module] || module} (${moduleRecords.length} records)</h3>
+            </div>
+            <div class="table-header-actions">
+                <div class="table-search-wrapper">
+                    <input type="text" class="table-search-input" id="table-search-${module}" placeholder="Search this table..." onkeyup="filterTableBySearch('${module}')">
+                    <i class="fa-solid fa-magnifying-glass table-search-icon"></i>
+                </div>
+                <button class="table-columns-toggle" onclick="toggleColumnDropdown('${module}')">
+                    <i class="fa-solid fa-columns"></i> Columns
+                </button>
+            </div>
         `;
         tableWrapper.appendChild(tableHeader);
 
@@ -537,6 +587,29 @@ async function filterReports() {
         table.appendChild(tbody);
         tableDiv.appendChild(table);
         tableWrapper.appendChild(tableDiv);
+
+        // Add column dropdown
+        const columnDropdown = document.createElement('div');
+        columnDropdown.className = 'column-dropdown hidden';
+        columnDropdown.id = `column-dropdown-${module}`;
+        columnDropdown.innerHTML = `
+            <div class="column-dropdown-header">
+                <span>Show/Hide Columns</span>
+                <button onclick="closeColumnDropdown('${module}')" class="column-dropdown-close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="column-dropdown-options">
+                ${moduleColumns.filter(col => !col.isSource).map(col => `
+                    <label class="column-checkbox-item">
+                        <input type="checkbox" value="${col.key}" onchange="toggleTableColumn('${module}', '${col.key}')" ${columnVisibility[col.key] !== false ? 'checked' : ''}>
+                        <span>${col.label}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `;
+        tableWrapper.appendChild(columnDropdown);
+
         tablesContainer.appendChild(tableWrapper);
     });
 
@@ -657,3 +730,7 @@ window.clearReportSearch = clearReportSearch;
 window.resetReportFilters = resetReportFilters;
 window.updateModuleSelection = updateModuleSelection;
 window.toggleColumnVisibility = toggleColumnVisibility;
+window.getReportData = getReportData;
+window.getMergedColumnConfig = getMergedColumnConfig;
+window.getVisibleColumns = getVisibleColumns;
+window.moduleLabels = moduleLabels;

@@ -12,6 +12,13 @@ function switchView(viewId) {
     document.getElementById('view-' + viewId).classList.add('active-view');
     document.getElementById('node-' + viewId).classList.add('active');
 
+    // Hide action container for specific tabs
+    const tabsWithoutSearch = ['dashboard', 'reports', 'messages', 'notifications', 'notes', 'settings'];
+    const actionContainer = document.querySelector('.action-container');
+    if (actionContainer) {
+        actionContainer.style.display = tabsWithoutSearch.includes(viewId) ? 'none' : 'flex';
+    }
+
     // Load data from Supabase whenever the view is shown
     if (viewId === 'marketRequest') {
         loadMarketRequests();
