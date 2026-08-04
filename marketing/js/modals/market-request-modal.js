@@ -16,7 +16,7 @@ export const marketRequestModal = `
                 <div class="form-group" id="mkt_status_group" style="display:none;"><label>Status</label><select id="mkt_status" class="input-field"><option selected>pending</option><option>approved</option><option>rejected</option></select></div>
             </div>
             <div class="form-row">
-                <div class="form-group"><label>Assigned To</label><input type="text" id="mkt_assign" class="input-field" value="Abebe K."></div>
+                <div class="form-group"><label>Assigned To</label><select id="mkt_assign" class="input-field"><option value="">-- Select User --</option></select></div>
                 <div class="form-group"><label>Due Date</label><input type="date" id="mkt_due" class="input-field" value="2026-06-15"></div>
             </div>
             

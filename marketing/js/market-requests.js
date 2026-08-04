@@ -13,6 +13,32 @@ async function loadUsersCache() {
     usersCache = data || [];
 }
 
+// Populate the "Assigned To" dropdown with users
+function populateAssignedToDropdown() {
+    const select = document.getElementById('mkt_assign');
+    if (!select) return;
+    
+    // Save current selection
+    const currentValue = select.value;
+    
+    // Clear existing options (keep the default option)
+    select.innerHTML = '<option value="">-- Select User --</option>';
+    
+    // Add users to dropdown
+    usersCache.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.id;
+        const displayName = user.username || user.email || 'Unknown';
+        option.textContent = displayName;
+        select.appendChild(option);
+    });
+    
+    // Restore selection if it still exists in the new options
+    if (currentValue && usersCache.find(u => u.id === currentValue)) {
+        select.value = currentValue;
+    }
+}
+
 function getUserName(userId) {
     if (!userId) return '—';
     const u = usersCache.find(x => x.id === userId);
@@ -79,7 +105,7 @@ function updateAdminFieldsVisibility() {
 }
 
 // Open the form in "create" mode (reset fields)
-function openNewMarketRequestForm() {
+async function openNewMarketRequestForm() {
     editingMarketRequestId = null;
     resetStorageState();
     document.getElementById('mkt_date').value = new Date().toISOString().slice(0, 10);
@@ -93,6 +119,11 @@ function openNewMarketRequestForm() {
     document.getElementById('mkt_file').value = '';
     document.getElementById('mkt_file_lbl').innerText = '';
     document.getElementById('existingAttachments').style.display = 'none';
+    
+    // Load users and populate dropdown
+    await loadUsersCache();
+    populateAssignedToDropdown();
+    
     updateAdminFieldsVisibility();
     document.getElementById('formModal-marketRequest').style.display = 'flex';
 }
@@ -114,10 +145,16 @@ async function editMarketRequest(id) {
     document.getElementById('mkt_desc').value = data.description || '';
     document.getElementById('mkt_priority').value = data.priority || 'medium';
     document.getElementById('mkt_status').value = data.status || 'pending';
-    document.getElementById('mkt_assign').value = data.assigned_to || '';
     document.getElementById('mkt_due').value = data.due_date || '';
     document.getElementById('mkt_file').value = '';
     document.getElementById('mkt_file_lbl').innerText = '';
+
+    // Load users and populate dropdown before setting the assigned value
+    await loadUsersCache();
+    populateAssignedToDropdown();
+    
+    // Set the assigned user by UUID
+    document.getElementById('mkt_assign').value = data.assigned_to || '';
 
     // Show existing attachments
     const existingAttachmentsDiv = document.getElementById('existingAttachments');
@@ -190,6 +227,11 @@ async function saveMarketRequest() {
         status: status,
         due_date: due,
     };
+
+    // Only include assigned_to if a user is selected (not empty string)
+    if (assign) {
+        payload.assigned_to = assign;
+    }
 
     const { attachedFiles, voiceRecordingBlob } = getStorageState();
 
