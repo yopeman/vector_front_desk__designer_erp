@@ -222,8 +222,8 @@ async function openChat(userId) {
 
     const chatContainer = document.getElementById('msg-chat-container');
     const emptyState = document.getElementById('msg-empty-state');
-    if (chatContainer) chatContainer.classList.remove('hidden');
-    if (emptyState) emptyState.classList.add('hidden');
+    if (chatContainer) chatContainer.style.display = 'flex';
+    if (emptyState) emptyState.style.display = 'none';
 
     const avatar = document.getElementById('msg-chat-avatar');
     const name = document.getElementById('msg-chat-name');
@@ -307,14 +307,14 @@ function closeChat() {
     MarketingMessages.selectedUserId = null;
     const chatContainer = document.getElementById('msg-chat-container');
     const emptyState = document.getElementById('msg-empty-state');
-    if (chatContainer) chatContainer.classList.add('hidden');
-    if (emptyState) emptyState.classList.remove('hidden');
-    
+    if (chatContainer) chatContainer.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'flex';
+
     if (MarketingMessages.channel) {
         window.supabase.removeChannel(MarketingMessages.channel);
         MarketingMessages.channel = null;
     }
-    
+
     renderUserList();
 }
 

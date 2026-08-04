@@ -1129,8 +1129,8 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
 }
 
 .color-dot {
-    width: 8px;
-    height: 8px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
 }
 
@@ -1205,6 +1205,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     grid-template-columns: 300px 1fr;
     gap: 16px;
     min-height: 500px;
+    height: 100%;
 }
 
 .messages-sidebar {
@@ -1214,6 +1215,17 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+.messages-chat-wrapper {
+    background: var(--panel-bg);
+    border: 1px solid #233554;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
 }
 
 .sidebar-search {
@@ -1329,6 +1341,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    height: 100%;
 }
 
 .messages-chat.hidden {
@@ -1425,6 +1438,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     padding: 12px 16px;
     border-top: 1px solid #233554;
     background: var(--input-bg);
+    flex-shrink: 0;
 }
 
 .chat-input-group {
@@ -1474,6 +1488,7 @@ body { background-color: var(--bg-dark); color: var(--text-white); }
     align-items: center;
     justify-content: center;
     padding: 40px;
+    height: 100%;
 }
 
 .messages-empty.hidden {
