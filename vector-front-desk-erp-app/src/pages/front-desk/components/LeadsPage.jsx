@@ -20,6 +20,9 @@ export default function LeadsPage({ onUpgradeToClient }) {
   });
   const [noteAuthors, setNoteAuthors] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [formTab, setFormTab] = useState('details');
+  const [documents, setDocuments] = useState([]);
+  const [docFileUrls, setDocFileUrls] = useState({});
 
   const [payingClientIds, setPayingClientIds] = useState(new Set());
 
@@ -73,6 +76,7 @@ export default function LeadsPage({ onUpgradeToClient }) {
 
       delete submitData.poc;
       delete submitData.extraNotes;
+      submitData.document_file_ids = documents.filter(doc => doc.file_id).map(doc => doc.file_id);
 
       let clientId;
       if (editingId) {
@@ -109,8 +113,35 @@ export default function LeadsPage({ onUpgradeToClient }) {
       extraNotes: []
     });
     setNoteAuthors([]);
+    setDocuments([]);
     setEditingId(lead.id);
     setView('form');
+    setFormTab('details');
+    
+    if (lead.document_file_ids && lead.document_file_ids.length > 0) {
+      const { data: files } = await supabase
+        .from('files')
+        .select('*')
+        .in('id', lead.document_file_ids);
+      if (files) {
+        setDocuments(files.map(file => ({
+          description: file.description || '',
+          file: null,
+          file_id: file.id,
+          file_name: file.name,
+          file_path: file.path
+        })));
+
+        const urls = { ...docFileUrls };
+        for (const file of files) {
+          if (file.path) {
+            const url = await getFileUrl(file.path);
+            if (url) urls[file.id] = url;
+          }
+        }
+        setDocFileUrls(urls);
+      }
+    }
     const { data: notes } = await supabase
       .from('notes')
       .select('content, user_id')
@@ -149,6 +180,9 @@ export default function LeadsPage({ onUpgradeToClient }) {
       extraNotes: []
     });
     setNoteAuthors([]);
+    setDocuments([]);
+    setDocFileUrls({});
+    setFormTab('details');
     setEditingId(null);
     setView('dashboard');
   };
@@ -189,6 +223,69 @@ export default function LeadsPage({ onUpgradeToClient }) {
     if (noteInserts.length > 0) {
       const { error } = await supabase.from('notes').insert(noteInserts);
       if (error) throw error;
+    }
+  };
+
+  const getFileUrl = async (filePath) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600);
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      return null;
+    }
+  };
+
+  const handleSaveDocument = async (idx) => {
+    const doc = documents[idx];
+    if (!doc.file) {
+      alert('Please select a file to upload');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+      
+      const fileName = `${Date.now()}_${doc.file.name}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(fileName, doc.file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: fileData, error: fileError } = await supabase
+        .from('files')
+        .insert({
+          name: doc.file.name,
+          path: uploadData.path,
+          mime_type: doc.file.type,
+          file_size: doc.file.size,
+          uploaded_by: userId,
+          description: doc.description
+        })
+        .select()
+        .single();
+
+      if (fileError) throw fileError;
+
+      const newDocs = [...documents];
+      newDocs[idx].file_id = fileData.id;
+      newDocs[idx].file_name = fileData.name;
+      newDocs[idx].file_path = fileData.path;
+      setDocuments(newDocs);
+
+      const url = await getFileUrl(fileData.path);
+      if (url) {
+        setDocFileUrls(prev => ({ ...prev, [fileData.id]: url }));
+      }
+
+    } catch (error) {
+      console.error('Error saving document:', error);
+      alert('Error saving document: ' + error.message);
     }
   };
 
@@ -420,6 +517,15 @@ export default function LeadsPage({ onUpgradeToClient }) {
               </div>
             </div>
 
+            {/* Tabs */}
+            <div className="flex border-b border-slate-200 text-xs gap-4 font-medium text-slate-400 pb-0 mb-4 overflow-x-auto scrollbar-hide">
+              <button onClick={() => setFormTab('details')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'details' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Lead Details</button>
+              <button onClick={() => setFormTab('documents')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'documents' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Documents</button>
+              <button onClick={() => setFormTab('notes')} className={`pb-3 border-b-2 cursor-pointer bg-transparent whitespace-nowrap ${formTab === 'notes' ? 'border-blue-500 text-blue-600' : 'border-transparent'}`} style={{border:'none',outline:'none'}}>Notes</button>
+            </div>
+
+            {/* TAB: Lead Details */}
+            {formTab === 'details' && (
             <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 space-y-4">
               <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-2 flex items-center">
                 <i className="fa-solid fa-address-card text-blue-500 mr-2"></i>
@@ -497,20 +603,125 @@ export default function LeadsPage({ onUpgradeToClient }) {
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                 />
               </div>
+            </div>
+            )}
 
-                {/* Notes */}
-                <div className="mt-2">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-xs font-medium text-slate-500">Note</label>
-                    <button
-                      type="button"
-                      onClick={addExtraNote}
-                      className="flex items-center gap-1 text-blue-600 text-xs font-semibold cursor-pointer bg-transparent border-none hover:text-blue-800"
-                    >
-                      <i className="fa-solid fa-plus"></i> Add Note
-                    </button>
-                  </div>
-                {/* Dynamic extra notes container */}
+            {/* TAB: Documents */}
+            {formTab === 'documents' && (
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Documents</h3>
+                  <button
+                    type="button"
+                    onClick={() => setDocuments([...documents, { description: '', file: null, file_id: null }])}
+                    className="flex items-center gap-1 text-blue-600 text-xs font-semibold cursor-pointer bg-transparent border-none hover:text-blue-800"
+                  >
+                    <i className="fa-solid fa-plus"></i> Add Document
+                  </button>
+                </div>
+                <div id="lead-documents-list" className="space-y-3">
+                  {documents.length === 0 ? (
+                    <div className="text-xs text-slate-400 italic py-4">No documents added yet. Click "+ Add Document" to add.</div>
+                  ) : (
+                    documents.map((doc, idx) => (
+                      <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
+                          <input
+                            type="text"
+                            value={doc.description || ''}
+                            onChange={(e) => {
+                              const newDocs = [...documents];
+                              newDocs[idx].description = e.target.value;
+                              setDocuments(newDocs);
+                            }}
+                            placeholder="Write description here"
+                            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <label className="block text-xs font-medium text-slate-500 mb-1">Upload file (file chooser)</label>
+                            <input
+                              type="file"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const newDocs = [...documents];
+                                  newDocs[idx].file = file;
+                                  setDocuments(newDocs);
+                                }
+                              }}
+                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveDocument(idx)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium cursor-pointer border-none mt-5"
+                          >
+                            (+ save)
+                          </button>
+                        </div>
+                        {doc.file_id && (
+                          <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg">
+                            {docFileUrls[doc.file_id] ? (
+                              <a
+                                href={docFileUrls[doc.file_id]}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 no-underline flex items-center gap-1"
+                              >
+                                <i className="fa-solid fa-check text-green-700 mr-1"></i>
+                                {doc.file_name || doc.file?.name || 'File saved'}
+                                <i className="fa-solid fa-external-link text-blue-400 text-[10px]"></i>
+                              </a>
+                            ) : (
+                              <span className="text-xs text-green-700">
+                                <i className="fa-solid fa-check mr-1"></i>
+                                {doc.file_name || doc.file?.name || 'File saved'}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setDocuments(documents.filter((_, i) => i !== idx))}
+                              className="text-red-500 hover:text-red-700 text-xs font-medium cursor-pointer bg-transparent border-none"
+                            >
+                              <i className="fa-solid fa-trash"></i> Remove
+                            </button>
+                          </div>
+                        )}
+                        {!doc.file_id && (
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setDocuments(documents.filter((_, i) => i !== idx))}
+                              className="text-red-500 hover:text-red-700 text-xs font-medium cursor-pointer bg-transparent border-none"
+                            >
+                              <i className="fa-solid fa-trash"></i> Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: Notes */}
+            {formTab === 'notes' && (
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-bold text-slate-700 text-xs uppercase tracking-wider">Notes</h3>
+                  <button
+                    type="button"
+                    onClick={addExtraNote}
+                    className="flex items-center gap-1 text-blue-600 text-xs font-semibold cursor-pointer bg-transparent border-none hover:text-blue-800"
+                  >
+                    <i className="fa-solid fa-plus"></i> Add Note
+                  </button>
+                </div>
                 <div id="lead-extra-notes-container" className="space-y-3">
                   {formData.extraNotes.length === 0 ? (
                     <div className="text-xs text-slate-400 italic py-4">No notes added yet. Click "+ Add Note" to add.</div>
@@ -540,8 +751,8 @@ export default function LeadsPage({ onUpgradeToClient }) {
                     ))
                   )}
                 </div>
-                </div>
-            </div>
+              </div>
+            )}
 
             {/* Footer — Save actions */}
             <div className="flex items-center justify-between border-t border-slate-200 pt-4 mt-6">
