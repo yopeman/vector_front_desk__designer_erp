@@ -1,34 +1,105 @@
 // Other Forms module for research, digital log, tender, feedback, and leave operations
 
-async function saveDigitalLog() {
-    const user = await getCurrentUser();
-    if (!user) { alert("Please sign in first."); return; }
+let editingResearchId = null;
+let researchCache = [];
 
-    const date = document.getElementById('log_date').value;
-    const no = document.getElementById('log_no').value;
-    const title = document.getElementById('log_title').value;
-    const script = document.getElementById('log_script').value;
-    const share = document.getElementById('log_share').value;
+// Load research from Supabase and render the table
+async function loadResearch() {
+    const tbody = document.getElementById('researchTableBody');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-gray);">Loading research...</td></tr>';
 
-    const { error } = await window.supabase
-        .from('mrk_digital_logs')
-        .insert({
-            log_date: date,
-            content_no: no,
-            content_title: title,
-            content_script: script,
-            social_channel: document.getElementById('log_channel').value,
-            share_to: share,
-            created_by: user.id,
-        });
+    const { data, error } = await window.supabase
+        .from('mrk_research_logins')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error) { alert("Error saving digital log: " + error.message); return; }
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--danger);">Error loading: ${error.message}</td></tr>`;
+        return;
+    }
 
-    document.getElementById('digitalLogTableBody').innerHTML += `<tr><td>${date}</td><td>${no}</td><td>${title}</td><td>${script.substring(0,35)}...</td><td>${share}</td></tr>`;
-    alert("Digital log information has been saved!");
-    closeAllModals();
+    researchCache = data || [];
+    renderResearch();
 }
 
+function renderResearch() {
+    const tbody = document.getElementById('researchTableBody');
+    if (researchCache.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-gray);">No research found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = researchCache.map(r => {
+        return `<tr>
+            <td>${r.research_date || '—'}</td>
+            <td>${r.research_no || '—'}</td>
+            <td>${r.title || '—'}</td>
+            <td>${r.reason || '—'}</td>
+            <td>${r.objective || '—'}</td>
+            <td>${r.methodology || '—'}</td>
+            <td>
+                <button class="action-trigger btn-register" style="padding:6px 12px; font-size:11px;" onclick="editResearch('${r.id}')">✏️ Edit</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// Open the form in "create" mode (reset fields)
+function openNewResearchForm() {
+    editingResearchId = null;
+    resetStorageState();
+    document.getElementById('res_date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('res_no').value = '';
+    document.getElementById('res_title').value = '';
+    document.getElementById('res_reason').value = '';
+    document.getElementById('res_obj').value = '';
+    document.getElementById('res_method').value = '';
+    document.getElementById('researchExistingAttachments').style.display = 'none';
+    document.getElementById('formModal-research').style.display = 'flex';
+}
+
+// Open the form in "edit" mode, pre-filled with the record's data
+async function editResearch(id) {
+    const { data, error } = await window.supabase
+        .from('mrk_research_logins')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+    if (error || !data) { alert("Error loading research: " + (error?.message || 'not found')); return; }
+
+    editingResearchId = id;
+    resetStorageState();
+    document.getElementById('res_date').value = data.research_date || '';
+    document.getElementById('res_no').value = data.research_no || '';
+    document.getElementById('res_title').value = data.title || '';
+    document.getElementById('res_reason').value = data.reason || '';
+    document.getElementById('res_obj').value = data.objective || '';
+    document.getElementById('res_method').value = data.methodology || '';
+
+    // Show existing attachment
+    const existingAttachmentsDiv = document.getElementById('researchExistingAttachments');
+    const existingFileLink = document.getElementById('researchExistingFileLink');
+    const fileLink = document.getElementById('researchFileLink');
+
+    if (data.file_url) {
+        existingAttachmentsDiv.style.display = 'block';
+        existingFileLink.style.display = 'block';
+        const filePath = data.file_url.split('/documents/')[1]?.split('?')[0];
+        if (filePath) {
+            const freshUrl = await getFileUrl(filePath);
+            fileLink.href = freshUrl || data.file_url;
+        } else {
+            fileLink.href = data.file_url;
+        }
+        document.getElementById('researchFileLinkText').textContent = 'Open attached file';
+    } else {
+        existingAttachmentsDiv.style.display = 'none';
+    }
+
+    document.getElementById('formModal-research').style.display = 'flex';
+}
+
+// Create or update research
 async function saveResearch() {
     const user = await getCurrentUser();
     if (!user) { alert("Please sign in first."); return; }
@@ -40,23 +111,72 @@ async function saveResearch() {
     const obj = document.getElementById('res_obj').value;
     const method = document.getElementById('res_method').value;
 
-    const { error } = await window.supabase
-        .from('mrk_research_logins')
-        .insert({
-            research_date: date,
-            research_no: no,
-            title: title,
-            reason: reason,
-            objective: obj,
-            methodology: method,
-            created_by: user.id,
-        });
+    if (!no) { alert("Research Number is required."); return; }
+    if (!title) { alert("Research Title is required."); return; }
+
+    const payload = {
+        research_date: date,
+        research_no: no,
+        title: title,
+        reason: reason,
+        objective: obj,
+        methodology: method,
+    };
+
+    const { attachedFiles } = getStorageState();
+
+    // Upload attached file if present
+    if (attachedFiles.length > 0) {
+        try {
+            const file = attachedFiles[0];
+            const fileName = `research_${Date.now()}_${file.name}`;
+            const { data: uploadData, error: uploadError } = await window.supabase.storage
+                .from('documents')
+                .upload(fileName, file);
+
+            if (uploadError) {
+                if (uploadError.message.includes('Bucket not found')) {
+                    alert('Storage bucket "documents" does not exist. Please create it in Supabase dashboard (Storage → Create new bucket → name it "documents")');
+                    return;
+                }
+                throw uploadError;
+            }
+
+            const fileUrl = await getFileUrl(uploadData.path);
+            if (fileUrl) {
+                payload.file_url = fileUrl;
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Error uploading file: ' + error.message);
+            return;
+        }
+    }
+
+    let error;
+    if (editingResearchId) {
+        // UPDATE existing record
+        ({ error } = await window.supabase
+            .from('mrk_research_logins')
+            .update(payload)
+            .eq('id', editingResearchId));
+    } else {
+        // CREATE new record
+        payload.created_by = user.id;
+        ({ error } = await window.supabase
+            .from('mrk_research_logins')
+            .insert(payload));
+    }
 
     if (error) { alert("Error saving research: " + error.message); return; }
 
-    document.getElementById('researchTableBody').innerHTML += `<tr><td>${date}</td><td>${no}</td><td>${title}</td><td>${reason}</td><td>${obj}</td><td>${method}</td></tr>`;
-    alert("Research information has been added to the table!");
+    // Reset attachments
+    resetStorageState();
+
+    alert(editingResearchId ? "Research updated successfully!" : "Research information has been added to the table!");
     closeAllModals();
+    editingResearchId = null;
+    loadResearch();
 }
 
 async function saveTender() {

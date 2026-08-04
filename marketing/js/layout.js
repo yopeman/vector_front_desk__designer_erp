@@ -116,9 +116,9 @@ const layoutHTML = `
     <h3>Research Login List</h3>
     <div class="table-container">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Research Number</th><th>Title</th><th>Reason</th><th>Objective</th><th>Methodology</th></tr></thead>
+            <thead><tr><th>Date</th><th>Research Number</th><th>Title</th><th>Reason</th><th>Objective</th><th>Methodology</th><th>Actions</th></tr></thead>
             <tbody id="researchTableBody">
-                <tr><td>2026-06-01</td><td>RES-701</td><td>Competitor Study</td><td>Analyze competitors</td><td>Market Share</td><td>Surveys</td></tr>
+                <tr><td colspan="7" style="text-align:center; color:var(--text-gray);">Loading research...</td></tr>
             </tbody>
         </table>
     </div>

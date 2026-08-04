@@ -10,10 +10,20 @@ export const researchModal = `
                 <div class="form-group"><label>Research Number</label><input type="text" id="res_no" class="input-field" value="RES-701"></div>
             </div>
             <div class="form-group"><label>Research Title</label><input type="text" id="res_title" class="input-field" value="Competitor Study"></div>
-            <div class="form-group"><label>Research Reason</label><input type="text" id="res_reason" class="input-field" value="Analyze competitors and market share"></div>
+            <div class="form-group"><label>Research Reason</label><textarea id="res_reason" class="input-field" rows="5">Analyze competitors and market share</textarea></div>
             <div class="form-row">
                 <div class="form-group"><label>Objective</label><input type="text" id="res_obj" class="input-field" value="Identify Gaps"></div>
                 <div class="form-group"><label>Methodology</label><input type="text" id="res_method" class="input-field" value="Surveys & Data Mining"></div>
+            </div>
+
+            <div id="researchExistingAttachments" style="display:none; margin-bottom:15px; padding:12px; background:var(--input-bg); border-radius:8px; border:1px solid #233554;">
+                <div style="font-size:12px; color:var(--text-gray); margin-bottom:8px;">Existing Attachment:</div>
+                <div id="researchExistingFileLink" style="display:none; margin-bottom:8px;">
+                    <a id="researchFileLink" href="#" target="_blank" style="color:var(--primary); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-file"></i>
+                        <span id="researchFileLinkText">Open attached file</span>
+                    </a>
+                </div>
             </div>
 
             <div class="media-box">
