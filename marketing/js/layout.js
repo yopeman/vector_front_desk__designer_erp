@@ -152,9 +152,9 @@ const layoutHTML = `
     <h3>Feedback List</h3>
     <div class="table-container">
         <table class="data-table">
-            <thead><tr><th>Date</th><th>Company Name</th><th>Project Name</th><th>Project Number</th><th>Overall Evaluation</th><th>Service Quality</th><th>Grade</th></tr></thead>
+            <thead><tr><th>Date</th><th>Company Name</th><th>Project Name</th><th>Project Number</th><th>Overall Evaluation</th><th>Service Quality</th><th>Grade</th><th>Actions</th></tr></thead>
             <tbody id="feedbackTableBody">
-                <tr><td>2026-06-02</td><td>Commercial Bank</td><td>App Campaign</td><td>PRJ-77</td><td>Excellent (100)</td><td>Very Satisfied (100)</td><td>A (95%+)</td></tr>
+                <tr><td colspan="8" style="text-align:center; color:var(--text-gray);">Loading feedbacks...</td></tr>
             </tbody>
         </table>
     </div>

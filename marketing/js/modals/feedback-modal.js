@@ -18,6 +18,16 @@ export const feedbackModal = `
                 <div class="form-group"><label>Service Quality (0-100)</label><input type="number" id="fb_score2" class="input-field" value="100"></div>
             </div>
 
+            <div id="feedbackExistingAttachments" style="display:none; margin-bottom:15px; padding:12px; background:var(--input-bg); border-radius:8px; border:1px solid #233554;">
+                <div style="font-size:12px; color:var(--text-gray); margin-bottom:8px;">Existing Attachment:</div>
+                <div id="feedbackExistingFileLink" style="display:none; margin-bottom:8px;">
+                    <a id="feedbackFileLink" href="#" target="_blank" style="color:var(--primary); font-size:12px; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-file"></i>
+                        <span id="feedbackFileLinkText">Open attached file</span>
+                    </a>
+                </div>
+            </div>
+
             <div class="media-box">
                 <button type="button" class="media-btn file-btn" onclick="document.getElementById('fb_file').click()">📎 Attach Signed Form</button>
                 <input type="file" id="fb_file" style="display:none;" onchange="handleFileSelect(event)">

@@ -6,6 +6,8 @@ let editingDigitalLogId = null;
 let digitalLogCache = [];
 let editingTenderId = null;
 let tenderCache = [];
+let editingFeedbackId = null;
+let feedbackCache = [];
 
 // Load research from Supabase and render the table
 async function loadResearch() {
@@ -586,6 +588,104 @@ async function saveTender() {
     loadTenders();
 }
 
+// Load feedbacks from Supabase and render the table
+async function loadFeedbacks() {
+    const tbody = document.getElementById('feedbackTableBody');
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-gray);">Loading feedbacks...</td></tr>';
+
+    const { data, error } = await window.supabase
+        .from('mrk_feedbacks')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--danger);">Error loading: ${error.message}</td></tr>`;
+        return;
+    }
+
+    feedbackCache = data || [];
+    renderFeedbacks();
+}
+
+function renderFeedbacks() {
+    const tbody = document.getElementById('feedbackTableBody');
+    if (feedbackCache.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-gray);">No feedbacks found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = feedbackCache.map(f => {
+        return `<tr>
+            <td>${f.feedback_date || '—'}</td>
+            <td>${f.client_name || '—'}</td>
+            <td>${f.project_name || '—'}</td>
+            <td>${f.project_no || '—'}</td>
+            <td>${f.overall_score !== null ? f.overall_score : '—'}</td>
+            <td>${f.service_score !== null ? f.service_score : '—'}</td>
+            <td>${f.grade || '—'}</td>
+            <td>
+                <button class="action-trigger btn-register" style="padding:6px 12px; font-size:11px;" onclick="editFeedback('${f.id}')">✏️ Edit</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// Open the form in "create" mode (reset fields)
+function openNewFeedbackForm() {
+    editingFeedbackId = null;
+    resetStorageState();
+    document.getElementById('fb_date').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('fb_client').value = '';
+    document.getElementById('fb_proj').value = '';
+    document.getElementById('fb_proj_no').value = '';
+    document.getElementById('fb_score1').value = '';
+    document.getElementById('fb_score2').value = '';
+    document.getElementById('feedbackExistingAttachments').style.display = 'none';
+    document.getElementById('formModal-feedback').style.display = 'flex';
+}
+
+// Open the form in "edit" mode, pre-filled with the record's data
+async function editFeedback(id) {
+    const { data, error } = await window.supabase
+        .from('mrk_feedbacks')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+    if (error || !data) { alert("Error loading feedback: " + (error?.message || 'not found')); return; }
+
+    editingFeedbackId = id;
+    resetStorageState();
+    document.getElementById('fb_date').value = data.feedback_date || '';
+    document.getElementById('fb_client').value = data.client_name || '';
+    document.getElementById('fb_proj').value = data.project_name || '';
+    document.getElementById('fb_proj_no').value = data.project_no || '';
+    document.getElementById('fb_score1').value = data.overall_score || '';
+    document.getElementById('fb_score2').value = data.service_score || '';
+
+    // Show existing attachment
+    const existingAttachmentsDiv = document.getElementById('feedbackExistingAttachments');
+    const existingFileLink = document.getElementById('feedbackExistingFileLink');
+    const fileLink = document.getElementById('feedbackFileLink');
+
+    if (data.file_url) {
+        existingAttachmentsDiv.style.display = 'block';
+        existingFileLink.style.display = 'block';
+        const filePath = data.file_url.split('/documents/')[1]?.split('?')[0];
+        if (filePath) {
+            const freshUrl = await getFileUrl(filePath);
+            fileLink.href = freshUrl || data.file_url;
+        } else {
+            fileLink.href = data.file_url;
+        }
+        document.getElementById('feedbackFileLinkText').textContent = 'Open attached file';
+    } else {
+        existingAttachmentsDiv.style.display = 'none';
+    }
+
+    document.getElementById('formModal-feedback').style.display = 'flex';
+}
+
+// Create or update feedback
 async function saveFeedback() {
     const user = await getCurrentUser();
     if (!user) { alert("Please sign in first."); return; }
@@ -594,26 +694,74 @@ async function saveFeedback() {
     const client = document.getElementById('fb_client').value;
     const proj = document.getElementById('fb_proj').value;
     const no = document.getElementById('fb_proj_no').value;
-    const s1 = parseInt(document.getElementById('fb_score1').value) || 0;
-    const s2 = parseInt(document.getElementById('fb_score2').value) || 0;
+    const s1 = parseInt(document.getElementById('fb_score1').value) || null;
+    const s2 = parseInt(document.getElementById('fb_score2').value) || null;
 
-    const { error } = await window.supabase
-        .from('mrk_feedbacks')
-        .insert({
-            feedback_date: date,
-            client_name: client,
-            project_name: proj,
-            project_no: no,
-            overall_score: s1,
-            service_score: s2,
-            created_by: user.id,
-        });
+    if (!client) { alert("Client Name is required."); return; }
+
+    const payload = {
+        feedback_date: date,
+        client_name: client,
+        project_name: proj,
+        project_no: no,
+        overall_score: s1,
+        service_score: s2,
+    };
+
+    const { attachedFiles } = getStorageState();
+
+    // Upload attached file if present
+    if (attachedFiles.length > 0) {
+        try {
+            const file = attachedFiles[0];
+            const fileName = `feedback_${Date.now()}_${file.name}`;
+            const { data: uploadData, error: uploadError } = await window.supabase.storage
+                .from('documents')
+                .upload(fileName, file);
+
+            if (uploadError) {
+                if (uploadError.message.includes('Bucket not found')) {
+                    alert('Storage bucket "documents" does not exist. Please create it in Supabase dashboard (Storage → Create new bucket → name it "documents")');
+                    return;
+                }
+                throw uploadError;
+            }
+
+            const fileUrl = await getFileUrl(uploadData.path);
+            if (fileUrl) {
+                payload.file_url = fileUrl;
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Error uploading file: ' + error.message);
+            return;
+        }
+    }
+
+    let error;
+    if (editingFeedbackId) {
+        // UPDATE existing record
+        ({ error } = await window.supabase
+            .from('mrk_feedbacks')
+            .update(payload)
+            .eq('id', editingFeedbackId));
+    } else {
+        // CREATE new record
+        payload.created_by = user.id;
+        ({ error } = await window.supabase
+            .from('mrk_feedbacks')
+            .insert(payload));
+    }
 
     if (error) { alert("Error saving feedback: " + error.message); return; }
 
-    document.getElementById('feedbackTableBody').innerHTML += `<tr><td>${date}</td><td>${client}</td><td>${proj}</td><td>${no}</td><td>Excellent (${s1})</td><td>Very Satisfied (${s2})</td><td>A</td></tr>`;
-    alert("Client feedback has been recorded!");
+    // Reset attachments
+    resetStorageState();
+
+    alert(editingFeedbackId ? "Feedback updated successfully!" : "Client feedback has been recorded!");
     closeAllModals();
+    editingFeedbackId = null;
+    loadFeedbacks();
 }
 
 function saveLeave() {
