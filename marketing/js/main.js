@@ -27,6 +27,16 @@ function switchView(viewId) {
         loadTenders();
     } else if (viewId === 'feedback') {
         loadFeedbacks();
+    } else if (viewId === 'reports') {
+        if (typeof reportsTab !== 'undefined') reportsTab.activate();
+    } else if (viewId === 'messages') {
+        if (typeof messagesTab !== 'undefined') messagesTab.activate();
+    } else if (viewId === 'notifications') {
+        if (typeof notificationsTab !== 'undefined') notificationsTab.activate();
+    } else if (viewId === 'notes') {
+        if (typeof notesTab !== 'undefined') notesTab.activate();
+    } else if (viewId === 'settings') {
+        if (typeof settingsTab !== 'undefined') settingsTab.activate();
     }
 }
 

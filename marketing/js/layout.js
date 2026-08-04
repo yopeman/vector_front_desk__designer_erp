@@ -31,6 +31,21 @@ const layoutHTML = `
     <div class="menu-node" id="node-leave" onclick="window.location.href='https://vectoradvert.com/hr'">
         <h4>Leave Request</h4><span>HR</span>
     </div>
+    <div class="menu-node" id="node-reports" onclick="switchView('reports')">
+        <h4>Reports</h4><span>Analytics</span>
+    </div>
+    <div class="menu-node" id="node-messages" onclick="switchView('messages')">
+        <h4>Messages</h4><span>Communication</span>
+    </div>
+    <div class="menu-node" id="node-notifications" onclick="switchView('notifications')">
+        <h4>Notifications</h4><span>Alerts</span>
+    </div>
+    <div class="menu-node" id="node-notes" onclick="switchView('notes')">
+        <h4>Notes</h4><span>Workspace</span>
+    </div>
+    <div class="menu-node" id="node-settings" onclick="switchView('settings')">
+        <h4>Settings</h4><span>Configuration</span>
+    </div>
 </div>
 
 <div class="main-content">
@@ -171,6 +186,26 @@ const layoutHTML = `
             </tbody>
         </table>
     </div>
+</div>
+
+<div id="view-reports" class="view-section">
+    <div id="reports-section-container"></div>
+</div>
+
+<div id="view-messages" class="view-section">
+    <div id="messages-section-container"></div>
+</div>
+
+<div id="view-notifications" class="view-section">
+    <div id="notifications-section-container"></div>
+</div>
+
+<div id="view-notes" class="view-section">
+    <div id="notes-section-container"></div>
+</div>
+
+<div id="view-settings" class="view-section">
+    <div id="settings-section-container"></div>
 </div>
 </div>
 </div>
