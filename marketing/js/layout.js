@@ -66,30 +66,6 @@ const layoutHTML = `
 </div>
 
 <div id="view-dashboard" class="view-section active-view">
-    <div class="dashboard-grid">
-        <div class="panel-card">
-            <div class="panel-title">Presence</div>
-            <div class="presence-grid">
-                <button class="presence-btn in" onclick="toggleClock(true)">Clock In</button>
-                <button class="presence-btn out" onclick="toggleClock(false)">Clock Out</button>
-            </div>
-            <div class="presence-grid" style="font-size:12px; text-align:center; color: var(--text-gray);">
-                <div id="clockInTime">In: --:--:--</div><div id="clockOutTime">Out: --:--:--</div>
-            </div>
-            <div class="clock-counter" id="livePresenceTimer">00:00:00</div>
-        </div>
-        <div class="panel-card">
-            <div class="panel-title">Order Status</div>
-            <div style="height:120px; background:var(--input-bg); border-radius:8px; display:flex; align-items:flex-end; padding:15px; gap:20px;">
-                <div style="flex:1; height:85%; background:var(--primary); position:relative;"><span style="position:absolute; top:-20px; font-size:11px; width:100%; text-align:center;">85%</span></div>
-                <div style="flex:1; height:40%; background:var(--success); position:relative;"><span style="position:absolute; top:-20px; font-size:11px; width:100%; text-align:center;">40%</span></div>
-            </div>
-        </div>
-        <div class="panel-card">
-            <div class="panel-title">Notification</div>
-            <p style="font-size:12px; color:var(--warning); line-height:1.6;">⚠️ Note: When the client's payment is completed, the status will automatically update and the client will be included in the list.</p>
-        </div>
-    </div>
 </div>
 
 <div id="view-marketRequest" class="view-section">
