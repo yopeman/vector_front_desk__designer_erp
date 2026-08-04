@@ -7,7 +7,7 @@ export default function TestProformaInvoicesPage() {
   const [applyVat, setApplyVat] = useState(true);
   const [vatAmount, setVatAmount] = useState(15);
   const [testInvoiceData, setTestInvoiceData] = useState({
-    invoice_no: '',
+    invoice_no: `TEST-INV-${Math.floor(10000 + Math.random() * 90000)}`,
     order_no: '',
     client_name: '',
     items: []
