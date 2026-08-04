@@ -15,6 +15,7 @@ import OrdersPage from './components/OrdersPage';
 import DesignsPage from './components/DesignsPage';
 import DesignStatusPage from './components/DesignStatusPage';
 import ProformaInvoicesPage from './components/ProformaInvoicesPage';
+import TestProformaInvoicesPage from './components/TestProformaInvoicesPage';
 import SalesInvoicesPage from './components/SalesInvoicesPage';
 import PaymentsPage from './components/PaymentsPage';
 import JobOrdersPage from './components/JobOrdersPage';
@@ -121,17 +122,22 @@ export default function FrontDeskPage() {
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Design Status Page Loaded</h2>
               <DesignStatusPage />
             </div>
-          ) : currentPage === 'proforma invoices' ? (
+          ) : currentPage === 'sales invoices' ? ( // Proforma Invoices
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Proforma Invoices Page Loaded</h2>
               <ProformaInvoicesPage preselectedOrderId={preselectedOrderId} />
             </div>
-          ) : currentPage === 'sales invoices' ? (
+          ) : currentPage === 'proforma invoices' ? ( // Test Proforma Invoices
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Test Proforma Invoices Page Loaded</h2>
+              <TestProformaInvoicesPage />
+            </div>
+          ) : currentPage === 'sales invoices status' ? ( // Sales Invoices
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Sales Invoices Page Loaded</h2>
               <SalesInvoicesPage />
             </div>
-          ) : currentPage === 'payments' ? (
+          ) : currentPage === 'payments' ? ( // Payments
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Payments Page Loaded</h2>
               <PaymentsPage />

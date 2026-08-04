@@ -37,9 +37,10 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       icon: 'fa-cart-shopping', 
       active: false,
       submenu: [
-        { name: 'Proforma Invoices', icon: 'fa-file-invoice' },
-        { name: 'Payments', icon: 'fa-credit-card' },
-        { name: 'Sales Invoices', icon: 'fa-file-invoice-dollar' },
+        { name: 'Proforma Invoices', icon: 'fa-flask' }, // Test Proforma Invoices
+        { name: 'Sales Invoices', icon: 'fa-file-invoice' }, // Proforma Invoices
+        { name: 'Payments', icon: 'fa-credit-card' }, // Payments
+        { name: 'Sales Invoices Status', icon: 'fa-file-invoice-dollar' }, // Sales Invoices
       ] 
     },
     { 

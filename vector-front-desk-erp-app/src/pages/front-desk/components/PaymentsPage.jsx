@@ -425,6 +425,7 @@ export default function PaymentsPage() {
                   <option value="Bank Transfer">Bank Transfer</option>
                   <option value="Mobile Money">Mobile Money</option>
                   <option value="Card">Card</option>
+                  <option value="Credit">Credit</option>
                   <option value="E-commerce">E-commerce</option>
                 </select>
               </div>

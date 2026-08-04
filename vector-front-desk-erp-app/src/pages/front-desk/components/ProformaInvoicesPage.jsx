@@ -417,12 +417,12 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-slate-800">Proforma Invoices</h2>
         <div className="flex gap-2">
-          <button
+          {/* <button
             onClick={handleOpenTestInvoiceModal}
             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
           >
             <i className="fa-solid fa-flask"></i> Test Proforma Invoice
-          </button>
+          </button> */}
           <button
             onClick={handleOpenNewInvoiceModal}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
