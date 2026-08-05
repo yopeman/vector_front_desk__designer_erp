@@ -777,5 +777,144 @@ function saveLeave() {
 }
 
 function downloadFormPDF(formName) {
-    alert(`The complete document for [ ${formName} ] has been converted to PDF and download has started!`);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    let formData = {};
+    let title = '';
+    
+    // Helper function to check if modal is visible
+    function isModalVisible(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return false;
+        const display = window.getComputedStyle(modal).display;
+        return display === 'flex';
+    }
+    
+    // Detect which modal is open and extract data
+    if (isModalVisible('formModal-research')) {
+        title = 'Research Form';
+        formData = {
+            'Date': document.getElementById('res_date')?.value || '',
+            'Research No': document.getElementById('res_no')?.value || '',
+            'Title': document.getElementById('res_title')?.value || '',
+            'Reason': document.getElementById('res_reason')?.value || '',
+            'Objective': document.getElementById('res_obj')?.value || '',
+            'Methodology': document.getElementById('res_method')?.value || ''
+        };
+    } else if (isModalVisible('formModal-digitalLog')) {
+        title = 'Digital Log Form';
+        formData = {
+            'Date': document.getElementById('log_date')?.value || '',
+            'Content No': document.getElementById('log_no')?.value || '',
+            'Content Title': document.getElementById('log_title')?.value || '',
+            'Content Script': document.getElementById('log_script')?.value || '',
+            'Social Channel': document.getElementById('log_channel')?.value || '',
+            'Share To': document.getElementById('log_share')?.value || ''
+        };
+    } else if (isModalVisible('formModal-tender')) {
+        title = 'Tender Form';
+        formData = {
+            'Date': document.getElementById('ten_date')?.value || '',
+            'Company Name': document.getElementById('ten_company')?.value || '',
+            'Tender No': document.getElementById('ten_no')?.value || '',
+            'Item/Service': document.getElementById('ten_item')?.value || '',
+            'CPO Amount': document.getElementById('ten_cpo')?.value || '',
+            'Total Price': document.getElementById('ten_total')?.value || '',
+            'VAT Status': document.getElementById('ten_vat_status')?.value || ''
+        };
+    } else if (isModalVisible('formModal-feedback')) {
+        title = 'Feedback Form';
+        formData = {
+            'Date': document.getElementById('fb_date')?.value || '',
+            'Client Name': document.getElementById('fb_client')?.value || '',
+            'Project Name': document.getElementById('fb_proj')?.value || '',
+            'Project No': document.getElementById('fb_proj_no')?.value || '',
+            'Overall Score': document.getElementById('fb_score1')?.value || '',
+            'Service Score': document.getElementById('fb_score2')?.value || ''
+        };
+    } else if (isModalVisible('formModal-leave')) {
+        title = 'Leave Form';
+        formData = {
+            'Date': document.getElementById('leave_date')?.value || '',
+            'Start Date': document.getElementById('leave_start')?.value || '',
+            'End Date': document.getElementById('leave_end')?.value || '',
+            'Reason': document.getElementById('leave_reason')?.value || '',
+            'Remarks': document.getElementById('leave_rem')?.value || ''
+        };
+    } else if (isModalVisible('formModal-marketRequest')) {
+        title = 'Market Request Form';
+        formData = {
+            'Date': document.getElementById('mkt_date')?.value || '',
+            'Request Number': document.getElementById('mkt_no')?.value || '',
+            'Request Type': document.getElementById('mkt_type')?.value || '',
+            'Description': document.getElementById('mkt_desc')?.value || '',
+            'Priority': document.getElementById('mkt_priority')?.value || '',
+            'Status': document.getElementById('mkt_status')?.value || '',
+            'Assigned To': document.getElementById('mkt_assign')?.value || '',
+            'Due Date': document.getElementById('mkt_due')?.value || ''
+        };
+    } else if (isModalVisible('formModal-clientRegistry')) {
+        title = 'Client Registry Form';
+        formData = {
+            'Date': document.getElementById('cli_date')?.value || '',
+            'Client/Company Name': document.getElementById('cli_name')?.value || '',
+            'Customer Type': document.getElementById('cli_type')?.value || '',
+            'Business Sector': document.getElementById('cli_sector')?.value || '',
+            'TIN Number': document.getElementById('cli_tin')?.value || '',
+            'Discovery': document.getElementById('cli_discovery')?.value || ''
+        };
+    } else if (isModalVisible('formModal-invoice')) {
+        title = 'Invoice Form';
+        const vatToggle = document.getElementById('inv_vat_toggle')?.checked;
+        formData = {
+            'Date': document.getElementById('inv_date')?.value || '',
+            'Invoice Number': document.getElementById('inv_no')?.value || '',
+            'Client Name': document.getElementById('inv_client')?.value || '',
+            'Reference Number': document.getElementById('inv_ref')?.value || '',
+            'Item/Service Type': document.getElementById('inv_item')?.value || '',
+            'Subtotal Amount': document.getElementById('inv_subtotal')?.value || '',
+            'Company TIN Number': document.getElementById('inv_tin')?.value || '',
+            'Payment Term': document.getElementById('inv_term')?.value || '',
+            'Include VAT': vatToggle ? 'Yes' : 'No',
+            'VAT Amount': document.getElementById('displayVatAmount')?.textContent || '',
+            'Grand Total': document.getElementById('displayGrandTotal')?.textContent || ''
+        };
+    } else {
+        alert('No form modal is currently open.');
+        return;
+    }
+    
+    // Generate PDF
+    doc.setFontSize(20);
+    doc.text(title, 20, 20);
+    
+    doc.setFontSize(12);
+    let yPosition = 35;
+    
+    for (const [key, value] of Object.entries(formData)) {
+        if (value) {
+            const label = `${key}:`;
+            const text = `${value}`;
+            
+            doc.setFont(undefined, 'bold');
+            doc.text(label, 20, yPosition);
+            
+            doc.setFont(undefined, 'normal');
+            doc.text(text, 60, yPosition);
+            
+            yPosition += 10;
+        }
+    }
+    
+    // Add timestamp
+    doc.setFontSize(10);
+    doc.setTextColor(128);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, yPosition + 10);
+    
+    // Save PDF
+    const fileName = `${title.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+    doc.save(fileName);
+    
+    // alert(`The complete document for [ ${formName} ] has been converted to PDF and download has started!`);
 }

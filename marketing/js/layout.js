@@ -51,14 +51,14 @@ const layoutHTML = `
 <div class="main-content">
 <div class="action-container">
     <div class="search-group">
-        <input type="text" class="search-input-field" id="mainSearchInput" placeholder="🔍 Search here... (number, name, or sector)" onkeyup="filterDataBySearch()">
-        <div class="filter-tags-wrapper">
+        <input type="text" class="search-input-field" id="mainSearchInput" placeholder="🔍 Search here..." onkeyup="filterDataBySearch()">
+        <!-- <div class="filter-tags-wrapper">
             <div class="filter-tag active-tag" id="tag-all" onclick="setSearchFilter('all')">All</div>
             <div class="filter-tag" id="tag-date" onclick="setSearchFilter('date')">Date</div>
             <div class="filter-tag" id="tag-name" onclick="setSearchFilter('name')">Name</div>
             <div class="filter-tag" id="tag-sector" onclick="setSearchFilter('sector')">Sector</div>
             <div class="filter-tag" id="tag-type" onclick="setSearchFilter('type')">Type</div>
-        </div>
+        </div> -->
     </div>
     <button class="add-action-btn" onclick="triggerCurrentForm()">
         <span>+</span> Add New
