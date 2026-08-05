@@ -13,6 +13,8 @@ export default function OrdersPage({ onNavigateToProforma }) {
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [clientSearchQuery, setClientSearchQuery] = useState('');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const [selectedClientType, setSelectedClientType] = useState(null);
+  const [upgradeLeadToClient, setUpgradeLeadToClient] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -217,6 +219,18 @@ export default function OrdersPage({ onNavigateToProforma }) {
         }]);
       }
 
+      // Update client type from lead to client if checkbox is checked
+      if (upgradeLeadToClient && formData.client_id && selectedClientType === 'lead') {
+        const { error: clientUpdateError } = await supabase
+          .from('clients')
+          .update({ 
+            client_type: 'client',
+            converted_at: new Date().toISOString()
+          })
+          .eq('id', formData.client_id);
+        if (clientUpdateError) throw clientUpdateError;
+      }
+
       await fetchOrders();
       resetForm();
     } catch (error) {
@@ -226,6 +240,21 @@ export default function OrdersPage({ onNavigateToProforma }) {
   };
 
   const handleEdit = async (order) => {
+    // Fetch client type and name for the selected client
+    let clientType = null;
+    let clientName = '';
+    if (order.client_id) {
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('client_type, name')
+        .eq('id', order.client_id)
+        .single();
+      if (clientData) {
+        clientType = clientData.client_type;
+        clientName = clientData.name;
+      }
+    }
+
     setFormData({
       client_id: order.client_id || '',
       order_no: order.order_no || '',
@@ -243,9 +272,12 @@ export default function OrdersPage({ onNavigateToProforma }) {
       order_items: order.order_items || []
     });
     setAttachments([]);
+    setSelectedClientType(clientType);
+    setUpgradeLeadToClient(false);
+    setClientSearchQuery(clientName ? `${clientName} (${clientType})` : '');
     setEditingId(order.id);
     setShowModal(true);
-    
+
     if (order.attachments && order.attachments.length > 0) {
       const { data: files } = await supabase
         .from('files')
@@ -292,6 +324,9 @@ export default function OrdersPage({ onNavigateToProforma }) {
     });
     setAttachments([]);
     setAttachmentFileUrls({});
+    setSelectedClientType(null);
+    setUpgradeLeadToClient(false);
+    setClientSearchQuery('');
     setEditingId(null);
     setShowModal(false);
   };
@@ -603,6 +638,8 @@ export default function OrdersPage({ onNavigateToProforma }) {
                             onClick={() => {
                               setFormData({ ...formData, client_id: client.id });
                               setClientSearchQuery(`${client.name} (${client.client_type})`);
+                              setSelectedClientType(client.client_type);
+                              setUpgradeLeadToClient(false);
                               setShowClientDropdown(false);
                             }}
                             className="px-3 py-2 text-xs hover:bg-slate-100 cursor-pointer"
@@ -717,6 +754,23 @@ export default function OrdersPage({ onNavigateToProforma }) {
                       className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                     />
                   </div>
+                  {selectedClientType === 'lead' && (
+                    <div className="flex items-center gap-2 pt-2">
+                      <input
+                        type="checkbox"
+                        id="upgradeLeadToClient"
+                        checked={upgradeLeadToClient}
+                        onChange={(e) => setUpgradeLeadToClient(e.target.checked)}
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                      />
+                      <label
+                        htmlFor="upgradeLeadToClient"
+                        className="text-xs font-medium text-slate-700 cursor-pointer"
+                      >
+                        Ready for payment, upgrade this lead to client.
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
