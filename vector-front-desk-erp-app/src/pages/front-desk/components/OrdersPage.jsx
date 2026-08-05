@@ -606,13 +606,13 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                     >
                       <i className="fa-solid fa-pen-to-square"></i> Edit
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => onNavigateToProforma?.(order.id)}
                       className="text-green-600 hover:text-green-800 bg-transparent border-none cursor-pointer"
                       title="Proforma Invoice"
                     >
                       <i className="fa-solid fa-file-invoice"></i> Proforma
-                    </button>
+                    </button> */}
                   </td>
                 </tr>
               ))
