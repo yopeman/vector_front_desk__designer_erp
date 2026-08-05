@@ -36,6 +36,7 @@ import SettingsPage from './components/SettingsPage';
 export default function FrontDeskPage() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [preselectedOrderId, setPreselectedOrderId] = useState(null);
+  const [prefillOrderData, setPrefillOrderData] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { loading, data } = useDashboardData();
 
@@ -44,6 +45,11 @@ export default function FrontDeskPage() {
     setPreselectedOrderId(orderId);
     setCurrentPage(page);
     console.log('currentPage set to:', page);
+  };
+
+  const handleUpgradeToOrder = (orderData) => {
+    setPrefillOrderData(orderData);
+    setCurrentPage('orders');
   };
 
     return (
@@ -110,7 +116,10 @@ export default function FrontDeskPage() {
           ) : currentPage === 'orders' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Orders Page Loaded</h2>
-              <OrdersPage onNavigateToProforma={(orderId) => handleMenuClick('proforma invoices', orderId)} />
+              <OrdersPage 
+                onNavigateToProforma={(orderId) => handleMenuClick('proforma invoices', orderId)} 
+                prefillOrderData={prefillOrderData}
+              />
             </div>
           ) : currentPage === 'designs' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
@@ -125,7 +134,7 @@ export default function FrontDeskPage() {
           ) : currentPage === 'proforma invoices' ? ( // Test Proforma Invoices (test_proforma_invoices table)
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Proforma Invoices Page Loaded</h2>
-              <TestProformaInvoicesPage />
+              <TestProformaInvoicesPage onUpgradeToOrder={handleUpgradeToOrder} />
             </div>
           ) : currentPage === 'sales invoices' ? ( // Proforma Invoices (invoices table with type Proforma)
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

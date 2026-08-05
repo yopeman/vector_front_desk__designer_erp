@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
-export default function OrdersPage({ onNavigateToProforma }) {
+export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
   const [showModal, setShowModal] = useState(false);
   const [orders, setOrders] = useState([]);
   const [clients, setClients] = useState([]);
@@ -52,6 +52,33 @@ export default function OrdersPage({ onNavigateToProforma }) {
     }, 300);
     return () => clearTimeout(debounceTimer);
   }, [clientSearchQuery]);
+
+  // Handle prefill order data from test proforma upgrade
+  useEffect(() => {
+    if (prefillOrderData) {
+      setFormData({
+        client_id: prefillOrderData.client_id || '',
+        order_no: prefillOrderData.order_no || '',
+        order_date: prefillOrderData.order_date || '',
+        required_date: prefillOrderData.required_date || '',
+        status: prefillOrderData.status || 'New',
+        priority: prefillOrderData.priority || 'Medium',
+        total_amount: 0,
+        paid_amount: prefillOrderData.paid_amount || 0,
+        balance: 0,
+        sales_officer_id: currentUserId,
+        currency: prefillOrderData.currency || 'ETB',
+        payment_terms: prefillOrderData.payment_terms || '',
+        special_instructions: prefillOrderData.special_instructions || '',
+        order_items: prefillOrderData.order_items || []
+      });
+      setSelectedClientType(prefillOrderData.client_type || null);
+      setClientSearchQuery(prefillOrderData.client_name ? `${prefillOrderData.client_name} (${prefillOrderData.client_type})` : '');
+      setUpgradeLeadToClient(false);
+      setEditingId(null);
+      setShowModal(true);
+    }
+  }, [prefillOrderData, currentUserId]);
 
   const fetchCurrentUser = async () => {
     try {

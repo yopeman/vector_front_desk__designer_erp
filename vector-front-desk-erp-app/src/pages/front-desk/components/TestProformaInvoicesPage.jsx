@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import jsPDF from 'jspdf';
 
-export default function TestProformaInvoicesPage() {
+export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -10,6 +10,7 @@ export default function TestProformaInvoicesPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [clients, setClients] = useState([]);
+  const [items, setItems] = useState([]);
   const [applyVat, setApplyVat] = useState(true);
   const [vatAmount, setVatAmount] = useState(15);
   const [testInvoiceData, setTestInvoiceData] = useState({
@@ -25,6 +26,7 @@ export default function TestProformaInvoicesPage() {
   useEffect(() => {
     fetchInvoices();
     fetchClients();
+    fetchItems();
   }, []);
 
   useEffect(() => {
@@ -76,24 +78,43 @@ export default function TestProformaInvoicesPage() {
     }
   };
 
+  const fetchItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .select('id, name')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    }
+  };
+
   const generateInvoiceNumber = async () => {
     try {
       const { data: lastInvoice } = await supabase
         .from('test_proforma_invoices')
         .select('invoice_no')
-        .ilike('invoice_no', 'TEST-INV%')
+        .ilike('invoice_no', 'PROF%')
         .order('invoice_no', { ascending: false })
         .limit(1)
         .single();
       
       let nextNumber = 1;
       if (lastInvoice) {
-        const lastNum = parseInt(lastInvoice.invoice_no.split('-')[2]);
-        nextNumber = lastNum + 1;
+        const parts = lastInvoice.invoice_no.split('-');
+        const lastNum = parseInt(parts[parts.length - 1]);
+        if (!isNaN(lastNum)) {
+          nextNumber = lastNum + 1;
+        }
       }
-      return `TEST-INV-${String(nextNumber).padStart(5, '0')}`;
+      return `PROF-${String(nextNumber).padStart(5, '0')}`;
     } catch (error) {
-      return `TEST-INV-${String(Math.floor(Math.random() * 90000) + 10000)}`;
+      // If no invoices exist or error occurs, start from 1 or use timestamp-based fallback
+      const timestamp = Date.now().toString().slice(-6);
+      return `PROF-${timestamp}`;
     }
   };
 
@@ -149,6 +170,53 @@ export default function TestProformaInvoicesPage() {
     }
   };
 
+  const handleUpgradeToOrder = async (invoice) => {
+    try {
+      // Fetch client data to get client_id
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('id, client_type')
+        .ilike('name', invoice.client_name)
+        .single();
+
+      if (!clientData) {
+        alert('Client not found. Please ensure the client exists in the system.');
+        return;
+      }
+
+      // Prepare order data from test proforma
+      const orderData = {
+        client_id: clientData.id,
+        client_name: invoice.client_name,
+        client_type: clientData.client_type,
+        order_no: invoice.order_no || '',
+        order_date: new Date().toISOString().split('T')[0],
+        required_date: '',
+        status: 'New',
+        priority: 'Medium',
+        currency: 'ETB',
+        paid_amount: 0,
+        payment_terms: '',
+        special_instructions: '',
+        order_items: (invoice.items || []).map(item => ({
+          item_id: item.item_id || '',
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit || '',
+          unit_price: item.unit_price,
+          discount_percent: 0,
+          tax_percent: 0,
+          amount: item.total
+        }))
+      };
+
+      onUpgradeToOrder(orderData);
+    } catch (error) {
+      console.error('Error upgrading to order:', error);
+      alert('Error upgrading to order: ' + error.message);
+    }
+  };
+
   const handleSave = async () => {
     if (!testInvoiceData.client_name) {
       alert('Please select a client');
@@ -164,8 +232,35 @@ export default function TestProformaInvoicesPage() {
       const vatValue = applyVat ? (subtotal * (vatAmount / 100)) : 0;
       const grandTotal = subtotal + vatValue;
 
+      let invoiceNo = testInvoiceData.invoice_no;
+      
+      // For new invoices, ensure invoice_no is unique
+      if (!testInvoiceData.id) {
+        let isUnique = false;
+        let attempts = 0;
+        while (!isUnique && attempts < 10) {
+          const { data: existing } = await supabase
+            .from('test_proforma_invoices')
+            .select('invoice_no')
+            .eq('invoice_no', invoiceNo)
+            .single();
+          
+          if (!existing) {
+            isUnique = true;
+          } else {
+            invoiceNo = await generateInvoiceNumber();
+            attempts++;
+          }
+        }
+        
+        if (!isUnique) {
+          alert('Unable to generate unique invoice number. Please try again.');
+          return;
+        }
+      }
+
       const invoiceData = {
-        invoice_no: testInvoiceData.invoice_no,
+        invoice_no: invoiceNo,
         order_no: testInvoiceData.order_no,
         client_name: testInvoiceData.client_name,
         subtotal: subtotal,
@@ -272,7 +367,7 @@ export default function TestProformaInvoicesPage() {
       ...testInvoiceData,
       items: [
         ...testInvoiceData.items,
-        { id: Date.now(), description: '', quantity: 1, unit_price: 0, total: 0 }
+        { id: Date.now(), item_id: '', description: '', quantity: 1, unit: '', unit_price: 0, total: 0 }
       ]
     });
   };
@@ -288,6 +383,15 @@ export default function TestProformaInvoicesPage() {
     const updatedItems = testInvoiceData.items.map(item => {
       if (item.id === itemId) {
         const updatedItem = { ...item, [field]: value };
+        
+        // If item_id is selected, auto-fill description from items table
+        if (field === 'item_id' && value) {
+          const selectedItem = items.find(i => i.id === value);
+          if (selectedItem) {
+            updatedItem.description = selectedItem.name;
+          }
+        }
+        
         if (field === 'quantity' || field === 'unit_price') {
           updatedItem.total = (updatedItem.quantity || 0) * (updatedItem.unit_price || 0);
         }
@@ -373,11 +477,18 @@ export default function TestProformaInvoicesPage() {
                         <i className="fa-solid fa-download"></i>
                       </button>
                       <button
+                        onClick={() => handleUpgradeToOrder(invoice)}
+                        className="text-green-600 hover:text-green-800 border-none bg-transparent cursor-pointer"
+                        title="Upgrade to Order"
+                      >
+                        <i className="fa-solid fa-arrow-up"></i>
+                      </button>
+                      <button
                         onClick={() => handleDelete(invoice.id)}
                         className="text-red-500 hover:text-red-700 border-none bg-transparent cursor-pointer"
                         title="Delete"
                       >
-                        {/* <i className="fa-solid fa-trash"></i> */}
+                        <i className="fa-solid fa-trash"></i>
                       </button>
                     </div>
                   </td>
@@ -475,6 +586,21 @@ export default function TestProformaInvoicesPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
+                        <label className="block text-xs text-slate-500 mb-1">Item</label>
+                        <select
+                          value={item.item_id}
+                          onChange={(e) => handleTestItemChange(item.id, 'item_id', e.target.value)}
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                        >
+                          <option value="">Select item...</option>
+                          {items.map(itemOption => (
+                            <option key={itemOption.id} value={itemOption.id}>
+                              {itemOption.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
                         <label className="block text-xs text-slate-500 mb-1">Description</label>
                         <input
                           type="text"
@@ -492,6 +618,16 @@ export default function TestProformaInvoicesPage() {
                           onChange={(e) => handleTestItemChange(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                           className="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
                           min="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Unit</label>
+                        <input
+                          type="text"
+                          value={item.unit}
+                          onChange={(e) => handleTestItemChange(item.id, 'unit', e.target.value)}
+                          className="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                          placeholder="e.g., pcs, kg, liter"
                         />
                       </div>
                       <div>
