@@ -286,6 +286,7 @@ export default function ReportPage() {
         { key: 'invoice_no', label: 'Invoice No' },
         { key: 'order_no', label: 'Order No' },
         { key: 'client_name', label: 'Client' },
+        { key: 'status', label: 'Status' },
         { key: 'created_at', label: 'Created Date' },
         { key: 'grand_total', label: 'Total' },
       ],

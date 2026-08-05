@@ -122,6 +122,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
       invoice_no: invoiceNo,
       order_no: '',
       client_name: '',
+      status: 'not_upgraded',
       items: []
     });
     setApplyVat(true);
@@ -136,6 +137,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
       invoice_no: invoice.invoice_no,
       order_no: invoice.order_no || '',
       client_name: invoice.client_name,
+      status: invoice.status || 'not_upgraded',
       items: invoice.items || []
     });
     setApplyVat(invoice.apply_vat);
@@ -207,6 +209,18 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
         }))
       };
 
+      // Update the invoice status to 'upgraded'
+      const { error: updateError } = await supabase
+        .from('test_proforma_invoices')
+        .update({ status: 'upgraded' })
+        .eq('id', invoice.id);
+
+      if (updateError) {
+        console.error('Error updating invoice status:', updateError);
+        alert('Error updating invoice status: ' + updateError.message);
+        return;
+      }
+
       onUpgradeToOrder(orderData);
     } catch (error) {
       console.error('Error upgrading to order:', error);
@@ -260,6 +274,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
         invoice_no: invoiceNo,
         order_no: testInvoiceData.order_no,
         client_name: testInvoiceData.client_name,
+        status: testInvoiceData.status || 'not_upgraded',
         subtotal: subtotal,
         vat_amount: vatValue,
         vat_percentage: vatAmount,
@@ -438,6 +453,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
                 <th className="p-3 text-left font-semibold text-slate-600">Order No</th>
                 <th className="p-3 text-left font-semibold text-slate-600">Client</th>
                 <th className="p-3 text-right font-semibold text-slate-600">Total</th>
+                <th className="p-3 text-left font-semibold text-slate-600">Status</th>
                 <th className="p-3 text-left font-semibold text-slate-600">Date</th>
                 <th className="p-3 text-center font-semibold text-slate-600">Actions</th>
               </tr>
@@ -449,6 +465,13 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
                   <td className="p-3 text-slate-600">{invoice.order_no || '-'}</td>
                   <td className="p-3 text-slate-600">{invoice.client_name}</td>
                   <td className="p-3 text-right text-slate-800">{invoice.grand_total?.toFixed(2) || '0.00'}</td>
+                  <td className="p-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      invoice.status === 'upgraded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {invoice.status === 'upgraded' ? 'Upgraded' : 'Not Upgraded'}
+                    </span>
+                  </td>
                   <td className="p-3 text-slate-600">{new Date(invoice.created_at).toLocaleDateString()}</td>
                   <td className="p-3 text-center">
                     <div className="flex justify-center gap-2">
@@ -480,13 +503,13 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
                       >
                         <i className="fa-solid fa-arrow-up"></i>
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => handleDelete(invoice.id)}
                         className="text-red-500 hover:text-red-700 border-none bg-transparent cursor-pointer"
                         title="Delete"
                       >
                         <i className="fa-solid fa-trash"></i>
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
