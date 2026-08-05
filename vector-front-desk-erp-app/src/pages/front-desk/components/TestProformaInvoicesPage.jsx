@@ -101,20 +101,17 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
         .order('invoice_no', { ascending: false })
         .limit(1)
         .single();
-      
+
       let nextNumber = 1;
-      if (lastInvoice) {
-        const parts = lastInvoice.invoice_no.split('-');
-        const lastNum = parseInt(parts[parts.length - 1]);
-        if (!isNaN(lastNum)) {
-          nextNumber = lastNum + 1;
-        }
+      if (lastInvoice?.invoice_no) {
+        const lastNum = parseInt(lastInvoice.invoice_no.split('-')[1]);
+        nextNumber = lastNum + 1;
       }
       return `PROF-${String(nextNumber).padStart(5, '0')}`;
     } catch (error) {
-      // If no invoices exist or error occurs, start from 1 or use timestamp-based fallback
-      const timestamp = Date.now().toString().slice(-6);
-      return `PROF-${timestamp}`;
+      console.error('Error generating invoice number:', error);
+      // If no invoices exist or error occurs, start from 1
+      return `PROF-00001`;
     }
   };
 
