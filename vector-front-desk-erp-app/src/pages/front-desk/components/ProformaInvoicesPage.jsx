@@ -427,7 +427,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
             onClick={handleOpenNewInvoiceModal}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
           >
-            <i className="fa-solid fa-plus"></i> New Sells Invoice
+            <i className="fa-solid fa-plus"></i> New Sales Invoice
           </button>
         </div>
       </div>
@@ -475,7 +475,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
               <th className="p-4 text-left text-xs font-semibold text-slate-600">VAT</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Grand Total</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Balance</th>
-              <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
+              {/* <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th> */}
               <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
             </tr>
           </thead>
@@ -499,7 +499,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                   <td className="p-4">{invoice.vat_amount || 0}</td>
                   <td className="p-4 font-medium">{invoice.grand_total || 0}</td>
                   <td className="p-4">{invoice.balance || 0}</td>
-                  <td className="p-4">
+                  {/* <td className="p-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       invoice.status === 'Paid' ? 'bg-green-100 text-green-700' :
                       invoice.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-700' :
@@ -507,7 +507,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                     }`}>
                       {invoice.status}
                     </span>
-                  </td>
+                  </td> */}
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handlePreview(invoice)}
@@ -547,7 +547,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
 
             <div className="p-8">
               <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-slate-800 mb-2">SELLS INVOICE</h1>
+                <h1 className="text-2xl font-bold text-slate-800 mb-2">Sales INVOICE</h1>
               </div>
 
               <div className="mb-6 p-4 bg-slate-50 rounded-lg">
@@ -658,7 +658,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl border border-slate-200 w-full max-w-lg">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800">Create Sells Invoice</h2>
+              <h2 className="text-xl font-bold text-slate-800">Create Sales Invoice</h2>
               <button
                 onClick={() => {
                   setShowNewInvoiceModal(false);

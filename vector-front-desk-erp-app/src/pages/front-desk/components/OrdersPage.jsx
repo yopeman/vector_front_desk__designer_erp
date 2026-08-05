@@ -524,9 +524,9 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
               className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
             >
               <option value="All">All Status</option>
-              <option value="New">New</option>
+              {/* <option value="New">New</option> */}
               <option value="In Progress">In Progress</option>
-              <option value="In Production">In Production</option>
+              {/* <option value="In Production">In Production</option> */}
               <option value="Completed">Completed</option>
               <option value="Cancelled">Cancelled</option>
             </select>
