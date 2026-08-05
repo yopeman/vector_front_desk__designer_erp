@@ -31,6 +31,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
     currency: 'ETB',
     payment_terms: '',
     special_instructions: '',
+    sales_type: 'direct_sales',
     order_items: []
   });
   const [editingId, setEditingId] = useState(null);
@@ -70,6 +71,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
         currency: prefillOrderData.currency || 'ETB',
         payment_terms: prefillOrderData.payment_terms || '',
         special_instructions: prefillOrderData.special_instructions || '',
+        sales_type: prefillOrderData.sales_type || 'direct_sales',
         order_items: prefillOrderData.order_items || []
       });
       setSelectedClientType(prefillOrderData.client_type || null);
@@ -189,6 +191,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
         currency: formData.currency,
         payment_terms: formData.payment_terms,
         special_instructions: formData.special_instructions,
+        sales_type: formData.sales_type,
         attachments: attachments.filter(att => att.file_id).map(att => att.file_id)
       };
 
@@ -296,6 +299,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
       currency: order.currency || 'ETB',
       payment_terms: order.payment_terms || '',
       special_instructions: order.special_instructions || '',
+      sales_type: order.sales_type || 'direct_sales',
       order_items: order.order_items || []
     });
     setAttachments([]);
@@ -347,6 +351,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
       currency: 'ETB',
       payment_terms: '',
       special_instructions: '',
+      sales_type: 'direct_sales',
       order_items: []
     });
     setAttachments([]);
@@ -733,6 +738,17 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                       </select>
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Sales Type</label>
+                    <select
+                      value={formData.sales_type}
+                      onChange={(e) => setFormData({ ...formData, sales_type: e.target.value })}
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                    >
+                      <option value="direct_sales">Direct Sales</option>
+                      <option value="from_design">From Design</option>
+                    </select>
+                  </div>
                 </div>
 
                 {/* Additional Information */}
@@ -794,7 +810,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                         htmlFor="upgradeLeadToClient"
                         className="text-xs font-medium text-slate-700 cursor-pointer"
                       >
-                        Ready for payment, upgrade this lead to client.
+                        Leads to client converted (Ready for payment)
                       </label>
                     </div>
                   )}

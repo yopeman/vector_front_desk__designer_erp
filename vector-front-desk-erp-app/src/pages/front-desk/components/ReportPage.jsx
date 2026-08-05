@@ -265,6 +265,7 @@ export default function ReportPage() {
         { key: 'order_date', label: 'Order Date' },
         { key: 'total_amount', label: 'Total Amount' },
         { key: 'status', label: 'Status' },
+        { key: 'sales_type', label: 'Sales Type' },
       ],
       'Designs': [
         { key: 'design_type', label: 'Design Type' },

@@ -64,6 +64,7 @@ export default function DesignsPage() {
       const { data, error } = await supabase
         .from('orders')
         .select('id, order_no')
+        .eq('sales_type', 'from_design')
         .order('order_no', { ascending: true });
 
       if (error) throw error;
