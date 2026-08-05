@@ -301,12 +301,12 @@ export default function TestProformaInvoicesPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-slate-800">Test Proforma Invoices</h2>
+        <h2 className="text-xl font-bold text-slate-800">Proforma Invoices</h2>
         <button
           onClick={handleOpenCreateModal}
           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
         >
-          <i className="fa-solid fa-plus"></i> Create Test Invoice
+          <i className="fa-solid fa-plus"></i> Create Proforma Invoice
         </button>
       </div>
 
@@ -326,7 +326,7 @@ export default function TestProformaInvoicesPage() {
         <div className="text-center py-8 text-slate-500">Loading...</div>
       ) : invoices.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-          No test invoices found. Click "Create Test Invoice" to create one.
+          No test invoices found. Click "Create Proforma Invoice" to create one.
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -394,7 +394,7 @@ export default function TestProformaInvoicesPage() {
           <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
               <h2 className="text-xl font-bold text-slate-800">
-                {testInvoiceData.id ? 'Edit Test Invoice' : 'Create Test Invoice'}
+                {testInvoiceData.id ? 'Edit Test Invoice' : 'Create Proforma Invoice'}
               </h2>
               <button
                 onClick={() => setShowFormModal(false)}
