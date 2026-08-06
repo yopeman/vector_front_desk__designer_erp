@@ -4,47 +4,47 @@ const layoutHTML = `
 <div class="app-layout">
 <div class="erp-header-tree">
     <div class="menu-node active" id="node-dashboard" onclick="switchView('dashboard')">
-        <h4>Dashboard</h4><span>Overview</span>
+        <h4>📊 Dashboard</h4><span>Overview</span>
     </div>
     <div class="menu-node" id="node-marketRequest" onclick="switchView('marketRequest')">
-        <h4>Market Request</h4><span>Marketing</span>
+        <h4>📢 Market Request</h4><span>Marketing</span>
     </div>
     <div class="menu-node" id="node-clientRegistry" onclick="switchView('clientRegistry')">
-        <h4>Client Registry</h4><span>Customers</span>
+        <h4>👥 Client Registry</h4><span>Customers</span>
     </div>
     <div class="menu-node" id="node-invoice" onclick="switchView('invoice')">
-        <h4>Invoice</h4><span>Billing</span>
+        <h4>💰 Invoice</h4><span>Billing</span>
     </div>
     <div class="menu-node" id="node-research" onclick="switchView('research')">
-        <h4>Research Login</h4><span>Research</span>
+        <h4>🔬 Research Login</h4><span>Research</span>
     </div>
     <div class="menu-node" id="node-digitalLog" onclick="switchView('digitalLog')">
-        <h4>Digital Log</h4><span>Content</span>
+        <h4>📝 Digital Log</h4><span>Content</span>
     </div>
     <div class="menu-node" id="node-tender" onclick="switchView('tender')">
-        <h4>Tender</h4><span>Procurement</span>
+        <h4>📦 Tender</h4><span>Procurement</span>
     </div>
     <div class="menu-node" id="node-feedback" onclick="switchView('feedback')">
-        <h4>Feedback</h4><span>Reviews</span>
+        <h4>⭐ Feedback</h4><span>Reviews</span>
     </div>
     <div class="menu-node" id="node-reports" onclick="switchView('reports')">
-        <h4>Reports</h4><span>Analytics</span>
+        <h4>📈 Reports</h4><span>Analytics</span>
     </div>
     <div class="menu-node" id="node-messages" onclick="switchView('messages')">
-        <h4>Messages</h4><span>Communication</span>
+        <h4>✉️ Messages</h4><span>Communication</span>
     </div>
     <div class="menu-node" id="node-notifications" onclick="switchView('notifications')">
-        <h4>Notifications</h4><span>Alerts</span>
+        <h4>🔔 Notifications</h4><span>Alerts</span>
     </div>
     <div class="menu-node" id="node-notes" onclick="switchView('notes')">
-        <h4>Notes</h4><span>Workspace</span>
+        <h4>📒 Notes</h4><span>Workspace</span>
     </div>
     <!-- <div class="menu-node" id="node-leave" onclick="switchView('leave')"> -->
-    <div class="menu-node" id="node-leave" onclick="window.location.href='https://vectoradvert.com/hr'">
-        <h4>Leave Request</h4><span>HR</span>
+    <div class="menu-node" id="node-leave" onclick="window.location.href='https://vectoradvert.com/erp/hr'">
+        <h4>🏖️ Leave Request</h4><span>HR</span>
     </div>
     <div class="menu-node" id="node-settings" onclick="switchView('settings')">
-        <h4>Settings</h4><span>Configuration</span>
+        <h4>⚙️ Settings</h4><span>Configuration</span>
     </div>
 </div>
 

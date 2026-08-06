@@ -101,7 +101,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       icon: 'fa-user-tie', 
       active: false,
       submenu: null,
-      externalUrl: 'https://vectoradvert.com/hr'
+      externalUrl: 'https://vectoradvert.com/erp/hr'
     },
     { 
       name: 'Settings', 

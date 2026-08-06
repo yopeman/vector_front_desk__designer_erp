@@ -137,7 +137,7 @@ class DashboardSection {
                              <p class="text-[11px] text-slate-400 mt-0.5">Quick notes & checklist</p>
                          </div>
                      </a>
-                     <a href="https://vectoradvert.com/hr" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-teal-500/30 hover:bg-teal-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
+                     <a href="https://vectoradvert.com/erp/hr" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-teal-500/30 hover:bg-teal-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
                          <div class="w-11 h-11 rounded-xl bg-teal-500/15 flex items-center justify-center shrink-0">
                              <i class="fa-solid fa-users text-teal-400 text-lg"></i>
                          </div>

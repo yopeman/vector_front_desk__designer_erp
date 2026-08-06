@@ -49,7 +49,7 @@ class SidebarSection {
                             <span class="truncate font-medium">Machine Maintenance</span>
                         </button>
                         <!-- <button onclick="switchTab('store-request')" id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all"> -->
-                        <button onclick="window.location.href = 'https://vectoradvert.com/store'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        <button onclick="window.location.href = 'https://vectoradvert.com/erp/store'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-boxes-stacked w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Store Request</span>
@@ -74,7 +74,7 @@ class SidebarSection {
                             <i class="fa-solid fa-sticky-note w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Note</span>
                         </button>
-                        <button onclick="window.location.href='https://vectoradvert.com/hr'" id="tab-hr-requests" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        <button onclick="window.location.href='https://vectoradvert.com/erp/hr'" id="tab-hr-requests" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-users-gear w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">HR Request</span>
