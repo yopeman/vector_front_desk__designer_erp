@@ -679,7 +679,7 @@ export default function DesignsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
-                      <input type="text" value={formData.status} readOnly />
+                      <input type="text" value={formData.status} readOnly disabled />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Priority</label>

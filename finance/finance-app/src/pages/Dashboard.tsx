@@ -3,15 +3,40 @@ import { usePurchases, useSales, usePayroll } from '../hooks/useFinance';
 import { DollarSign, ShoppingCart, Users, TrendingUp } from 'lucide-react';
 
 export function Dashboard() {
-  const { data: purchases } = usePurchases(1, 1000);
-  const { data: sales } = useSales(1, 1000);
-  const { data: payroll } = usePayroll();
+  const { data: purchases, isLoading: purchasesLoading, error: purchasesError } = usePurchases(1, 1000);
+  const { data: sales, isLoading: salesLoading, error: salesError } = useSales(1, 1000);
+  const { data: payroll, isLoading: payrollLoading, error: payrollError } = usePayroll();
 
   // Calculate totals
   const totalPurchases = purchases?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0;
   const totalSales = sales?.reduce((sum, s) => sum + (s.total_amount || 0), 0) || 0;
   const totalPayroll = payroll?.reduce((sum, p) => sum + (p.net_pay || 0), 0) || 0;
   const cashFlow = totalSales - totalPurchases - totalPayroll;
+
+  const isLoading = purchasesLoading || salesLoading || payrollLoading;
+  const hasError = purchasesError || salesError || payrollError;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-gray-600">Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-red-900 mb-2">Error loading data</h2>
+        <p className="text-red-700">
+          {purchasesError?.message || salesError?.message || payrollError?.message || 'Unknown error'}
+        </p>
+        <p className="text-sm text-red-600 mt-2">
+          Please check your environment variables and Supabase configuration.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -70,6 +95,9 @@ export function Dashboard() {
               <p className="font-semibold text-green-600">ETB {sale.total_amount.toLocaleString()}</p>
             </div>
           ))}
+          {!purchases?.length && !sales?.length && (
+            <p className="text-gray-500 text-center py-4">No recent activity</p>
+          )}
         </div>
       </div>
     </div>
