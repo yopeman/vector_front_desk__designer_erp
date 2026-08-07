@@ -56,7 +56,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
       if (error) throw error;
       setInvoices(data || []);
     } catch (error) {
-      console.error('Error fetching test invoices:', error);
+      console.error('Error fetching Proforma Invoices:', error);
     } finally {
       setLoading(false);
     }
@@ -214,7 +214,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this test invoice?')) return;
+    if (!confirm('Are you sure you want to delete this Proforma Invoice?')) return;
     
     try {
       const { error } = await supabase
@@ -223,11 +223,11 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
         .eq('id', id);
       
       if (error) throw error;
-      alert('Test invoice deleted successfully');
+      alert('Proforma Invoice deleted successfully');
       fetchInvoices();
     } catch (error) {
-      console.error('Error deleting test invoice:', error);
-      alert('Error deleting test invoice: ' + error.message);
+      console.error('Error deleting Proforma Invoice:', error);
+      alert('Error deleting Proforma Invoice: ' + error.message);
     }
   };
 
@@ -371,12 +371,12 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
 
       await saveInvoiceNotes(invoiceId);
 
-      alert(testInvoiceData.id ? 'Test invoice updated successfully' : 'Test invoice created successfully');
+      alert(testInvoiceData.id ? 'Proforma Invoice updated successfully' : 'Proforma Invoice created successfully');
       setShowFormModal(false);
       fetchInvoices();
     } catch (error) {
-      console.error('Error saving test invoice:', error);
-      alert('Error saving test invoice: ' + error.message);
+      console.error('Error saving Proforma Invoice:', error);
+      alert('Error saving Proforma Invoice: ' + error.message);
     }
   };
 
@@ -442,8 +442,8 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
 
       doc.save(`Test_Proforma_${dataToExport.invoice_no}.pdf`);
     } catch (error) {
-      console.error('Error exporting test invoice:', error);
-      alert('Error exporting test invoice: ' + error.message);
+      console.error('Error exporting Proforma Invoice:', error);
+      alert('Error exporting Proforma Invoice: ' + error.message);
     }
   };
 
@@ -612,7 +612,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
         <div className="text-center py-8 text-slate-500">Loading...</div>
       ) : invoices.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
-          No test invoices found. Click "Create Proforma Invoice" to create one.
+          No Proforma Invoices found. Click "Create Proforma Invoice" to create one.
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -695,7 +695,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
           <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
               <h2 className="text-xl font-bold text-slate-800">
-                {testInvoiceData.id ? 'Edit Test Invoice' : 'Create Proforma Invoice'}
+                {testInvoiceData.id ? 'Edit Proforma Invoice' : 'Create Proforma Invoice'}
               </h2>
               <button
                 onClick={() => setShowFormModal(false)}
@@ -1114,7 +1114,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800">Test Invoice Details</h2>
+              <h2 className="text-xl font-bold text-slate-800">Proforma Invoice Details</h2>
               <button
                 onClick={() => setShowViewModal(false)}
                 className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
