@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import jsPDF from 'jspdf';
+import logo from '../../../assets/logo.png';
+import address from '../../../assets/address.png';
+import seal from '../../../assets/seal.png';
 
 export default function SalesInvoicesPage() {
   const [invoices, setInvoices] = useState([]);
@@ -115,8 +118,18 @@ export default function SalesInvoicesPage() {
 
       if (invoiceError) throw invoiceError;
 
+      // Convert images to base64
+      const logoBase64 = await imageToBase64(logo);
+      const addressBase64 = await imageToBase64(address);
+      const sealBase64 = await imageToBase64(seal);
+
       const doc = new jsPDF();
       let y = 20;
+
+      // Add company logo (left) and address (right) on same row
+      doc.addImage(logoBase64, 'PNG', 0, y, 120, 40);
+      doc.addImage(addressBase64, 'PNG', 120, y, 80, 40);
+      y += 50;
 
       // Header
       doc.setFontSize(18);
@@ -172,6 +185,10 @@ export default function SalesInvoicesPage() {
       doc.text(`Balance: ${invoiceData.balance}`, 130, y);
       y += 8;
       doc.text(`Status: ${invoiceData.status}`, 130, y);
+      y += 20;
+
+      // Add company seal at bottom (full width)
+      doc.addImage(sealBase64, 'PNG', 0, y - 10, 200, 40);
 
       // Save PDF
       doc.save(`Sales_${invoiceData.invoice_no}.pdf`);
@@ -300,6 +317,23 @@ export default function SalesInvoicesPage() {
       if (error) throw error;
     }
     alert('Notes saved successfully');
+  };
+
+  const imageToBase64 = (image) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = reject;
+      img.src = image;
+    });
   };
 
   if (loading) {

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import jsPDF from 'jspdf';
+import logo from '../../../assets/logo.png';
+import address from '../../../assets/address.png';
+import seal from '../../../assets/seal.png';
 
 export default function ProformaInvoicesPage({ preselectedOrderId }) {
   const [invoices, setInvoices] = useState([]);
@@ -317,10 +320,20 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
 
       if (invoiceError) throw invoiceError;
 
+      // Convert images to base64
+      const logoBase64 = await imageToBase64(logo);
+      const addressBase64 = await imageToBase64(address);
+      const sealBase64 = await imageToBase64(seal);
+
       // Create PDF
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       let y = 20;
+
+      // Add company logo (left) and address (right) on same row
+      doc.addImage(logoBase64, 'PNG', 0, y, 120, 40);
+      doc.addImage(addressBase64, 'PNG', 120, y, 80, 40);
+      y += 50;
 
       // Title
       doc.setFontSize(20);
@@ -383,6 +396,10 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
       doc.text(`Balance: ${invoiceData.balance}`, 130, y);
       y += 8;
       doc.text(`Status: ${invoiceData.status}`, 130, y);
+      y += 20;
+
+      // Add company seal at bottom (full width)
+      doc.addImage(sealBase64, 'PNG', 0, y - 10, 200, 40);
 
       // Save PDF
       doc.save(`Proforma_${invoiceData.invoice_no}.pdf`);
@@ -437,15 +454,25 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
     setTestInvoiceData({ ...testInvoiceData, items: updatedItems });
   };
 
-  const handleExportTestInvoice = () => {
+  const handleExportTestInvoice = async () => {
     try {
       const subtotal = testInvoiceData.items.reduce((sum, item) => sum + (item.total || 0), 0);
       const vatValue = applyVat ? (subtotal * (vatAmount / 100)) : 0;
       const grandTotal = subtotal + vatValue;
 
+      // Convert images to base64
+      const logoBase64 = await imageToBase64(logo);
+      const addressBase64 = await imageToBase64(address);
+      const sealBase64 = await imageToBase64(seal);
+
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       let y = 20;
+
+      // Add company logo (left) and address (right) on same row
+      doc.addImage(logoBase64, 'PNG', 0, y, 120, 40);
+      doc.addImage(addressBase64, 'PNG', 120, y, 80, 40);
+      y += 50;
 
       // Title
       doc.setFontSize(18);
@@ -492,6 +519,10 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
       doc.text(`VAT (${vatAmount}%): ${vatValue.toFixed(2)}`, 130, y);
       y += 8;
       doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, 130, y);
+      y += 20;
+
+      // Add company seal at bottom (full width)
+      doc.addImage(sealBase64, 'PNG', 0, y - 10, 200, 40);
 
       // Save PDF
       doc.save(`Test_Proforma_${testInvoiceData.invoice_no}.pdf`);
@@ -685,6 +716,23 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
 
   const removeNewInvoiceNote = (index) => {
     setNewInvoiceNotes(newInvoiceNotes.filter((_, i) => i !== index));
+  };
+
+  const imageToBase64 = (image) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = reject;
+      img.src = image;
+    });
   };
 
   if (loading) {

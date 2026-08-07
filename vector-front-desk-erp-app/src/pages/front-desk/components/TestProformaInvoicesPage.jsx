@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import jsPDF from 'jspdf';
+import logo from '../../../assets/logo.png';
+import address from '../../../assets/address.png';
+import seal from '../../../assets/seal.png';
 
 export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
   const [invoices, setInvoices] = useState([]);
@@ -380,7 +383,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
     }
   };
 
-  const handleExportTestInvoice = (invoice = null) => {
+  const handleExportTestInvoice = async (invoice = null) => {
     try {
       const dataToExport = invoice || testInvoiceData;
       const items = dataToExport.items || [];
@@ -388,10 +391,21 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
       const vatValue = dataToExport.apply_vat ? (subtotal * (dataToExport.vat_percentage / 100)) : 0;
       const grandTotal = subtotal + vatValue;
 
+      // Convert images to base64
+      const logoBase64 = await imageToBase64(logo);
+      const addressBase64 = await imageToBase64(address);
+      const sealBase64 = await imageToBase64(seal);
+
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.getWidth();
       let y = 20;
 
+      // Add company logo (left) and address (right) on same row
+      doc.addImage(logoBase64, 'PNG', 0, y, 120, 40);
+      doc.addImage(addressBase64, 'PNG', 120, y, 80, 40);
+      y += 50;
+
+      // Invoice details
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.text('PROFORMA INVOICE (TEST)', pageWidth / 2, y, { align: 'center' });
@@ -439,6 +453,10 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
         y += 8;
       }
       doc.text(`Grand Total: ${grandTotal.toFixed(2)}`, 130, y);
+      y += 20;
+
+      // Add company seal at bottom (full width)
+      doc.addImage(sealBase64, 'PNG', 0, y - 10, 200, 40);
 
       doc.save(`Test_Proforma_${dataToExport.invoice_no}.pdf`);
     } catch (error) {
@@ -582,6 +600,23 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
       const { error } = await supabase.from('notes').insert(noteInserts);
       if (error) throw error;
     }
+  };
+
+  const imageToBase64 = (image) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = reject;
+      img.src = image;
+    });
   };
 
   return (
