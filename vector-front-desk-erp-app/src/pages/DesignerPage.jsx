@@ -1132,6 +1132,12 @@ export default function DesignerPage() {
                                     .select('*, files(id, name, path)')
                                     .eq('design_id', d.id);
 
+                                  const { data: communications } = await supabase
+                                    .from('design_communications')
+                                    .select('*, sender:sender_id(id, username), receiver:receiver_id(id, username)')
+                                    .eq('design_id', d.id)
+                                    .order('created_at', { ascending: false });
+
                                   // Generate signed URLs
                                   const urls = {};
                                   if (files) {
@@ -1156,7 +1162,8 @@ export default function DesignerPage() {
                                     ...d,
                                     assigned_designer: designers,
                                     attached_files: files || [],
-                                    design_versions: designVersions || []
+                                    design_versions: designVersions || [],
+                                    communications: communications || []
                                   });
                                   setShowTaskModal(true);
                                 };
@@ -2240,6 +2247,12 @@ export default function DesignerPage() {
                                     .select('*, files(id, name, path)')
                                     .eq('design_id', d.id);
 
+                                  const { data: communications } = await supabase
+                                    .from('design_communications')
+                                    .select('*, sender:sender_id(id, username), receiver:receiver_id(id, username)')
+                                    .eq('design_id', d.id)
+                                    .order('created_at', { ascending: false });
+
                                   const urls = {};
                                   if (files) {
                                     for (const file of files) {
@@ -2263,7 +2276,8 @@ export default function DesignerPage() {
                                     ...d,
                                     assigned_designer: designers,
                                     attached_files: files || [],
-                                    design_versions: designVersions || []
+                                    design_versions: designVersions || [],
+                                    communications: communications || []
                                   });
                                   setShowTaskModal(true);
                                 };
@@ -2478,6 +2492,41 @@ export default function DesignerPage() {
                           {version.comment && (
                             <div className="mt-2 p-2 bg-white border border-slate-200 rounded text-xs text-slate-600">
                               <span className="font-semibold">Comment:</span> {version.comment}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedTask.communications && selectedTask.communications.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Communications</h3>
+                    <div className="space-y-3">
+                      {selectedTask.communications.map((comm) => (
+                        <div key={comm.id} className={`p-4 rounded-lg border ${comm.is_read ? 'bg-slate-50 border-slate-200' : 'bg-blue-50 border-blue-200'}`}>
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-slate-900">{comm.sender?.username || 'Unknown'}</span>
+                              {!comm.is_read && (
+                                <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">New</span>
+                              )}
+                            </div>
+                            <span className="text-xs text-slate-500">
+                              {new Date(comm.created_at).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 mb-2">{comm.message}</p>
+                          {comm.attached_file_ids && comm.attached_file_ids.length > 0 && (
+                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                              <i className="fa-solid fa-paperclip"></i>
+                              <span>{comm.attached_file_ids.length} file(s) attached</span>
+                            </div>
+                          )}
+                          {comm.receiver && (
+                            <div className="text-xs text-slate-500 mt-2">
+                              To: {comm.receiver.username}
                             </div>
                           )}
                         </div>
