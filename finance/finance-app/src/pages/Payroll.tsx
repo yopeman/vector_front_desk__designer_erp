@@ -144,6 +144,10 @@ export function Payroll() {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  // Generate dynamic year range (5 years back to 5 years forward)
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -180,7 +184,7 @@ export function Payroll() {
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {[2024, 2025, 2026, 2027].map(year => (
+              {years.map(year => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
@@ -219,7 +223,7 @@ export function Payroll() {
 
       {/* Detail Modal */}
       {selectedPayroll && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-gray-900">Payroll Details</h2>
