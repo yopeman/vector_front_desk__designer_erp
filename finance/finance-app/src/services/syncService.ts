@@ -24,7 +24,7 @@ async function isAlreadySynced(sourceType: string, sourceId: string): Promise<bo
     .eq('source_type', sourceType)
     .eq('source_id', sourceId)
     .eq('status', 'success')
-    .single();
+    .maybeSingle();
 
   if (error && error.code !== 'PGRST116') {
     console.error('Error checking sync status:', error);
@@ -80,7 +80,7 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
         with_vat_total,
         status
       `)
-      .eq('status', 'Received')
+      .eq('status', 'received')
       .order('date', { ascending: false });
 
     if (grvError) {
@@ -91,14 +91,48 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
       return results;
     }
 
-    // Get default purchase GL account
-    const { data: glAccount } = await financeClient
+    // Fetch suppliers to map supplier names
+    const { data: suppliers } = await storeClient
+      .from('suppliers')
+      .select('id, company_name');
+
+    const supplierMap = new Map(
+      suppliers?.map(s => [s.id, s.company_name]) || []
+    );
+
+    // Get default purchase GL account (use any Liability account for purchases)
+    let { data: glAccount } = await financeClient
       .from('finance_gl_accounts')
       .select('id')
-      .eq('account_code', 'PURCHASE_DEFAULT')
-      .single();
+      .eq('account_type', 'Liability')
+      .limit(1)
+      .maybeSingle();
 
-    const defaultGlAccountId = glAccount?.id;
+    let defaultGlAccountId = glAccount?.id;
+
+    // If no Liability account exists, create a default one
+    if (!defaultGlAccountId) {
+      const { data: newAccount, error: accountError } = await financeClient
+        .from('finance_gl_accounts')
+        .insert({
+          account_code: '2000',
+          account_name: 'Accounts Payable',
+          account_type: 'Liability',
+          description: 'Money owed to suppliers'
+        })
+        .select('id')
+        .single();
+      
+      if (accountError) {
+        console.error('Failed to create default GL account:', accountError);
+        throw new Error(`Failed to create default GL account: ${accountError.message}`);
+      }
+      defaultGlAccountId = newAccount?.id;
+    }
+
+    if (!defaultGlAccountId) {
+      throw new Error('Could not obtain or create a GL account for purchases');
+    }
 
     for (const grv of grvs as any[]) {
       try {
@@ -116,16 +150,16 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
           purchase_no: purchaseNo,
           purchase_type: 'Credit',
           seller_tin: null,
-          seller_name: grv.suppliers?.company_name || 'Unknown Supplier',
+          seller_name: grv.supplier_id ? supplierMap.get(grv.supplier_id) || 'Unknown Supplier' : 'Unknown Supplier',
           seller_id: grv.supplier_id,
           purchase_date: grv.date,
           receipt_source: 'Manual',
           reference_no: grv.invoice_no,
-          gl_account_id: defaultGlAccountId || '',
+          gl_account_id: defaultGlAccountId || null,
           vat_type: 'VAT',
-          subtotal: grv.without_vat_total,
-          vat_amount: grv.vat_amount,
-          total_amount: grv.with_vat_total,
+          subtotal: grv.without_vat_total || 0,
+          vat_amount: grv.vat_amount || 0,
+          total_amount: grv.with_vat_total || 0,
           status: 'Draft',
           notes: grv.description
         };
@@ -137,6 +171,8 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
           .single();
 
         if (purchaseError) {
+          console.error('Purchase insert error:', purchaseError);
+          console.error('Purchase data being inserted:', purchase);
           throw new Error(`Failed to create purchase: ${purchaseError.message}`);
         }
 
@@ -148,7 +184,7 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
           description: grv.description,
           quantity: grv.quantity,
           unit_price: grv.unit_price,
-          gl_account_id: defaultGlAccountId
+          gl_account_id: defaultGlAccountId || null
         };
 
         const { error: itemError } = await financeClient
