@@ -269,6 +269,31 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
     }
   };
 
+  const generateNextOrderNo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('order_no')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0 && data[0].order_no) {
+        const lastOrderNo = data[0].order_no;
+        const match = lastOrderNo.match(/OR-(\d+)/);
+        if (match) {
+          const nextNum = parseInt(match[1]) + 1;
+          return `OR-${String(nextNum).padStart(2, '0')}`;
+        }
+      }
+      return 'OR-01';
+    } catch (error) {
+      console.error('Error generating order no:', error);
+      return 'OR-01';
+    }
+  };
+
   const handleEdit = async (order) => {
     // Fetch client type and name for the selected client
     let clientType = null;
@@ -336,10 +361,11 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
   };
 
 
-  const resetForm = () => {
+  const resetForm = async () => {
+    const nextOrderNo = await generateNextOrderNo();
     setFormData({
       client_id: '',
-      order_no: '',
+      order_no: nextOrderNo,
       order_date: '',
       required_date: '',
       status: 'New',
@@ -503,7 +529,33 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-slate-800">Orders</h2>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={async () => {
+            setEditingId(null);
+            const nextOrderNo = await generateNextOrderNo();
+            setFormData({
+              client_id: '',
+              order_no: nextOrderNo,
+              order_date: '',
+              required_date: '',
+              status: 'New',
+              priority: 'Medium',
+              total_amount: 0,
+              paid_amount: 0,
+              balance: 0,
+              sales_officer_id: currentUserId,
+              currency: 'ETB',
+              payment_terms: '',
+              special_instructions: '',
+              sales_type: 'direct_sales',
+              order_items: []
+            });
+            setAttachments([]);
+            setAttachmentFileUrls({});
+            setSelectedClientType(null);
+            setUpgradeLeadToClient(false);
+            setClientSearchQuery('');
+            setShowModal(true);
+          }}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
         >
           <i className="fa-solid fa-plus"></i> New Order
@@ -687,9 +739,8 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                     <input
                       type="text"
                       value={formData.order_no}
-                      onChange={(e) => setFormData({ ...formData, order_no: e.target.value })}
-                      placeholder="Enter order number"
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                      readOnly
+                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-slate-100"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">

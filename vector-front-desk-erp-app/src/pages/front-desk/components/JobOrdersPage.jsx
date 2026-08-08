@@ -142,11 +142,37 @@ export default function JobOrdersPage() {
   };
 
 
-  const handleOpenModal = () => {
+  const generateNextJobNo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('job_orders')
+        .select('job_no')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (data && data.length > 0 && data[0].job_no) {
+        const lastJobNo = data[0].job_no;
+        const match = lastJobNo.match(/CS-(\d+)/);
+        if (match) {
+          const nextNum = parseInt(match[1]) + 1;
+          return `CS-${String(nextNum).padStart(2, '0')}`;
+        }
+      }
+      return 'CS-01';
+    } catch (error) {
+      console.error('Error generating job no:', error);
+      return 'CS-01';
+    }
+  };
+
+  const handleOpenModal = async () => {
     setEditingJobOrder(null);
+    const nextJobNo = await generateNextJobNo();
     setFormData({
       invoice_id: '',
-      job_no: '',
+      job_no: nextJobNo,
       collaboration: '',
       order_status: 'Pending',
       start_time: '',
@@ -306,8 +332,8 @@ export default function JobOrdersPage() {
                   <input
                     type="text"
                     value={formData.job_no}
-                    onChange={(e) => setFormData({ ...formData, job_no: e.target.value })}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    readOnly
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-slate-100"
                   />
                 </div>
 
