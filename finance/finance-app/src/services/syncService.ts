@@ -220,7 +220,7 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
   const results = { success: 0, failed: 0, errors: [] as string[] };
 
   try {
-    // Fetch invoices that are paid/approved and not synced
+    // Fetch invoices that are paid/approved and not synced with client information
     const { data: invoices, error: invoiceError } = await frontdeskClient
       .from('invoices')
       .select(`
@@ -234,9 +234,16 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
         grand_total,
         paid_amount,
         balance,
-        status
+        status,
+        orders!inner (
+          client_id,
+          clients (
+            name,
+            tin
+          )
+        )
       `)
-      .in('status', ['Paid', 'Approved'])
+      .in('status', ['Paid', 'Partially Paid'])
       .order('issue_date', { ascending: false });
 
     if (invoiceError) {
@@ -252,7 +259,7 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
       .from('finance_gl_accounts')
       .select('id')
       .eq('account_code', 'SALES_REVENUE')
-      .single();
+      .maybeSingle();
 
     const defaultGlAccountId = glAccount?.id;
 
@@ -273,9 +280,9 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
           sales_type: 'Cash',
           sales_category: invoice.invoice_type || 'Goods',
           cash_received: invoice.paid_amount,
-          customer_tin: null,
-          customer_name: 'Unknown Customer',
-          customer_id: null,
+          customer_tin: invoice.orders?.clients?.tin || null,
+          customer_name: invoice.orders?.clients?.name || 'Unknown Customer',
+          customer_id: invoice.orders?.client_id || null,
           sales_date: invoice.issue_date,
           receipt_source: 'Manual',
           vat_withholding: 'No Withholding',
