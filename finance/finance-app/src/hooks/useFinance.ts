@@ -82,7 +82,7 @@ export function useDeleteGLAccount() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await financeClient
-        .from('gl_accounts')
+        .from('finance_gl_accounts')
         .delete()
         .eq('id', id);
       
@@ -261,6 +261,27 @@ export function useCreateJournal() {
       const { data, error } = await financeClient
         .from('finance_journals')
         .insert(journal)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as Journal;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journals'] });
+    }
+  });
+}
+
+export function useUpdateJournal() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...journal }: Partial<Journal> & { id: string }) => {
+      const { data, error } = await financeClient
+        .from('finance_journals')
+        .update(journal)
+        .eq('id', id)
         .select()
         .single();
       
