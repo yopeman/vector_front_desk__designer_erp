@@ -1,17 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DataTable } from '../components/DataTable';
 import { SyncButton } from '../components/SyncButton';
 import { usePayroll, useUpdatePayrollStatus } from '../hooks/useFinance';
 import { useSyncPayroll } from '../hooks/useSync';
-import { Calendar, Download, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, Download, CheckCircle, Clock, Eye, X } from 'lucide-react';
+import { hrClient } from '../services/supabaseClients';
 import type { Payroll } from '../types';
 
 export function Payroll() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
+  const [employeeDetails, setEmployeeDetails] = useState<any>(null);
   const { data: payroll, isLoading } = usePayroll(selectedYear, selectedMonth);
   const syncPayroll = useSyncPayroll();
   const updateStatus = useUpdatePayrollStatus();
+
+  // Fetch employee details when payroll is selected
+  useEffect(() => {
+    async function fetchEmployeeDetails() {
+      if (selectedPayroll) {
+        const { data, error } = await hrClient
+          .from('employees')
+          .select('*')
+          .eq('id', selectedPayroll.employee_id)
+          .single();
+        
+        if (error) {
+          console.error('Error fetching employee details:', error);
+        } else {
+          setEmployeeDetails(data);
+        }
+      } else {
+        setEmployeeDetails(null);
+      }
+    }
+    fetchEmployeeDetails();
+  }, [selectedPayroll]);
 
   const handleGeneratePayroll = async () => {
     await syncPayroll.mutateAsync({ year: selectedYear, month: selectedMonth });
@@ -98,6 +123,19 @@ export function Payroll() {
           </span>
         </div>
       )
+    },
+    {
+      key: 'actions' as keyof Payroll,
+      label: 'Actions',
+      render: (_: any, row: Payroll) => (
+        <button
+          onClick={() => setSelectedPayroll(row)}
+          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+          title="View Details"
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+      )
     }
   ];
 
@@ -178,6 +216,192 @@ export function Payroll() {
         pagination={true}
         pageSize={20}
       />
+
+      {/* Detail Modal */}
+      {selectedPayroll && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Payroll Details</h2>
+              <button
+                onClick={() => setSelectedPayroll(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Employee Information */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Employee Information</h3>
+                {employeeDetails ? (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      {employeeDetails.profile_image ? (
+                        <img 
+                          src={employeeDetails.profile_image} 
+                          alt={employeeDetails.full_name}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-500 text-xl font-semibold">
+                            {employeeDetails.full_name?.charAt(0) || '?'}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-gray-900">{employeeDetails.full_name}</h4>
+                        <p className="text-sm text-gray-600">{employeeDetails.job_title}{employeeDetails.department && ` • ${employeeDetails.department}`}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Employee ID:</span>
+                        <p className="font-medium">{employeeDetails.employee_id}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Email:</span>
+                        <p className="font-medium">{employeeDetails.email}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Phone:</span>
+                        <p className="font-medium">{employeeDetails.phone || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Employment Status:</span>
+                        <p className="font-medium">{employeeDetails.employment_status}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Join Date:</span>
+                        <p className="font-medium">{employeeDetails.join_date || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Period:</span>
+                        <p className="font-medium">{selectedPayroll.period_start} to {selectedPayroll.period_end}</p>
+                      </div>
+                    </div>
+                    {(employeeDetails.address || employeeDetails.city || employeeDetails.country) && (
+                      <div className="text-sm">
+                        <span className="text-gray-500">Address:</span>
+                        <p className="font-medium">
+                          {[employeeDetails.address, employeeDetails.city, employeeDetails.country].filter(Boolean).join(', ') || 'N/A'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Employee ID:</span>
+                      <p className="font-medium">{selectedPayroll.employee_id}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Period:</span>
+                      <p className="font-medium">{selectedPayroll.period_start} to {selectedPayroll.period_end}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Earnings */}
+              <div className="bg-green-50 rounded-lg p-4">
+                <h3 className="font-semibold text-green-900 mb-3">Earnings</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Basic Salary:</span>
+                    <span className="font-medium">ETB {selectedPayroll.basic_salary?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Transport Allowance:</span>
+                    <span className="font-medium">ETB {selectedPayroll.transport_allowance?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Telephone Allowance:</span>
+                    <span className="font-medium">ETB {selectedPayroll.telephone_allowance?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Overtime:</span>
+                    <span className="font-medium">ETB {selectedPayroll.overtime?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Other Earnings:</span>
+                    <span className="font-medium">ETB {selectedPayroll.other_earnings?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-green-200 pt-2 mt-2">
+                    <span className="font-semibold text-green-900">Gross Salary:</span>
+                    <span className="font-bold text-green-900">ETB {selectedPayroll.gross_salary?.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Deductions */}
+              <div className="bg-red-50 rounded-lg p-4">
+                <h3 className="font-semibold text-red-900 mb-3">Deductions</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Taxable Salary:</span>
+                    <span className="font-medium">ETB {selectedPayroll.taxable_salary?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Income Tax:</span>
+                    <span className="font-medium">ETB {selectedPayroll.income_tax?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Pension (Employee 7%):</span>
+                    <span className="font-medium">ETB {selectedPayroll.pension_employee?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Pension (Employer 11%):</span>
+                    <span className="font-medium">ETB {selectedPayroll.pension_employer?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-red-200 pt-2 mt-2">
+                    <span className="font-semibold text-red-900">Total Deductions:</span>
+                    <span className="font-bold text-red-900">ETB {selectedPayroll.total_deductions?.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Net Pay */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-blue-900 text-lg">Net Pay:</span>
+                  <span className="font-bold text-blue-900 text-2xl">ETB {selectedPayroll.net_pay?.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Status & Dates */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Status & Dates</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-500">Status:</span>
+                    <p className="font-medium">{selectedPayroll.status}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Payment Date:</span>
+                    <p className="font-medium">{selectedPayroll.payment_date || 'Not paid'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Created At:</span>
+                    <p className="font-medium">{new Date(selectedPayroll.created_at).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Updated At:</span>
+                    <p className="font-medium">{new Date(selectedPayroll.updated_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                {selectedPayroll.notes && (
+                  <div className="mt-4">
+                    <span className="text-gray-500">Notes:</span>
+                    <p className="font-medium mt-1">{selectedPayroll.notes}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

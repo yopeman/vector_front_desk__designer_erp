@@ -415,7 +415,7 @@ export async function syncPayrollFromHR(year: number, month: number): Promise<{ 
           .eq('employee_id', employee.id)
           .eq('period_start', periodStart.toISOString().split('T')[0])
           .eq('period_end', periodEnd.toISOString().split('T')[0])
-          .single();
+          .maybeSingle();
 
         if (existingPayroll) {
           continue; // Skip if already processed

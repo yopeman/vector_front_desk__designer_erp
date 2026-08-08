@@ -284,7 +284,8 @@ export function usePayroll(year?: number, month?: number) {
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-        query = query.gte('period_start', startDate).lte('period_end', endDate);
+        // Use overlap check: payroll period overlaps with selected month
+        query = query.lte('period_start', endDate).gte('period_end', startDate);
       }
       
       const { data, error } = await query.order('period_start', { ascending: false });
