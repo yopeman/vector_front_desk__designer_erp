@@ -128,7 +128,7 @@ export function DataTable<T extends Record<string, any>>({
               paginatedData.map((row, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   {columns.map((column) => (
-                    <td key={String(column.key)} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td key={`${index}-${String(column.key)}`} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {column.render ? column.render(row[column.key], row) : String(row[column.key] ?? '')}
                     </td>
                   ))}

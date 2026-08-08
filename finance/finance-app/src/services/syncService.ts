@@ -78,8 +78,7 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
         vat_amount,
         without_vat_total,
         with_vat_total,
-        status,
-        suppliers (id, company_name)
+        status
       `)
       .eq('status', 'Received')
       .order('date', { ascending: false });
@@ -199,9 +198,7 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
         grand_total,
         paid_amount,
         balance,
-        status,
-        orders (id, client_id),
-        clients (id, name)
+        status
       `)
       .in('status', ['Paid', 'Approved'])
       .order('issue_date', { ascending: false });
@@ -241,8 +238,8 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
           sales_category: invoice.invoice_type || 'Goods',
           cash_received: invoice.paid_amount,
           customer_tin: null,
-          customer_name: invoice.clients?.name || 'Unknown Customer',
-          customer_id: invoice.orders?.client_id,
+          customer_name: 'Unknown Customer',
+          customer_id: null,
           sales_date: invoice.issue_date,
           receipt_source: 'Manual',
           vat_withholding: 'No Withholding',
@@ -427,7 +424,6 @@ export async function syncPayrollFromHR(year: number, month: number): Promise<{ 
           telephone_allowance: telephoneAllowance,
           overtime: overtimeTotal,
           other_earnings: otherEarnings,
-          gross_salary: grossSalary,
           taxable_salary: taxableSalary,
           income_tax: incomeTax,
           pension_employee: pensionEmployee,
