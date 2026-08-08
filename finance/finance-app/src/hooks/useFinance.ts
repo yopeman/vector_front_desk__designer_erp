@@ -8,7 +8,7 @@ export function useGLAccounts() {
     queryKey: ['gl-accounts'],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('gl_accounts')
+        .from('finance_gl_accounts')
         .select('*')
         .order('account_code');
       
@@ -23,7 +23,7 @@ export function useGLAccount(id: string) {
     queryKey: ['gl-account', id],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('gl_accounts')
+        .from('finance_gl_accounts')
         .select('*')
         .eq('id', id)
         .single();
@@ -41,7 +41,7 @@ export function useCreateGLAccount() {
   return useMutation({
     mutationFn: async (account: Partial<GLAccount>) => {
       const { data, error } = await financeClient
-        .from('gl_accounts')
+        .from('finance_gl_accounts')
         .insert(account)
         .select()
         .single();
@@ -61,7 +61,7 @@ export function useUpdateGLAccount() {
   return useMutation({
     mutationFn: async ({ id, ...account }: Partial<GLAccount> & { id: string }) => {
       const { data, error } = await financeClient
-        .from('gl_accounts')
+        .from('finance_gl_accounts')
         .update(account)
         .eq('id', id)
         .select()
@@ -103,7 +103,7 @@ export function usePurchases(page = 1, pageSize = 10) {
       const to = from + pageSize - 1;
       
       const { data, error } = await financeClient
-        .from('purchases')
+        .from('finance_purchases')
         .select('*')
         .order('purchase_date', { ascending: false })
         .range(from, to);
@@ -119,7 +119,7 @@ export function usePurchase(id: string) {
     queryKey: ['purchase', id],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('purchases')
+        .from('finance_purchases')
         .select('*')
         .eq('id', id)
         .single();
@@ -136,7 +136,7 @@ export function usePurchaseItems(purchaseId: string) {
     queryKey: ['purchase-items', purchaseId],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('purchase_items')
+        .from('finance_purchase_items')
         .select('*')
         .eq('purchase_id', purchaseId);
       
@@ -156,7 +156,7 @@ export function useSales(page = 1, pageSize = 10) {
       const to = from + pageSize - 1;
       
       const { data, error } = await financeClient
-        .from('sales')
+        .from('finance_sales')
         .select('*')
         .order('sales_date', { ascending: false })
         .range(from, to);
@@ -172,7 +172,7 @@ export function useSale(id: string) {
     queryKey: ['sale', id],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('sales')
+        .from('finance_sales')
         .select('*')
         .eq('id', id)
         .single();
@@ -189,7 +189,7 @@ export function useSalesItems(salesId: string) {
     queryKey: ['sales-items', salesId],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('sales_items')
+        .from('finance_sales_items')
         .select('*')
         .eq('sales_id', salesId);
       
@@ -209,7 +209,7 @@ export function useJournals(page = 1, pageSize = 10) {
       const to = from + pageSize - 1;
       
       const { data, error } = await financeClient
-        .from('journals')
+        .from('finance_journals')
         .select('*')
         .order('journal_date', { ascending: false })
         .range(from, to);
@@ -225,7 +225,7 @@ export function useJournal(id: string) {
     queryKey: ['journal', id],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('journals')
+        .from('finance_journals')
         .select('*')
         .eq('id', id)
         .single();
@@ -242,7 +242,7 @@ export function useJournalLines(journalId: string) {
     queryKey: ['journal-lines', journalId],
     queryFn: async () => {
       const { data, error } = await financeClient
-        .from('journal_lines')
+        .from('finance_journal_lines')
         .select('*')
         .eq('journal_id', journalId);
       
@@ -259,7 +259,7 @@ export function useCreateJournal() {
   return useMutation({
     mutationFn: async (journal: Partial<Journal>) => {
       const { data, error } = await financeClient
-        .from('journals')
+        .from('finance_journals')
         .insert(journal)
         .select()
         .single();
@@ -278,7 +278,7 @@ export function usePayroll(year?: number, month?: number) {
   return useQuery({
     queryKey: ['payroll', year, month],
     queryFn: async () => {
-      let query = financeClient.from('payroll').select('*');
+      let query = financeClient.from('finance_payroll').select('*');
       
       if (year && month) {
         const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -300,7 +300,7 @@ export function useCreatePayroll() {
   return useMutation({
     mutationFn: async (payroll: Partial<Payroll>) => {
       const { data, error } = await financeClient
-        .from('payroll')
+        .from('finance_payroll')
         .insert(payroll)
         .select()
         .single();
@@ -320,7 +320,7 @@ export function useUpdatePayrollStatus() {
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: 'Draft' | 'Approved' | 'Paid' }) => {
       const { data, error } = await financeClient
-        .from('payroll')
+        .from('finance_payroll')
         .update({ status })
         .eq('id', id)
         .select()

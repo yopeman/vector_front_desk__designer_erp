@@ -94,7 +94,7 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
 
     // Get default purchase GL account
     const { data: glAccount } = await financeClient
-      .from('gl_accounts')
+      .from('finance_gl_accounts')
       .select('id')
       .eq('account_code', 'PURCHASE_DEFAULT')
       .single();
@@ -132,7 +132,7 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
         };
 
         const { data: purchaseData, error: purchaseError } = await financeClient
-          .from('purchases')
+          .from('finance_purchases')
           .insert(purchase)
           .select('id')
           .single();
@@ -153,7 +153,7 @@ export async function syncPurchasesFromStore(): Promise<{ success: number; faile
         };
 
         const { error: itemError } = await financeClient
-          .from('purchase_items')
+          .from('finance_purchase_items')
           .insert(purchaseItem);
 
         if (itemError) {
@@ -216,7 +216,7 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
 
     // Get default sales GL account
     const { data: glAccount } = await financeClient
-      .from('gl_accounts')
+      .from('finance_gl_accounts')
       .select('id')
       .eq('account_code', 'SALES_REVENUE')
       .single();
@@ -255,7 +255,7 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
         };
 
         const { data: salesData, error: salesError } = await financeClient
-          .from('sales')
+          .from('finance_sales')
           .insert(sale)
           .select('id')
           .single();
@@ -287,7 +287,7 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
           }));
 
           const { error: insertItemsError } = await financeClient
-            .from('sales_items')
+            .from('finance_sales_items')
             .insert(salesItems);
 
           if (insertItemsError) {
@@ -370,7 +370,7 @@ export async function syncPayrollFromHR(year: number, month: number): Promise<{ 
       try {
         // Check if payroll already exists for this employee and period
         const { data: existingPayroll } = await financeClient
-          .from('payroll')
+          .from('finance_payroll')
           .select('id')
           .eq('employee_id', employee.id)
           .eq('period_start', periodStart.toISOString().split('T')[0])
@@ -438,7 +438,7 @@ export async function syncPayrollFromHR(year: number, month: number): Promise<{ 
         };
 
         const { error: payrollError } = await financeClient
-          .from('payroll')
+          .from('finance_payroll')
           .insert(payroll);
 
         if (payrollError) {

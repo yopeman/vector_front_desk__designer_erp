@@ -1,4 +1,4 @@
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -24,7 +24,7 @@ const navItems = [
   { path: '/reports', label: 'Report', icon: BarChart3 },
 ];
 
-export function MainLayout() {
+export function MainLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -104,7 +104,7 @@ export function MainLayout() {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         <div className="p-6 lg:p-8">
-          <Outlet />
+          {children}
         </div>
       </main>
     </div>
