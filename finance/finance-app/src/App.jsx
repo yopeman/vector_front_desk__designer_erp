@@ -9,6 +9,11 @@ import { Inventory } from './pages/Inventory';
 import { GeneralJournal } from './pages/GeneralJournal';
 import { Payroll } from './pages/Payroll';
 import { Reports } from './pages/Reports';
+import MessagesPage from './pages/MessagesPage';
+import NotificationsPage from './pages/NotificationsPage';
+import NotesPage from './pages/NotesPage';
+import SettingsPage from './pages/SettingsPage';
+import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
 
@@ -24,20 +29,26 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <MainLayout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/purchases" element={<Purchases />} />
-            <Route path="/sales" element={<Sales />} />
-            <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
-            <Route path="/inventory" element={<Inventory />} />
-            <Route path="/general-journal" element={<GeneralJournal />} />
-            <Route path="/payroll" element={<Payroll />} />
-            <Route path="/reports" element={<Reports />} />
-          </Routes>
-        </MainLayout>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <MainLayout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/purchases" element={<Purchases />} />
+              <Route path="/sales" element={<Sales />} />
+              <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/general-journal" element={<GeneralJournal />} />
+              <Route path="/payroll" element={<Payroll />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/messages" element={<MessagesPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/notes" element={<NotesPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
+          </MainLayout>
+        </BrowserRouter>
+      </AuthProvider>
       <Toaster position="top-right" />
     </QueryClientProvider>
   );

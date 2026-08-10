@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   ShoppingCart, 
@@ -9,9 +9,14 @@ import {
   Users, 
   BarChart3,
   Menu,
-  X
+  X,
+  MessageSquare,
+  Bell,
+  StickyNote,
+  Settings
 } from 'lucide-react';
 import { useState } from 'react';
+import TopHeader from '../components/TopHeader';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -22,91 +27,108 @@ const navItems = [
   { path: '/general-journal', label: 'General Journal', icon: FileText },
   { path: '/payroll', label: 'Payroll', icon: Users },
   { path: '/reports', label: 'Report', icon: BarChart3 },
+  { path: '/messages', label: 'Messages', icon: MessageSquare },
+  { path: '/notifications', label: 'Notifications', icon: Bell },
+  { path: '/notes', label: 'Notes', icon: StickyNote },
+  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-md"
-      >
-        {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
+    <div className="flex flex-col h-screen bg-gray-100">
+      {/* Top Header */}
+      <TopHeader 
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onNavigate={handleNavigate}
+      />
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-40
-        w-64 bg-white border-r border-gray-200
-        transform transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
-      `}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-xl font-bold text-gray-900">Finance ERP</h1>
-            <p className="text-sm text-gray-500">Vector Advert</p>
-          </div>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-md"
+        >
+          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                    ${isActive 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'text-gray-700 hover:bg-gray-100'
-                    }
-                  `}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+        {/* Sidebar */}
+        <aside className={`
+          fixed lg:static inset-y-0 left-0 z-40 mt-[62px] lg:mt-0
+          w-64 bg-white border-r border-gray-200
+          transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
+        `}>
+          <div className="flex flex-col h-full">
+            {/* Logo */}
+            <div className="p-6 border-b border-gray-200">
+              <h1 className="text-xl font-bold text-gray-900">Finance ERP</h1>
+              <p className="text-sm text-gray-500">Vector Advert</p>
+            </div>
 
-          {/* User section */}
-          <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-blue-600">A</span>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Admin User</p>
-                <p className="text-xs text-gray-500">Finance Manager</p>
+            {/* Navigation */}
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
+                
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`
+                      flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
+                      ${isActive 
+                        ? 'bg-blue-50 text-blue-600' 
+                        : 'text-gray-700 hover:bg-gray-100'
+                      }
+                    `}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* User section */}
+            <div className="p-4 border-t border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-medium text-blue-600">A</span>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Admin User</p>
+                  <p className="text-xs text-gray-500">Finance Manager</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-6 lg:p-8">
-          {children}
-        </div>
-      </main>
+        {/* Main content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-6 lg:p-8">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
