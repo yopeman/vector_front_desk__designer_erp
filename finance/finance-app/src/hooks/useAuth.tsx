@@ -14,6 +14,9 @@ interface AuthContextType {
   profile: Profile | null;
   user: User | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, username: string) => Promise<void>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -68,8 +71,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const signIn = async (email: string, password: string) => {
+    const { error } = await financeClient.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+  };
+
+  const signUp = async (email: string, password: string, username: string) => {
+    const { data: authData, error: authError } = await financeClient.auth.signUp({
+      email,
+      password,
+    });
+    if (authError) throw authError;
+
+    if (authData.user) {
+      const { error: profileError } = await financeClient.from('users').insert({
+        id: authData.user.id,
+        username: username,
+        email: email,
+        role: null,
+      });
+      if (profileError) throw profileError;
+    }
+  };
+
+  const signOut = async () => {
+    await financeClient.auth.signOut();
+  };
+
   return (
-    <AuthContext.Provider value={{ profile, user, loading }}>
+    <AuthContext.Provider value={{ profile, user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

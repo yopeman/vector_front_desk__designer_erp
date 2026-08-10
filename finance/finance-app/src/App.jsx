@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './layouts/MainLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Purchases } from './pages/Purchases';
@@ -13,6 +13,8 @@ import MessagesPage from './pages/MessagesPage';
 import NotificationsPage from './pages/NotificationsPage';
 import NotesPage from './pages/NotesPage';
 import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'react-hot-toast';
 import './index.css';
@@ -31,22 +33,32 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BrowserRouter>
-          <MainLayout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/purchases" element={<Purchases />} />
-              <Route path="/sales" element={<Sales />} />
-              <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/general-journal" element={<GeneralJournal />} />
-              <Route path="/payroll" element={<Payroll />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/notes" element={<NotesPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Routes>
-          </MainLayout>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <Routes>
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/purchases" element={<Purchases />} />
+                      <Route path="/sales" element={<Sales />} />
+                      <Route path="/chart-of-accounts" element={<ChartOfAccounts />} />
+                      <Route path="/inventory" element={<Inventory />} />
+                      <Route path="/general-journal" element={<GeneralJournal />} />
+                      <Route path="/payroll" element={<Payroll />} />
+                      <Route path="/reports" element={<Reports />} />
+                      <Route path="/messages" element={<MessagesPage />} />
+                      <Route path="/notifications" element={<NotificationsPage />} />
+                      <Route path="/notes" element={<NotesPage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
+                    </Routes>
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
         </BrowserRouter>
       </AuthProvider>
       <Toaster position="top-right" />
