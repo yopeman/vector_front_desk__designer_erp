@@ -3,6 +3,7 @@ import { Calendar, Download, Search, Settings2, X } from 'lucide-react';
 import { usePurchases, useSales, useGLAccounts, useJournals, usePayroll } from '../hooks/useFinance';
 import { storeClient } from '../services/supabaseClients';
 import { useQuery } from '@tanstack/react-query';
+import jsPDF from 'jspdf';
 
 export function Reports() {
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
@@ -127,8 +128,233 @@ export function Reports() {
   };
 
   const handleExportPDF = () => {
-    // PDF export will be implemented with jsPDF
-    console.log('Exporting to PDF');
+    try {
+      if (selectedReports.length === 0) {
+        alert('Please select at least one report type to export.');
+        return;
+      }
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const leftMargin = 15;
+      const rightMargin = pageWidth / 2 + 10;
+      const lineHeight = 7;
+      let y = 20;
+
+      // Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Financial Reports', pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      // Date range
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const dateRange = startDate && endDate 
+        ? `From: ${startDate}  To: ${endDate}` 
+        : 'All Records';
+      doc.text(dateRange, pageWidth / 2, y, { align: 'center' });
+      y += 10;
+
+      // Process each selected report
+      selectedReports.forEach((reportType) => {
+        const rawData = realData[reportType];
+        if (!rawData || rawData.length === 0) return;
+
+        const dateFilteredData = filterDataByDate(rawData, reportType);
+        const searchTerm = searchTerms[reportType] || '';
+        const data = filterDataBySearch(dateFilteredData, searchTerm);
+
+        if (data.length === 0) return;
+
+        const reportConfig: Record<string, { title: string; columns: Array<{ key: string; label: string }> }> = {
+          purchase: {
+            title: 'Purchase Report',
+            columns: [
+              { key: 'purchase_no', label: 'Purchase No' },
+              { key: 'purchase_date', label: 'Date' },
+              { key: 'purchase_type', label: 'Type' },
+              { key: 'receipt_source', label: 'Source' },
+              { key: 'reference_no', label: 'Reference No' },
+              { key: 'vat_type', label: 'VAT Type' },
+              { key: 'subtotal', label: 'Subtotal' },
+              { key: 'vat_amount', label: 'VAT' },
+              { key: 'total_amount', label: 'Total' },
+              { key: 'status', label: 'Status' },
+            ],
+          },
+          sales: {
+            title: 'Sales Report',
+            columns: [
+              { key: 'sales_no', label: 'Sales No' },
+              { key: 'sales_date', label: 'Date' },
+              { key: 'customer_name', label: 'Customer' },
+              { key: 'customer_tin', label: 'Customer TIN' },
+              { key: 'sales_type', label: 'Type' },
+              { key: 'sales_category', label: 'Category' },
+              { key: 'receipt_source', label: 'Source' },
+              { key: 'vat_withholding', label: 'VAT Withholding' },
+              { key: 'cash_received', label: 'Cash Received' },
+              { key: 'subtotal', label: 'Subtotal' },
+              { key: 'vat_amount', label: 'VAT' },
+              { key: 'withholding_amount', label: 'Withholding' },
+              { key: 'total_amount', label: 'Total' },
+              { key: 'net_amount', label: 'Net Amount' },
+              { key: 'status', label: 'Status' },
+            ],
+          },
+          'chart-of-accounts': {
+            title: 'Chart of Accounts',
+            columns: [
+              { key: 'account_code', label: 'Account Code' },
+              { key: 'account_name', label: 'Account Name' },
+              { key: 'account_type', label: 'Type' },
+              { key: 'is_active', label: 'Status' },
+            ],
+          },
+          inventory: {
+            title: 'Inventory Report',
+            columns: [
+              { key: 'code', label: 'Item Code' },
+              { key: 'name', label: 'Item Name' },
+              { key: 'category', label: 'Category' },
+              { key: 'balance', label: 'Balance' },
+              { key: 'unit_cost', label: 'Unit Cost' },
+              { key: 'reorder_level', label: 'Reorder Level' },
+            ],
+          },
+          'general-journal': {
+            title: 'General Journal',
+            columns: [
+              { key: 'journal_no', label: 'Journal No' },
+              { key: 'journal_date', label: 'Date' },
+              { key: 'reference', label: 'Reference' },
+              { key: 'status', label: 'Status' },
+            ],
+          },
+          payroll: {
+            title: 'Payroll Report',
+            columns: [
+              { key: 'employee_id', label: 'Employee ID' },
+              { key: 'period_start', label: 'Period Start' },
+              { key: 'period_end', label: 'Period End' },
+              { key: 'basic_salary', label: 'Basic Salary' },
+              { key: 'overtime', label: 'Overtime' },
+              { key: 'gross_salary', label: 'Gross Salary' },
+              { key: 'income_tax', label: 'Income Tax' },
+              { key: 'net_pay', label: 'Net Pay' },
+              { key: 'status', label: 'Status' },
+            ],
+          },
+        };
+
+        const config = reportConfig[reportType];
+        if (!config) return;
+
+        const visibleColumns = config.columns.filter(col => columnVisibility[reportType]?.[col.label] !== false);
+
+        // Add section header
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${config.title} (${data.length})`, leftMargin, y);
+        y += 8;
+
+        // Split data into left and right sections
+        const midPoint = Math.ceil(data.length / 2);
+        const leftData = data.slice(0, midPoint);
+        const rightData = data.slice(midPoint);
+
+        // Left section
+        let leftY = y;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Section 1', leftMargin, leftY);
+        leftY += 6;
+
+        leftData.forEach((row, index) => {
+          if (leftY > pageHeight - 20) {
+            doc.addPage();
+            leftY = 20;
+          }
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Record ${index + 1}:`, leftMargin, leftY);
+          leftY += 5;
+
+          visibleColumns.forEach(col => {
+            if (leftY > pageHeight - 15) {
+              doc.addPage();
+              leftY = 20;
+            }
+            let value = row[col.key];
+            if (typeof value === 'number' && value % 1 !== 0) {
+              value = `ETB ${value.toLocaleString()}`;
+            } else if (typeof value === 'boolean') {
+              value = value ? 'Active' : 'Inactive';
+            }
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${col.label}:`, leftMargin, leftY);
+            doc.text(`${value || '-'}`, leftMargin + 35, leftY);
+            leftY += 4;
+          });
+          leftY += 3;
+        });
+
+        // Right section (new page if needed)
+        let rightY = y;
+        if (leftY > pageHeight / 2) {
+          doc.addPage();
+          rightY = 20;
+        }
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Section 2', rightMargin, rightY);
+        rightY += 6;
+
+        rightData.forEach((row, index) => {
+          if (rightY > pageHeight - 20) {
+            doc.addPage();
+            rightY = 20;
+          }
+
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`Record ${midPoint + index + 1}:`, rightMargin, rightY);
+          rightY += 5;
+
+          visibleColumns.forEach(col => {
+            if (rightY > pageHeight - 15) {
+              doc.addPage();
+              rightY = 20;
+            }
+            let value = row[col.key];
+            if (typeof value === 'number' && value % 1 !== 0) {
+              value = `ETB ${value.toLocaleString()}`;
+            } else if (typeof value === 'boolean') {
+              value = value ? 'Active' : 'Inactive';
+            }
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${col.label}:`, rightMargin, rightY);
+            doc.text(`${value || '-'}`, rightMargin + 35, rightY);
+            rightY += 4;
+          });
+          rightY += 3;
+        });
+
+        // Add page break between reports
+        doc.addPage();
+        y = 20;
+      });
+
+      const filename = `Financial_Reports_${selectedReports.join('_')}_${startDate || 'all'}_to_${endDate || 'all'}.pdf`;
+      doc.save(filename);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Error exporting PDF: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
   };
 
   return (
