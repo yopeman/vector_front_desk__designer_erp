@@ -48,17 +48,17 @@ export function Inventory() {
       key: 'reorder_level' as keyof StockItem, 
       label: 'Reorder Level'
     },
-    {
-      key: 'status' as any,
-      label: 'Status',
-      render: (_: any, row: StockItem) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.balance <= row.reorder_level ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-        }`}>
-          {row.balance <= row.reorder_level ? 'Low Stock' : 'In Stock'}
-        </span>
-      )
-    }
+    // {
+    //   key: 'status' as any,
+    //   label: 'Status',
+    //   render: (_: any, row: StockItem) => (
+    //     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+    //       row.balance <= row.reorder_level ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+    //     }`}>
+    //       {row.balance <= row.reorder_level ? 'Low Stock' : 'In Stock'}
+    //     </span>
+    //   )
+    // }
   ];
 
   return (

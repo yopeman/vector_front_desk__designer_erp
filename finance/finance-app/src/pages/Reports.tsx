@@ -1,40 +1,8 @@
 import { useState } from 'react';
 import { Calendar, Download, Search, Settings2, X } from 'lucide-react';
-
-// Mock data for each report type
-const mockData: Record<string, any[]> = {
-  purchase: [
-    { purchase_no: 'PO001', purchase_date: '2024-01-15', purchase_type: 'Local', receipt_source: 'POS', reference_no: 'REF-001', vat_type: 'VAT Inclusive', subtotal: 2272.73, vat_amount: 227.27, total_amount: 2500.00, status: 'Received' },
-    { purchase_no: 'PO002', purchase_date: '2024-01-18', purchase_type: 'Import', receipt_source: 'Manual', reference_no: 'REF-002', vat_type: 'VAT Exclusive', subtotal: 1636.36, vat_amount: 163.64, total_amount: 1800.00, status: 'Pending' },
-    { purchase_no: 'PO003', purchase_date: '2024-01-20', purchase_type: 'Local', receipt_source: 'POS', reference_no: 'REF-003', vat_type: 'VAT Inclusive', subtotal: 3818.18, vat_amount: 381.82, total_amount: 4200.00, status: 'Received' },
-  ],
-  sales: [
-    { sales_no: 'SO001', sales_date: '2024-01-15', customer_name: 'Client A', customer_tin: 'TIN001', sales_type: 'Cash', sales_category: 'Retail', receipt_source: 'POS', vat_withholding: 'Yes', cash_received: 1500.00, subtotal: 1363.64, vat_amount: 136.36, withholding_amount: 0.00, total_amount: 1500.00, net_amount: 1500.00, status: 'Completed' },
-    { sales_no: 'SO002', sales_date: '2024-01-17', customer_name: 'Client B', customer_tin: 'TIN002', sales_type: 'Credit', sales_category: 'Wholesale', receipt_source: 'Manual', vat_withholding: 'No', cash_received: 0.00, subtotal: 2909.09, vat_amount: 290.91, withholding_amount: 0.00, total_amount: 3200.00, net_amount: 3200.00, status: 'Completed' },
-    { sales_no: 'SO003', sales_date: '2024-01-19', customer_name: 'Client C', customer_tin: 'TIN003', sales_type: 'Cash', sales_category: 'Retail', receipt_source: 'POS', vat_withholding: 'Yes', cash_received: 800.00, subtotal: 727.27, vat_amount: 72.73, withholding_amount: 0.00, total_amount: 800.00, net_amount: 800.00, status: 'Pending' },
-  ],
-  'chart-of-accounts': [
-    { account_code: '1000', account_name: 'Cash', account_type: 'Asset', is_active: true, created_at: '2024-01-10' },
-    { account_code: '1100', account_name: 'Accounts Receivable', account_type: 'Asset', is_active: true, created_at: '2024-01-12' },
-    { account_code: '2000', account_name: 'Accounts Payable', account_type: 'Liability', is_active: true, created_at: '2024-01-14' },
-    { account_code: '3000', account_name: 'Revenue', account_type: 'Revenue', is_active: true, created_at: '2024-01-16' },
-  ],
-  inventory: [
-    { code: 'SKU001', name: 'Product A', category: 'Electronics', balance: 150, unit_cost: 25.00, reorder_level: 20, status: 'In Stock', created_at: '2024-01-11' },
-    { code: 'SKU002', name: 'Product B', category: 'Furniture', balance: 200, unit_cost: 30.00, reorder_level: 30, status: 'In Stock', created_at: '2024-01-13' },
-    { code: 'SKU003', name: 'Product C', category: 'Office Supplies', balance: 75, unit_cost: 45.00, reorder_level: 50, status: 'Low Stock', created_at: '2024-01-15' },
-  ],
-  'general-journal': [
-    { journal_no: 'JNL-001', journal_date: '2024-01-15', reference: 'REF-001', status: 'Posted' },
-    { journal_no: 'JNL-002', journal_date: '2024-01-16', reference: 'REF-002', status: 'Draft' },
-    { journal_no: 'JNL-003', journal_date: '2024-01-17', reference: 'REF-003', status: 'Posted' },
-  ],
-  payroll: [
-    { employee_id: 'EMP001', period_start: '2024-01-01', period_end: '2024-01-31', basic_salary: 5000.00, overtime: 500.00, gross_salary: 5500.00, income_tax: 275.00, net_pay: 5225.00, status: 'Paid' },
-    { employee_id: 'EMP002', period_start: '2024-01-01', period_end: '2024-01-31', basic_salary: 4500.00, overtime: 300.00, gross_salary: 4800.00, income_tax: 240.00, net_pay: 4560.00, status: 'Approved' },
-    { employee_id: 'EMP003', period_start: '2024-01-01', period_end: '2024-01-31', basic_salary: 6000.00, overtime: 800.00, gross_salary: 6800.00, income_tax: 340.00, net_pay: 6460.00, status: 'Draft' },
-  ],
-};
+import { usePurchases, useSales, useGLAccounts, useJournals, usePayroll } from '../hooks/useFinance';
+import { storeClient } from '../services/supabaseClients';
+import { useQuery } from '@tanstack/react-query';
 
 export function Reports() {
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
@@ -42,6 +10,40 @@ export function Reports() {
   const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
   const [columnDropdowns, setColumnDropdowns] = useState<Record<string, boolean>>({});
   const [columnVisibility, setColumnVisibility] = useState<Record<string, Record<string, boolean>>>({});
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Fetch real data from APIs
+  const { data: purchases, isLoading: purchasesLoading } = usePurchases(1, 1000);
+  const { data: sales, isLoading: salesLoading } = useSales(1, 1000);
+  const { data: accounts, isLoading: accountsLoading } = useGLAccounts();
+  const { data: journals, isLoading: journalsLoading } = useJournals(1, 1000);
+  const { data: payroll, isLoading: payrollLoading } = usePayroll();
+
+  // Fetch inventory from store module
+  const { data: inventory, isLoading: inventoryLoading } = useQuery({
+    queryKey: ['stock-items'],
+    queryFn: async () => {
+      const { data, error } = await storeClient
+        .from('stock_items')
+        .select('*')
+        .order('category');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Combine all real data
+  const realData: Record<string, any[]> = {
+    purchase: purchases || [],
+    sales: sales || [],
+    'chart-of-accounts': accounts || [],
+    inventory: inventory || [],
+    'general-journal': journals || [],
+    payroll: payroll || [],
+  };
+
+  const isLoading = purchasesLoading || salesLoading || accountsLoading || inventoryLoading || journalsLoading || payrollLoading;
 
   const reportOptions = [
     { value: 'purchase', label: 'Purchase' },
@@ -78,8 +80,6 @@ export function Reports() {
     const visibility = columnVisibility[reportType] || {};
     return allColumns.filter(col => visibility[col] !== false);
   };
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
 
   const handleGenerateReport = () => {
     // Report generation will be implemented with actual data queries
@@ -196,13 +196,13 @@ export function Reports() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <button
+          {/* <button
             onClick={handleGenerateReport}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mt-5"
           >
             <Calendar className="w-4 h-4" />
             Generate Report
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -215,10 +215,17 @@ export function Reports() {
             <p className="text-sm mt-2">Financial reports will be displayed here</p>
           </div>
         </div>
+      ) : isLoading ? (
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-12 text-center">
+          <div className="text-gray-400">
+            <Calendar className="w-16 h-16 mx-auto mb-4 animate-spin" />
+            <p className="text-lg font-medium">Loading reports...</p>
+          </div>
+        </div>
       ) : (
         <div className="space-y-6">
           {selectedReports.map(reportType => {
-            const rawData = mockData[reportType];
+            const rawData = realData[reportType];
             if (!rawData || rawData.length === 0) return null;
             
             const dateFilteredData = filterDataByDate(rawData, reportType);
@@ -279,7 +286,6 @@ export function Reports() {
                   { key: 'balance', label: 'Balance' },
                   { key: 'unit_cost', label: 'Unit Cost' },
                   { key: 'reorder_level', label: 'Reorder Level' },
-                  { key: 'status', label: 'Status' },
                 ],
               },
               'general-journal': {
