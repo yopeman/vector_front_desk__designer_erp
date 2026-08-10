@@ -41,7 +41,7 @@ export function Purchases() {
       render: (value: number) => `ETB ${value.toLocaleString()}`
     },
     { key: 'status' as keyof Purchase, label: 'Status' },
-    { key: 'notes' as keyof Purchase, label: 'Notes' },
+    // { key: 'notes' as keyof Purchase, label: 'Notes' },
     {
       key: 'actions' as keyof Purchase,
       label: 'Actions',

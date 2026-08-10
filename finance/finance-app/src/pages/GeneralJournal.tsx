@@ -81,7 +81,7 @@ export function GeneralJournal() {
     { key: 'journal_no' as keyof Journal, label: 'Journal No' },
     { key: 'journal_date' as keyof Journal, label: 'Date' },
     { key: 'reference' as keyof Journal, label: 'Reference' },
-    { key: 'description' as keyof Journal, label: 'Description' },
+    // { key: 'description' as keyof Journal, label: 'Description' },
     { 
       key: 'status' as keyof Journal, 
       label: 'Status',
