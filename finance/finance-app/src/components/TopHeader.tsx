@@ -171,7 +171,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
 
   return (
     <header className="top-header" style={{
-      backgroundColor: '#ffffff',
+      backgroundColor: '#00CED1',
       height: '62px',
       display: 'flex',
       alignItems: 'center',
@@ -190,7 +190,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
             left: '13px',
             top: '50%',
             transform: 'translateY(-50%)',
-            color: '#94a3b8',
+            color: '#ffffff',
             fontSize: '12px',
             pointerEvents: 'none'
           }}></i>
@@ -210,7 +210,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
               padding: '8px 14px 8px 34px',
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
-              backgroundColor: '#f8fafc',
+              backgroundColor: '#ffffff',
               outline: 'none',
               fontSize: '12.5px',
               color: '#1e293b'
@@ -267,7 +267,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
           position: 'relative',
           cursor: 'pointer',
           fontSize: '16px',
-          color: '#64748b',
+          color: '#ffffff',
           width: '36px',
           height: '36px',
           display: 'flex',
@@ -277,6 +277,14 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
           transition: 'background 0.18s, color 0.18s'
         }}
         onClick={() => setNotificationDropdown(!notificationDropdown)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = '#00CED1';
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.9)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = '#ffffff';
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
         >
           <i className="fa-solid fa-bell"></i>
           <span className="badge" style={{
@@ -364,7 +372,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
           position: 'relative',
           cursor: 'pointer',
           fontSize: '16px',
-          color: '#64748b',
+          color: '#ffffff',
           width: '36px',
           height: '36px',
           display: 'flex',
@@ -374,6 +382,14 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
           transition: 'background 0.18s, color 0.18s'
         }}
         onClick={() => setMessageDropdown(!messageDropdown)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = '#00CED1';
+          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.9)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = '#ffffff';
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
         >
           <i className="fa-solid fa-envelope"></i>
           <span className="badge" style={{
@@ -476,7 +492,8 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
           padding: '5px 10px 5px 6px',
           borderRadius: '10px',
           cursor: 'pointer',
-          transition: 'background 0.18s'
+          transition: 'background 0.18s',
+          border: 'solid 3px white'
         }}
         onClick={() => setProfileDropdown(!profileDropdown)}
         >
@@ -495,12 +512,12 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
             {profile?.username?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div>
-            <div style={{ fontWeight: 600, fontSize: '12px', color: '#1e293b' }}>
+            <div style={{ fontWeight: 600, fontSize: '12px', color: '#ffffff' }}>
               {profile?.username || 'User'}
             </div>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>Finance Manager</div>
+            <div style={{ fontSize: '10px', color: '#e0f7fa' }}>Finance Manager</div>
           </div>
-          <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px', color: '#64748b', marginLeft: '4px' }}></i>
+          <i className="fa-solid fa-chevron-down" style={{ fontSize: '10px', color: '#ffffff', marginLeft: '4px' }}></i>
 
           {profileDropdown && (
             <div style={{

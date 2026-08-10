@@ -56,15 +56,17 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         {/* Sidebar */}
         <aside className={`
           fixed lg:static inset-y-0 left-0 z-40 mt-[62px] lg:mt-0
-          w-64 bg-white border-r border-gray-200
+          w-64 border-r border-gray-200
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
-        `}>
+        `}
+        style={{ backgroundColor: '#00CED1' }}
+        >
           <div className="flex flex-col h-full">
             {/* Logo */}
             <div className="p-6 border-b border-gray-200">
-              <h1 className="text-xl font-bold text-gray-900">V☰CTOR</h1>
-              <p className="text-sm text-gray-500">Advert & Manufacturing ERP</p>
+              <h1 className="text-xl font-bold text-white">V☰CTOR</h1>
+              <p className="text-sm text-white">Advert & Manufacturing ERP</p>
             </div>
 
             {/* Navigation */}
@@ -81,8 +83,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
                     className={`
                       flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
                       ${isActive 
-                        ? 'bg-blue-50 text-blue-600' 
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-white text-[#00CED1]' 
+                        : 'text-white hover:bg-white hover:text-[#00CED1]'
                       }
                     `}
                   >
