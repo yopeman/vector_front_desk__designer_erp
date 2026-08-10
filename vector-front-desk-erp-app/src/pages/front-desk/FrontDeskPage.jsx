@@ -14,6 +14,7 @@ import ItemsPage from './components/ItemsPage';
 import OrdersPage from './components/OrdersPage';
 import DesignsPage from './components/DesignsPage';
 import DesignStatusPage from './components/DesignStatusPage';
+import DesignLibraryPage from './components/DesignLibraryPage';
 import ProformaInvoicesPage from './components/ProformaInvoicesPage';
 import TestProformaInvoicesPage from './components/TestProformaInvoicesPage';
 import SalesInvoicesPage from './components/SalesInvoicesPage';
@@ -130,6 +131,10 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Design Status Page Loaded</h2>
               <DesignStatusPage />
+            </div>
+          ) : currentPage === 'design library' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <DesignLibraryPage />
             </div>
           ) : currentPage === 'proforma invoices' ? ( // Test Proforma Invoices (test_proforma_invoices table)
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

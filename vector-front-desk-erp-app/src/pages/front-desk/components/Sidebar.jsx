@@ -30,6 +30,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       submenu: [
         { name: 'Designs', icon: 'fa-file-code' },
         { name: 'Design Status', icon: 'fa-spinner' },
+        { name: 'Design Library', icon: 'fa-book' },
       ] 
     },
     { 
