@@ -184,13 +184,6 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
       zIndex: 300
     }}>
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-        <div 
-          onClick={onToggleSidebar}
-          style={{ fontSize: '16px', cursor: 'pointer', color: '#64748b' }}
-        >
-          <i className="fa-solid fa-bars"></i>
-        </div>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1e293b' }}>Finance ERP</h2>
         <div className="search-box" style={{ position: 'relative' }}>
           <i className="fa-solid fa-magnifying-glass" style={{
             position: 'absolute',

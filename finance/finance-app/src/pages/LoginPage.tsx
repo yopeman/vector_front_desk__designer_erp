@@ -139,7 +139,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="text-center mt-6">
+        {/* <div className="text-center mt-6">
           <button
             onClick={toggleMode}
             className="text-sm text-[#00ced1] hover:underline font-medium cursor-pointer bg-transparent border-none"
@@ -148,7 +148,7 @@ export default function LoginPage() {
               ? "Don't have an account? Sign up"
               : 'Already have an account? Sign in'}
           </button>
-        </div>
+        </div> */}
 
         <p className="text-center mt-6 text-[11px] text-gray-300">
           Internal use only &mdash; V☰CTOR Finance ERP System
