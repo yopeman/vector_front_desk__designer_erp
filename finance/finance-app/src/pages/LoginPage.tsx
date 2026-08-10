@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { financeClient } from '../services/supabaseClients';
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -10,7 +11,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, profile } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -21,6 +22,23 @@ export default function LoginPage() {
     try {
       if (mode === 'login') {
         await signIn(email, password);
+        
+        const { data: { user: currentUser } } = await financeClient.auth.getUser();
+        if (!currentUser) {
+          throw new Error('Failed to authenticate');
+        }
+
+        const { data: profileData } = await financeClient
+          .from('users')
+          .select('role')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (profileData?.role !== 'finance') {
+          await financeClient.auth.signOut();
+          throw new Error('Access denied. You do not have the finance role.');
+        }
+
         navigate('/');
       } else {
         await signUp(email, password, username);
