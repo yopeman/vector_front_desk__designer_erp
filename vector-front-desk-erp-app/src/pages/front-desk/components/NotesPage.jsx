@@ -265,6 +265,7 @@ export default function NotesPage() {
                         onChange={() => {}}
                         className="w-3 h-3 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         readOnly
+                        disabled
                       />
                       <span className={`${item.done ? 'line-through text-slate-400' : 'text-slate-600'}`}>
                         {item.text}

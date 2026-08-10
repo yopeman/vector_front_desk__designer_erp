@@ -273,6 +273,7 @@ export default function ProductionOrderModal({ onClose, onSuccess }) {
               type="text"
               value={profile?.username || user?.email || 'Unknown'}
               readOnly
+              disabled
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
             />
           </div>

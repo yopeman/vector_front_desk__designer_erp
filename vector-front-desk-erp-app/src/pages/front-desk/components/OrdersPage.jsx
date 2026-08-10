@@ -740,6 +740,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                       type="text"
                       value={formData.order_no}
                       readOnly
+                      disabled
                       className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-slate-100"
                     />
                   </div>
@@ -766,15 +767,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                      >
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </select>
+                      <input type="text" value={formData.status} readOnly disabled/>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Priority</label>
@@ -952,6 +945,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                               step="0.01"
                               value={item.amount}
                               readOnly
+                              disabled
                               className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-slate-100 focus:outline-none"
                             />
                           </div>

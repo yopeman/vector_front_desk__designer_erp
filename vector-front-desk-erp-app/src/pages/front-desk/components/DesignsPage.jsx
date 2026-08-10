@@ -974,6 +974,7 @@ export default function DesignsPage() {
                                 type="text"
                                 value={version.comment || ''}
                                 readOnly
+                                disabled
                                 placeholder="Comment (read-only)"
                                 className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs bg-slate-100 text-slate-600 cursor-not-allowed"
                               />

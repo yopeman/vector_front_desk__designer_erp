@@ -333,6 +333,7 @@ export default function JobOrdersPage() {
                     type="text"
                     value={formData.job_no}
                     readOnly
+                    disabled
                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-slate-100"
                   />
                 </div>

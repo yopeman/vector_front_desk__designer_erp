@@ -1552,6 +1552,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                   onChange={(e) => setTestInvoiceData({ ...testInvoiceData, invoice_no: e.target.value })}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-slate-50"
                   readOnly
+                  disabled
                 />
               </div>
 
@@ -1631,6 +1632,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                           type="text"
                           value={item.total.toFixed(2)}
                           readOnly
+                          disabled
                           className="w-full border border-slate-300 rounded px-2 py-1 text-xs bg-slate-100 focus:outline-none"
                         />
                       </div>
