@@ -500,7 +500,7 @@ export default function LeadsPage({ onUpgradeToClient }) {
                 {editingId && (
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/#/clients/${editingId}`);
+                      navigator.clipboard.writeText(`https://vectoradvert.com/erp/frontdesk/#/clients/${editingId}`);
                     }}
                     className="text-slate-500 hover:text-blue-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
                     title="Copy client link"
