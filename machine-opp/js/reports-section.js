@@ -109,7 +109,7 @@ class ReportsSection {
                         </div>
 
                         <!-- Search input -->
-                        <div>
+                        <div style="display: none;">
                             <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                                 <i class="fa-solid fa-magnifying-glass text-slate-500 text-[10px]"></i> Search
                             </label>

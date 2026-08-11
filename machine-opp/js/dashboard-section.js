@@ -11,7 +11,6 @@ class DashboardSection {
         const container = document.getElementById('content-dashboard');
         const currentUser = Auth.getCurrentUser();
         const isFinishRole = currentUser && currentUser.role === 'finish';
-        console.log(currentUser);
 
         if (container) {
             container.innerHTML = `<div class="flex justify-between items-center">
