@@ -161,6 +161,68 @@ async function saveBaton() {
 }
 
 // =============================================
+// FILTER COMPLETED ORDERS
+// =============================================
+function filterCompletedOrders(searchTerm) {
+    const tbody = document.getElementById('completed-orders-body');
+    if (!tbody) return;
+
+    if (!searchTerm || searchTerm.trim() === '') {
+        // Show all orders if search is empty
+        renderCompletedOrdersTable();
+        return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    const filteredOrders = completedOrdersData.filter(order => {
+        return (
+            order.date.toLowerCase().includes(term) ||
+            order.taskType.toLowerCase().includes(term) ||
+            String(order.orderNum).toLowerCase().includes(term) ||
+            order.title.toLowerCase().includes(term) ||
+            order.machine.toLowerCase().includes(term) ||
+            order.material.toLowerCase().includes(term) ||
+            order.thickness.toLowerCase().includes(term) ||
+            order.color.toLowerCase().includes(term) ||
+            String(order.length).toLowerCase().includes(term) ||
+            String(order.width).toLowerCase().includes(term) ||
+            String(order.area).toLowerCase().includes(term) ||
+            order.quality.toLowerCase().includes(term) ||
+            order.status.toLowerCase().includes(term)
+        );
+    });
+
+    tbody.innerHTML = '';
+
+    if (filteredOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="14" class="p-8 text-center text-slate-500 italic">No matching orders found.</td></tr>';
+        return;
+    }
+
+    filteredOrders.forEach((order, index) => {
+        const row = document.createElement('tr');
+        row.className = 'order-row hover:bg-blue-600/10 transition-colors';
+        row.innerHTML = `
+            <td class="p-4 text-center font-mono text-slate-500">${String(index + 1).padStart(2, '0')}</td>
+            <td class="p-4 font-mono">${order.date}</td>
+            <td class="p-4"><span class="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded border border-blue-500/20 capitalize">${order.taskType}</span></td>
+            <td class="p-4 font-mono">${order.orderNum}</td>
+            <td class="p-4 font-medium">${order.title}</td>
+            <td class="p-4 font-mono text-xs">${order.machine}</td>
+            <td class="p-4 text-slate-400">${order.material}</td>
+            <td class="p-4 font-mono text-xs">${order.thickness}</td>
+            <td class="p-4">${order.color}</td>
+            <td class="p-4 font-mono text-xs">${order.length}</td>
+            <td class="p-4 font-mono text-xs">${order.width}</td>
+            <td class="p-4 font-mono text-xs">${order.area}</td>
+            <td class="p-4 text-emerald-400 text-xs font-bold">${order.quality}</td>
+            <td class="p-4"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded border border-emerald-500/20">${order.status}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// =============================================
 // INITIALIZE COMPLETED ORDERS
 // =============================================
 async function initCompletedOrders() {
@@ -168,6 +230,14 @@ async function initCompletedOrders() {
         await fetchCompletedOrders();
     }
     renderCompletedOrdersTable();
+
+    // Add search event listener
+    const searchInput = document.getElementById('completed-orders-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            filterCompletedOrders(e.target.value);
+        });
+    }
 }
 
 // =============================================
