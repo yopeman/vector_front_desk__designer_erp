@@ -5,9 +5,14 @@ class DashboardSection {
     constructor() {
         this.render();
     }
-    
-    render() {
+
+    async render() {
+        await Auth.initPromise;
         const container = document.getElementById('content-dashboard');
+        const currentUser = Auth.getCurrentUser();
+        const isFinishRole = currentUser && currentUser.role === 'finish';
+        console.log(currentUser);
+
         if (container) {
             container.innerHTML = `<div class="flex justify-between items-center">
                      <div>
@@ -101,7 +106,7 @@ class DashboardSection {
                              <p class="text-[11px] text-slate-400 mt-0.5">Review finished work</p>
                          </div>
                      </a>
-                     <a href="#" onclick="switchTab('machine-login'); return false;" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
+                     ${!isFinishRole ? `<a href="#" onclick="switchTab('machine-login'); return false;" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-violet-500/30 hover:bg-violet-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
                          <div class="w-11 h-11 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
                              <i class="fa-solid fa-wrench text-violet-400 text-lg"></i>
                          </div>
@@ -109,7 +114,7 @@ class DashboardSection {
                              <p class="text-sm font-semibold text-white group-hover:text-violet-400 transition-colors">Machine Maintenance</p>
                              <p class="text-[11px] text-slate-400 mt-0.5">Checklists & logs</p>
                          </div>
-                     </a>
+                     </a>` : ''}
                      <a href="#" onclick="switchTab('notifications'); return false;" class="group bg-slate-800/50 p-5 rounded-2xl border border-slate-700/50 hover:border-rose-500/30 hover:bg-rose-500/5 transition-all duration-200 flex items-center gap-4 no-underline">
                          <div class="w-11 h-11 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
                              <i class="fa-solid fa-bell text-rose-400 text-lg"></i>

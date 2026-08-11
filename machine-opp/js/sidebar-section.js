@@ -7,9 +7,13 @@ class SidebarSection {
     constructor() {
         this.render();
     }
-    
-    render() {
+
+    async render() {
+        await Auth.initPromise;
         const container = document.getElementById('sidebar-container');
+        const currentUser = Auth.getCurrentUser();
+        const isFinishRole = currentUser && currentUser.role === 'finish';
+
         if (container) {
             container.innerHTML = `<aside class="w-[18rem] bg-[#00CED1] border-r border-white/20 p-5 flex flex-col justify-between overflow-y-auto relative">
             <!-- Subtle gradient overlay at bottom of sidebar -->
@@ -43,11 +47,11 @@ class SidebarSection {
                             <i class="fa-solid fa-circle-check w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Completed Order</span>
                         </button>
-                        <button onclick="switchTab('machine-login')" id="tab-machine-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        ${!isFinishRole ? `<button onclick="switchTab('machine-login')" id="tab-machine-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-desktop w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Machine Maintenance</span>
-                        </button>
+                        </button>` : ''}
                         <!-- <button onclick="switchTab('store-request')" id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all"> -->
                         <button onclick="window.location.href = 'https://vectoradvert.com/erp/store'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>

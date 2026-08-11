@@ -29,7 +29,7 @@ class TopNavigationBar {
                     <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
                         V☰CTOR ADVERT & MANUFACTURING
                     </h1>
-                    <p class="text-[10px] text-white/80 font-medium">Machine Operation Management</p>
+                    <p class="text-[10px] text-white/80 font-medium">Vector for Engineering</p>
                 </div>
             </div>
 

@@ -252,7 +252,7 @@ function exportPDF() {
             </div>
             ${ordersHTML}
             <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #334155; font-size: 10px; color: #64748b; text-align: center;">
-                <p style="margin: 0;">ERP System v2.0 - Machine Operation Management</p>
+                <p style="margin: 0;">ERP System v2.0 - Vector for Engineering</p>
                 <p style="margin: 5px 0 0 0;">This is a computer-generated document. No signature required.</p>
             </div>
         </div>
