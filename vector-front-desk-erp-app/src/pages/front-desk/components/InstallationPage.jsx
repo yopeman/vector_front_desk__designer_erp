@@ -9,6 +9,11 @@ export default function InstallationPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [editingInstallation, setEditingInstallation] = useState(null);
   const [formData, setFormData] = useState({
     job_order_id: '',
@@ -31,17 +36,34 @@ export default function InstallationPage() {
     fetchInstallations();
     fetchJobOrders();
     fetchClients();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchInstallations = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('installations')
-        .select('*, job_order:job_orders(job_no, invoice:invoices(invoice_no)), client:clients(name)')
+        .select('*, job_order:job_orders(job_no, invoice:invoices(invoice_no)), client:clients(name)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`installation_no.ilike.%${searchQuery}%,job_order.job_no.ilike.%${searchQuery}%,client.name.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('status', statusFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setInstallations(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching installations:', error);
     } finally {
@@ -219,13 +241,10 @@ export default function InstallationPage() {
     setShowModal(true);
   };
 
-  const filteredInstallations = installations.filter(installation => {
-    const matchesSearch = installation.installation_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         installation.job_order?.job_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         installation.client?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || installation.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   return (
     <div>
@@ -284,16 +303,16 @@ export default function InstallationPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredInstallations.length === 0 ? (
+            {installations.length === 0 ? (
               <tr>
                 <td colSpan="9" className="p-8 text-center text-slate-400">
                   No installations found
                 </td>
               </tr>
             ) : (
-              filteredInstallations.map((installation, index) => (
+              installations.map((installation, index) => (
                 <tr key={installation.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-center">{index + 1}</td>
+                  <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4 font-medium">{installation.installation_no || '-'}</td>
                   <td className="p-4">{installation.job_order?.job_no || '-'}</td>
                   <td className="p-4">{installation.client?.name || '-'}</td>
@@ -324,6 +343,57 @@ export default function InstallationPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div className="text-sm text-slate-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} installations
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-2 text-sm text-slate-600">
+            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Last
+          </button>
+        </div>
       </div>
 
       {/* Modal */}

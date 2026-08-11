@@ -8,6 +8,11 @@ export default function PaymentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [selectedInvoice, setSelectedInvoice] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [previewPayment, setPreviewPayment] = useState(null);
@@ -32,17 +37,34 @@ export default function PaymentsPage() {
   useEffect(() => {
     fetchPayments();
     fetchInvoices();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchPayments = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('payments')
-        .select('*, invoice:invoices(invoice_no, invoice_type, grand_total, balance), client:clients(name)')
+        .select('*, invoice:invoices(invoice_no, invoice_type, grand_total, balance), client:clients(name)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`reference_number.ilike.%${searchQuery}%,invoice.invoice_no.ilike.%${searchQuery}%,client.name.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('invoice_status', statusFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setPayments(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching payments:', error);
     } finally {
@@ -341,12 +363,10 @@ export default function PaymentsPage() {
     }
   };
 
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.invoice?.invoice_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         payment.client?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || payment.invoice_status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   const getFileUrl = async (filePath) => {
     try {
@@ -558,64 +578,121 @@ export default function PaymentsPage() {
           <div className="w-8 h-8 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Invoice No</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Payment Date</th>
-                <th className="p-4 text-right text-xs font-semibold text-slate-600">Amount Paid</th>
-                <th className="p-4 text-right text-xs font-semibold text-slate-600">Gross Amount</th>
-                <th className="p-4 text-right text-xs font-semibold text-slate-600">Unpaid Amount</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Payment Method</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
-                <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPayments.length === 0 ? (
+        <>
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <td colSpan="10" className="p-8 text-center text-slate-500 text-sm">
-                    No payments found
-                  </td>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Invoice No</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Payment Date</th>
+                  <th className="p-4 text-right text-xs font-semibold text-slate-600">Amount Paid</th>
+                  <th className="p-4 text-right text-xs font-semibold text-slate-600">Gross Amount</th>
+                  <th className="p-4 text-right text-xs font-semibold text-slate-600">Unpaid Amount</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Payment Method</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
+                  <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
                 </tr>
-              ) : (
-                filteredPayments.map((payment, index) => (
-                  <tr key={payment.id} className="hover:bg-slate-50">
-                    <td className="p-4 text-center">{index + 1}</td>
-                    <td className="p-4 font-medium">{payment.invoice?.invoice_no || '-'}</td>
-                    <td className="p-4">{payment.client?.name || '-'}</td>
-                    <td className="p-4">{payment.payment_date || '-'}</td>
-                    <td className="p-4 text-right">{payment.amount_paid || 0}</td>
-                    <td className="p-4 text-right">{payment.gross_amount || 0}</td>
-                    <td className="p-4 text-right">{payment.unpaid_amount || 0}</td>
-                    <td className="p-4">{payment.payment_method || '-'}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        payment.invoice_status === 'Paid' ? 'bg-green-100 text-green-700' :
-                        payment.invoice_status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {payment.invoice_status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      <button
-                        onClick={() => handleShow(payment)}
-                        className="text-purple-600 hover:text-purple-800 bg-transparent border-none cursor-pointer"
-                        title="Show"
-                      >
-                        <i className="fa-solid fa-eye"></i> Show
-                      </button>
+              </thead>
+              <tbody>
+                {payments.length === 0 ? (
+                  <tr>
+                    <td colSpan="10" className="p-8 text-center text-slate-500 text-sm">
+                      No payments found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  payments.map((payment, index) => (
+                    <tr key={payment.id} className="hover:bg-slate-50">
+                      <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="p-4 font-medium">{payment.invoice?.invoice_no || '-'}</td>
+                      <td className="p-4">{payment.client?.name || '-'}</td>
+                      <td className="p-4">{payment.payment_date || '-'}</td>
+                      <td className="p-4 text-right">{payment.amount_paid || 0}</td>
+                      <td className="p-4 text-right">{payment.gross_amount || 0}</td>
+                      <td className="p-4 text-right">{payment.unpaid_amount || 0}</td>
+                      <td className="p-4">{payment.payment_method || '-'}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          payment.invoice_status === 'Paid' ? 'bg-green-100 text-green-700' :
+                          payment.invoice_status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {payment.invoice_status || 'Pending'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => handleShow(payment)}
+                          className="text-purple-600 hover:text-purple-800 bg-transparent border-none cursor-pointer"
+                          title="Show"
+                        >
+                          <i className="fa-solid fa-eye"></i> Show
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan="10" className="p-4 text-sm text-slate-600">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div className="text-sm text-slate-600">
+                        Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} payments
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                          className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+                        >
+                          <option value={5}>5</option>
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                          <option value={50}>50</option>
+                          <option value={100}>100</option>
+                        </select>
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                        >
+                          First
+                        </button>
+                        <button
+                          onClick={() => setCurrentPage(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                        >
+                          Previous
+                        </button>
+                        <span className="px-3 py-2 text-sm text-slate-600">
+                          Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(currentPage + 1)}
+                          disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                          className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                        >
+                          Next
+                        </button>
+                        <button
+                          onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+                          disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                          className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                        >
+                          Last
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </>
       )}
 
       {/* New Payment Modal */}

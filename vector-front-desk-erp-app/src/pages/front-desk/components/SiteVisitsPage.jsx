@@ -11,6 +11,11 @@ export default function SiteVisitsPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
   // Form state
   const [formData, setFormData] = useState({
     client_id: '',
@@ -38,17 +43,39 @@ export default function SiteVisitsPage() {
     fetchSiteVisits();
     fetchClients();
     fetchDepartments();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchSiteVisits = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('site_visits')
-        .select('*, client:clients(name), department:departments(name)')
+        .select('*, client:clients(name), department:departments(name)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`request_no.ilike.%${searchQuery}%,visit_purpose.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,client.name.ilike.%${searchQuery}%,department.name.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('status', statusFilter);
+      }
+
+      // Apply priority filter
+      if (priorityFilter !== 'All') {
+        query = query.eq('priority', priorityFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setSiteVisits(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching site visits:', error);
     } finally {
@@ -182,19 +209,10 @@ export default function SiteVisitsPage() {
     setShowModal(false);
   };
 
-  const filteredVisits = siteVisits.filter(visit => {
-    const matchesSearch = 
-      (visit.request_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (visit.visit_purpose?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (visit.city?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (visit.client?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (visit.department?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'All' || visit.status === statusFilter;
-    const matchesPriority = priorityFilter === 'All' || visit.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, priorityFilter]);
 
   if (loading) {
     return (
@@ -277,16 +295,16 @@ export default function SiteVisitsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredVisits.length === 0 ? (
+            {siteVisits.length === 0 ? (
               <tr>
                 <td colSpan="9" className="p-8 text-center text-slate-400">
                   No site visits found
                 </td>
               </tr>
             ) : (
-              filteredVisits.map((visit, index) => (
+              siteVisits.map((visit, index) => (
                 <tr key={visit.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-center">{index + 1}</td>
+                  <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4 font-medium">{visit.request_no || '-'}</td>
                   <td className="p-4">{visit.client?.name || '-'}</td>
                   <td className="p-4">{visit.visit_purpose || '-'}</td>
@@ -326,6 +344,57 @@ export default function SiteVisitsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div className="text-sm text-slate-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} site visits
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-2 text-sm text-slate-600">
+            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Last
+          </button>
+        </div>
       </div>
 
       {/* Modal */}

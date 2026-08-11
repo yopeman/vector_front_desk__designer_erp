@@ -16,6 +16,11 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
   const [selectedClientType, setSelectedClientType] = useState(null);
   const [upgradeLeadToClient, setUpgradeLeadToClient] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
   // Form state
   const [formData, setFormData] = useState({
     client_id: '',
@@ -45,7 +50,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
     fetchDepartments();
     fetchItems();
     fetchCurrentUser();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -96,13 +101,35 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
 
   const fetchOrders = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('orders')
-        .select('*, client:clients(name), sales_officer:users(username), department:departments(name), order_items(*)')
+        .select('*, client:clients(name), sales_officer:users(username), department:departments(name), order_items(*)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`order_no.ilike.%${searchQuery}%,client.name.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('status', statusFilter);
+      }
+
+      // Apply priority filter
+      if (priorityFilter !== 'All') {
+        query = query.eq('priority', priorityFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setOrders(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -497,17 +524,9 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      (order.order_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (order.client?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (order.reference_po?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-    const matchesPriority = priorityFilter === 'All' || order.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, priorityFilter]);
 
   if (loading) {
     return (
@@ -620,16 +639,16 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredOrders.length === 0 ? (
+            {orders.length === 0 ? (
               <tr>
                 <td colSpan="9" className="p-8 text-center text-slate-400">
                   No orders found
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((order, index) => (
+              orders.map((order, index) => (
                 <tr key={order.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-center">{index + 1}</td>
+                  <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4 font-medium">{order.order_no || '-'}</td>
                   <td className="p-4">{order.client?.name || '-'}</td>
                   <td className="p-4">{order.order_date || '-'}</td>
@@ -676,6 +695,57 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div className="text-sm text-slate-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} orders
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-2 text-sm text-slate-600">
+            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Last
+          </button>
+        </div>
       </div>
 
       {/* Modal */}

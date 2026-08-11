@@ -9,6 +9,11 @@ export default function LeadsPage({ onUpgradeToClient }) {
   const [statusFilter, setStatusFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
   const [officerFilter, setOfficerFilter] = useState('All');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -29,7 +34,7 @@ export default function LeadsPage({ onUpgradeToClient }) {
   useEffect(() => {
     fetchLeads();
     fetchPayingClientIds();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchPayingClientIds = async () => {
     try {
@@ -47,14 +52,31 @@ export default function LeadsPage({ onUpgradeToClient }) {
 
   const fetchLeads = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('clients')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('client_type', 'lead')
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`name.ilike.%${searchQuery}%,address.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('status', statusFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setLeads(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching leads:', error);
     } finally {
@@ -289,20 +311,13 @@ export default function LeadsPage({ onUpgradeToClient }) {
     }
   };
 
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch = !searchQuery || 
-      lead.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.phone?.includes(searchQuery);
-    
-    const matchesStatus = statusFilter === 'All' || lead.status === statusFilter;
-    const matchesOfficer = officerFilter === 'All' || lead.assigned_sales_officer_id === officerFilter;
-    
-    return matchesSearch && matchesStatus && matchesOfficer;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   const kpiStats = {
-    total: leads.length,
+    total: totalCount,
     new: leads.filter(l => l.status === 'New').length,
     inProgress: leads.filter(l => l.status === 'In Progress').length,
     converted: leads.filter(l => l.status === 'Converted').length,
@@ -435,10 +450,10 @@ export default function LeadsPage({ onUpgradeToClient }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
-                  {filteredLeads.map((lead, index) => (
+                  {leads.map((lead, index) => (
                     <tr key={lead.id} className="hover:bg-slate-50">
-                      <td className="p-4 text-center">{index + 1}</td>
-                      <td className="p-4">LD-{String(index + 1).padStart(6, '0')}</td>
+                      <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="p-4">LD-{String((currentPage - 1) * itemsPerPage + index + 1).padStart(6, '0')}</td>
                       <td className="p-4 font-medium">{lead.name}</td>
                       <td className="p-4">{lead.address}</td>
                       <td className="p-4">{lead.phone}</td>
@@ -465,6 +480,57 @@ export default function LeadsPage({ onUpgradeToClient }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+            <div className="text-sm text-slate-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} leads
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-2 text-sm text-slate-600">
+                Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+              </span>
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+                disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                Last
+              </button>
             </div>
           </div>
         </>

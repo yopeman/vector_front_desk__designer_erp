@@ -35,10 +35,18 @@ export default function AdminPage() {
   const [deptSearch, setDeptSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
 
+  // ── Pagination ──
+  const [deptCurrentPage, setDeptCurrentPage] = useState(1);
+  const [deptItemsPerPage, setDeptItemsPerPage] = useState(10);
+  const [deptTotalCount, setDeptTotalCount] = useState(0);
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const [userItemsPerPage, setUserItemsPerPage] = useState(10);
+  const [userTotalCount, setUserTotalCount] = useState(0);
+
   useEffect(() => {
     fetchDepartments();
     fetchUsers();
-  }, []);
+  }, [deptCurrentPage, deptItemsPerPage, userCurrentPage, userItemsPerPage]);
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
@@ -48,8 +56,24 @@ export default function AdminPage() {
   // ── Departments ──
 
   async function fetchDepartments() {
-    const { data } = await supabase.from('departments').select('*').order('name');
-    if (data) setDepartments(data);
+    const from = (deptCurrentPage - 1) * deptItemsPerPage;
+    const to = from + deptItemsPerPage - 1;
+
+    let query = supabase.from('departments').select('*', { count: 'exact' }).order('name');
+
+    if (deptSearch) {
+      query = query.ilike('name', `%${deptSearch}%`);
+    }
+
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) {
+      console.error('Error fetching departments:', error);
+      return;
+    }
+    setDepartments(data || []);
+    setDeptTotalCount(count || 0);
   }
 
   async function saveDepartment(form) {
@@ -80,8 +104,24 @@ export default function AdminPage() {
   // ── Users ──
 
   async function fetchUsers() {
-    const { data } = await supabase.from('users').select('*, departments(name)').order('username');
-    if (data) setUsers(data);
+    const from = (userCurrentPage - 1) * userItemsPerPage;
+    const to = from + userItemsPerPage - 1;
+
+    let query = supabase.from('users').select('*, departments(name)', { count: 'exact' }).order('username');
+
+    if (userSearch) {
+      query = query.or(`username.ilike.%${userSearch}%,email.ilike.%${userSearch}%`);
+    }
+
+    query = query.range(from, to);
+
+    const { data, count, error } = await query;
+    if (error) {
+      console.error('Error fetching users:', error);
+      return;
+    }
+    setUsers(data || []);
+    setUserTotalCount(count || 0);
   }
 
   async function saveUser(form) {
@@ -121,16 +161,14 @@ export default function AdminPage() {
     fetchUsers();
   }
 
-  // ── Filtered data ──
+  // ── Reset page on search change ──
+  useEffect(() => {
+    setDeptCurrentPage(1);
+  }, [deptSearch]);
 
-  const filteredDepts = departments.filter((d) =>
-    !deptSearch || d.name.toLowerCase().includes(deptSearch.toLowerCase())
-  );
-  const filteredUsers = users.filter((u) =>
-    !userSearch ||
-    (u.username && u.username.toLowerCase().includes(userSearch.toLowerCase())) ||
-    (u.email && u.email.toLowerCase().includes(userSearch.toLowerCase()))
-  );
+  useEffect(() => {
+    setUserCurrentPage(1);
+  }, [userSearch]);
 
   // ── Render ──
 
@@ -161,12 +199,12 @@ export default function AdminPage() {
           <button onClick={() => setActiveTab('departments')}
             className={`text-sm font-semibold pb-2 px-1 transition ${activeTab === 'departments' ? 'border-b-2' : 'text-gray-500 hover:text-gray-700'}`}
             style={activeTab === 'departments' ? { color: '#00ced1', borderColor: '#00ced1' } : {}}>
-            Departments {departments.length > 0 && <span className="ml-1 text-xs text-gray-400">({departments.length})</span>}
+            Departments {deptTotalCount > 0 && <span className="ml-1 text-xs text-gray-400">({deptTotalCount})</span>}
           </button>
           <button onClick={() => setActiveTab('users')}
             className={`text-sm font-semibold pb-2 px-1 transition ${activeTab === 'users' ? 'border-b-2' : 'text-gray-500 hover:text-gray-700'}`}
             style={activeTab === 'users' ? { color: '#00ced1', borderColor: '#00ced1' } : {}}>
-            Users {users.length > 0 && <span className="ml-1 text-xs text-gray-400">({users.length})</span>}
+            Users {userTotalCount > 0 && <span className="ml-1 text-xs text-gray-400">({userTotalCount})</span>}
           </button>
         </div>
 
@@ -207,7 +245,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredDepts.map((d) => (
+                  {departments.map((d) => (
                     <tr key={d.id} className="border-t border-gray-100 hover:bg-gray-50">
                       <td className="px-5 py-3.5 font-medium text-gray-800">{d.name}</td>
                       <td className="px-5 py-3.5 text-gray-500">{d.description || '—'}</td>
@@ -226,11 +264,62 @@ export default function AdminPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredDepts.length === 0 && (
+                  {departments.length === 0 && (
                     <tr><td colSpan={3} className="px-5 py-10 text-center text-gray-400">No departments found.</td></tr>
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+              <div className="text-sm text-gray-600">
+                Showing {(deptCurrentPage - 1) * deptItemsPerPage + 1}-{Math.min(deptCurrentPage * deptItemsPerPage, deptTotalCount)} of {deptTotalCount} departments
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={deptItemsPerPage}
+                  onChange={(e) => setDeptItemsPerPage(Number(e.target.value))}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <button
+                  onClick={() => setDeptCurrentPage(1)}
+                  disabled={deptCurrentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  First
+                </button>
+                <button
+                  onClick={() => setDeptCurrentPage(deptCurrentPage - 1)}
+                  disabled={deptCurrentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-2 text-sm text-gray-600">
+                  Page {deptCurrentPage} of {Math.ceil(deptTotalCount / deptItemsPerPage) || 1}
+                </span>
+                <button
+                  onClick={() => setDeptCurrentPage(deptCurrentPage + 1)}
+                  disabled={deptCurrentPage >= Math.ceil(deptTotalCount / deptItemsPerPage)}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
+                <button
+                  onClick={() => setDeptCurrentPage(Math.ceil(deptTotalCount / deptItemsPerPage))}
+                  disabled={deptCurrentPage >= Math.ceil(deptTotalCount / deptItemsPerPage)}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Last
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -274,7 +363,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((u) => (
+                  {users.map((u) => (
                     <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
                       <td className="px-5 py-3.5 font-medium text-gray-800">{u.username || 'Unknown'}</td>
                       <td className="px-5 py-3.5 text-gray-500">{u.email}</td>
@@ -299,11 +388,62 @@ export default function AdminPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredUsers.length === 0 && (
+                  {users.length === 0 && (
                     <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400">No users found.</td></tr>
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+              <div className="text-sm text-gray-600">
+                Showing {(userCurrentPage - 1) * userItemsPerPage + 1}-{Math.min(userCurrentPage * userItemsPerPage, userTotalCount)} of {userTotalCount} users
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={userItemsPerPage}
+                  onChange={(e) => setUserItemsPerPage(Number(e.target.value))}
+                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <button
+                  onClick={() => setUserCurrentPage(1)}
+                  disabled={userCurrentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  First
+                </button>
+                <button
+                  onClick={() => setUserCurrentPage(userCurrentPage - 1)}
+                  disabled={userCurrentPage === 1}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-2 text-sm text-gray-600">
+                  Page {userCurrentPage} of {Math.ceil(userTotalCount / userItemsPerPage) || 1}
+                </span>
+                <button
+                  onClick={() => setUserCurrentPage(userCurrentPage + 1)}
+                  disabled={userCurrentPage >= Math.ceil(userTotalCount / userItemsPerPage)}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
+                <button
+                  onClick={() => setUserCurrentPage(Math.ceil(userTotalCount / userItemsPerPage))}
+                  disabled={userCurrentPage >= Math.ceil(userTotalCount / userItemsPerPage)}
+                  className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Last
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -10,6 +10,11 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFormModal, setShowFormModal] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [clients, setClients] = useState([]);
@@ -35,7 +40,7 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
     fetchInvoices();
     fetchClients();
     fetchItems();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -44,20 +49,31 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
     return () => clearTimeout(debounceTimer);
   }, [clientSearchQuery]);
 
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const fetchInvoices = async () => {
     try {
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
       let query = supabase
         .from('test_proforma_invoices')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false });
       
       if (searchQuery) {
         query = query.ilike('client_name', `%${searchQuery}%`);
       }
       
-      const { data, error } = await query;
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setInvoices(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching Proforma Invoices:', error);
     } finally {
@@ -650,78 +666,133 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
           No Proforma Invoices found. Click "Create Proforma Invoice" to create one.
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table className="w-full text-xs">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="p-3 text-left font-semibold text-slate-600">Invoice No</th>
-                <th className="p-3 text-left font-semibold text-slate-600">Order No</th>
-                <th className="p-3 text-left font-semibold text-slate-600">Client</th>
-                <th className="p-3 text-right font-semibold text-slate-600">Total</th>
-                <th className="p-3 text-left font-semibold text-slate-600">Status</th>
-                <th className="p-3 text-left font-semibold text-slate-600">Date</th>
-                <th className="p-3 text-center font-semibold text-slate-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoices.map((invoice) => (
-                <tr key={invoice.id} className="border-t hover:bg-slate-50">
-                  <td className="p-3 font-medium text-slate-800">{invoice.invoice_no}</td>
-                  <td className="p-3 text-slate-600">{invoice.order_no || '-'}</td>
-                  <td className="p-3 text-slate-600">{invoice.client_name}</td>
-                  <td className="p-3 text-right text-slate-800">{invoice.grand_total?.toFixed(2) || '0.00'}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      invoice.status === 'upgraded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {invoice.status === 'upgraded' ? 'Upgraded' : 'Not Upgraded'}
-                    </span>
-                  </td>
-                  <td className="p-3 text-slate-600">{new Date(invoice.created_at).toLocaleDateString()}</td>
-                  <td className="p-3 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => handleView(invoice)}
-                        className="text-blue-600 hover:text-blue-800 border-none bg-transparent cursor-pointer"
-                        title="View"
-                      >
-                        <i className="fa-solid fa-eye"></i>
-                      </button>
-                      <button
-                        onClick={() => handleEdit(invoice)}
-                        className="text-green-600 hover:text-green-800 border-none bg-transparent cursor-pointer"
-                        title="Edit"
-                      >
-                        <i className="fa-solid fa-edit"></i>
-                      </button>
-                      <button
-                        onClick={() => handleExportTestInvoice(invoice)}
-                        className="text-purple-600 hover:text-purple-800 border-none bg-transparent cursor-pointer"
-                        title="Export PDF"
-                      >
-                        <i className="fa-solid fa-download"></i>
-                      </button>
-                      <button
-                        onClick={() => handleUpgradeToOrder(invoice)}
-                        className="text-green-600 hover:text-green-800 border-none bg-transparent cursor-pointer"
-                        title="Upgrade to Order"
-                      >
-                        <i className="fa-solid fa-arrow-up"></i>
-                      </button>
-                      {/* <button
-                        onClick={() => handleDelete(invoice.id)}
-                        className="text-red-500 hover:text-red-700 border-none bg-transparent cursor-pointer"
-                        title="Delete"
-                      >
-                        <i className="fa-solid fa-trash"></i>
-                      </button> */}
-                    </div>
-                  </td>
+        <>
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="p-3 text-left font-semibold text-slate-600">#</th>
+                  <th className="p-3 text-left font-semibold text-slate-600">Invoice No</th>
+                  <th className="p-3 text-left font-semibold text-slate-600">Order No</th>
+                  <th className="p-3 text-left font-semibold text-slate-600">Client</th>
+                  <th className="p-3 text-right font-semibold text-slate-600">Total</th>
+                  <th className="p-3 text-left font-semibold text-slate-600">Status</th>
+                  <th className="p-3 text-left font-semibold text-slate-600">Date</th>
+                  <th className="p-3 text-center font-semibold text-slate-600">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {invoices.map((invoice, index) => (
+                  <tr key={invoice.id} className="border-t hover:bg-slate-50">
+                    <td className="p-3 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <td className="p-3 font-medium text-slate-800">{invoice.invoice_no}</td>
+                    <td className="p-3 text-slate-600">{invoice.order_no || '-'}</td>
+                    <td className="p-3 text-slate-600">{invoice.client_name}</td>
+                    <td className="p-3 text-right text-slate-800">{invoice.grand_total?.toFixed(2) || '0.00'}</td>
+                    <td className="p-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        invoice.status === 'upgraded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {invoice.status === 'upgraded' ? 'Upgraded' : 'Not Upgraded'}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-600">{new Date(invoice.created_at).toLocaleDateString()}</td>
+                    <td className="p-3 text-center">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => handleView(invoice)}
+                          className="text-blue-600 hover:text-blue-800 border-none bg-transparent cursor-pointer"
+                          title="View"
+                        >
+                          <i className="fa-solid fa-eye"></i>
+                        </button>
+                        <button
+                          onClick={() => handleEdit(invoice)}
+                          className="text-green-600 hover:text-green-800 border-none bg-transparent cursor-pointer"
+                          title="Edit"
+                        >
+                          <i className="fa-solid fa-edit"></i>
+                        </button>
+                        <button
+                          onClick={() => handleExportTestInvoice(invoice)}
+                          className="text-purple-600 hover:text-purple-800 border-none bg-transparent cursor-pointer"
+                          title="Export PDF"
+                        >
+                          <i className="fa-solid fa-download"></i>
+                        </button>
+                        <button
+                          onClick={() => handleUpgradeToOrder(invoice)}
+                          className="text-green-600 hover:text-green-800 border-none bg-transparent cursor-pointer"
+                          title="Upgrade to Order"
+                        >
+                          <i className="fa-solid fa-arrow-up"></i>
+                        </button>
+                        {/* <button
+                          onClick={() => handleDelete(invoice.id)}
+                          className="text-red-500 hover:text-red-700 border-none bg-transparent cursor-pointer"
+                          title="Delete"
+                        >
+                          <i className="fa-solid fa-trash"></i>
+                        </button> */}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+            <div className="text-sm text-slate-600">
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} proforma invoices
+            </div>
+            <div className="flex items-center gap-2">
+              <select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-2 text-sm text-slate-600">
+                Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+              </span>
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+                disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Form Modal */}

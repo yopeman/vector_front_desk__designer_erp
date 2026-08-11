@@ -7,21 +7,43 @@ export default function FeedbackPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [ratingFilter, setRatingFilter] = useState('All');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [previewFeedback, setPreviewFeedback] = useState(null);
 
   useEffect(() => {
     fetchFeedbacks();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchFeedbacks = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('feedbacks')
-        .select('*, order:orders(order_no), client:clients(name)')
+        .select('*, order:orders(order_no), client:clients(name)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`client.name.ilike.%${searchQuery}%,order.order_no.ilike.%${searchQuery}%`);
+      }
+
+      // Apply rating filter
+      if (ratingFilter !== 'All') {
+        query = query.eq('overall_rating', ratingFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setFeedbacks(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
     } finally {
@@ -34,12 +56,10 @@ export default function FeedbackPage() {
     setShowPreviewModal(true);
   };
 
-  const filteredFeedbacks = feedbacks.filter(feedback => {
-    const matchesSearch = feedback.client?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         feedback.order?.order_no?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRating = ratingFilter === 'All' || feedback.overall_rating === ratingFilter;
-    return matchesSearch && matchesRating;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, ratingFilter]);
 
   return (
     <div>
@@ -90,16 +110,16 @@ export default function FeedbackPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredFeedbacks.length === 0 ? (
+            {feedbacks.length === 0 ? (
               <tr>
                 <td colSpan="7" className="p-8 text-center text-slate-400">
                   No feedback found
                 </td>
               </tr>
             ) : (
-              filteredFeedbacks.map((feedback, index) => (
+              feedbacks.map((feedback, index) => (
                 <tr key={feedback.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-center">{index + 1}</td>
+                  <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4">{feedback.client?.name || '-'}</td>
                   <td className="p-4">{feedback.order?.order_no || '-'}</td>
                   <td className="p-4">
@@ -128,6 +148,57 @@ export default function FeedbackPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div className="text-sm text-slate-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} feedback
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-2 text-sm text-slate-600">
+            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Last
+          </button>
+        </div>
       </div>
 
       {/* Preview Modal */}

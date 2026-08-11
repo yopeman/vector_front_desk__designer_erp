@@ -17,6 +17,11 @@ export default function DesignsPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
   // Form state
   const [formData, setFormData] = useState({
     order_id: '',
@@ -41,17 +46,39 @@ export default function DesignsPage() {
     fetchOrders();
     fetchUsers();
     fetchFiles();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchDesigns = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('designs')
-        .select('*, order:orders(order_no), assigned_designer:users(username), design_versions(*)')
+        .select('*, order:orders(order_no), assigned_designer:users(username), design_versions(*)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`design_type.ilike.%${searchQuery}%,purpose.ilike.%${searchQuery}%,order.order_no.ilike.%${searchQuery}%,assigned_designer.username.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('status', statusFilter);
+      }
+
+      // Apply priority filter
+      if (priorityFilter !== 'All') {
+        query = query.eq('priority', priorityFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setDesigns(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching designs:', error);
     } finally {
@@ -455,17 +482,10 @@ export default function DesignsPage() {
     }
   };
 
-  const filteredDesigns = designs.filter(design => {
-    const matchesSearch = 
-      (design.design_type?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (design.purpose?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (design.order?.order_no?.toLowerCase() || '').includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'All' || design.status === statusFilter;
-    const matchesPriority = priorityFilter === 'All' || design.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, priorityFilter]);
 
   if (loading) {
     return (
@@ -551,16 +571,16 @@ export default function DesignsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredDesigns.length === 0 ? (
+            {designs.length === 0 ? (
               <tr>
                 <td colSpan="9" className="p-8 text-center text-slate-400">
                   No designs found
                 </td>
               </tr>
             ) : (
-              filteredDesigns.map((design, index) => (
+              designs.map((design, index) => (
                 <tr key={design.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-center">{index + 1}</td>
+                  <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4 font-medium">{design.order?.order_no || '-'}</td>
                   <td className="p-4">{design.design_type || '-'}</td>
                   <td className="p-4">{design.purpose || '-'}</td>
@@ -599,6 +619,57 @@ export default function DesignsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div className="text-sm text-slate-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} designs
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-2 text-sm text-slate-600">
+            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Last
+          </button>
+        </div>
       </div>
 
       {/* Modal */}

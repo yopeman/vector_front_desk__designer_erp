@@ -9,6 +9,11 @@ export default function DeliveryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [editingDelivery, setEditingDelivery] = useState(null);
   const [formData, setFormData] = useState({
     job_order_id: '',
@@ -30,17 +35,34 @@ export default function DeliveryPage() {
     fetchDeliveries();
     fetchJobOrders();
     fetchClients();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchDeliveries = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('deliveries')
-        .select('*, job_order:job_orders(job_no, invoice:invoices(invoice_no)), client:clients(name)')
+        .select('*, job_order:job_orders(job_no, invoice:invoices(invoice_no)), client:clients(name)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`delivery_no.ilike.%${searchQuery}%,job_order.job_no.ilike.%${searchQuery}%,client.name.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('status', statusFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setDeliveries(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching deliveries:', error);
     } finally {
@@ -213,13 +235,10 @@ export default function DeliveryPage() {
     setShowModal(true);
   };
 
-  const filteredDeliveries = deliveries.filter(delivery => {
-    const matchesSearch = delivery.delivery_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         delivery.job_order?.job_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         delivery.client?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || delivery.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   return (
     <div>
@@ -277,16 +296,16 @@ export default function DeliveryPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredDeliveries.length === 0 ? (
+            {deliveries.length === 0 ? (
               <tr>
                 <td colSpan="8" className="p-8 text-center text-slate-400">
                   No deliveries found
                 </td>
               </tr>
             ) : (
-              filteredDeliveries.map((delivery, index) => (
+              deliveries.map((delivery, index) => (
                 <tr key={delivery.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-center">{index + 1}</td>
+                  <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4 font-medium">{delivery.delivery_no || '-'}</td>
                   <td className="p-4">{delivery.job_order?.job_no || '-'}</td>
                   <td className="p-4">{delivery.client?.name || '-'}</td>
@@ -316,6 +335,57 @@ export default function DeliveryPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div className="text-sm text-slate-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} deliveries
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-2 text-sm text-slate-600">
+            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Last
+          </button>
+        </div>
       </div>
 
       {/* Modal */}

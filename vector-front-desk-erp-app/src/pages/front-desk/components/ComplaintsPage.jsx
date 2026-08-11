@@ -7,6 +7,11 @@ export default function ComplaintsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
   const [editingComplaint, setEditingComplaint] = useState(null);
   const [formData, setFormData] = useState({
     assigned_to: '',
@@ -16,17 +21,34 @@ export default function ComplaintsPage() {
 
   useEffect(() => {
     fetchComplaints();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const fetchComplaints = async () => {
     try {
-      const { data, error } = await supabase
+      const from = (currentPage - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
         .from('complaints')
-        .select('*, order:orders(order_no), client:clients(name)')
+        .select('*, order:orders(order_no), client:clients(name)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
+      // Apply search filter
+      if (searchQuery) {
+        query = query.or(`client.name.ilike.%${searchQuery}%,order.order_no.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+      }
+
+      // Apply status filter
+      if (statusFilter !== 'All') {
+        query = query.eq('status', statusFilter);
+      }
+
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
       if (error) throw error;
       setComplaints(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching complaints:', error);
     } finally {
@@ -88,13 +110,10 @@ export default function ComplaintsPage() {
     setShowModal(true);
   };
 
-  const filteredComplaints = complaints.filter(complaint => {
-    const matchesSearch = complaint.client?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         complaint.order?.order_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         complaint.subject?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || complaint.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Reset page when search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   return (
     <div>
@@ -146,16 +165,16 @@ export default function ComplaintsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredComplaints.length === 0 ? (
+            {complaints.length === 0 ? (
               <tr>
                 <td colSpan="8" className="p-8 text-center text-slate-400">
                   No complaints found
                 </td>
               </tr>
             ) : (
-              filteredComplaints.map((complaint, index) => (
+              complaints.map((complaint, index) => (
                 <tr key={complaint.id} className="hover:bg-slate-50">
-                  <td className="p-4 text-center">{index + 1}</td>
+                  <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4">{complaint.client?.name || '-'}</td>
                   <td className="p-4">{complaint.order?.order_no || '-'}</td>
                   <td className="p-4">{complaint.subject || '-'}</td>
@@ -191,6 +210,57 @@ export default function ComplaintsPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+        <div className="text-sm text-slate-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} complaints
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(Number(e.target.value))}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <button
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            First
+          </button>
+          <button
+            onClick={() => setCurrentPage(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-2 text-sm text-slate-600">
+            Page {currentPage} of {Math.ceil(totalCount / itemsPerPage) || 1}
+          </span>
+          <button
+            onClick={() => setCurrentPage(currentPage + 1)}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Next
+          </button>
+          <button
+            onClick={() => setCurrentPage(Math.ceil(totalCount / itemsPerPage))}
+            disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+          >
+            Last
+          </button>
+        </div>
       </div>
 
       {/* Modal */}
