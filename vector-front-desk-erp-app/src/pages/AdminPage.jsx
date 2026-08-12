@@ -179,7 +179,7 @@ export default function AdminPage() {
         <div className="flex items-center gap-3">
           <span className="text-3xl font-bold" style={{ color: '#00ced1' }}>V</span>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">V☰CTOR</h1>
+            <h1 className="text-xl font-bold text-gray-800">V☰CTOR Advert & Manufacturing</h1>
             <p className="text-xs text-gray-500 mt-0.5">Welcome, {profile?.username || 'Admin'}</p>
           </div>
         </div>
@@ -207,6 +207,8 @@ export default function AdminPage() {
             Users {userTotalCount > 0 && <span className="ml-1 text-xs text-gray-400">({userTotalCount})</span>}
           </button>
         </div> */}
+
+        <center className='font-bold'><h1 style={{fontSize: '48px'}}><u>User Management</u></h1></center>
 
         {/* ─── DEPARTMENTS ─── */}
         {activeTab === 'departments' && (
@@ -334,7 +336,7 @@ export default function AdminPage() {
                 placeholder="Search users by name or email..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none w-full max-w-xs"
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none w-full max-w-[calc(100%-12%)]"
                 style={{ transition: 'border-color 0.2s' }}
                 onFocus={(e) => e.target.style.borderColor = '#00ced1'}
                 onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
