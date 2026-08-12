@@ -24,7 +24,7 @@ export default function AdminPage() {
   const { profile, signOut } = useAuth();
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('departments');
+  const [activeTab, setActiveTab] = useState('users');
   const [toast, setToast] = useState(null);
 
   // Modal state
@@ -44,7 +44,7 @@ export default function AdminPage() {
   const [userTotalCount, setUserTotalCount] = useState(0);
 
   useEffect(() => {
-    fetchDepartments();
+    // fetchDepartments();
     fetchUsers();
   }, [deptCurrentPage, deptItemsPerPage, userCurrentPage, userItemsPerPage]);
 
@@ -195,7 +195,7 @@ export default function AdminPage() {
 
       <div className="max-w-7xl mx-auto p-6">
         {/* Tabs */}
-        <div className="flex gap-6 mb-6 border-b border-gray-200 pb-2">
+        {/* <div className="flex gap-6 mb-6 border-b border-gray-200 pb-2">
           <button onClick={() => setActiveTab('departments')}
             className={`text-sm font-semibold pb-2 px-1 transition ${activeTab === 'departments' ? 'border-b-2' : 'text-gray-500 hover:text-gray-700'}`}
             style={activeTab === 'departments' ? { color: '#00ced1', borderColor: '#00ced1' } : {}}>
@@ -206,7 +206,7 @@ export default function AdminPage() {
             style={activeTab === 'users' ? { color: '#00ced1', borderColor: '#00ced1' } : {}}>
             Users {userTotalCount > 0 && <span className="ml-1 text-xs text-gray-400">({userTotalCount})</span>}
           </button>
-        </div>
+        </div> */}
 
         {/* ─── DEPARTMENTS ─── */}
         {activeTab === 'departments' && (
@@ -358,7 +358,7 @@ export default function AdminPage() {
                     <th className="px-5 py-3 font-semibold text-gray-600">Name</th>
                     <th className="px-5 py-3 font-semibold text-gray-600">Email</th>
                     <th className="px-5 py-3 font-semibold text-gray-600">Role</th>
-                    <th className="px-5 py-3 font-semibold text-gray-600">Department</th>
+                    {/* <th className="px-5 py-3 font-semibold text-gray-600">Department</th> */}
                     <th className="px-5 py-3 font-semibold text-gray-600 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -372,7 +372,7 @@ export default function AdminPage() {
                           {u.role || 'pending'}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 text-gray-500">{u.departments?.name || '—'}</td>
+                      {/* <td className="px-5 py-3.5 text-gray-500">{u.departments?.name || '—'}</td> */}
                       <td className="px-5 py-3.5 text-right space-x-1">
                         <button onClick={() => setUserModal({ mode: 'edit', data: u })}
                           className="text-xs font-semibold px-2.5 py-1 rounded transition"
@@ -573,13 +573,18 @@ function UserModal({ mode, data, departments, onSave, onClose }) {
             onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
             onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
           >
-            <option value="">— No role (pending) —</option>
-            <option value="front_desk">Front Desk Officer</option>
-            <option value="designer">Designer</option>
+            <option value="" selected>— Pending —</option>
             <option value="admin">Admin</option>
+            <option value="front_desk">Front Desk</option>
+            <option value="designer">Designer</option>
+            <option value="machine_operator">Machine Operator</option>
+            <option value="finish">Finishing</option>
+            <option value="marketer">Marketer</option>
+            {/* <option value="admin_marketer">Marketer Admin</option> */}
+            <option value="finance">Finance</option>
           </select>
         </div>
-        <div>
+        {/* <div>
           <label className="block text-xs font-semibold text-gray-700 mb-1">Department</label>
           <select value={form.department_id} onChange={(e) => setForm({ ...form, department_id: e.target.value })}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
@@ -592,7 +597,7 @@ function UserModal({ mode, data, departments, onSave, onClose }) {
               <option key={d.id} value={d.id}>{d.name}</option>
             ))}
           </select>
-        </div>
+        </div> */}
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
           <button type="submit" className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition"
