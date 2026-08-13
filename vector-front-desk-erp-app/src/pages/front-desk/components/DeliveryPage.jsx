@@ -28,8 +28,16 @@ export default function DeliveryPage() {
     scheduled_time: '',
     actual_delivery_time: '',
     status: 'Pending',
-    received_by: ''
+    received_by: '',
+    note: ''
   });
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [existingFileIds, setExistingFileIds] = useState([]);
+  const [existingFiles, setExistingFiles] = useState([]);
+  const [selectedDelivery, setSelectedDelivery] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailAttachedFiles, setDetailAttachedFiles] = useState([]);
+  const [detailFileUrls, setDetailFileUrls] = useState({});
 
   useEffect(() => {
     fetchDeliveries();
@@ -109,6 +117,99 @@ export default function DeliveryPage() {
     }
   };
 
+  const handleFileChange = (e) => {
+    setAttachedFiles(Array.from(e.target.files));
+  };
+
+  const uploadFile = async (file) => {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .upload(fileName, file);
+
+    if (error) throw error;
+
+    // Insert file record into files table
+    const { data: fileRecord, error: insertError } = await supabase
+      .from('files')
+      .insert({
+        name: file.name,
+        path: data.path,
+        mime_type: file.type,
+        file_size: file.size,
+        uploaded_by: null
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+    return fileRecord.id;
+  };
+
+  const fetchExistingFiles = async (fileIds) => {
+    try {
+      const { data: files, error } = await supabase
+        .from('files')
+        .select('*')
+        .in('id', fileIds);
+
+      if (error) throw error;
+      setExistingFiles(files || []);
+    } catch (error) {
+      console.error('Error fetching existing files:', error);
+      setExistingFiles([]);
+    }
+  };
+
+  const getFileUrl = async (filePath) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600);
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error creating signed URL:', error);
+      // Fallback to public URL
+      const { data } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+      return data.publicUrl;
+    }
+  };
+
+  const handleViewDetails = async (delivery) => {
+    setSelectedDelivery(delivery);
+    setShowDetailModal(true);
+
+    // Fetch attached files
+    if (delivery.attached_file_ids && delivery.attached_file_ids.length > 0) {
+      try {
+        const { data: files, error } = await supabase
+          .from('files')
+          .select('*')
+          .in('id', delivery.attached_file_ids);
+
+        if (error) throw error;
+        setDetailAttachedFiles(files || []);
+
+        // Generate file URLs
+        const urls = {};
+        for (const file of files || []) {
+          urls[file.id] = await getFileUrl(file.path);
+        }
+        setDetailFileUrls(urls);
+      } catch (error) {
+        console.error('Error fetching files:', error);
+        setDetailAttachedFiles([]);
+        setDetailFileUrls({});
+      }
+    } else {
+      setDetailAttachedFiles([]);
+      setDetailFileUrls({});
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -120,6 +221,21 @@ export default function DeliveryPage() {
     try {
       // Get current user (simplified - in real app, use auth context)
       const currentUser = localStorage.getItem('username') || 'Admin';
+
+      // Upload files and get their IDs
+      const fileIds = [];
+      for (const file of attachedFiles) {
+        try {
+          const fileId = await uploadFile(file);
+          fileIds.push(fileId);
+        } catch (error) {
+          console.error('Error uploading file:', file.name, error);
+          alert(`Failed to upload file: ${file.name}`);
+        }
+      }
+
+      // Combine existing file IDs with new ones
+      const allFileIds = [...existingFileIds, ...fileIds];
 
       if (editingDelivery) {
         // Update existing delivery
@@ -139,7 +255,9 @@ export default function DeliveryPage() {
             actual_delivery_time: formData.actual_delivery_time || null,
             status: formData.status,
             received_by: formData.received_by,
-            logged_by: currentUser
+            logged_by: currentUser,
+            note: formData.note,
+            attached_file_ids: allFileIds
           })
           .eq('id', editingDelivery.id);
 
@@ -163,7 +281,9 @@ export default function DeliveryPage() {
             actual_delivery_time: formData.actual_delivery_time || null,
             status: formData.status,
             received_by: formData.received_by,
-            logged_by: currentUser
+            logged_by: currentUser,
+            note: formData.note,
+            attached_file_ids: allFileIds
           }]);
 
         if (error) throw error;
@@ -185,8 +305,12 @@ export default function DeliveryPage() {
         scheduled_time: '',
         actual_delivery_time: '',
         status: 'Pending',
-        received_by: ''
+        received_by: '',
+        note: ''
       });
+      setAttachedFiles([]);
+      setExistingFileIds([]);
+      setExistingFiles([]);
       await fetchDeliveries();
     } catch (error) {
       console.error('Error saving delivery:', error);
@@ -209,14 +333,22 @@ export default function DeliveryPage() {
       scheduled_time: delivery.scheduled_time || '',
       actual_delivery_time: delivery.actual_delivery_time ? delivery.actual_delivery_time.split('T')[0] : '',
       status: delivery.status || 'Pending',
-      received_by: delivery.received_by || ''
+      received_by: delivery.received_by || '',
+      note: delivery.note || ''
     });
+    setExistingFileIds(delivery.attached_file_ids || []);
+    if (delivery.attached_file_ids && delivery.attached_file_ids.length > 0) {
+      fetchExistingFiles(delivery.attached_file_ids);
+    }
     setShowModal(true);
   };
 
 
   const handleOpenModal = () => {
     setEditingDelivery(null);
+    setAttachedFiles([]);
+    setExistingFileIds([]);
+    setExistingFiles([]);
     setFormData({
       job_order_id: '',
       client_id: '',
@@ -322,13 +454,22 @@ export default function DeliveryPage() {
                     </span>
                   </td>
                   <td className="p-4 text-center">
-                    <button
-                      onClick={() => handleEdit(delivery)}
-                      className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
-                      title="Edit"
-                    >
-                      <i className="fa-solid fa-pen-to-square"></i> Edit
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handleViewDetails(delivery)}
+                        className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
+                        title="View Details"
+                      >
+                        <i className="fa-solid fa-eye"></i> Show
+                      </button>
+                      <button
+                        onClick={() => handleEdit(delivery)}
+                        className="text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
+                        title="Edit"
+                      >
+                        <i className="fa-solid fa-pen-to-square"></i> Edit
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -539,6 +680,83 @@ export default function DeliveryPage() {
                     className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Note</label>
+                  <textarea
+                    value={formData.note}
+                    onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    rows="3"
+                    placeholder="Add any additional notes..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">Attached Files</label>
+                  <div className="border-2 border-dashed border-slate-200 rounded-lg p-3">
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleFileChange}
+                      className="w-full text-xs text-slate-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {/* Existing files */}
+                    {existingFiles.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-xs font-semibold text-slate-500">Existing files:</p>
+                        {existingFiles.map((file) => (
+                          <div key={file.id} className="flex items-center justify-between bg-slate-50 rounded px-2 py-1">
+                            <div className="flex items-center gap-1">
+                              <i className="fa-solid fa-file text-blue-500 text-xs"></i>
+                              <span className="text-xs text-slate-700">{file.name}</span>
+                              <span className="text-xs text-slate-500">
+                                ({(file.file_size / 1024).toFixed(1)} KB)
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setExistingFiles(prev => prev.filter(f => f.id !== file.id));
+                                setExistingFileIds(prev => prev.filter(id => id !== file.id));
+                              }}
+                              className="text-slate-400 hover:text-red-500 transition-colors text-xs"
+                              title="Remove existing file"
+                            >
+                              <i className="fa-solid fa-xmark"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* New files */}
+                    {attachedFiles.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        <p className="text-xs font-semibold text-slate-500">New files to upload:</p>
+                        {attachedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between bg-blue-50 rounded px-2 py-1">
+                            <div className="flex items-center gap-1">
+                              <i className="fa-solid fa-file text-blue-500 text-xs"></i>
+                              <span className="text-xs text-slate-700">{file.name}</span>
+                              <span className="text-xs text-slate-500">
+                                ({(file.size / 1024).toFixed(1)} KB)
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+                              }}
+                              className="text-slate-400 hover:text-red-500 transition-colors text-xs"
+                            >
+                              <i className="fa-solid fa-xmark"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
@@ -560,6 +778,192 @@ export default function DeliveryPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delivery Detail Modal */}
+      {showDetailModal && selectedDelivery && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl border border-slate-200 w-full max-w-2xl mt-10 max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-slate-800">Delivery Details</h2>
+              <button
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setSelectedDelivery(null);
+                  setDetailAttachedFiles([]);
+                  setDetailFileUrls({});
+                }}
+                className="text-slate-500 hover:text-slate-700 font-medium flex items-center gap-1 border-none bg-transparent cursor-pointer text-xs"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Delivery No</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.delivery_no || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Job No</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.job_order?.job_no || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Client</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.client?.name || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.status || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Scheduled Date</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.scheduled_date || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Scheduled Time</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.scheduled_time || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+              </div>
+
+              {/* Delivery Address */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Delivery Address</label>
+                <input
+                  type="text"
+                  value={selectedDelivery.delivery_address || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+
+              {/* Contact Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contact Person</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.contact_person || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Contact Phone</label>
+                  <input
+                    type="text"
+                    value={selectedDelivery.contact_phone || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+              </div>
+
+              {/* Items */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Items</label>
+                <textarea
+                  value={selectedDelivery.items || '-'}
+                  readOnly
+                  rows="3"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 resize-none"
+                />
+              </div>
+
+              {/* Vehicle Driver */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Vehicle Driver</label>
+                <input
+                  type="text"
+                  value={selectedDelivery.vehicle_driver || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+
+              {/* Received By */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Received By</label>
+                <input
+                  type="text"
+                  value={selectedDelivery.received_by || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+
+              {/* Note */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Note</label>
+                <textarea
+                  value={selectedDelivery.note || '-'}
+                  readOnly
+                  rows="3"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 resize-none"
+                />
+              </div>
+
+              {/* Attached Files */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Attached Files</label>
+                {detailAttachedFiles.length > 0 ? (
+                  <div className="space-y-2">
+                    {detailAttachedFiles.map((file) => (
+                      <a
+                        key={file.id}
+                        href={detailFileUrls[file.id]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <i className="fa-solid fa-file text-blue-500"></i>
+                        <span className="text-sm text-slate-700">{file.name}</span>
+                        <span className="text-xs text-slate-500">
+                          ({(file.file_size / 1024).toFixed(1)} KB)
+                        </span>
+                        <i className="fa-solid fa-external-link text-xs text-slate-400 ml-auto"></i>
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">No attached files</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
