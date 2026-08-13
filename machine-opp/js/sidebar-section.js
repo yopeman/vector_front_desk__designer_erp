@@ -12,7 +12,7 @@ class SidebarSection {
         await Auth.initPromise;
         const container = document.getElementById('sidebar-container');
         const currentUser = Auth.getCurrentUser();
-        const isFinishRole = currentUser && currentUser.role === 'finish';
+        const isFinishRole = false; //currentUser && currentUser.role === 'finish';
 
         if (container) {
             container.innerHTML = `<aside class="w-[18rem] bg-[#00CED1] border-r border-white/20 p-5 flex flex-col justify-between overflow-y-auto relative">
