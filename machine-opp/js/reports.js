@@ -17,7 +17,21 @@ async function getReportData() {
     if (typeof fetchCompletedOrders === 'function') {
         await fetchCompletedOrders();
     }
-    // Don't fetch rework from Supabase for reports - use sample data from mock-data.js
+    if (typeof fetchReworkRecords === 'function') {
+        await fetchReworkRecords();
+    }
+    if (typeof fetchDeliveries === 'function') {
+        await fetchDeliveries();
+    }
+    if (typeof fetchInstallations === 'function') {
+        await fetchInstallations();
+    }
+    if (typeof loadInventoryItems === 'function') {
+        await loadInventoryItems();
+    }
+    if (typeof loadInventoryMovements === 'function') {
+        await loadInventoryMovements();
+    }
 
     // Add received orders
     ordersData.forEach(order => {
@@ -53,12 +67,9 @@ async function getReportData() {
         });
     });
 
-    // Add rework records (not yet integrated with Supabase)
-    console.log('[DEBUG] Checking reworkData:', typeof reworkData, reworkData);
+    // Add rework records
     if (typeof reworkData !== 'undefined' && reworkData.length > 0) {
-        console.log('[DEBUG] Processing rework records, count:', reworkData.length);
         reworkData.forEach(entry => {
-            console.log('[DEBUG] Processing rework entry:', entry);
             records.push({
                 module: 'rework',
                 moduleLabel: 'Rework Recording',
@@ -73,9 +84,6 @@ async function getReportData() {
                 statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
             });
         });
-        console.log('[DEBUG] Added rework records to report data');
-    } else {
-        console.log('[DEBUG] No rework data available or empty');
     }
 
     // Add machine maintenance logs from Supabase
@@ -136,15 +144,21 @@ async function getReportData() {
         }
     }
 
-    // Add delivery records (placeholder - to be integrated with data source)
-    if (typeof deliveryData !== 'undefined' && deliveryData.length > 0) {
-        deliveryData.forEach(entry => {
+    // Add delivery records from Supabase
+    if (typeof deliveriesData !== 'undefined' && deliveriesData.length > 0) {
+        deliveriesData.forEach(entry => {
+            const entryDate = entry.created_at ? new Date(entry.created_at) : null;
+            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
             records.push({
                 module: 'delivery',
                 moduleLabel: 'Delivery',
-                date: entry.date || '-',
-                orderNum: entry.orderNum || '-',
-                title: entry.deliveryType || '-',
+                date: formattedDate,
+                orderNum: entry.job_order?.job_no || '-',
+                title: 'Delivery',
                 designer: entry.driver || '-',
                 material: entry.vehicle || '-',
                 machine: entry.location || '-',
@@ -155,18 +169,24 @@ async function getReportData() {
         });
     }
 
-    // Add installation records (placeholder - to be integrated with data source)
-    if (typeof installationData !== 'undefined' && installationData.length > 0) {
-        installationData.forEach(entry => {
+    // Add installation records from Supabase
+    if (typeof installationsData !== 'undefined' && installationsData.length > 0) {
+        installationsData.forEach(entry => {
+            const entryDate = entry.created_at ? new Date(entry.created_at) : null;
+            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
             records.push({
                 module: 'installation',
                 moduleLabel: 'Installation',
-                date: entry.date || '-',
-                orderNum: entry.orderNum || '-',
-                title: entry.installationType || '-',
+                date: formattedDate,
+                orderNum: entry.job_order?.job_no || '-',
+                title: 'Installation',
                 designer: entry.technician || '-',
                 material: entry.equipment || '-',
-                machine: entry.siteLocation || '-',
+                machine: entry.location || '-',
                 status: entry.status || 'Pending',
                 statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'in-progress' ? 'text-amber-400' : 'text-slate-400',
                 statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'in-progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
@@ -174,40 +194,52 @@ async function getReportData() {
         });
     }
 
-    // Add inventory records (placeholder - to be integrated with data source)
-    if (typeof inventoryData !== 'undefined' && inventoryData.length > 0) {
-        inventoryData.forEach(entry => {
+    // Add inventory records from Supabase
+    if (typeof inventoryItems !== 'undefined' && inventoryItems.length > 0) {
+        inventoryItems.forEach(entry => {
+            const entryDate = entry.created_at ? new Date(entry.created_at) : null;
+            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
             records.push({
                 module: 'inventory',
                 moduleLabel: 'Inventory',
-                date: entry.date || '-',
-                orderNum: entry.itemId || '-',
-                title: entry.itemName || '-',
+                date: formattedDate,
+                orderNum: entry.item_code || '-',
+                title: entry.name || '-',
                 designer: entry.category || '-',
                 material: entry.sku || '-',
                 machine: entry.location || '-',
                 status: entry.status || 'In Stock',
-                statusColor: entry.status === 'in-stock' ? 'text-emerald-400' : entry.status === 'low-stock' ? 'text-amber-400' : 'text-rose-400',
-                statusBg: entry.status === 'in-stock' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'low-stock' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'
+                statusColor: entry.status === 'active' ? 'text-emerald-400' : entry.status === 'low_stock' ? 'text-amber-400' : 'text-rose-400',
+                statusBg: entry.status === 'active' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'low_stock' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'
             });
         });
     }
 
-    // Add stock movement records (placeholder - to be integrated with data source)
-    if (typeof stockMovementData !== 'undefined' && stockMovementData.length > 0) {
-        stockMovementData.forEach(entry => {
+    // Add stock movement records from Supabase
+    if (typeof inventoryMovements !== 'undefined' && inventoryMovements.length > 0) {
+        inventoryMovements.forEach(entry => {
+            const entryDate = entry.movement_date ? new Date(entry.movement_date) : null;
+            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
             records.push({
                 module: 'stock-movement',
                 moduleLabel: 'Stock Movement',
-                date: entry.date || '-',
-                orderNum: entry.movementId || '-',
-                title: entry.movementType || '-',
-                designer: entry.item || '-',
+                date: formattedDate,
+                orderNum: entry.id?.substring(0, 8).toUpperCase() || '-',
+                title: entry.movement_type || '-',
+                designer: entry.inventory?.name || '-',
                 material: entry.quantity || '-',
-                machine: entry.fromTo || '-',
-                status: entry.status || 'Completed',
-                statusColor: entry.status === 'completed' ? 'text-emerald-400' : 'text-amber-400',
-                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
+                machine: entry.movement_type || '-',
+                status: 'Completed',
+                statusColor: 'text-emerald-400',
+                statusBg: 'bg-emerald-500/10 border-emerald-500/20'
             });
         });
     }
@@ -338,7 +370,6 @@ function getMergedColumnConfig(selectedModules) {
 // =============================================
 async function filterReports() {
     const selectedModules = getSelectedModules();
-    console.log('[DEBUG] Selected modules:', selectedModules);
     const searchVal = document.getElementById('report-search').value.toLowerCase();
     const dateFrom = document.getElementById('report-date-from').value;
     const dateTo = document.getElementById('report-date-to').value;
@@ -389,16 +420,11 @@ async function filterReports() {
 
     // Get all records
     const allRecords = await getReportData();
-    console.log('[DEBUG] All records count:', allRecords.length);
-    console.log('[DEBUG] All records modules:', [...new Set(allRecords.map(r => r.module))]);
     let filtered = allRecords;
 
     // Apply multi-module filter
     if (selectedModules.length > 0) {
-        console.log('[DEBUG] Filtering by modules:', selectedModules);
         filtered = filtered.filter(r => selectedModules.includes(r.module));
-        console.log('[DEBUG] Filtered records count:', filtered.length);
-        console.log('[DEBUG] Filtered records modules:', [...new Set(filtered.map(r => r.module))]);
     }
 
     // Apply search filter
@@ -438,12 +464,9 @@ async function filterReports() {
 
     selectedModules.forEach(module => {
         const moduleRecords = filtered.filter(r => r.module === module);
-        console.log('[DEBUG] Module:', module, 'Records count:', moduleRecords.length);
 
         const moduleColumns = getMergedColumnConfig([module]);
-        console.log('[DEBUG] Module columns for', module, ':', moduleColumns);
         const visibleColumns = getVisibleColumns(moduleColumns);
-        console.log('[DEBUG] Visible columns for', module, ':', visibleColumns.map(c => c.key));
         const allColumns = moduleColumns.filter(col => col.key !== '__src__' && col.key !== 'no');
 
         // Get or initialize table state
@@ -532,13 +555,11 @@ async function filterReports() {
         tbody.className = 'divide-y divide-slate-800 text-sm text-slate-300';
 
         paginatedRecords.forEach((record, index) => {
-            console.log('[DEBUG] Rendering record:', record);
             const row = document.createElement('tr');
             row.className = 'order-row hover:bg-violet-600/10 transition-colors';
 
             visibleColumns.forEach(col => {
                 let value = record[col.key] || '-';
-                console.log('[DEBUG] Column:', col.key, 'Value:', value);
                 let cellCls = 'p-4';
                 if (col.cls) cellCls += ' ' + col.cls;
 
