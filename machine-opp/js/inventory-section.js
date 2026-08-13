@@ -142,4 +142,8 @@ class InventorySection {
 // Initialize section
 document.addEventListener('DOMContentLoaded', () => {
     new InventorySection();
+    // Initialize inventory module
+    if (typeof initInventory === 'function') {
+        initInventory();
+    }
 });

@@ -70,12 +70,41 @@ function renderInstallationTable() {
     const tbody = document.getElementById('installation-body');
     if (!tbody) return;
 
-    if (installationsData.length === 0) {
+    // Get filter values
+    const searchTerm = document.getElementById('installation-search')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('installation-status-filter')?.value || 'All';
+
+    // Filter installations
+    const filteredInstallations = installationsData.filter(installation => {
+        // Status filter
+        if (statusFilter !== 'All' && installation.status !== statusFilter) {
+            return false;
+        }
+
+        // Search filter
+        if (searchTerm) {
+            const searchableText = [
+                installation.installation_no || '',
+                installation.job_order?.job_no || '',
+                installation.client?.name || '',
+                installation.contact_person || '',
+                installation.scheduled_date || ''
+            ].join(' ').toLowerCase();
+
+            if (!searchableText.includes(searchTerm)) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    if (filteredInstallations.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-500">No installations found</td></tr>';
         return;
     }
 
-    tbody.innerHTML = installationsData.map((installation, index) => {
+    tbody.innerHTML = filteredInstallations.map((installation, index) => {
         const statusClass = installation.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-400' :
                            installation.status === 'In Progress' ? 'bg-blue-500/10 text-blue-400' :
                            installation.status === 'Cancelled' ? 'bg-red-500/10 text-red-400' :
@@ -494,4 +523,16 @@ window.closeInstallationDetailModal = function(event) {
 // =============================================
 window.initInstallations = function() {
     fetchInstallations();
+    
+    // Add event listeners for filters
+    const searchInput = document.getElementById('installation-search');
+    const statusFilter = document.getElementById('installation-status-filter');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', renderInstallationTable);
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', renderInstallationTable);
+    }
 }

@@ -465,14 +465,15 @@ async function saveMovement(type) {
 }
 
 // =============================================
-// SEARCH HANDLER
+// INITIALIZATION
 // =============================================
-document.addEventListener('DOMContentLoaded', () => {
+window.initInventory = function() {
+    // Add event listener for search
     const searchInput = document.getElementById('inventory-search');
     if (searchInput) {
         searchInput.addEventListener('input', renderInventoryTable);
     }
     
-    // Load inventory on page load
+    // Load inventory
     loadInventoryItems();
-});
+}

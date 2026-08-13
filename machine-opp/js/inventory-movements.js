@@ -298,9 +298,10 @@ function refreshMovements() {
 }
 
 // =============================================
-// SEARCH AND FILTER HANDLERS
+// INITIALIZATION
 // =============================================
-document.addEventListener('DOMContentLoaded', () => {
+window.initInventoryMovements = function() {
+    // Add event listeners for search and filter
     const searchInput = document.getElementById('movement-search');
     const filterSelect = document.getElementById('movement-filter-type');
     
@@ -312,6 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
         filterSelect.addEventListener('change', renderMovementsTable);
     }
     
-    // Load movements on page load
+    // Load movements
     loadInventoryMovements();
-});
+}

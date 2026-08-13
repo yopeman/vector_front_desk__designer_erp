@@ -70,12 +70,41 @@ function renderDeliveryTable() {
     const tbody = document.getElementById('delivery-body');
     if (!tbody) return;
 
-    if (deliveriesData.length === 0) {
+    // Get filter values
+    const searchTerm = document.getElementById('delivery-search')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('delivery-status-filter')?.value || 'All';
+
+    // Filter deliveries
+    const filteredDeliveries = deliveriesData.filter(delivery => {
+        // Status filter
+        if (statusFilter !== 'All' && delivery.status !== statusFilter) {
+            return false;
+        }
+
+        // Search filter
+        if (searchTerm) {
+            const searchableText = [
+                delivery.delivery_no || '',
+                delivery.job_order?.job_no || '',
+                delivery.client?.name || '',
+                delivery.contact_person || '',
+                delivery.scheduled_date || ''
+            ].join(' ').toLowerCase();
+
+            if (!searchableText.includes(searchTerm)) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    if (filteredDeliveries.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-500">No deliveries found</td></tr>';
         return;
     }
 
-    tbody.innerHTML = deliveriesData.map((delivery, index) => {
+    tbody.innerHTML = filteredDeliveries.map((delivery, index) => {
         const statusClass = delivery.status === 'Delivered' ? 'bg-emerald-500/10 text-emerald-400' :
                            delivery.status === 'In Transit' ? 'bg-blue-500/10 text-blue-400' :
                            delivery.status === 'Delayed' ? 'bg-red-500/10 text-red-400' :
@@ -488,4 +517,16 @@ window.closeDeliveryDetailModal = function(event) {
 // =============================================
 window.initDeliveries = function() {
     fetchDeliveries();
+    
+    // Add event listeners for filters
+    const searchInput = document.getElementById('delivery-search');
+    const statusFilter = document.getElementById('delivery-status-filter');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', renderDeliveryTable);
+    }
+    
+    if (statusFilter) {
+        statusFilter.addEventListener('change', renderDeliveryTable);
+    }
 }

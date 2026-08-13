@@ -121,4 +121,8 @@ class InventoryMovementsSection {
 // Initialize section
 document.addEventListener('DOMContentLoaded', () => {
     new InventoryMovementsSection();
+    // Initialize inventory movements module
+    if (typeof initInventoryMovements === 'function') {
+        initInventoryMovements();
+    }
 });
