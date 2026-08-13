@@ -414,11 +414,14 @@ async function saveMovement(type) {
     }
 
     try {
+        const currentUser = Auth.getCurrentUser();
+        
         const movementData = {
             inventory_id: inventoryId,
             movement_type: type,
             quantity: parseFloat(quantity),
             reference_type: referenceType || null,
+            performed_by: currentUser?.id || null,
             notes: notes || null,
             movement_date: new Date().toISOString(),
             created_at: new Date().toISOString()

@@ -3,7 +3,7 @@
 // =============================================
 
 let inventoryMovements = [];
-let inventoryItems = [];
+let inventoryItemsList = [];
 
 // =============================================
 // LOAD INVENTORY MOVEMENTS FROM SUPABASE
@@ -16,7 +16,8 @@ async function loadInventoryMovements() {
                 *,
                 inventory:inventory_id(name, item_code),
                 machines:machine_id(name),
-                production_orders:production_order_id(id)
+                production_orders:production_order_id(id),
+                users:performed_by(username)
             `)
             .order('movement_date', { ascending: false });
 
@@ -44,7 +45,7 @@ async function loadInventoryItemsForSelect() {
 
         if (error) throw error;
         
-        inventoryItems = data || [];
+        inventoryItemsList = data || [];
     } catch (error) {
         console.error('Error loading inventory items:', error);
     }
@@ -111,9 +112,7 @@ function renderMovementsTable() {
                     </span>
                 </td>
                 <td class="p-3 text-slate-300">${movement.reference_type || '-'}</td>
-                <td class="p-3 text-slate-400">${movement.machines?.name || '-'}</td>
-                <td class="p-3 font-mono text-xs text-blue-400">${movement.production_orders?.id ? movement.production_orders.id.slice(0, 8) + '...' : '-'}</td>
-                <td class="p-3 text-slate-400 text-xs">${movement.performed_by ? movement.performed_by.slice(0, 8) + '...' : '-'}</td>
+                <td class="p-3 text-slate-400 text-xs">${movement.users?.username || '-'}</td>
                 <td class="p-3 text-slate-400 text-xs max-w-[150px] truncate">${movement.notes || '-'}</td>
             </tr>
         `;
@@ -160,7 +159,7 @@ async function openMovementModal(type, preselectedItemId = null) {
     const typeIcon = isIn ? 'fa-arrow-down' : 'fa-arrow-up';
 
     // Build inventory options
-    const inventoryOptions = inventoryItems.map(item => 
+    const inventoryOptions = inventoryItemsList.map(item => 
         `<option value="${item.id}" ${item.id === preselectedItemId ? 'selected' : ''}>${item.name} ${item.item_code ? `(${item.item_code})` : ''}</option>`
     ).join('');
 
@@ -241,11 +240,14 @@ async function saveMovement(type) {
     }
 
     try {
+        const currentUser = Auth.getCurrentUser();
+        
         const movementData = {
             inventory_id: inventoryId,
             movement_type: type,
             quantity: parseFloat(quantity),
             reference_type: referenceType || null,
+            performed_by: currentUser?.id || null,
             notes: notes || null,
             movement_date: new Date().toISOString(),
             created_at: new Date().toISOString()
@@ -259,7 +261,7 @@ async function saveMovement(type) {
         if (movementError) throw movementError;
 
         // Update inventory quantity
-        const currentItem = inventoryItems.find(i => i.id === inventoryId);
+        const currentItem = inventoryItemsList.find(i => i.id === inventoryId);
         if (currentItem) {
             const currentQty = parseFloat(currentItem.current_quantity) || 0;
             const newQty = type === 'in' ? currentQty + parseFloat(quantity) : currentQty - parseFloat(quantity);

@@ -91,8 +91,6 @@ class InventoryMovementsSection {
                                             <th class="p-3">Type</th>
                                             <th class="p-3 text-center">Quantity</th>
                                             <th class="p-3">Reference Type</th>
-                                            <th class="p-3">Machine</th>
-                                            <th class="p-3">Production Order</th>
                                             <th class="p-3">Performed By</th>
                                             <th class="p-3">Notes</th>
                                         </tr>
