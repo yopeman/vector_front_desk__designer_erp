@@ -40,6 +40,12 @@ function switchTab(targetId) {
         'completed-orders': () => {
             if (typeof renderCompletedOrdersTable === 'function') renderCompletedOrdersTable();
         },
+        'delivery': () => {
+            if (typeof renderDeliveryTable === 'function') renderDeliveryTable();
+        },
+        'installation': () => {
+            if (typeof renderInstallationTable === 'function') renderInstallationTable();
+        },
         'machine-login': () => {
             if (typeof switchMachine === 'function') {
                 const currentMachineKey = typeof currentMachine !== 'undefined' ? currentMachine : 'cnc';
@@ -584,7 +590,13 @@ window.onload = async function() {
     // Completed Orders initialization
     if (typeof renderCompletedOrdersTable === 'function') renderCompletedOrdersTable();
     
-    // Notes initialization with Supabase
+    // Delivery initialization
+    if (typeof initDeliveries === 'function') initDeliveries();
+    
+    // Installation initialization
+    if (typeof initInstallations === 'function') initInstallations();
+    
+    // Machine Maintenance initialization with Supabase
     if (typeof initNotesData === 'function') await initNotesData();
     if (typeof setNotesFilter === 'function') setNotesFilter('all');
     

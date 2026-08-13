@@ -585,7 +585,8 @@ body {
     padding: 1rem;
 }
 
-.modal-overlay.open {
+.modal-overlay.open,
+.modal-overlay.active {
     opacity: 1;
     pointer-events: auto;
 }
