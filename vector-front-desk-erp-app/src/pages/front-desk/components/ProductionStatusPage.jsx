@@ -7,6 +7,10 @@ export default function ProductionStatusPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [fileUrls, setFileUrls] = useState({});
 
   useEffect(() => {
     fetchProductionOrders();
@@ -25,6 +29,64 @@ export default function ProductionStatusPage() {
       console.error('Error fetching production orders:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewDetails = async (order) => {
+    setSelectedOrder(order);
+    setShowDetailModal(true);
+
+    // Fetch attached files
+    if (order.attached_file_ids && order.attached_file_ids.length > 0) {
+      try {
+        const { data: files, error } = await supabase
+          .from('files')
+          .select('*')
+          .in('id', order.attached_file_ids);
+
+        if (error) throw error;
+        setAttachedFiles(files || []);
+
+        // Generate file URLs
+        const urls = {};
+        for (const file of files || []) {
+          urls[file.id] = await getFileUrl(file.path);
+        }
+        setFileUrls(urls);
+      } catch (error) {
+        console.error('Error fetching files:', error);
+        setAttachedFiles([]);
+        setFileUrls({});
+      }
+    } else {
+      setAttachedFiles([]);
+      setFileUrls({});
+    }
+  };
+
+  const getFileUrl = async (filePath) => {
+    try {
+      console.log('Attempting to get signed URL for:', filePath);
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(filePath, 3600);
+      if (error) {
+        console.error('Supabase signed URL error:', error);
+        const { data: publicData, error: publicError } = await supabase.storage
+          .from('documents')
+          .getPublicUrl(filePath);
+        if (publicError) {
+          console.error('Public URL error:', publicError);
+          return null;
+        }
+        console.log('Using public URL:', publicData.publicUrl);
+        return publicData.publicUrl;
+      }
+      console.log('Signed URL generated:', data.signedUrl);
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      return null;
     }
   };
 
@@ -109,7 +171,7 @@ export default function ProductionStatusPage() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Task Name</th>
+                <th className="p-4 text-left text-xs font-semibold text-slate-600">Task Type</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Order</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Material</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Machine</th>
@@ -117,6 +179,7 @@ export default function ProductionStatusPage() {
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Priority</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Job Type</th>
+                <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -177,10 +240,192 @@ export default function ProductionStatusPage() {
                       {order.job_type || '-'}
                     </span>
                   </td>
+                  <td className="p-4 text-center">
+                    <button
+                      onClick={() => handleViewDetails(order)}
+                      className="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                      title="View Details"
+                    >
+                      <i className="fa-solid fa-eye"></i> Show
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 mt-16">
+          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Production Order Details</h2>
+                <p className="text-sm text-slate-500">View detailed information</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setSelectedOrder(null);
+                  setAttachedFiles([]);
+                  setFileUrls({});
+                }}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <i className="fa-solid fa-xmark text-xl"></i>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.task_type || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Order Number</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.orders?.order_no || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Material</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.material || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Machine</label>
+                  <input
+                    type="text"
+                    value={`${selectedOrder.machines?.name || '-'} ${selectedOrder.machines?.machine_type ? `(${selectedOrder.machines.machine_type})` : ''}`}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Designer</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.designer?.username || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.task_type || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+              </div>
+
+              {/* Dimensions */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-2">Dimensions</label>
+                <div className="grid grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Length</label>
+                    <input
+                      type="text"
+                      value={selectedOrder.length || '-'}
+                      readOnly
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Width</label>
+                    <input
+                      type="text"
+                      value={selectedOrder.width || '-'}
+                      readOnly
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Height</label>
+                    <input
+                      type="text"
+                      value={selectedOrder.height || '-'}
+                      readOnly
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">Gram</label>
+                    <input
+                      type="text"
+                      value={selectedOrder.gram || '-'}
+                      readOnly
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Note */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Note</label>
+                <textarea
+                  value={selectedOrder.note || ''}
+                  readOnly
+                  rows="3"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 resize-none"
+                  placeholder="No note"
+                />
+              </div>
+
+              {/* Attached Files */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-2">Attached Files</label>
+                {attachedFiles.length > 0 ? (
+                  <div className="space-y-2">
+                    {attachedFiles.map(file => (
+                      <div key={file.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+                        <div className="flex items-center gap-2">
+                          <i className="fa-solid fa-file text-blue-500"></i>
+                          {fileUrls[file.id] ? (
+                            <a
+                              href={fileUrls[file.id]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-slate-700 hover:text-blue-600 transition-colors"
+                            >
+                              {file.name}
+                            </a>
+                          ) : (
+                            <span className="text-sm text-slate-700">{file.name}</span>
+                          )}
+                          <span className="text-xs text-slate-500">
+                            ({(file.file_size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-400 italic">No attached files</div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

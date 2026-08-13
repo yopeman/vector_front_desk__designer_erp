@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
 
-export default function ProductionOrderModal({ onClose, onSuccess }) {
+export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [machines, setMachines] = useState([]);
   const [designVersions, setDesignVersions] = useState([]);
+  const [existingFileIds, setExistingFileIds] = useState([]);
 
   const [formData, setFormData] = useState({
-    task_name: '',
     material: '',
     thickness: '',
     color: '',
@@ -23,14 +23,60 @@ export default function ProductionOrderModal({ onClose, onSuccess }) {
     design_version_id: '',
     task_type: 'project',
     priority: 'Medium',
-    job_type: 'received'
+    job_type: 'received',
+    note: ''
   });
+
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [uploadedFileIds, setUploadedFileIds] = useState([]);
+  const [existingFiles, setExistingFiles] = useState([]);
 
   useEffect(() => {
     fetchOrders();
     fetchMachines();
     fetchDesignVersions();
-  }, []);
+
+    // If editing, populate form with existing data
+    if (editOrder) {
+      setFormData({
+        material: editOrder.material || '',
+        thickness: editOrder.thickness || '',
+        color: editOrder.color || '',
+        machine_id: editOrder.machine_id || '',
+        order_id: editOrder.order_id || '',
+        length: editOrder.length || '',
+        width: editOrder.width || '',
+        height: editOrder.height || '',
+        gram: editOrder.gram || '',
+        design_version_id: editOrder.design_version_id || '',
+        task_type: editOrder.task_type || 'project',
+        priority: editOrder.priority || 'Medium',
+        job_type: editOrder.job_type || 'received',
+        note: editOrder.note || ''
+      });
+      setExistingFileIds(editOrder.attached_file_ids || []);
+
+      // Fetch existing file details
+      if (editOrder.attached_file_ids && editOrder.attached_file_ids.length > 0) {
+        fetchExistingFiles(editOrder.attached_file_ids);
+      }
+    }
+  }, [editOrder]);
+
+  const fetchExistingFiles = async (fileIds) => {
+    try {
+      const { data: files, error } = await supabase
+        .from('files')
+        .select('*')
+        .in('id', fileIds);
+
+      if (error) throw error;
+      setExistingFiles(files || []);
+    } catch (error) {
+      console.error('Error fetching existing files:', error);
+      setExistingFiles([]);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -77,31 +123,115 @@ export default function ProductionOrderModal({ onClose, onSuccess }) {
     }
   };
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setAttachedFiles(files);
+  };
+
+  const uploadFile = async (file) => {
+    try {
+      const fileName = `${Date.now()}-${file.name}`;
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(fileName);
+
+      // Insert file record into files table
+      const { data: fileRecord, error: insertError } = await supabase
+        .from('files')
+        .insert({
+          name: file.name,
+          path: data.path,
+          mime_type: file.type,
+          file_size: file.size,
+          uploaded_by: user.id
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      return fileRecord.id;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('production_orders')
-        .insert({
-          order_id: formData.order_id || null,
-          designer_id: user.id,
-          machine_id: formData.machine_id || null,
-          material: formData.material,
-          thickness: formData.thickness,
-          color: formData.color,
-          length: formData.length,
-          width: formData.width,
-          height: formData.height,
-          gram: formData.gram,
-          task_type: formData.task_type,
-          priority: formData.priority,
-          job_type: formData.job_type,
-          status: 'New'
-        });
+      // Upload files and get their IDs
+      const fileIds = [];
+      for (const file of attachedFiles) {
+        try {
+          const fileId = await uploadFile(file);
+          fileIds.push(fileId);
+        } catch (error) {
+          console.error('Error uploading file:', file.name, error);
+          alert(`Failed to upload file: ${file.name}`);
+        }
+      }
 
-      if (error) throw error;
+      // Combine existing file IDs with new ones
+      const allFileIds = [...existingFileIds, ...fileIds];
+
+      if (editOrder) {
+        // Update existing order
+        const { error } = await supabase
+          .from('production_orders')
+          .update({
+            order_id: formData.order_id || null,
+            machine_id: formData.machine_id || null,
+            material: formData.material,
+            thickness: formData.thickness,
+            color: formData.color,
+            length: formData.length,
+            width: formData.width,
+            height: formData.height,
+            gram: formData.gram,
+            task_type: formData.task_type,
+            priority: formData.priority,
+            job_type: formData.job_type,
+            note: formData.note,
+            attached_file_ids: allFileIds
+          })
+          .eq('id', editOrder.id);
+
+        if (error) throw error;
+      } else {
+        // Create new order
+        const { error } = await supabase
+          .from('production_orders')
+          .insert({
+            order_id: formData.order_id || null,
+            designer_id: user.id,
+            machine_id: formData.machine_id || null,
+            material: formData.material,
+            thickness: formData.thickness,
+            color: formData.color,
+            length: formData.length,
+            width: formData.width,
+            height: formData.height,
+            gram: formData.gram,
+            task_type: formData.task_type,
+            priority: formData.priority,
+            job_type: formData.job_type,
+            status: 'New',
+            note: formData.note,
+            attached_file_ids: allFileIds
+          });
+
+        if (error) throw error;
+      }
 
       // If design version is selected, link it somehow (you may need to add a field to production_orders)
       if (formData.design_version_id) {
@@ -112,8 +242,8 @@ export default function ProductionOrderModal({ onClose, onSuccess }) {
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Error creating production order:', error);
-      alert('Failed to create production order. Please try again.');
+      console.error('Error saving production order:', error);
+      alert('Failed to save production order. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -141,21 +271,22 @@ export default function ProductionOrderModal({ onClose, onSuccess }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Task Name */}
-          <div>
+          {/* Task Type */}
+          {/* <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Task Name <span className="text-red-500">*</span>
+              Task Type <span className="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              name="task_name"
-              value={formData.task_name}
+            <select
+              name="task_type"
+              value={formData.task_type}
               onChange={handleChange}
               required
-              placeholder="Enter task name"
               className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+            >
+              <option value="project">Project</option>
+              <option value="task">Task</option>
+            </select>
+          </div> */}
 
           {/* Order Selection */}
           <div>
@@ -361,6 +492,90 @@ export default function ProductionOrderModal({ onClose, onSuccess }) {
                 <option value="Medium">Medium</option>
                 <option value="Low">Low</option>
               </select>
+            </div>
+          </div>
+
+          {/* Note */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Note
+            </label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleChange}
+              rows="3"
+              placeholder="Add any additional notes..."
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+          </div>
+
+          {/* File Upload */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Attached Files
+            </label>
+            <div className="border-2 border-dashed border-slate-200 rounded-lg p-4">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileChange}
+                className="w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {/* Existing files */}
+              {existingFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-semibold text-slate-500">Existing files:</p>
+                  {existingFiles.map((file) => (
+                    <div key={file.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <i className="fa-solid fa-file text-blue-500"></i>
+                        <span className="text-sm text-slate-700">{file.name}</span>
+                        <span className="text-xs text-slate-500">
+                          ({(file.file_size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExistingFiles(prev => prev.filter(f => f.id !== file.id));
+                          setExistingFileIds(prev => prev.filter(id => id !== file.id));
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors"
+                        title="Remove existing file"
+                      >
+                        <i className="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* New files */}
+              {attachedFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs font-semibold text-slate-500">New files to upload:</p>
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <i className="fa-solid fa-file text-blue-500"></i>
+                        <span className="text-sm text-slate-700">{file.name}</span>
+                        <span className="text-xs text-slate-500">
+                          ({(file.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+                        }}
+                        className="text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <i className="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

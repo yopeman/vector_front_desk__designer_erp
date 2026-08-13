@@ -31,6 +31,11 @@ export default function DesignerPage() {
   const [showProductionOrderModal, setShowProductionOrderModal] = useState(false);
   const [productionOrders, setProductionOrders] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [selectedProductionOrder, setSelectedProductionOrder] = useState(null);
+  const [showProductionDetailModal, setShowProductionDetailModal] = useState(false);
+  const [productionAttachedFiles, setProductionAttachedFiles] = useState([]);
+  const [productionFileUrls, setProductionFileUrls] = useState({});
+  const [editProductionOrder, setEditProductionOrder] = useState(null);
 
   // Reports state
   const [reportDateFrom, setReportDateFrom] = useState(() => {
@@ -251,6 +256,43 @@ export default function DesignerPage() {
     } catch (error) {
       console.error('Error fetching production orders:', error);
     }
+  };
+
+  const handleViewProductionDetails = async (order) => {
+    setSelectedProductionOrder(order);
+    setShowProductionDetailModal(true);
+
+    // Fetch attached files
+    if (order.attached_file_ids && order.attached_file_ids.length > 0) {
+      try {
+        const { data: files, error } = await supabase
+          .from('files')
+          .select('*')
+          .in('id', order.attached_file_ids);
+
+        if (error) throw error;
+        setProductionAttachedFiles(files || []);
+
+        // Generate file URLs
+        const urls = {};
+        for (const file of files || []) {
+          urls[file.id] = await getFileUrl(file.path);
+        }
+        setProductionFileUrls(urls);
+      } catch (error) {
+        console.error('Error fetching files:', error);
+        setProductionAttachedFiles([]);
+        setProductionFileUrls({});
+      }
+    } else {
+      setProductionAttachedFiles([]);
+      setProductionFileUrls({});
+    }
+  };
+
+  const handleEditProductionOrder = (order) => {
+    setEditProductionOrder(order);
+    setShowProductionOrderModal(true);
   };
 
   // Designer report menu items
@@ -1811,7 +1853,7 @@ export default function DesignerPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-slate-50 text-left">
                       <tr>
-                        <th className="px-4 py-3 font-semibold text-slate-600">Task Name</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Task Type</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Material</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Machine</th>
@@ -1819,13 +1861,14 @@ export default function DesignerPage() {
                         <th className="px-4 py-3 font-semibold text-slate-600">Priority</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Job Type</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {productionOrders.map((order) => (
                         <tr key={order.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
-                            {order.material || '-'}
+                            {order.task_type || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {order.orders?.order_no || '-'}
@@ -1878,10 +1921,201 @@ export default function DesignerPage() {
                               {order.job_type}
                             </span>
                           </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleViewProductionDetails(order)}
+                                className="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                                title="View Details"
+                              >
+                                <i className="fa-solid fa-eye"></i> Show
+                              </button>
+                              <button
+                                onClick={() => handleEditProductionOrder(order)}
+                                className="text-emerald-600 hover:text-emerald-800 transition-colors p-2 rounded-lg hover:bg-emerald-50"
+                                title="Edit"
+                              >
+                                <i className="fa-solid fa-pen"></i> Edit
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* Production Order Detail Modal */}
+              {showProductionDetailModal && selectedProductionOrder && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 mt-16">
+                  <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900">Production Order Details</h2>
+                        <p className="text-sm text-slate-500">View detailed information</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowProductionDetailModal(false);
+                          setSelectedProductionOrder(null);
+                          setProductionAttachedFiles([]);
+                          setProductionFileUrls({});
+                        }}
+                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <i className="fa-solid fa-xmark text-xl"></i>
+                      </button>
+                    </div>
+
+                    <div className="p-6 space-y-6">
+                      {/* Basic Information */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
+                          <input
+                            type="text"
+                            value={selectedProductionOrder.task_type || '-'}
+                            readOnly
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Order Number</label>
+                          <input
+                            type="text"
+                            value={selectedProductionOrder.orders?.order_no || '-'}
+                            readOnly
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Material</label>
+                          <input
+                            type="text"
+                            value={selectedProductionOrder.material || '-'}
+                            readOnly
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Machine</label>
+                          <input
+                            type="text"
+                            value={`${selectedProductionOrder.machines?.name || '-'} ${selectedProductionOrder.machines?.machine_type ? `(${selectedProductionOrder.machines.machine_type})` : ''}`}
+                            readOnly
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Designer</label>
+                          <input
+                            type="text"
+                            value={selectedProductionOrder.designer?.username || '-'}
+                            readOnly
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
+                          <input
+                            type="text"
+                            value={selectedProductionOrder.task_type || '-'}
+                            readOnly
+                            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Dimensions */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-2">Dimensions</label>
+                        <div className="grid grid-cols-4 gap-3">
+                          <div>
+                            <label className="block text-xs text-slate-500 mb-1">Length</label>
+                            <input
+                              type="text"
+                              value={selectedProductionOrder.length || '-'}
+                              readOnly
+                              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-slate-500 mb-1">Width</label>
+                            <input
+                              type="text"
+                              value={selectedProductionOrder.width || '-'}
+                              readOnly
+                              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-slate-500 mb-1">Height</label>
+                            <input
+                              type="text"
+                              value={selectedProductionOrder.height || '-'}
+                              readOnly
+                              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-slate-500 mb-1">Gram</label>
+                            <input
+                              type="text"
+                              value={selectedProductionOrder.gram || '-'}
+                              readOnly
+                              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Note */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-1">Note</label>
+                        <textarea
+                          value={selectedProductionOrder.note || ''}
+                          readOnly
+                          rows="3"
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 resize-none"
+                          placeholder="No note"
+                        />
+                      </div>
+
+                      {/* Attached Files */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-600 mb-2">Attached Files</label>
+                        {productionAttachedFiles.length > 0 ? (
+                          <div className="space-y-2">
+                            {productionAttachedFiles.map(file => (
+                              <div key={file.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+                                <div className="flex items-center gap-2">
+                                  <i className="fa-solid fa-file text-blue-500"></i>
+                                  {productionFileUrls[file.id] ? (
+                                    <a
+                                      href={productionFileUrls[file.id]}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm text-slate-700 hover:text-blue-600 transition-colors"
+                                    >
+                                      {file.name}
+                                    </a>
+                                  ) : (
+                                    <span className="text-sm text-slate-700">{file.name}</span>
+                                  )}
+                                  <span className="text-xs text-slate-500">
+                                    ({(file.file_size / 1024).toFixed(1)} KB)
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-slate-400 italic">No attached files</div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -2574,11 +2808,14 @@ export default function DesignerPage() {
       {/* Production Order Modal */}
       {showProductionOrderModal && (
         <ProductionOrderModal
-          onClose={() => setShowProductionOrderModal(false)}
+          onClose={() => {
+            setShowProductionOrderModal(false);
+            setEditProductionOrder(null);
+          }}
           onSuccess={() => {
             fetchProductionOrders();
-            setShowProductionOrderModal(false);
           }}
+          editOrder={editProductionOrder}
         />
       )}
     </div>
