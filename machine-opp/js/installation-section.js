@@ -232,7 +232,7 @@ class InstallationSection {
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Attached Files</label>
-                                <div id="detail-attached-files-list" class="space-y-2">
+                                <div id="installation-detail-attached-files-list" class="space-y-2">
                                     <div class="text-xs text-slate-500">No attached files</div>
                                 </div>
                             </div>

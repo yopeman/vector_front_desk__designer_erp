@@ -425,8 +425,9 @@ window.viewInstallationDetails = async function(id) {
     document.getElementById('detail-note').value = installation.note || '-';
 
     // Fetch and display attached files
-    const filesList = document.getElementById('detail-attached-files-list');
+    const filesList = document.getElementById('installation-detail-attached-files-list');
     if (installation.attached_file_ids && installation.attached_file_ids.length > 0) {
+
         const { data: files, error } = await supabase
             .from('files')
             .select('*')
@@ -449,7 +450,8 @@ window.viewInstallationDetails = async function(id) {
                 </a>`;
             });
 
-            filesList.innerHTML = await Promise.all(fileHtmlPromises).then(htmls => htmls.join(''));
+            let allFileHtmlLinks =  await Promise.all(fileHtmlPromises).then(htmls => htmls.join(''));
+            filesList.innerHTML = allFileHtmlLinks;
         } else {
             filesList.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
         }
