@@ -79,7 +79,7 @@ async function fetchCompletedOrders() {
             date: formattedDate,
             taskType: row.task_type || 'task',
             orderNum: row.order_number || 'N/A',
-            title: row.title || 'Untitled',
+            title: row.job_type || 'Untitled',
             machine: machinesMap[row.machine_id] || row.machine || 'N/A',
             material: row.material || 'N/A',
             thickness: row.thickness || 'N/A',
@@ -87,9 +87,11 @@ async function fetchCompletedOrders() {
             length: row.length || 'N/A',
             width: row.width || 'N/A',
             area: row.area || 0,
-            quality: row.quality || 'Pass',
+            quality: row.quality_status || 'Pass',
             status: row.status || 'Completed',
-            completedAt: row.completed_at
+            completedAt: row.completed_at,
+            note: row.note || '',
+            attachedFileIds: row.attached_file_ids || []
         };
     });
 
@@ -111,7 +113,7 @@ async function renderCompletedOrdersTable() {
     }
 
     if (completedOrdersData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="14" class="p-8 text-center text-slate-500 italic">No completed orders yet. Mark orders as complete from the Received Order Status popup.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" class="p-8 text-center text-slate-500 italic">No completed orders yet. Mark orders as complete from the Received Order Status popup.</td></tr>';
         return;
     }
 
@@ -133,6 +135,11 @@ async function renderCompletedOrdersTable() {
             <td class="p-4 font-mono text-xs">${order.area}</td>
             <td class="p-4 text-emerald-400 text-xs font-bold">${order.quality}</td>
             <td class="p-4"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded border border-emerald-500/20">${order.status}</span></td>
+            <td class="p-4 text-center">
+                <button onclick="viewCompletedOrderDetails(${index})" class="text-blue-400 hover:text-blue-300 transition-colors p-2 rounded-lg hover:bg-blue-500/10">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </td>
         `;
         tbody.appendChild(row);
     });
@@ -367,6 +374,147 @@ function exportPDF() {
         }
     };
 
-    // Generate and download PDF
-    exportToPDF(wrapper, `completed_orders_${new Date().toISOString().split('T')[0]}.pdf`);
+    // Generate PDF
+    html2pdf().set(opt).from(wrapper).save();
+}
+
+// =============================================
+// VIEW COMPLETED ORDER DETAILS
+// =============================================
+async function viewCompletedOrderDetails(index) {
+    const order = completedOrdersData[index];
+    if (!order) return;
+
+    const modal = document.getElementById('completed-order-modal');
+    if (!modal) return;
+
+    // Populate modal with order details
+    document.getElementById('comp-date').value = order.date;
+    document.getElementById('comp-order-num').value = order.orderNum;
+    document.getElementById('comp-title').value = order.title;
+    document.getElementById('comp-machine').value = order.machine;
+    document.getElementById('comp-material').value = order.material;
+    document.getElementById('comp-thickness').value = order.thickness;
+    document.getElementById('comp-color').value = order.color;
+    document.getElementById('comp-length').value = order.length;
+    document.getElementById('comp-width').value = order.width;
+    document.getElementById('comp-height').value = order.height || 'N/A';
+    document.getElementById('comp-area').value = order.area;
+    document.getElementById('comp-quality').value = order.quality;
+    
+    // Format completed at timestamp
+    let completedAt = 'N/A';
+    if (order.completedAt) {
+        try {
+            const date = new Date(order.completedAt);
+            completedAt = date.toLocaleString();
+        } catch (e) {
+            completedAt = order.completedAt;
+        }
+    }
+    document.getElementById('comp-completed-at').value = completedAt;
+    document.getElementById('comp-task-type').value = order.taskType;
+    document.getElementById('comp-note').value = order.note || '';
+
+    // Populate attached files
+    await populateCompletedOrderAttachments(order.attachedFileIds);
+
+    // Open modal
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+}
+
+// =============================================
+// CLOSE COMPLETED ORDER MODAL
+// =============================================
+function closeCompletedOrderModal(event) {
+    if (event && event.target !== document.getElementById('completed-order-modal')) return;
+    const modal = document.getElementById('completed-order-modal');
+    if (modal) {
+        modal.classList.remove('open');
+        document.body.classList.remove('modal-open');
+    }
+}
+
+// =============================================
+// POPULATE COMPLETED ORDER ATTACHMENTS
+// =============================================
+async function populateCompletedOrderAttachments(attachedFileIds) {
+    const filesList = document.getElementById('comp-attached-files-list');
+    
+    if (!filesList) return;
+    
+    if (attachedFileIds && attachedFileIds.length > 0) {
+        const { data: files, error } = await supabase
+            .from('files')
+            .select('*')
+            .in('id', attachedFileIds);
+        
+        if (error) {
+            console.error('Error fetching files:', error);
+            filesList.innerHTML = '<div class="text-xs text-slate-500">Error loading files</div>';
+            return;
+        }
+        
+        if (files && files.length > 0) {
+            const fileHtmlPromises = files.map(async file => {
+                const fileUrl = await getFileUrl(file.path);
+                
+                return `
+                    <div class="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-file text-purple-400 text-xs"></i>
+                            <a href="${fileUrl}" target="_blank" class="text-xs text-slate-300 hover:text-blue-400 truncate max-w-[200px] transition-colors">${file.name}</a>
+                            <span class="text-[10px] text-slate-500">(${formatFileSize(file.file_size)})</span>
+                        </div>
+                    </div>
+                `;
+            });
+            filesList.innerHTML = (await Promise.all(fileHtmlPromises)).join('');
+        } else {
+            filesList.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
+        }
+    } else {
+        filesList.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
+    }
+}
+
+// =============================================
+// FORMAT FILE SIZE
+// =============================================
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// =============================================
+// GET FILE URL WITH FALLBACK
+// =============================================
+async function getFileUrl(filePath) {
+    try {
+        console.log('Attempting to get signed URL for:', filePath);
+        const { data, error } = await window.supabase.storage
+            .from('documents')
+            .createSignedUrl(filePath, 3600);
+        if (error) {
+            console.error('Supabase signed URL error:', error);
+            const { data: publicData, error: publicError } = await window.supabase.storage
+                .from('documents')
+                .getPublicUrl(filePath);
+            if (publicError) {
+                console.error('Public URL error:', publicError);
+                return null;
+            }
+            console.log('Using public URL:', publicData.publicUrl);
+            return publicData.publicUrl;
+        }
+        console.log('Signed URL generated:', data.signedUrl);
+        return data.signedUrl;
+    } catch (error) {
+        console.error('Error getting file URL:', error);
+        return null;
+    }
 }

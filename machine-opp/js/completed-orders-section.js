@@ -37,7 +37,7 @@ class CompletedordersSection {
                                     <th class="p-4">Date</th>
                                     <th class="p-4">Task/Project</th>
                                     <th class="p-4">Order Number</th>
-                                    <th class="p-4">Project/Task Name/Title</th>
+                                    <th class="p-4">Work Type</th>
                                     <th class="p-4">Machine Used</th>
                                     <th class="p-4">Material Used</th>
                                     <th class="p-4">Thickness</th>
@@ -47,6 +47,7 @@ class CompletedordersSection {
                                     <th class="p-4">Area</th>
                                     <th class="p-4">Quality</th>
                                     <th class="p-4">Status</th>
+                                    <th class="p-4 text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="completed-orders-body" class="divide-y divide-slate-800 text-sm text-slate-300">
@@ -65,9 +66,93 @@ class CompletedordersSection {
                                     <td class="p-4 font-mono text-xs">7200</td>
                                     <td class="p-4 text-emerald-400 text-xs font-bold">Pass</td>
                                     <td class="p-4"><span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded border border-emerald-500/20">Completed</span></td>
+                                    <td class="p-4 text-center">
+                                        <button onclick="viewCompletedOrderDetails(0)" class="text-blue-400 hover:text-blue-300 transition-colors p-2 rounded-lg hover:bg-blue-500/10">
+                                            <i class="fa-solid fa-eye"></i> Show
+                                        </button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                <!-- Completed Order Details Modal -->
+                <div id="completed-order-modal" class="modal-overlay" onclick="closeCompletedOrderModal(event)">
+                    <div class="modal-container max-w-3xl" onclick="event.stopPropagation()">
+                        <button onclick="closeCompletedOrderModal()" class="modal-close-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <h3 class="text-xl font-bold text-white mb-6">Completed Order Details</h3>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Date</label>
+                                <input type="text" id="comp-date" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Order Number</label>
+                                <input type="text" id="comp-order-num" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Title</label>
+                                <input type="text" id="comp-title" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Machine</label>
+                                <input type="text" id="comp-machine" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Material</label>
+                                <input type="text" id="comp-material" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Thickness</label>
+                                <input type="text" id="comp-thickness" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Color</label>
+                                <input type="text" id="comp-color" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Length</label>
+                                <input type="text" id="comp-length" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Width</label>
+                                <input type="text" id="comp-width" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Height</label>
+                                <input type="text" id="comp-height" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Area</label>
+                                <input type="text" id="comp-area" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Quality Status</label>
+                                <input type="text" id="comp-quality" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Completed At</label>
+                                <input type="text" id="comp-completed-at" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Task Type</label>
+                                <input type="text" id="comp-task-type" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Note</label>
+                                <textarea id="comp-note" rows="3" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none resize-none"></textarea>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Attached Files</label>
+                                <div id="comp-attached-files-list" class="space-y-2">
+                                    <div class="text-xs text-slate-500">No attached files</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>`;
         }
