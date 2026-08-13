@@ -100,8 +100,24 @@ class ReportsSection {
                                             <span>Completed Order</span>
                                         </label>
                                         <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
+                                            <input type="checkbox" value="delivery" onchange="updateModuleSelection()" class="module-checkbox">
+                                            <span>Delivery</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
+                                            <input type="checkbox" value="installation" onchange="updateModuleSelection()" class="module-checkbox">
+                                            <span>Installation</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
                                             <input type="checkbox" value="machine-maintenance" onchange="updateModuleSelection()" class="module-checkbox">
                                             <span>Machine Maintenance Logs</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
+                                            <input type="checkbox" value="inventory" onchange="updateModuleSelection()" class="module-checkbox">
+                                            <span>Inventory</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 px-2 py-1.5 text-sm text-slate-300 hover:bg-slate-700/30 rounded cursor-pointer">
+                                            <input type="checkbox" value="stock-movement" onchange="updateModuleSelection()" class="module-checkbox">
+                                            <span>Stock Movement</span>
                                         </label>
                                     </div>
                                 </div>

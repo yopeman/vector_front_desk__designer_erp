@@ -18,10 +18,54 @@ window.completedOrdersData = completedOrdersData;
 // =============================================
 // REWORK RECORDS DATA
 // =============================================
-let reworkData = [];
+let reworkData = [
+    { id: 1, date: '15/01/25', taskType: 'Edge Polishing', machine: 'CNC-01', material: 'Granite', status: 'completed' },
+    { id: 2, date: '16/01/25', taskType: 'Cut Correction', machine: 'CNC-02', material: 'Marble', status: 'in-progress' },
+    { id: 3, date: '17/01/25', taskType: 'Surface Refinishing', machine: 'CNC-01', material: 'Quartz', status: 'completed' }
+];
 let reworkIdCounter = 4;
 window.reworkData = reworkData;
 window.reworkIdCounter = reworkIdCounter;
+
+// =============================================
+// DELIVERY DATA
+// =============================================
+let deliveryData = [
+    { id: 1, date: '18/01/25', orderNum: 'ORD-001', deliveryType: 'Standard', driver: 'John Smith', vehicle: 'TRK-101', location: 'Warehouse A', status: 'completed' },
+    { id: 2, date: '19/01/25', orderNum: 'ORD-002', deliveryType: 'Express', driver: 'Jane Doe', vehicle: 'TRK-102', location: 'Site B', status: 'in-transit' },
+    { id: 3, date: '20/01/25', orderNum: 'ORD-003', deliveryType: 'Standard', driver: 'Mike Johnson', vehicle: 'TRK-103', location: 'Warehouse A', status: 'pending' }
+];
+window.deliveryData = deliveryData;
+
+// =============================================
+// INSTALLATION DATA
+// =============================================
+let installationData = [
+    { id: 1, date: '21/01/25', orderNum: 'ORD-004', installationType: 'Kitchen Counter', technician: 'Tom Wilson', equipment: 'Kit-001', siteLocation: '123 Main St', status: 'completed' },
+    { id: 2, date: '22/01/25', orderNum: 'ORD-005', installationType: 'Bathroom Vanity', technician: 'Sarah Lee', equipment: 'Kit-002', siteLocation: '456 Oak Ave', status: 'in-progress' },
+    { id: 3, date: '23/01/25', orderNum: 'ORD-006', installationType: 'Floor Tiling', technician: 'Bob Brown', equipment: 'Kit-003', siteLocation: '789 Pine Rd', status: 'pending' }
+];
+window.installationData = installationData;
+
+// =============================================
+// INVENTORY DATA
+// =============================================
+let inventoryData = [
+    { id: 1, date: '24/01/25', itemId: 'INV-001', itemName: 'Granite Slab', category: 'Raw Material', sku: 'GRN-001', location: 'Zone A', status: 'in-stock' },
+    { id: 2, date: '25/01/25', itemId: 'INV-002', itemName: 'Marble Block', category: 'Raw Material', sku: 'MRB-002', location: 'Zone B', status: 'low-stock' },
+    { id: 3, date: '26/01/25', itemId: 'INV-003', itemName: 'Quartz Sheet', category: 'Finished Product', sku: 'QTZ-003', location: 'Zone C', status: 'in-stock' }
+];
+window.inventoryData = inventoryData;
+
+// =============================================
+// STOCK MOVEMENT DATA
+// =============================================
+let stockMovementData = [
+    { id: 1, date: '27/01/25', movementId: 'MOV-001', movementType: 'Transfer In', item: 'Granite Slab', quantity: '50 pcs', fromTo: 'From: Supplier', status: 'completed' },
+    { id: 2, date: '28/01/25', movementId: 'MOV-002', movementType: 'Transfer Out', item: 'Marble Block', quantity: '20 pcs', fromTo: 'To: Production', status: 'completed' },
+    { id: 3, date: '29/01/25', movementId: 'MOV-003', movementType: 'Adjustment', item: 'Quartz Sheet', quantity: '+5 pcs', fromTo: 'Zone A → Zone C', status: 'completed' }
+];
+window.stockMovementData = stockMovementData;
 
 // =============================================
 // STORE REQUEST DATA
@@ -108,8 +152,8 @@ const reportColumnConfigs = {
         { key: 'no', label: 'No', cls: 'text-center w-16' },
         { key: 'date', label: 'Date', cls: '' },
         { key: 'title', label: 'Work Type', cls: '' },
+        { key: 'designer', label: 'Machine', cls: 'text-xs' },
         { key: 'material', label: 'Material', cls: 'text-xs' },
-        { key: 'machine', label: 'Machine', cls: 'font-mono text-xs' },
         { key: 'status', label: 'Status', cls: '' }
     ],
     'completed-orders': [
@@ -133,6 +177,46 @@ const reportColumnConfigs = {
         { key: 'status', label: 'Status', cls: '' },
         { key: 'checklistCount', label: 'Items', cls: 'text-center' },
         { key: 'notes', label: 'Notes', cls: 'text-xs' }
+    ],
+    'delivery': [
+        { key: 'no', label: 'No', cls: 'text-center w-16' },
+        { key: 'date', label: 'Date', cls: '' },
+        { key: 'orderNum', label: 'Order #', cls: 'font-mono' },
+        { key: 'title', label: 'Delivery Type', cls: '' },
+        { key: 'designer', label: 'Driver', cls: 'text-xs' },
+        { key: 'material', label: 'Vehicle', cls: 'text-xs' },
+        { key: 'machine', label: 'Location', cls: 'font-mono text-xs' },
+        { key: 'status', label: 'Status', cls: '' }
+    ],
+    'installation': [
+        { key: 'no', label: 'No', cls: 'text-center w-16' },
+        { key: 'date', label: 'Date', cls: '' },
+        { key: 'orderNum', label: 'Order #', cls: 'font-mono' },
+        { key: 'title', label: 'Installation Type', cls: '' },
+        { key: 'designer', label: 'Technician', cls: 'text-xs' },
+        { key: 'material', label: 'Equipment', cls: 'text-xs' },
+        { key: 'machine', label: 'Site Location', cls: 'font-mono text-xs' },
+        { key: 'status', label: 'Status', cls: '' }
+    ],
+    'inventory': [
+        { key: 'no', label: 'No', cls: 'text-center w-16' },
+        { key: 'date', label: 'Date', cls: '' },
+        { key: 'orderNum', label: 'Item ID', cls: 'font-mono' },
+        { key: 'title', label: 'Item Name', cls: '' },
+        { key: 'designer', label: 'Category', cls: 'text-xs' },
+        { key: 'material', label: 'SKU', cls: 'text-xs' },
+        { key: 'machine', label: 'Location', cls: 'font-mono text-xs' },
+        { key: 'status', label: 'Status', cls: '' }
+    ],
+    'stock-movement': [
+        { key: 'no', label: 'No', cls: 'text-center w-16' },
+        { key: 'date', label: 'Date', cls: '' },
+        { key: 'orderNum', label: 'Movement ID', cls: 'font-mono' },
+        { key: 'title', label: 'Movement Type', cls: '' },
+        { key: 'designer', label: 'Item', cls: 'text-xs' },
+        { key: 'material', label: 'Quantity', cls: 'text-xs' },
+        { key: 'machine', label: 'From/To', cls: 'font-mono text-xs' },
+        { key: 'status', label: 'Status', cls: '' }
     ]
 };
 
@@ -140,7 +224,11 @@ const moduleLabels = {
     'received-orders': 'Received Order',
     'rework': 'Rework Recording',
     'completed-orders': 'Completed Order',
-    'machine-maintenance': 'Machine Maintenance Logs'
+    'delivery': 'Delivery',
+    'installation': 'Installation',
+    'machine-maintenance': 'Machine Maintenance Logs',
+    'inventory': 'Inventory',
+    'stock-movement': 'Stock Movement'
 };
 
 // =============================================

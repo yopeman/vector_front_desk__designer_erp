@@ -17,6 +17,7 @@ async function getReportData() {
     if (typeof fetchCompletedOrders === 'function') {
         await fetchCompletedOrders();
     }
+    // Don't fetch rework from Supabase for reports - use sample data from mock-data.js
 
     // Add received orders
     ordersData.forEach(order => {
@@ -53,21 +54,29 @@ async function getReportData() {
     });
 
     // Add rework records (not yet integrated with Supabase)
-    reworkData.forEach(entry => {
-        records.push({
-            module: 'rework',
-            moduleLabel: 'Rework Recording',
-            date: entry.date,
-            orderNum: '-',
-            title: entry.taskType,
-            designer: entry.machine,
-            material: entry.material || '-',
-            machine: entry.machine,
-            status: entry.status === 'completed' ? 'Completed' : 'In Progress',
-            statusColor: entry.status === 'completed' ? 'text-emerald-400' : 'text-amber-400',
-            statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
+    console.log('[DEBUG] Checking reworkData:', typeof reworkData, reworkData);
+    if (typeof reworkData !== 'undefined' && reworkData.length > 0) {
+        console.log('[DEBUG] Processing rework records, count:', reworkData.length);
+        reworkData.forEach(entry => {
+            console.log('[DEBUG] Processing rework entry:', entry);
+            records.push({
+                module: 'rework',
+                moduleLabel: 'Rework Recording',
+                date: entry.date,
+                orderNum: '-',
+                title: entry.taskType,
+                designer: entry.machine,
+                material: entry.material || '-',
+                machine: entry.machine,
+                status: entry.status === 'completed' ? 'Completed' : 'In Progress',
+                statusColor: entry.status === 'completed' ? 'text-emerald-400' : 'text-amber-400',
+                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
+            });
         });
-    });
+        console.log('[DEBUG] Added rework records to report data');
+    } else {
+        console.log('[DEBUG] No rework data available or empty');
+    }
 
     // Add machine maintenance logs from Supabase
     if (typeof supabase !== 'undefined') {
@@ -125,6 +134,82 @@ async function getReportData() {
         } catch (error) {
             console.error('Error fetching machine maintenance logs:', error);
         }
+    }
+
+    // Add delivery records (placeholder - to be integrated with data source)
+    if (typeof deliveryData !== 'undefined' && deliveryData.length > 0) {
+        deliveryData.forEach(entry => {
+            records.push({
+                module: 'delivery',
+                moduleLabel: 'Delivery',
+                date: entry.date || '-',
+                orderNum: entry.orderNum || '-',
+                title: entry.deliveryType || '-',
+                designer: entry.driver || '-',
+                material: entry.vehicle || '-',
+                machine: entry.location || '-',
+                status: entry.status || 'Pending',
+                statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'in-transit' ? 'text-amber-400' : 'text-slate-400',
+                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'in-transit' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
+            });
+        });
+    }
+
+    // Add installation records (placeholder - to be integrated with data source)
+    if (typeof installationData !== 'undefined' && installationData.length > 0) {
+        installationData.forEach(entry => {
+            records.push({
+                module: 'installation',
+                moduleLabel: 'Installation',
+                date: entry.date || '-',
+                orderNum: entry.orderNum || '-',
+                title: entry.installationType || '-',
+                designer: entry.technician || '-',
+                material: entry.equipment || '-',
+                machine: entry.siteLocation || '-',
+                status: entry.status || 'Pending',
+                statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'in-progress' ? 'text-amber-400' : 'text-slate-400',
+                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'in-progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
+            });
+        });
+    }
+
+    // Add inventory records (placeholder - to be integrated with data source)
+    if (typeof inventoryData !== 'undefined' && inventoryData.length > 0) {
+        inventoryData.forEach(entry => {
+            records.push({
+                module: 'inventory',
+                moduleLabel: 'Inventory',
+                date: entry.date || '-',
+                orderNum: entry.itemId || '-',
+                title: entry.itemName || '-',
+                designer: entry.category || '-',
+                material: entry.sku || '-',
+                machine: entry.location || '-',
+                status: entry.status || 'In Stock',
+                statusColor: entry.status === 'in-stock' ? 'text-emerald-400' : entry.status === 'low-stock' ? 'text-amber-400' : 'text-rose-400',
+                statusBg: entry.status === 'in-stock' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'low-stock' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'
+            });
+        });
+    }
+
+    // Add stock movement records (placeholder - to be integrated with data source)
+    if (typeof stockMovementData !== 'undefined' && stockMovementData.length > 0) {
+        stockMovementData.forEach(entry => {
+            records.push({
+                module: 'stock-movement',
+                moduleLabel: 'Stock Movement',
+                date: entry.date || '-',
+                orderNum: entry.movementId || '-',
+                title: entry.movementType || '-',
+                designer: entry.item || '-',
+                material: entry.quantity || '-',
+                machine: entry.fromTo || '-',
+                status: entry.status || 'Completed',
+                statusColor: entry.status === 'completed' ? 'text-emerald-400' : 'text-amber-400',
+                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
+            });
+        });
     }
 
     return records;
@@ -253,6 +338,7 @@ function getMergedColumnConfig(selectedModules) {
 // =============================================
 async function filterReports() {
     const selectedModules = getSelectedModules();
+    console.log('[DEBUG] Selected modules:', selectedModules);
     const searchVal = document.getElementById('report-search').value.toLowerCase();
     const dateFrom = document.getElementById('report-date-from').value;
     const dateTo = document.getElementById('report-date-to').value;
@@ -274,8 +360,6 @@ async function filterReports() {
     // Update active module label
     if (selectedModules.length === 0) {
         activeModule.textContent = 'None';
-    } else if (selectedModules.length === 4) {
-        activeModule.textContent = 'All Modules';
     } else {
         activeModule.textContent = selectedModules.map(m => moduleLabels[m] || m).join(', ');
     }
@@ -305,11 +389,16 @@ async function filterReports() {
 
     // Get all records
     const allRecords = await getReportData();
+    console.log('[DEBUG] All records count:', allRecords.length);
+    console.log('[DEBUG] All records modules:', [...new Set(allRecords.map(r => r.module))]);
     let filtered = allRecords;
 
     // Apply multi-module filter
     if (selectedModules.length > 0) {
+        console.log('[DEBUG] Filtering by modules:', selectedModules);
         filtered = filtered.filter(r => selectedModules.includes(r.module));
+        console.log('[DEBUG] Filtered records count:', filtered.length);
+        console.log('[DEBUG] Filtered records modules:', [...new Set(filtered.map(r => r.module))]);
     }
 
     // Apply search filter
@@ -349,10 +438,12 @@ async function filterReports() {
 
     selectedModules.forEach(module => {
         const moduleRecords = filtered.filter(r => r.module === module);
-        if (moduleRecords.length === 0) return;
+        console.log('[DEBUG] Module:', module, 'Records count:', moduleRecords.length);
 
         const moduleColumns = getMergedColumnConfig([module]);
+        console.log('[DEBUG] Module columns for', module, ':', moduleColumns);
         const visibleColumns = getVisibleColumns(moduleColumns);
+        console.log('[DEBUG] Visible columns for', module, ':', visibleColumns.map(c => c.key));
         const allColumns = moduleColumns.filter(col => col.key !== '__src__' && col.key !== 'no');
 
         // Get or initialize table state
@@ -441,11 +532,13 @@ async function filterReports() {
         tbody.className = 'divide-y divide-slate-800 text-sm text-slate-300';
 
         paginatedRecords.forEach((record, index) => {
+            console.log('[DEBUG] Rendering record:', record);
             const row = document.createElement('tr');
             row.className = 'order-row hover:bg-violet-600/10 transition-colors';
 
             visibleColumns.forEach(col => {
                 let value = record[col.key] || '-';
+                console.log('[DEBUG] Column:', col.key, 'Value:', value);
                 let cellCls = 'p-4';
                 if (col.cls) cellCls += ' ' + col.cls;
 
@@ -553,6 +646,10 @@ async function updateReportStats() {
     const completed = allRecords.filter(r => r.module === 'completed-orders').length;
     const rework = allRecords.filter(r => r.module === 'rework').length;
     const maintenance = allRecords.filter(r => r.module === 'machine-maintenance').length;
+    const delivery = allRecords.filter(r => r.module === 'delivery').length;
+    const installation = allRecords.filter(r => r.module === 'installation').length;
+    const inventory = allRecords.filter(r => r.module === 'inventory').length;
+    const stockMovement = allRecords.filter(r => r.module === 'stock-movement').length;
 
     const totalEl = document.getElementById('report-stats-total');
     const receivedEl = document.getElementById('report-stats-received');
@@ -639,12 +736,7 @@ async function exportReportPDF() {
         return;
     }
 
-    let moduleName;
-    if (selectedModules.length === 4) {
-        moduleName = 'All Modules';
-    } else {
-        moduleName = selectedModules.map(m => moduleLabels[m] || m).join(', ');
-    }
+    let moduleName = selectedModules.map(m => moduleLabels[m] || m).join(', ');
 
     // Use jsPDF directly for left/right split layout
     try {
@@ -848,14 +940,16 @@ function updateModuleSelection() {
     const textEl = document.getElementById('report-module-selected-text');
     if (selected.length === 0) {
         textEl.textContent = 'No Modules';
-    } else if (selected.length === 4) {
-        textEl.textContent = 'All Modules';
     } else {
         const labels = {
             'received-orders': 'Received Order',
             'completed-orders': 'Completed Order',
             'rework': 'Rework Recording',
-            'machine-maintenance': 'Machine Maintenance Logs'
+            'machine-maintenance': 'Machine Maintenance Logs',
+            'delivery': 'Delivery',
+            'installation': 'Installation',
+            'inventory': 'Inventory',
+            'stock-movement': 'Stock Movement'
         };
         textEl.textContent = selected.map(m => labels[m] || m).join(', ');
     }
