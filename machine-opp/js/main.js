@@ -533,7 +533,7 @@ function updateModuleSelection() {
     const textEl = document.getElementById('report-module-selected-text');
     if (selected.length === 0) {
         textEl.textContent = 'No Modules';
-    } else if (selected.length === 4) {
+    } else if (selected.length === 8) {
         textEl.textContent = 'All Modules';
     } else {
         const labels = {

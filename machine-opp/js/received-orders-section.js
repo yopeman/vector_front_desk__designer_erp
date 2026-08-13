@@ -73,9 +73,9 @@ class ReceivedordersSection {
                         <!-- Priority Dropdown -->
                         <div class="relative w-full md:w-48">
                             <select id="priority-filter" onchange="filterOrders()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
-                                <option value="all" class="text-slate-300">All Priorities (ሁሉም)</option>
-                                <option value="urgent" class="text-rose-400 font-bold">Urgent Only (ኤርጀንት ብቻ)</option>
-                                <option value="normal" class="text-slate-300 font-medium">Normal Only (ኖርማል ብቻ)</option>
+                                <option value="all" class="text-slate-300">All Priorities</option>
+                                <option value="urgent" class="text-rose-400 font-bold">Urgent Only</option>
+                                <option value="normal" class="text-slate-300 font-medium">Normal Only</option>
                             </select>
                             <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-slate-500 pointer-events-none text-[10px]"></i>
                         </div>

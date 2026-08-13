@@ -35,33 +35,64 @@ async function getReportData() {
 
     // Add received orders
     ordersData.forEach(order => {
+        const orderDate = order.order_date ? new Date(order.order_date) : null;
+        const formattedDate = orderDate ? orderDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        }) : '-';
         records.push({
             module: 'received-orders',
             moduleLabel: 'Received Order',
-            date: order.date,
-            orderNum: order.orderNum,
-            title: order.taskType,
-            designer: order.designer,
-            material: order.material || '-',
-            machine: order.machine,
-            status: order.priority === 'urgent' ? 'Urgent' : 'Normal',
-            statusColor: order.priority === 'urgent' ? 'text-rose-400' : 'text-emerald-400',
-            statusBg: order.priority === 'urgent' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-slate-700/60 border-slate-600/40'
+            order_date: formattedDate,
+            order_no: order.order_no || '-',
+            required_date: order.required_date || '-',
+            priority: order.priority || 'Medium',
+            total_amount: order.total_amount || '-',
+            paid_amount: order.paid_amount || '-',
+            status: order.status || 'New',
+            statusColor: order.status === 'Completed' ? 'text-emerald-400' : order.status === 'In Progress' ? 'text-amber-400' : 'text-slate-400',
+            statusBg: order.status === 'Completed' ? 'bg-emerald-500/10 border-emerald-500/20' : order.status === 'In Progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
         });
     });
 
     // Add completed orders
+    // Fetch machines to get machine names
+    let completedMachineNames = {};
+    const completedMachineIds = [...new Set(completedOrdersData.map(o => o.machine_id).filter(Boolean))];
+    if (completedMachineIds.length > 0 && typeof supabase !== 'undefined') {
+        try {
+            const { data: machines } = await supabase
+                .from('machines')
+                .select('id, name')
+                .in('id', completedMachineIds);
+            
+            (machines || []).forEach(m => {
+                completedMachineNames[m.id] = m.name || 'Unknown Machine';
+            });
+        } catch (error) {
+            console.error('Error fetching machines:', error);
+        }
+    }
+
     completedOrdersData.forEach(order => {
+        const completedDate = order.completed_at ? new Date(order.completed_at) : null;
+        const formattedDate = completedDate ? completedDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        }) : '-';
+        const machineName = order.machine_id ? (completedMachineNames[order.machine_id] || 'Unknown Machine') : '-';
         records.push({
             module: 'completed-orders',
             moduleLabel: 'Completed Order',
-            date: order.date,
-            orderNum: order.orderNum,
-            title: order.taskType,
-            designer: order.machine,
+            completed_at: formattedDate,
+            task_type: order.task_type || '-',
+            machine_id: machineName,
             material: order.material || '-',
-            machine: order.machine,
-            status: 'Completed',
+            quality_status: order.quality_status || '-',
+            priority: order.priority || 'Medium',
+            status: order.status || 'Completed',
             statusColor: 'text-emerald-400',
             statusBg: 'bg-emerald-500/10 border-emerald-500/20'
         });
@@ -69,19 +100,44 @@ async function getReportData() {
 
     // Add rework records
     if (typeof reworkData !== 'undefined' && reworkData.length > 0) {
+        // Fetch machines to get machine names
+        let machineNames = {};
+        const machineIds = [...new Set(reworkData.map(r => r.machine_id).filter(Boolean))];
+        if (machineIds.length > 0 && typeof supabase !== 'undefined') {
+            try {
+                const { data: machines } = await supabase
+                    .from('machines')
+                    .select('id, name')
+                    .in('id', machineIds);
+                
+                (machines || []).forEach(m => {
+                    machineNames[m.id] = m.name || 'Unknown Machine';
+                });
+            } catch (error) {
+                console.error('Error fetching machines:', error);
+            }
+        }
+
         reworkData.forEach(entry => {
+            const createdDate = entry.created_at ? new Date(entry.created_at) : null;
+            const formattedDate = createdDate ? createdDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
+            const machineName = entry.machine_id ? (machineNames[entry.machine_id] || 'Unknown Machine') : '-';
             records.push({
                 module: 'rework',
                 moduleLabel: 'Rework Recording',
-                date: entry.date,
-                orderNum: '-',
-                title: entry.taskType,
-                designer: entry.machine,
+                created_at: formattedDate,
+                task_type: entry.task_type || '-',
+                machine_id: machineName,
                 material: entry.material || '-',
-                machine: entry.machine,
-                status: entry.status === 'completed' ? 'Completed' : 'In Progress',
-                statusColor: entry.status === 'completed' ? 'text-emerald-400' : 'text-amber-400',
-                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20'
+                quality_status: entry.quality_status || '-',
+                priority: entry.priority || 'Medium',
+                status: entry.status || 'New',
+                statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'In Progress' ? 'text-amber-400' : 'text-slate-400',
+                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'In Progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
             });
         });
     }
@@ -116,26 +172,28 @@ async function getReportData() {
                         day: 'numeric', 
                         year: 'numeric' 
                     }) : '-';
+                    const createdDate = log.created_at ? new Date(log.created_at) : null;
+                    const formattedCreated = createdDate ? createdDate.toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                    }) : '-';
 
                     const machineName = log.machine?.name || 'Unknown Machine';
-                    const machineType = log.machine?.machine_type || 'N/A';
                     const performerName = log.performed_by ? (userNames[log.performed_by] || 'Unknown') : 'System';
-                    const checklistCount = log.checklist_results?.length || 0;
 
                     records.push({
                         module: 'machine-maintenance',
                         moduleLabel: 'Machine Maintenance Logs',
-                        date: formattedDate,
-                        orderNum: log.id.substring(0, 8).toUpperCase(),
-                        title: `Maintenance - ${machineName}`,
-                        designer: performerName,
-                        material: machineType.toUpperCase(),
-                        machine: machineName,
+                        performed_at: formattedDate,
+                        machine_id: log.machine_id?.substring(0, 8).toUpperCase() || '-',
+                        checklist_id: log.checklist_id?.substring(0, 8).toUpperCase() || '-',
+                        performed_by: performerName,
                         status: log.status === 'completed' ? 'Completed' : log.status === 'partial' ? 'Partial' : 'Pending',
                         statusColor: log.status === 'completed' ? 'text-emerald-400' : log.status === 'partial' ? 'text-amber-400' : 'text-slate-400',
                         statusBg: log.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : log.status === 'partial' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40',
-                        checklistCount: checklistCount,
-                        notes: log.notes || '-'
+                        notes: log.notes || '-',
+                        created_at: formattedCreated
                     });
                 });
             }
@@ -147,8 +205,14 @@ async function getReportData() {
     // Add delivery records from Supabase
     if (typeof deliveriesData !== 'undefined' && deliveriesData.length > 0) {
         deliveriesData.forEach(entry => {
-            const entryDate = entry.created_at ? new Date(entry.created_at) : null;
-            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+            const scheduledDate = entry.scheduled_date ? new Date(entry.scheduled_date) : null;
+            const formattedDate = scheduledDate ? scheduledDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
+            const actualDate = entry.actual_delivery_time ? new Date(entry.actual_delivery_time) : null;
+            const formattedActual = actualDate ? actualDate.toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric', 
                 year: 'numeric' 
@@ -156,15 +220,15 @@ async function getReportData() {
             records.push({
                 module: 'delivery',
                 moduleLabel: 'Delivery',
-                date: formattedDate,
-                orderNum: entry.job_order?.job_no || '-',
-                title: 'Delivery',
-                designer: entry.driver || '-',
-                material: entry.vehicle || '-',
-                machine: entry.location || '-',
+                scheduled_date: formattedDate,
+                delivery_no: entry.delivery_no || '-',
+                delivery_address: entry.delivery_address || '-',
+                contact_person: entry.contact_person || '-',
+                vehicle_driver: entry.vehicle_driver || '-',
+                actual_delivery_time: formattedActual,
                 status: entry.status || 'Pending',
-                statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'in-transit' ? 'text-amber-400' : 'text-slate-400',
-                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'in-transit' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
+                statusColor: entry.status === 'Delivered' ? 'text-emerald-400' : entry.status === 'In Transit' ? 'text-amber-400' : 'text-slate-400',
+                statusBg: entry.status === 'Delivered' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'In Transit' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
             });
         });
     }
@@ -172,8 +236,14 @@ async function getReportData() {
     // Add installation records from Supabase
     if (typeof installationsData !== 'undefined' && installationsData.length > 0) {
         installationsData.forEach(entry => {
-            const entryDate = entry.created_at ? new Date(entry.created_at) : null;
-            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+            const scheduledDate = entry.scheduled_date ? new Date(entry.scheduled_date) : null;
+            const formattedDate = scheduledDate ? scheduledDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
+            const completionDate = entry.completion_time ? new Date(entry.completion_time) : null;
+            const formattedCompletion = completionDate ? completionDate.toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric', 
                 year: 'numeric' 
@@ -181,15 +251,15 @@ async function getReportData() {
             records.push({
                 module: 'installation',
                 moduleLabel: 'Installation',
-                date: formattedDate,
-                orderNum: entry.job_order?.job_no || '-',
-                title: 'Installation',
-                designer: entry.technician || '-',
-                material: entry.equipment || '-',
-                machine: entry.location || '-',
-                status: entry.status || 'Pending',
-                statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'in-progress' ? 'text-amber-400' : 'text-slate-400',
-                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'in-progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
+                scheduled_date: formattedDate,
+                installation_no: entry.installation_no || '-',
+                site_address: entry.site_address || '-',
+                contact_person: entry.contact_person || '-',
+                team: entry.team || '-',
+                completion_time: formattedCompletion,
+                status: entry.status || 'Scheduled',
+                statusColor: entry.status === 'Completed' ? 'text-emerald-400' : entry.status === 'In Progress' ? 'text-amber-400' : 'text-slate-400',
+                statusBg: entry.status === 'Completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'In Progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
             });
         });
     }
@@ -197,8 +267,14 @@ async function getReportData() {
     // Add inventory records from Supabase
     if (typeof inventoryItems !== 'undefined' && inventoryItems.length > 0) {
         inventoryItems.forEach(entry => {
-            const entryDate = entry.created_at ? new Date(entry.created_at) : null;
-            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+            const createdDate = entry.created_at ? new Date(entry.created_at) : null;
+            const formattedDate = createdDate ? createdDate.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            }) : '-';
+            const updatedDate = entry.updated_at ? new Date(entry.updated_at) : null;
+            const formattedUpdated = updatedDate ? updatedDate.toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric', 
                 year: 'numeric' 
@@ -206,15 +282,16 @@ async function getReportData() {
             records.push({
                 module: 'inventory',
                 moduleLabel: 'Inventory',
-                date: formattedDate,
-                orderNum: entry.item_code || '-',
-                title: entry.name || '-',
-                designer: entry.category || '-',
-                material: entry.sku || '-',
-                machine: entry.location || '-',
-                status: entry.status || 'In Stock',
-                statusColor: entry.status === 'active' ? 'text-emerald-400' : entry.status === 'low_stock' ? 'text-amber-400' : 'text-rose-400',
-                statusBg: entry.status === 'active' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'low_stock' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'
+                created_at: formattedDate,
+                id: entry.id?.substring(0, 8).toUpperCase() || '-',
+                name: entry.name || '-',
+                pcs: entry.pcs || '-',
+                kilo: entry.kilo || '-',
+                meter: entry.meter || '-',
+                updated_at: formattedUpdated,
+                status: 'In Stock',
+                statusColor: 'text-emerald-400',
+                statusBg: 'bg-emerald-500/10 border-emerald-500/20'
             });
         });
     }
@@ -222,8 +299,8 @@ async function getReportData() {
     // Add stock movement records from Supabase
     if (typeof inventoryMovements !== 'undefined' && inventoryMovements.length > 0) {
         inventoryMovements.forEach(entry => {
-            const entryDate = entry.movement_date ? new Date(entry.movement_date) : null;
-            const formattedDate = entryDate ? entryDate.toLocaleDateString('en-US', { 
+            const createdDate = entry.created_at ? new Date(entry.created_at) : null;
+            const formattedDate = createdDate ? createdDate.toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric', 
                 year: 'numeric' 
@@ -231,12 +308,12 @@ async function getReportData() {
             records.push({
                 module: 'stock-movement',
                 moduleLabel: 'Stock Movement',
-                date: formattedDate,
-                orderNum: entry.id?.substring(0, 8).toUpperCase() || '-',
-                title: entry.movement_type || '-',
-                designer: entry.inventory?.name || '-',
-                material: entry.quantity || '-',
-                machine: entry.movement_type || '-',
+                created_at: formattedDate,
+                id: entry.id?.substring(0, 8).toUpperCase() || '-',
+                movement_type: entry.movement_type || '-',
+                item_id: entry.item_id?.substring(0, 8).toUpperCase() || '-',
+                quantity: entry.quantity || '-',
+                location: entry.location || '-',
                 status: 'Completed',
                 statusColor: 'text-emerald-400',
                 statusBg: 'bg-emerald-500/10 border-emerald-500/20'
