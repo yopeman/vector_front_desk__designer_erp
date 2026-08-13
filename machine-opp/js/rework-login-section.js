@@ -136,7 +136,7 @@ class ReworkloginSection {
                 </div>
 
                 <!-- ============================================================ -->
-                <!-- NEW REWORK MODAL OVERLAY                                        -->
+                <!-- NEW REWORK MODAL OVERLAY                                     -->
                 <!-- ============================================================ -->
                 <div id="new-rework-modal" class="modal-overlay" onclick="closeNewReworkModal(event)">
                     <div class="modal-container max-w-3xl" onclick="event.stopPropagation()">
@@ -224,6 +224,34 @@ class ReworkloginSection {
                                 </div>
                             </div>
 
+                            <!-- Attachments Section -->
+                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                                <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                                        <i class="fa-solid fa-paperclip text-purple-400 text-[10px]"></i>
+                                    </span>
+                                    Attached Files
+                                </span>
+                                <div class="flex items-center gap-2">
+                                    <input type="file" id="rework-file-input" multiple class="hidden" onchange="handleAttachedFiles(this, 'rework-attached-files-list')">
+                                    <button type="button" onclick="document.getElementById('rework-file-input').click()" class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs py-2 px-3 rounded-lg transition-all flex items-center gap-2">
+                                        <i class="fa-solid fa-upload"></i> Upload Files
+                                    </button>
+                                    <span id="rework-file-count" class="text-xs text-slate-500">0 files selected</span>
+                                </div>
+                                <div id="rework-attached-files-list" class="space-y-2">
+                                    <div class="text-xs text-slate-500">No attached files</div>
+                                </div>
+                            </div>
+
+                            <!-- Note Section -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-note-sticky text-slate-500 text-[10px]"></i> Notes
+                                </label>
+                                <textarea id="rework-note" rows="3" placeholder="Add additional notes..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 placeholder-slate-600 resize-none"></textarea>
+                            </div>
+
                             <!-- Rework Reason text area -->
                             <div>
                                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -287,12 +315,129 @@ class ReworkloginSection {
     </div>
 </div>
 `;
-
-<!-- ============================================================ -->
-<!-- TEXT NOTE MODAL (for Message Panel text button)              -->
-<!-- ============================================================ -->
-
         }
+    }
+}
+
+// Handle attached files
+async function handleAttachedFiles(input, listId) {
+    const files = input.files;
+    const listElement = document.getElementById(listId);
+    const countElement = document.getElementById(input.id.replace('-input', '-count'));
+    
+    if (files.length > 0) {
+        listElement.innerHTML = '';
+        
+        for (const file of files) {
+            // Upload file to storage
+            const fileData = await uploadFile(file);
+            
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2';
+            
+            if (fileData && fileData.url) {
+                fileItem.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-file text-purple-400 text-xs"></i>
+                        <a href="${fileData.url}" target="_blank" class="text-xs text-slate-300 hover:text-blue-400 truncate max-w-[200px] transition-colors">${file.name}</a>
+                        <span class="text-[10px] text-slate-500">(${formatFileSize(file.size)})</span>
+                    </div>
+                    <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+            } else {
+                fileItem.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-file-exclamation text-red-400 text-xs"></i>
+                        <span class="text-xs text-red-400 truncate max-w-[200px]">${file.name} (upload failed)</span>
+                    </div>
+                    <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                `;
+            }
+            listElement.appendChild(fileItem);
+        }
+        
+        countElement.textContent = `${files.length} file${files.length > 1 ? 's' : ''} selected`;
+    } else {
+        listElement.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
+        countElement.textContent = '0 files selected';
+    }
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Remove file from list
+function removeFile(button, inputId) {
+    const input = document.getElementById(inputId);
+    const fileItem = button.closest('.flex.items-center.justify-between');
+    const listElement = fileItem.parentElement;
+    const countElement = document.getElementById(inputId.replace('-input', '-count'));
+    
+    fileItem.remove();
+    
+    const remainingFiles = listElement.querySelectorAll('.flex.items-center.justify-between').length;
+    if (remainingFiles === 0) {
+        listElement.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
+        countElement.textContent = '0 files selected';
+        input.value = '';
+    } else {
+        countElement.textContent = `${remainingFiles} file${remainingFiles > 1 ? 's' : ''} selected`;
+    }
+}
+
+// Upload file to storage
+async function uploadFile(file) {
+    try {
+        const fileName = `${Date.now()}-${file.name}`;
+        const { data, error } = await supabase.storage
+            .from('documents')
+            .upload(fileName, file);
+        
+        if (error) {
+            if (error.message.includes('Bucket not found')) {
+                alert('Storage bucket "documents" does not exist. Please create it in Supabase dashboard (Storage → Create new bucket → name it "documents")');
+                return null;
+            }
+            throw error;
+        }
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from('documents')
+            .getPublicUrl(fileName);
+        
+        // Insert file record into files table
+        const { data: fileRecord, error: insertError } = await supabase
+            .from('files')
+            .insert({
+                name: file.name,
+                path: data.path,
+                mime_type: file.type,
+                file_size: file.size
+            })
+            .select()
+            .single();
+        
+        if (insertError) {
+            console.error('Error inserting file record:', insertError);
+            throw insertError;
+        }
+        
+        return { id: fileRecord.id, url: publicUrl, name: file.name };
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Error uploading file: ' + error.message);
+        return null;
     }
 }
 
@@ -302,4 +447,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof initReworkData === 'function') {
         initReworkData();
     }
+    // Load machines for the dropdown
+    loadMachinesForRework();
 });
+
+// Load machines for rework dropdown
+async function loadMachinesForRework() {
+    const machineSelect = document.getElementById('rework-machine');
+    if (!machineSelect) return;
+
+    try {
+        const { data: machines, error } = await supabase
+            .from('machines')
+            .select('*')
+            .order('name');
+
+        if (error) throw error;
+
+        if (machines && machines.length > 0) {
+            machineSelect.innerHTML = '<option value="">Select Machine</option>' +
+                machines.map(m => `<option value="${m.id}">${m.name} (${m.machine_type})</option>`).join('');
+        } else {
+            machineSelect.innerHTML = '<option value="">No machines available</option>';
+        }
+    } catch (error) {
+        console.error('Error loading machines:', error);
+        machineSelect.innerHTML = '<option value="">Error loading machines</option>';
+    }
+}

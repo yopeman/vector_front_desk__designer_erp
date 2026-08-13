@@ -5,6 +5,28 @@
 let completedOrdersLoaded = false;
 
 // =============================================
+// FETCH MACHINES FROM DATABASE
+// =============================================
+async function fetchMachines() {
+    if (typeof supabase === 'undefined') {
+        console.error('Supabase client not initialized');
+        return [];
+    }
+
+    const { data, error } = await supabase
+        .from('machines')
+        .select('*')
+        .order('name');
+
+    if (error) {
+        console.error('Error fetching machines:', error);
+        return [];
+    }
+
+    return data || [];
+}
+
+// =============================================
 // FETCH COMPLETED ORDERS FROM SUPABASE
 // =============================================
 async function fetchCompletedOrders() {

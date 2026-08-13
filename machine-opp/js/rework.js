@@ -234,6 +234,10 @@ async function editReworkEntry(entryId) {
     document.getElementById('rework-height').value = entry.height === 'N/A' ? '' : entry.height;
     document.getElementById('rework-gram').value = entry.gram === 'N/A' ? '' : entry.gram;
     document.getElementById('rework-reason').value = entry.reason || '';
+    document.getElementById('rework-note').value = entry.note || '';
+
+    // Populate attachments
+    await populateReworkAttachments(entry.id);
 
     // Set machine select
     const machineSelect = document.getElementById('rework-machine');
@@ -787,5 +791,101 @@ async function logReworkStatusTime(mode) {
         renderReworkRecords();
         updateReworkStats();
         alert('Rework completed. End time captured.');
+    }
+}
+
+// Populate rework attachments and note
+async function populateReworkAttachments(entryId) {
+    try {
+        // Fetch production order with note and attached_file_ids
+        const { data: productionOrder, error: orderError } = await supabase
+            .from('production_orders')
+            .select('note, attached_file_ids')
+            .eq('id', entryId)
+            .single();
+        
+        if (orderError) throw orderError;
+        
+        // Populate note
+        const noteInput = document.getElementById('rework-note');
+        if (noteInput) {
+            noteInput.value = productionOrder.note || '';
+        }
+        
+        // Fetch and populate attached files
+        const filesList = document.getElementById('rework-attached-files-list');
+        const countElement = document.getElementById('rework-file-count');
+        
+        if (filesList && productionOrder.attached_file_ids && productionOrder.attached_file_ids.length > 0) {
+            const { data: files, error: filesError } = await supabase
+                .from('files')
+                .select('*')
+                .in('id', productionOrder.attached_file_ids);
+            
+            if (filesError) throw filesError;
+            
+            if (files && files.length > 0) {
+                const fileHtmlPromises = files.map(async file => {
+                    const fileUrl = await getFileUrl(file.path);
+                    
+                    return `
+                        <div class="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-file text-purple-400 text-xs"></i>
+                                <a href="${fileUrl}" target="_blank" class="text-xs text-slate-300 hover:text-blue-400 truncate max-w-[200px] transition-colors">${file.name}</a>
+                                <span class="text-[10px] text-slate-500">(${formatFileSize(file.file_size)})</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                filesList.innerHTML = (await Promise.all(fileHtmlPromises)).join('');
+                countElement.textContent = `${files.length} file${files.length > 1 ? 's' : ''} attached`;
+            } else {
+                filesList.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
+                countElement.textContent = '0 files attached';
+            }
+        } else if (filesList) {
+            filesList.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
+            countElement.textContent = '0 files attached';
+        }
+    } catch (error) {
+        console.error('Error populating attachments:', error);
+    }
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+
+// Helper function to get file URL with fallback
+async function getFileUrl(filePath) {
+    try {
+        console.log('Attempting to get signed URL for:', filePath);
+        const { data, error } = await window.supabase.storage
+            .from('documents')
+            .createSignedUrl(filePath, 3600); // 1 hour expiry
+        if (error) {
+            console.error('Supabase signed URL error:', error);
+            // Try public URL as fallback
+            const { data: publicData, error: publicError } = await window.supabase.storage
+                .from('documents')
+                .getPublicUrl(filePath);
+            if (publicError) {
+                console.error('Public URL error:', publicError);
+                return null;
+            }
+            console.log('Using public URL:', publicData.publicUrl);
+            return publicData.publicUrl;
+        }
+        console.log('Signed URL generated:', data.signedUrl);
+        return data.signedUrl;
+    } catch (error) {
+        console.error('Error getting file URL:', error);
+        return null;
     }
 }
