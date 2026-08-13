@@ -24,7 +24,7 @@ class SidebarSection {
                 <div>
                     <div class="flex items-center justify-between px-3 mb-3">
                         <span class="text-[10px] font-bold text-white/80 uppercase tracking-[0.15em]">Navigation</span>
-                        <span class="text-[10px] text-white/60 font-mono">12 modules</span>
+                        <span class="text-[10px] text-white/60 font-mono">14 modules</span>
                     </div>
                     <nav class="space-y-0.5" id="main-nav">
                         <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all active-tab">
@@ -67,6 +67,16 @@ class SidebarSection {
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-boxes-stacked w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Store Request</span>
+                        </button>
+                        <button onclick="switchTab('inventory')" id="tab-inventory" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                            <span class="active-indicator"></span>
+                            <i class="fa-solid fa-warehouse w-5 text-left text-base shrink-0"></i>
+                            <span class="truncate font-medium">Inventory</span>
+                        </button>
+                        <button onclick="switchTab('inventory-movements')" id="tab-inventory-movements" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                            <span class="active-indicator"></span>
+                            <i class="fa-solid fa-arrow-right-arrow-left w-5 text-left text-base shrink-0"></i>
+                            <span class="truncate font-medium">Stock Movements</span>
                         </button>
                         <button onclick="switchTab('reports')" id="tab-reports" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
