@@ -75,8 +75,7 @@ async function renderDashboardCharts() {
     const moduleData = [
         { label: 'Received', value: ordersData.length },
         { label: 'Completed', value: completedOrdersData.length },
-        { label: 'Rework', value: 0 }, // Rework data not yet integrated
-        { label: 'Store', value: localStoreItemsList ? localStoreItemsList.length : 0 }
+        { label: 'Rework', value: reworkData.length },
     ];
     drawBarChart('chart-module', moduleData, moduleColors);
 
