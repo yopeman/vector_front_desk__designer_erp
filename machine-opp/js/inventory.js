@@ -78,12 +78,18 @@ function renderInventoryTable() {
                     </span>
                 </td>
                 <td class="p-3 text-center">
+                    <button onclick="openMovementModal('in', '${item.id}')" class="text-emerald-400 hover:text-emerald-300 mr-2 transition-colors" title="Stock IN">
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                    <button onclick="openMovementModal('out', '${item.id}')" class="text-red-400 hover:text-red-300 mr-2 transition-colors" title="Stock OUT">
+                        <i class="fa-solid fa-arrow-up"></i>
+                    </button>
                     <button onclick="editInventoryItem('${item.id}')" class="text-blue-400 hover:text-blue-300 mr-2 transition-colors" title="Edit">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </button>
-                    <button onclick="deleteInventoryItem('${item.id}')" class="text-red-400 hover:text-red-300 transition-colors" title="Delete">
+                    <!-- <button onclick="deleteInventoryItem('${item.id}')" class="text-red-400 hover:text-red-300 transition-colors" title="Delete">
                         <i class="fa-solid fa-trash"></i>
-                    </button>
+                    </button> -->
                 </td>
             </tr>
         `;
@@ -291,6 +297,168 @@ async function deleteInventoryItem(itemId) {
 // =============================================
 function refreshInventory() {
     loadInventoryItems();
+}
+
+// =============================================
+// OPEN MOVEMENT MODAL (re-exported from inventory-movements.js)
+// =============================================
+async function openMovementModal(type, preselectedItemId = null) {
+    await loadInventoryItemsForSelect();
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+    modal.id = 'movement-modal';
+    
+    const isIn = type === 'in';
+    const typeClass = isIn ? 'from-emerald-600 to-emerald-700' : 'from-red-500 to-red-600';
+    const typeIcon = isIn ? 'fa-arrow-down' : 'fa-arrow-up';
+
+    // Build inventory options
+    const inventoryOptions = inventoryItems.map(item => 
+        `<option value="${item.id}" ${item.id === preselectedItemId ? 'selected' : ''}>${item.name} ${item.item_code ? `(${item.item_code})` : ''}</option>`
+    ).join('');
+
+    modal.innerHTML = `
+        <div class="bg-slate-800 rounded-2xl border border-slate-700/50 w-full max-w-lg shadow-2xl">
+            <div class="p-6 border-b border-slate-700/50">
+                <h3 class="text-xl font-bold text-white flex items-center gap-3">
+                    <i class="fa-solid ${typeIcon} text-${isIn ? 'emerald' : 'red'}-400"></i>
+                    Record Stock ${type.toUpperCase()}
+                </h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Select Item *</label>
+                    <select id="mov-inventory-id" class="w-full bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-${isIn ? 'emerald' : 'red'}-500 focus:ring-1 focus:ring-${isIn ? 'emerald' : 'red'}-500/20 transition-all">
+                        <option value="">Select an item...</option>
+                        ${inventoryOptions}
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Quantity *</label>
+                        <input type="number" id="mov-quantity" class="w-full bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-${isIn ? 'emerald' : 'red'}-500 focus:ring-1 focus:ring-${isIn ? 'emerald' : 'red'}-500/20 transition-all" placeholder="0" min="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Reference Type</label>
+                        <select id="mov-reference-type" class="w-full bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-${isIn ? 'emerald' : 'red'}-500 focus:ring-1 focus:ring-${isIn ? 'emerald' : 'red'}-500/20 transition-all">
+                            <option value="">Select type...</option>
+                            <option value="received">Received</option>
+                            <option value="rework">Rework</option>
+                            <option value="delivery">Delivery</option>
+                            <option value="installation">Installation</option>
+                            <option value="adjustment">Adjustment</option>
+                            <option value="return">Return</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Notes</label>
+                    <textarea id="mov-notes" rows="2" class="w-full bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-${isIn ? 'emerald' : 'red'}-500 focus:ring-1 focus:ring-${isIn ? 'emerald' : 'red'}-500/20 transition-all resize-none" placeholder="Optional notes..."></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-700/50 flex justify-end gap-3">
+                <button onclick="closeMovementModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all">Cancel</button>
+                <button onclick="saveMovement('${type}')" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r ${typeClass} hover:opacity-90 text-white shadow-lg shadow-${isIn ? 'emerald' : 'red'}-500/15 transition-all">
+                    Record Movement
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeMovementModal();
+    });
+}
+
+// =============================================
+// LOAD INVENTORY ITEMS FOR SELECT (helper function)
+// =============================================
+async function loadInventoryItemsForSelect() {
+    try {
+        const { data, error } = await supabase
+            .from('inventory')
+            .select('id, name, item_code, current_quantity')
+            .eq('status', 'active')
+            .order('name');
+
+        if (error) throw error;
+        
+        inventoryItems = data || [];
+    } catch (error) {
+        console.error('Error loading inventory items:', error);
+    }
+}
+
+// =============================================
+// CLOSE MOVEMENT MODAL
+// =============================================
+function closeMovementModal() {
+    const modal = document.getElementById('movement-modal');
+    if (modal) modal.remove();
+}
+
+// =============================================
+// SAVE MOVEMENT
+// =============================================
+async function saveMovement(type) {
+    const inventoryId = document.getElementById('mov-inventory-id').value;
+    const quantity = document.getElementById('mov-quantity').value;
+    const referenceType = document.getElementById('mov-reference-type').value;
+    const notes = document.getElementById('mov-notes').value;
+
+    if (!inventoryId || !quantity) {
+        alert('Please select an item and enter quantity');
+        return;
+    }
+
+    try {
+        const movementData = {
+            inventory_id: inventoryId,
+            movement_type: type,
+            quantity: parseFloat(quantity),
+            reference_type: referenceType || null,
+            notes: notes || null,
+            movement_date: new Date().toISOString(),
+            created_at: new Date().toISOString()
+        };
+
+        // Insert movement
+        const { error: movementError } = await supabase
+            .from('inventory_movements')
+            .insert([movementData]);
+
+        if (movementError) throw movementError;
+
+        // Update inventory quantity
+        const currentItem = inventoryItems.find(i => i.id === inventoryId);
+        if (currentItem) {
+            const currentQty = parseFloat(currentItem.current_quantity) || 0;
+            const newQty = type === 'in' ? currentQty + parseFloat(quantity) : currentQty - parseFloat(quantity);
+            
+            const { error: updateError } = await supabase
+                .from('inventory')
+                .update({ 
+                    current_quantity: newQty,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', inventoryId);
+
+            if (updateError) throw updateError;
+        }
+
+        closeMovementModal();
+        loadInventoryItems();
+        
+        // Also reload movements if the function exists
+        if (typeof loadInventoryMovements === 'function') {
+            loadInventoryMovements();
+        }
+    } catch (error) {
+        console.error('Error saving movement:', error);
+        alert('Failed to record stock movement');
+    }
 }
 
 // =============================================

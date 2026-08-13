@@ -38,7 +38,7 @@ async function loadInventoryItemsForSelect() {
     try {
         const { data, error } = await supabase
             .from('inventory')
-            .select('id, name, item_code')
+            .select('id, name, item_code, current_quantity')
             .eq('status', 'active')
             .order('name');
 
@@ -148,7 +148,7 @@ function updateMovementsStats() {
 // =============================================
 // OPEN MOVEMENT MODAL
 // =============================================
-async function openMovementModal(type) {
+async function openMovementModal(type, preselectedItemId = null) {
     await loadInventoryItemsForSelect();
     
     const modal = document.createElement('div');
@@ -161,7 +161,7 @@ async function openMovementModal(type) {
 
     // Build inventory options
     const inventoryOptions = inventoryItems.map(item => 
-        `<option value="${item.id}">${item.name} ${item.item_code ? `(${item.item_code})` : ''}</option>`
+        `<option value="${item.id}" ${item.id === preselectedItemId ? 'selected' : ''}>${item.name} ${item.item_code ? `(${item.item_code})` : ''}</option>`
     ).join('');
 
     modal.innerHTML = `
