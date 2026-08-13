@@ -175,6 +175,9 @@ window.editInstallation = async function(id) {
     document.getElementById('installation-modal-title').textContent = 'Edit Installation';
     document.getElementById('installation-submit-btn').textContent = 'Update';
 
+    // Fetch job orders first to populate dropdown
+    await fetchJobOrdersForInstallation();
+
     // Populate form
     document.getElementById('installation-job-order').value = installation.job_order_id || '';
     document.getElementById('installation-no').value = installation.installation_no || '';
@@ -197,7 +200,6 @@ window.editInstallation = async function(id) {
     }
 
     document.getElementById('installation-modal').classList.add('active');
-    fetchJobOrdersForInstallation();
 }
 
 // =============================================

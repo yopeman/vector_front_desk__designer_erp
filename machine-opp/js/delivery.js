@@ -175,6 +175,9 @@ window.editDelivery = async function(id) {
     document.getElementById('delivery-modal-title').textContent = 'Edit Delivery';
     document.getElementById('delivery-submit-btn').textContent = 'Update';
 
+    // Fetch job orders first to populate dropdown
+    await fetchJobOrdersForDelivery();
+
     // Populate form
     document.getElementById('delivery-job-order').value = delivery.job_order_id || '';
     document.getElementById('delivery-no').value = delivery.delivery_no || '';
@@ -196,7 +199,6 @@ window.editDelivery = async function(id) {
     }
 
     document.getElementById('delivery-modal').classList.add('active');
-    fetchJobOrdersForDelivery();
 }
 
 // =============================================

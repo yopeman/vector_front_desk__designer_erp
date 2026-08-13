@@ -21,10 +21,6 @@ class StorerequestSection {
                             <span class="text-slate-500">(አድ ሲሉት መዝግቦ ከታች ያሳያል፤ ፎርሙም ይጸዳል)</span>
                         </p>
                     </div>
-                    <div class="flex items-center gap-2 text-xs text-slate-500 bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50">
-                        <i class="fa-regular fa-clock text-slate-400"></i>
-                        <span>Order Sequence: Date <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Order # <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Title <i class="fa-solid fa-chevron-right mx-1.5 text-[10px]"></i> Material</span>
-                    </div>
                 </div>
 
                 <!-- ===== NEW: Stats Summary Cards ===== -->
