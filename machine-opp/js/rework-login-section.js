@@ -261,7 +261,7 @@ class ReworkloginSection {
                             </div>
 
                             <!-- Status Timeline -->
-                            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                            <div id="rework-status-timeline" class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
                                 <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                     <span class="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                                         <i class="fa-solid fa-circle-notch text-emerald-400 text-[10px]"></i>
@@ -327,10 +327,15 @@ async function handleAttachedFiles(input, listId) {
     
     if (files.length > 0) {
         listElement.innerHTML = '';
+        const uploadedFileIds = [];
         
         for (const file of files) {
             // Upload file to storage
             const fileData = await uploadFile(file);
+            
+            if (fileData && fileData.id) {
+                uploadedFileIds.push(fileData.id);
+            }
             
             const fileItem = document.createElement('div');
             fileItem.className = 'flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2';
@@ -360,10 +365,14 @@ async function handleAttachedFiles(input, listId) {
             listElement.appendChild(fileItem);
         }
         
+        // Store file IDs on the input element for later retrieval
+        input.dataset.fileIds = JSON.stringify(uploadedFileIds);
+        
         countElement.textContent = `${files.length} file${files.length > 1 ? 's' : ''} selected`;
     } else {
         listElement.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
         countElement.textContent = '0 files selected';
+        input.dataset.fileIds = JSON.stringify([]);
     }
 }
 
@@ -399,7 +408,7 @@ function removeFile(button, inputId) {
 async function uploadFile(file) {
     try {
         const fileName = `${Date.now()}-${file.name}`;
-        const { data, error } = await supabase.storage
+        const { data, error } = await window.supabase.storage
             .from('documents')
             .upload(fileName, file);
         
@@ -412,12 +421,12 @@ async function uploadFile(file) {
         }
         
         // Get public URL
-        const { data: { publicUrl } } = supabase.storage
+        const { data: { publicUrl } } = window.supabase.storage
             .from('documents')
             .getPublicUrl(fileName);
         
         // Insert file record into files table
-        const { data: fileRecord, error: insertError } = await supabase
+        const { data: fileRecord, error: insertError } = await window.supabase
             .from('files')
             .insert({
                 name: file.name,
@@ -457,7 +466,7 @@ async function loadMachinesForRework() {
     if (!machineSelect) return;
 
     try {
-        const { data: machines, error } = await supabase
+        const { data: machines, error } = await window.supabase
             .from('machines')
             .select('*')
             .order('name');

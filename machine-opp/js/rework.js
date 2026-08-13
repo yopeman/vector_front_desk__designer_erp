@@ -83,6 +83,11 @@ async function addReworkEntry() {
     const height = document.getElementById('rework-height').value;
     const gram = document.getElementById('rework-gram').value;
     const reason = document.getElementById('rework-reason').value;
+    const note = document.getElementById('rework-note').value;
+    
+    // Get attached file IDs
+    const fileInput = document.getElementById('rework-file-input');
+    const attachedFileIds = fileInput && fileInput.dataset.fileIds ? JSON.parse(fileInput.dataset.fileIds) : [];
 
     if (!taskType || !machineId) {
         alert('Please fill in at least Task Type and Machine Type.');
@@ -102,6 +107,8 @@ async function addReworkEntry() {
             height: height || 'N/A',
             gram: gram || 'N/A',
             rework_reason: reason || '',
+            note: note || '',
+            attached_file_ids: attachedFileIds,
             status: 'New',
             job_type: 'rework'
         })
@@ -315,7 +322,7 @@ async function editReworkEntry(entryId) {
 // DISPLAY STATUS TIMELINE
 // =============================================
 function displayStatusTimeline(entry) {
-    const statusTimeline = document.querySelector('#new-rework-modal .bg-slate-900\\/50');
+    const statusTimeline = document.getElementById('rework-status-timeline');
     if (!statusTimeline) return;
 
     // Show the Status Timeline section
@@ -408,6 +415,11 @@ async function updateReworkEntry() {
     const height = document.getElementById('rework-height').value;
     const gram = document.getElementById('rework-gram').value;
     const reason = document.getElementById('rework-reason').value;
+    const note = document.getElementById('rework-note').value;
+    
+    // Get attached file IDs
+    const fileInput = document.getElementById('rework-file-input');
+    const attachedFileIds = fileInput && fileInput.dataset.fileIds ? JSON.parse(fileInput.dataset.fileIds) : [];
 
     if (!taskType || !machineId) {
         alert('Please fill in at least Task Type and Machine Type.');
@@ -426,7 +438,9 @@ async function updateReworkEntry() {
             width: width || 'N/A',
             height: height || 'N/A',
             gram: gram || 'N/A',
-            rework_reason: reason || ''
+            rework_reason: reason || '',
+            note: note || '',
+            attached_file_ids: attachedFileIds
         })
         .eq('id', editingId)
         .select()
@@ -601,6 +615,36 @@ function openNewReworkModal() {
     modal.classList.add('open');
     document.body.classList.add('modal-open');
 
+    // Clear form fields for new entries
+    const mode = modal.getAttribute('data-mode');
+    if (mode !== 'edit') {
+        document.getElementById('rework-task-type').value = '';
+        document.getElementById('rework-material').value = '';
+        document.getElementById('rework-thickness').value = '';
+        document.getElementById('rework-color').value = '';
+        document.getElementById('rework-length').value = '';
+        document.getElementById('rework-width').value = '';
+        document.getElementById('rework-height').value = '';
+        document.getElementById('rework-gram').value = '';
+        document.getElementById('rework-reason').value = '';
+        document.getElementById('rework-note').value = '';
+        
+        // Clear file upload
+        const fileInput = document.getElementById('rework-file-input');
+        if (fileInput) {
+            fileInput.value = '';
+            fileInput.dataset.fileIds = JSON.stringify([]);
+        }
+        const filesList = document.getElementById('rework-attached-files-list');
+        if (filesList) {
+            filesList.innerHTML = '<div class="text-xs text-slate-500">No attached files</div>';
+        }
+        const fileCount = document.getElementById('rework-file-count');
+        if (fileCount) {
+            fileCount.textContent = '0 files selected';
+        }
+    }
+
     const machineSelect = document.getElementById('rework-machine');
     if (machineSelect && (!machineSelect.options || machineSelect.options.length <= 1 || machineSelect.options[0].value === '' && machineSelect.options[1]?.value === 'Loading machines...')) {
         fetchMachines().then(machines => {
@@ -612,8 +656,7 @@ function openNewReworkModal() {
     }
 
     // Hide Status Timeline section for new entries
-    const mode = modal.getAttribute('data-mode');
-    const statusTimeline = document.querySelector('#new-rework-modal .bg-slate-900\\/50');
+    const statusTimeline = document.getElementById('rework-status-timeline');
     if (statusTimeline && mode !== 'edit') {
         statusTimeline.classList.add('hidden');
     }
@@ -654,7 +697,7 @@ function closeNewReworkModal(event) {
         if (machineSelect) machineSelect.value = '';
 
         // Reset and hide Status Timeline section
-        const statusTimeline = document.querySelector('#new-rework-modal .bg-slate-900\\/50');
+        const statusTimeline = document.getElementById('rework-status-timeline');
         if (statusTimeline) {
             statusTimeline.classList.add('hidden');
             
