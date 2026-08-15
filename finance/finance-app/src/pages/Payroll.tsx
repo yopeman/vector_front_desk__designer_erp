@@ -201,7 +201,7 @@ export function Payroll() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-semibold text-blue-900 mb-2">Ethiopian Progressive Tax Brackets</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-          <div className="bg-white p-2 rounded">0 - 6,000 ETB: 0%</div>
+          <div className="bg-white p-2 rounded">0 - 2,000 ETB: 0%</div>
           <div className="bg-white p-2 rounded">6,001 - 16,500 ETB: 10%</div>
           <div className="bg-white p-2 rounded">16,501 - 32,000 ETB: 15%</div>
           <div className="bg-white p-2 rounded">32,001 - 52,500 ETB: 20%</div>

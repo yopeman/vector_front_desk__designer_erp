@@ -358,7 +358,7 @@ export async function syncSalesFromFrontdesk(): Promise<{ success: number; faile
 // Ethiopian Progressive Tax Calculator
 function calculateIncomeTax(taxableSalary: number): number {
   const brackets = [
-    { min: 0, max: 6000, rate: 0 },
+    { min: 0, max: 2000, rate: 0 },
     { min: 6001, max: 16500, rate: 0.10 },
     { min: 16501, max: 32000, rate: 0.15 },
     { min: 32001, max: 52500, rate: 0.20 },
