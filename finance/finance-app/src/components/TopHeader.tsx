@@ -177,7 +177,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: '0 28px',
-      borderBottom: '1px solid #e8edf3',
+      borderBottom: '1px solid #00CED1',
       boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
       position: 'sticky',
       top: 0,

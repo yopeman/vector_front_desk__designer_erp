@@ -56,15 +56,15 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         {/* Sidebar */}
         <aside className={`
           fixed lg:static inset-y-0 left-0 z-40 mt-[62px] lg:mt-0
-          w-64 border-r border-gray-200
+          w-64 border-r
           transform transition-transform duration-300 ease-in-out
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0
         `}
-        style={{ backgroundColor: '#00CED1' }}
+        style={{ backgroundColor: '#00CED1', borderColor: '#00CED1' }}
         >
           <div className="flex flex-col h-full">
             {/* Logo */}
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b" style={{ borderColor: '#00CED1' }}>
               <h1 className="text-xl font-bold text-white">V☰CTOR</h1>
               <p className="text-sm text-white">Advert & Manufacturing ERP</p>
             </div>
