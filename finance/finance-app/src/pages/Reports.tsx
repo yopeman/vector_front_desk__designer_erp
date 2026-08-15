@@ -4,6 +4,7 @@ import { usePurchases, useSales, useGLAccounts, useJournals, usePayroll } from '
 import { storeClient } from '../services/supabaseClients';
 import { useQuery } from '@tanstack/react-query';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 
 export function Reports() {
   const [selectedReports, setSelectedReports] = useState<string[]>([]);
@@ -357,6 +358,140 @@ export function Reports() {
     }
   };
 
+  const handleExportExcel = () => {
+    try {
+      if (selectedReports.length === 0) {
+        alert('Please select at least one report type to export.');
+        return;
+      }
+
+      const workbook = XLSX.utils.book_new();
+
+      const reportConfig: Record<string, { title: string; columns: Array<{ key: string; label: string }> }> = {
+        purchase: {
+          title: 'Purchase Report',
+          columns: [
+            { key: 'purchase_no', label: 'Purchase No' },
+            { key: 'purchase_date', label: 'Date' },
+            { key: 'purchase_type', label: 'Type' },
+            { key: 'receipt_source', label: 'Source' },
+            { key: 'reference_no', label: 'Reference No' },
+            { key: 'vat_type', label: 'VAT Type' },
+            { key: 'subtotal', label: 'Subtotal' },
+            { key: 'vat_amount', label: 'VAT' },
+            { key: 'total_amount', label: 'Total' },
+            { key: 'status', label: 'Status' },
+          ],
+        },
+        sales: {
+          title: 'Sales Report',
+          columns: [
+            { key: 'sales_no', label: 'Sales No' },
+            { key: 'sales_date', label: 'Date' },
+            { key: 'customer_name', label: 'Customer' },
+            { key: 'customer_tin', label: 'Customer TIN' },
+            { key: 'sales_type', label: 'Type' },
+            { key: 'sales_category', label: 'Category' },
+            { key: 'receipt_source', label: 'Source' },
+            { key: 'vat_withholding', label: 'VAT Withholding' },
+            { key: 'cash_received', label: 'Cash Received' },
+            { key: 'subtotal', label: 'Subtotal' },
+            { key: 'vat_amount', label: 'VAT' },
+            { key: 'withholding_amount', label: 'Withholding' },
+            { key: 'total_amount', label: 'Total' },
+            { key: 'net_amount', label: 'Net Amount' },
+            { key: 'status', label: 'Status' },
+          ],
+        },
+        'chart-of-accounts': {
+          title: 'Chart of Accounts',
+          columns: [
+            { key: 'account_code', label: 'Account Code' },
+            { key: 'account_name', label: 'Account Name' },
+            { key: 'account_type', label: 'Type' },
+            { key: 'is_active', label: 'Status' },
+          ],
+        },
+        inventory: {
+          title: 'Inventory Report',
+          columns: [
+            { key: 'code', label: 'Item Code' },
+            { key: 'name', label: 'Item Name' },
+            { key: 'category', label: 'Category' },
+            { key: 'balance', label: 'Balance' },
+            { key: 'unit_cost', label: 'Unit Cost' },
+            { key: 'reorder_level', label: 'Reorder Level' },
+          ],
+        },
+        'general-journal': {
+          title: 'General Journal',
+          columns: [
+            { key: 'journal_no', label: 'Journal No' },
+            { key: 'journal_date', label: 'Date' },
+            { key: 'reference', label: 'Reference' },
+            { key: 'status', label: 'Status' },
+          ],
+        },
+        payroll: {
+          title: 'Payroll Report',
+          columns: [
+            { key: 'employee_id', label: 'Employee ID' },
+            { key: 'period_start', label: 'Period Start' },
+            { key: 'period_end', label: 'Period End' },
+            { key: 'basic_salary', label: 'Basic Salary' },
+            { key: 'overtime', label: 'Overtime' },
+            { key: 'gross_salary', label: 'Gross Salary' },
+            { key: 'income_tax', label: 'Income Tax' },
+            { key: 'net_pay', label: 'Net Pay' },
+            { key: 'status', label: 'Status' },
+          ],
+        },
+      };
+
+      selectedReports.forEach((reportType) => {
+        const rawData = realData[reportType];
+        if (!rawData || rawData.length === 0) return;
+
+        const dateFilteredData = filterDataByDate(rawData, reportType);
+        const searchTerm = searchTerms[reportType] || '';
+        const data = filterDataBySearch(dateFilteredData, searchTerm);
+
+        if (data.length === 0) return;
+
+        const config = reportConfig[reportType];
+        if (!config) return;
+
+        const visibleColumns = config.columns.filter(col => columnVisibility[reportType]?.[col.label] !== false);
+
+        // Prepare data for Excel sheet
+        const sheetData = data.map(row => {
+          const rowData: any = {};
+          visibleColumns.forEach(col => {
+            let value = row[col.key];
+            if (typeof value === 'boolean') {
+              value = value ? 'Active' : 'Inactive';
+            }
+            rowData[col.label] = value;
+          });
+          return rowData;
+        });
+
+        // Create worksheet
+        const worksheet = XLSX.utils.json_to_sheet(sheetData);
+        
+        // Add worksheet to workbook with sheet name
+        const sheetName = config.title.replace(/\s+/g, '_').substring(0, 31);
+        XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+      });
+
+      const filename = `Financial_Reports_${selectedReports.join('_')}_${startDate || 'all'}_to_${endDate || 'all'}.xlsx`;
+      XLSX.writeFile(workbook, filename);
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      alert('Error exporting Excel: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -364,13 +499,22 @@ export function Reports() {
           <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
           <p className="text-gray-600">Generate financial reports</p>
         </div>
-        <button
-          onClick={handleExportPDF}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Export PDF
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export PDF
+          </button>
+        </div>
       </div>
 
       {/* Report Controls */}
