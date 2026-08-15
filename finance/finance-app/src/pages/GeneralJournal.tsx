@@ -411,7 +411,7 @@ export function GeneralJournal() {
                           {calculateTotals().totalCredit.toFixed(2)}
                         </span>
                       </div>
-                      <div className={`text-sm font-semibold ${
+                      {/* <div className={`text-sm font-semibold ${
                         Math.abs(calculateTotals().totalDebit - calculateTotals().totalCredit) < 0.01
                           ? 'text-green-600'
                           : 'text-red-600'
@@ -419,7 +419,7 @@ export function GeneralJournal() {
                         {Math.abs(calculateTotals().totalDebit - calculateTotals().totalCredit) < 0.01
                           ? '✓ Balanced'
                           : '✗ Unbalanced'}
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 )}
