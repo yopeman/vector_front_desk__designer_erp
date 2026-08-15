@@ -294,6 +294,65 @@ export function useUpdateJournal() {
   });
 }
 
+export function useCreateJournalLine() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (line: Partial<JournalLine>) => {
+      const { data, error } = await financeClient
+        .from('finance_journal_lines')
+        .insert(line)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as JournalLine;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['journal-lines', variables.journal_id] });
+    }
+  });
+}
+
+export function useUpdateJournalLine() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...line }: Partial<JournalLine> & { id: string }) => {
+      const { data, error } = await financeClient
+        .from('finance_journal_lines')
+        .update(line)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as JournalLine;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['journal-lines', variables.journal_id] });
+    }
+  });
+}
+
+export function useDeleteJournalLine() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await financeClient
+        .from('finance_journal_lines')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['journal-lines'] });
+    }
+  });
+}
+
 // Payroll Hooks
 export function usePayroll(year?: number, month?: number) {
   return useQuery({
