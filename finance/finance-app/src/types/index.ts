@@ -16,6 +16,7 @@ export interface GLAccount {
   parent_id: string | null;
   description: string | null;
   is_active: boolean;
+  items: Array<{ item_id: string; item_description: string }>;
   created_at: string;
   updated_at: string;
   created_by: string | null;

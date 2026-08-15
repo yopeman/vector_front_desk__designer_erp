@@ -4,6 +4,8 @@ import { useGLAccounts, useCreateGLAccount, useUpdateGLAccount, useDeleteGLAccou
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import type { GLAccount, AccountType } from '../types';
 
+type AccountItem = { item_id: string; item_description: string };
+
 export function ChartOfAccounts() {
   const { data: accounts, isLoading } = useGLAccounts();
   const createGLAccount = useCreateGLAccount();
@@ -19,7 +21,8 @@ export function ChartOfAccounts() {
     account_type: 'Asset' as AccountType,
     parent_id: '',
     description: '',
-    is_active: true
+    is_active: true,
+    items: [] as AccountItem[]
   });
 
   const handleOpenModal = (account?: GLAccount) => {
@@ -31,7 +34,8 @@ export function ChartOfAccounts() {
         account_type: account.account_type,
         parent_id: account.parent_id || '',
         description: account.description || '',
-        is_active: account.is_active
+        is_active: account.is_active,
+        items: account.items || []
       });
     } else {
       setEditingAccount(null);
@@ -41,7 +45,8 @@ export function ChartOfAccounts() {
         account_type: 'Asset',
         parent_id: '',
         description: '',
-        is_active: true
+        is_active: true,
+        items: []
       });
     }
     setIsModalOpen(true);
@@ -56,7 +61,28 @@ export function ChartOfAccounts() {
       account_type: 'Asset',
       parent_id: '',
       description: '',
-      is_active: true
+      is_active: true,
+      items: []
+    });
+  };
+
+  const addItem = () => {
+    setFormData({
+      ...formData,
+      items: [...formData.items, { item_id: '', item_description: '' }]
+    });
+  };
+
+  const updateItem = (index: number, field: keyof AccountItem, value: string) => {
+    const updatedItems = [...formData.items];
+    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    setFormData({ ...formData, items: updatedItems });
+  };
+
+  const removeItem = (index: number) => {
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index)
     });
   };
 
@@ -68,13 +94,15 @@ export function ChartOfAccounts() {
           id: editingAccount.id,
           ...formData,
           parent_id: formData.parent_id || null,
-          description: formData.description || null
+          description: formData.description || null,
+          items: formData.items
         });
       } else {
         await createGLAccount.mutateAsync({
           ...formData,
           parent_id: formData.parent_id || null,
-          description: formData.description || null
+          description: formData.description || null,
+          items: formData.items
         });
       }
       handleCloseModal();
@@ -257,6 +285,71 @@ export function ChartOfAccounts() {
                   Active
                 </label>
               </div>
+
+              {/* Items Section */}
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">Items</h3>
+                  <button
+                    type="button"
+                    onClick={addItem}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Item
+                  </button>
+                </div>
+
+                {formData.items.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <p className="text-gray-500">No items added yet. Click "Add Item" to create items.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {formData.items.map((item, index) => (
+                      <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="grid grid-cols-12 gap-3 items-start">
+                          <div className="col-span-5">
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Item ID
+                            </label>
+                            <input
+                              type="text"
+                              value={item.item_id}
+                              onChange={(e) => updateItem(index, 'item_id', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Item ID"
+                            />
+                          </div>
+                          <div className="col-span-6">
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              Item Description
+                            </label>
+                            <input
+                              type="text"
+                              value={item.item_description}
+                              onChange={(e) => updateItem(index, 'item_description', e.target.value)}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Item description"
+                            />
+                          </div>
+                          <div className="col-span-1 flex items-end">
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove item"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
