@@ -51,8 +51,8 @@ export function Reports() {
     { value: 'purchase', label: 'Purchase' },
     { value: 'sales', label: 'Sales' },
     { value: 'chart-of-accounts', label: 'Chart of Accounts' },
-    { value: 'inventory', label: 'Inventory' },
     { value: 'general-journal', label: 'General Journal' },
+    { value: 'inventory', label: 'Inventory' },
     { value: 'payroll', label: 'Payroll' },
   ];
 
