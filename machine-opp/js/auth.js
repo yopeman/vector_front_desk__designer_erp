@@ -115,6 +115,12 @@ const Auth = (function() {
     }
 
     async function login(email, password) {
+        // Check location first
+        const locationResult = await LocationCheck.checkLocation();
+        if (!locationResult.success) {
+            return { success: false, error: locationResult.error || 'Location check failed' };
+        }
+
         const { error } = await supabase.auth.signInWithPassword({
             email,
             password

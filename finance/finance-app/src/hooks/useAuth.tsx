@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { financeClient } from '../services/supabaseClients';
 import { User } from '@supabase/supabase-js';
+import { checkLocation } from '../utils/location';
 
 interface Profile {
   id: string;
@@ -72,6 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    // Check location first
+    const locationResult = await checkLocation();
+    if (!locationResult.success) {
+      throw new Error(locationResult.error || 'Location check failed');
+    }
+
     const { error } = await financeClient.auth.signInWithPassword({
       email,
       password,
