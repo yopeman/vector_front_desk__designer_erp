@@ -34,7 +34,20 @@ export function TenderForm({ tender, onSubmit, onCancel, isLoading }: TenderForm
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Only include date fields if they have values
+    const submitData: Partial<Tender> = {
+      title: formData.title,
+      client_name: formData.client_name || undefined,
+      amount: formData.amount,
+      status: formData.status,
+      notes: formData.notes || undefined,
+    }
+    
+    if (formData.deadline) {
+      submitData.deadline = formData.deadline
+    }
+    
+    onSubmit(submitData)
   }
 
   return (

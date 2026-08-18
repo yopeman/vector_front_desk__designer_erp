@@ -45,7 +45,23 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Only include date fields if they have values
+    const submitData: Partial<Activity> = {
+      title: formData.title,
+      type: formData.type,
+      status: formData.status,
+      location: formData.location || undefined,
+      notes: formData.notes || undefined,
+    }
+    
+    if (formData.scheduled_start) {
+      submitData.scheduled_start = formData.scheduled_start
+    }
+    if (formData.scheduled_end) {
+      submitData.scheduled_end = formData.scheduled_end
+    }
+    
+    onSubmit(submitData)
   }
 
   return (

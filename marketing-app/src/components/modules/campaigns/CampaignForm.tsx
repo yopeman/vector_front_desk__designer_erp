@@ -33,7 +33,23 @@ export function CampaignForm({ campaign, onSubmit, onCancel, isLoading }: Campai
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Only include date fields if they have values
+    const submitData: Partial<Campaign> = {
+      name: formData.name,
+      description: formData.description || undefined,
+      status: formData.status,
+      budget_estimated: formData.budget_estimated,
+      notes: formData.notes || undefined,
+    }
+    
+    if (formData.start_date) {
+      submitData.start_date = formData.start_date
+    }
+    if (formData.end_date) {
+      submitData.end_date = formData.end_date
+    }
+    
+    onSubmit(submitData)
   }
 
   return (

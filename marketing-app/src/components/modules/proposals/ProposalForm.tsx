@@ -32,7 +32,16 @@ export function ProposalForm({ proposal, onSubmit, onCancel, isLoading }: Propos
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
+    // Only include date fields if they have values
+    const submitData: Partial<Proposal> = {
+      client_name: formData.client_name,
+      client_email: formData.client_email || undefined,
+      amount: formData.amount,
+      status: formData.status,
+      notes: formData.notes || undefined,
+    }
+    
+    onSubmit(submitData)
   }
 
   return (
