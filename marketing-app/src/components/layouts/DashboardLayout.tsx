@@ -35,7 +35,7 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -46,7 +46,7 @@ export default function DashboardLayout() {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:inset-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -108,7 +108,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="flex-1 flex flex-col">
         {/* Top bar */}
         <div className="flex items-center justify-between h-16 px-6 bg-white border-b border-gray-200">
           <button
@@ -121,7 +121,7 @@ export default function DashboardLayout() {
         </div>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="px-4 py-6 flex-1">
           <Outlet />
         </main>
       </div>

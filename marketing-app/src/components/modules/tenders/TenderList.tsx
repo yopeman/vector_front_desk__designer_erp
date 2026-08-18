@@ -22,7 +22,7 @@ export function TenderList({ tenders, onEdit, onDelete, onCreate }: TenderListPr
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Tenders</h2>
         <Button onClick={onCreate}>Create Tender</Button>

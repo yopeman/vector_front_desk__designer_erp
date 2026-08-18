@@ -22,7 +22,7 @@ export function ProposalList({ proposals, onEdit, onDelete, onCreate }: Proposal
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Proposals</h2>
         <Button onClick={onCreate}>Create Proposal</Button>

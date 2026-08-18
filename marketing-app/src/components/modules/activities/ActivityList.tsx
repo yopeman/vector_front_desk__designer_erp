@@ -21,7 +21,7 @@ export function ActivityList({ activities, onEdit, onDelete, onCreate }: Activit
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Activities</h2>
         <Button onClick={onCreate}>Create Activity</Button>
