@@ -9,14 +9,25 @@ interface ProposalListProps {
   onEdit: (proposal: Proposal) => void
   onDelete: (id: string) => void
   onCreate: () => void
+  title?: string
+  createLabel?: string
+  emptyMessage?: string
 }
 
-export function ProposalList({ proposals, onEdit, onDelete, onCreate }: ProposalListProps) {
+export function ProposalList({
+  proposals,
+  onEdit,
+  onDelete,
+  onCreate,
+  title = 'Proposals',
+  createLabel = 'Create Proposal',
+  emptyMessage = 'No proposals yet',
+}: ProposalListProps) {
   if (proposals.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">No proposals yet</p>
-        <Button onClick={onCreate}>Create Proposal</Button>
+        <p className="text-gray-500 mb-4">{emptyMessage}</p>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
     )
   }
@@ -24,8 +35,8 @@ export function ProposalList({ proposals, onEdit, onDelete, onCreate }: Proposal
   return (
     <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Proposals</h2>
-        <Button onClick={onCreate}>Create Proposal</Button>
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
       <div className="space-y-3">
         {proposals.map((proposal) => (

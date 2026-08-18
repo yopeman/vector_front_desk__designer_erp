@@ -1,17 +1,32 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
 import { useProformas } from '../../lib/hooks/useProformas'
 import { Proforma } from '../../types/database'
+import { navigation } from '../../lib/navigation'
 import { ProformaList } from '../../components/modules/proformas/ProformaList'
 import { ProformaForm } from '../../components/modules/proformas/ProformaForm'
 import { ProformaDetails } from '../../components/modules/proformas/ProformaDetails'
+import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
+const section = navigation.find((s) => s.label === 'Proforma')!
+
 export default function ProformasPage() {
+  const { filter } = useParams()
   const { proformas, createProforma, updateProforma, deleteProforma, convertToProposal } = useProformas()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingProforma, setEditingProforma] = useState<Proforma | undefined>()
   const [viewingProforma, setViewingProforma] = useState<Proforma | undefined>()
   const [convertingId, setConvertingId] = useState<string | null>(null)
+
+  const filtered = useMemo(() => {
+    if (!filter) return proformas.data || []
+    return (proformas.data || []).filter((p) => p.status === filter)
+  }, [proformas.data, filter])
+
+  const activeItem = section.children.find(
+    (item) => item.path === `/proformas${filter ? '/' + filter : ''}`
+  )
 
   const handleCreate = () => {
     setEditingProforma(undefined)
@@ -79,12 +94,15 @@ export default function ProformasPage() {
 
   return (
     <>
+      <ModuleTabs section={section} className="mb-2" />
       <ProformaList
-        proformas={proformas.data || []}
+        proformas={filtered}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onView={handleView}
         onCreate={handleCreate}
+        title={activeItem ? activeItem.label : 'Proformas'}
+        emptyMessage={filter ? `No ${activeItem?.label.toLowerCase() || 'matching'} proformas` : 'No proformas yet'}
       />
 
       {/* Create / Edit dialog */}

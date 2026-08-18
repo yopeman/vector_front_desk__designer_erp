@@ -11,9 +11,20 @@ interface ProductListProps {
   onEdit: (product: ProductService) => void
   onDelete: (id: string) => void
   onCreate: () => void
+  title?: string
+  createLabel?: string
+  emptyMessage?: string
 }
 
-export function ProductList({ products, onEdit, onDelete, onCreate }: ProductListProps) {
+export function ProductList({
+  products,
+  onEdit,
+  onDelete,
+  onCreate,
+  title = 'Products / Services',
+  createLabel = 'Add Product',
+  emptyMessage = 'No products or services yet',
+}: ProductListProps) {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
 
@@ -33,14 +44,14 @@ export function ProductList({ products, onEdit, onDelete, onCreate }: ProductLis
   return (
     <div className="space-y-4 w-full">
       <div className="flex flex-wrap justify-between items-center gap-3">
-        <h2 className="text-2xl font-bold">Products / Services</h2>
-        <Button onClick={onCreate}>Add Product</Button>
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
 
       {products.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">No products or services yet</p>
-          <Button onClick={onCreate}>Add Product</Button>
+          <p className="text-gray-500 mb-4">{emptyMessage}</p>
+          <Button onClick={onCreate}>{createLabel}</Button>
         </div>
       ) : (
         <>

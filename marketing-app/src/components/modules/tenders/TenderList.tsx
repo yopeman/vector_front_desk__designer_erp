@@ -9,14 +9,25 @@ interface TenderListProps {
   onEdit: (tender: Tender) => void
   onDelete: (id: string) => void
   onCreate: () => void
+  title?: string
+  createLabel?: string
+  emptyMessage?: string
 }
 
-export function TenderList({ tenders, onEdit, onDelete, onCreate }: TenderListProps) {
+export function TenderList({
+  tenders,
+  onEdit,
+  onDelete,
+  onCreate,
+  title = 'Tenders',
+  createLabel = 'Create Tender',
+  emptyMessage = 'No tenders yet',
+}: TenderListProps) {
   if (tenders.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">No tenders yet</p>
-        <Button onClick={onCreate}>Create Tender</Button>
+        <p className="text-gray-500 mb-4">{emptyMessage}</p>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
     )
   }
@@ -24,8 +35,8 @@ export function TenderList({ tenders, onEdit, onDelete, onCreate }: TenderListPr
   return (
     <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Tenders</h2>
-        <Button onClick={onCreate}>Create Tender</Button>
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
       <div className="space-y-3">
         {tenders.map((tender) => (

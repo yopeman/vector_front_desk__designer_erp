@@ -10,14 +10,26 @@ interface ProformaListProps {
   onDelete: (id: string) => void
   onView: (proforma: Proforma) => void
   onCreate: () => void
+  title?: string
+  createLabel?: string
+  emptyMessage?: string
 }
 
-export function ProformaList({ proformas, onEdit, onDelete, onView, onCreate }: ProformaListProps) {
+export function ProformaList({
+  proformas,
+  onEdit,
+  onDelete,
+  onView,
+  onCreate,
+  title = 'Proformas',
+  createLabel = 'Create Proforma',
+  emptyMessage = 'No proformas yet',
+}: ProformaListProps) {
   if (proformas.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">No proformas yet</p>
-        <Button onClick={onCreate}>Create Proforma</Button>
+        <p className="text-gray-500 mb-4">{emptyMessage}</p>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
     )
   }
@@ -25,8 +37,8 @@ export function ProformaList({ proformas, onEdit, onDelete, onView, onCreate }: 
   return (
     <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Proformas</h2>
-        <Button onClick={onCreate}>Create Proforma</Button>
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
       <div className="space-y-3">
         {proformas.map((proforma) => (

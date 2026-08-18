@@ -1,14 +1,29 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
 import { useTenders } from '../../lib/hooks/useTenders'
 import { Tender } from '../../types/database'
+import { navigation } from '../../lib/navigation'
 import { TenderList } from '../../components/modules/tenders/TenderList'
 import { TenderForm } from '../../components/modules/tenders/TenderForm'
+import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
+const section = navigation.find((s) => s.label === 'Tenders')!
+
 export default function TendersPage() {
+  const { filter } = useParams()
   const { tenders, createTender, updateTender, deleteTender } = useTenders()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingTender, setEditingTender] = useState<Tender | undefined>()
+
+  const filtered = useMemo(() => {
+    if (!filter) return tenders.data || []
+    return (tenders.data || []).filter((t) => t.status === filter)
+  }, [tenders.data, filter])
+
+  const activeItem = section.children.find(
+    (item) => item.path === `/tenders${filter ? '/' + filter : ''}`
+  )
 
   const handleCreate = () => {
     setEditingTender(undefined)
@@ -50,13 +65,16 @@ export default function TendersPage() {
 
   return (
     <>
+      <ModuleTabs section={section} className="mb-2" />
       <TenderList
-        tenders={tenders.data || []}
+        tenders={filtered}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onCreate={handleCreate}
+        title={activeItem ? activeItem.label : 'Tenders'}
+        emptyMessage={filter ? `No ${activeItem?.label.toLowerCase() || 'matching'} tenders` : 'No tenders yet'}
       />
-      
+
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

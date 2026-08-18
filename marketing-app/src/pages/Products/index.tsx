@@ -1,14 +1,29 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
 import { useProducts } from '../../lib/hooks/useProducts'
 import { ProductService } from '../../types/database'
+import { navigation } from '../../lib/navigation'
 import { ProductList } from '../../components/modules/products/ProductList'
 import { ProductForm } from '../../components/modules/products/ProductForm'
+import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
+const section = navigation.find((s) => s.label === 'Product & Service Marketing')!
+
 export default function ProductsPage() {
+  const { filter } = useParams()
   const { products, createProduct, updateProduct, deleteProduct } = useProducts()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<ProductService | undefined>()
+
+  const filtered = useMemo(() => {
+    if (!filter) return products.data || []
+    return (products.data || []).filter((p) => p.type === filter)
+  }, [products.data, filter])
+
+  const activeItem = section.children.find(
+    (item) => item.path === `/products${filter ? '/' + filter : ''}`
+  )
 
   const handleCreate = () => {
     setEditingProduct(undefined)
@@ -50,11 +65,14 @@ export default function ProductsPage() {
 
   return (
     <>
+      <ModuleTabs section={section} className="mb-2" />
       <ProductList
-        products={products.data || []}
+        products={filtered}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onCreate={handleCreate}
+        title={activeItem ? activeItem.label : 'Products / Services'}
+        emptyMessage={filter ? `No ${activeItem?.label.toLowerCase() || 'matching'} found` : 'No products or services yet'}
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

@@ -14,11 +14,13 @@ interface ExpenseListProps {
   onApprove: (id: string) => void
   onReject: (id: string) => void
   canApprove: boolean
+  title?: string
+  createLabel?: string
 }
 
 const categories = ['advertising', 'content', 'events', 'travel', 'software', 'personnel', 'other']
 
-export function ExpenseList({ expenses, onEdit, onDelete, onCreate, onApprove, onReject, canApprove }: ExpenseListProps) {
+export function ExpenseList({ expenses, onEdit, onDelete, onCreate, onApprove, onReject, canApprove, title = 'Expenses', createLabel = 'Submit Expense' }: ExpenseListProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
@@ -33,14 +35,14 @@ export function ExpenseList({ expenses, onEdit, onDelete, onCreate, onApprove, o
   return (
     <div className="space-y-4 w-full">
       <div className="flex flex-wrap justify-between items-center gap-3">
-        <h2 className="text-2xl font-bold">Expenses</h2>
-        <Button onClick={onCreate}>Submit Expense</Button>
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
 
       {expenses.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 mb-4">No expenses yet</p>
-          <Button onClick={onCreate}>Submit Expense</Button>
+          <Button onClick={onCreate}>{createLabel}</Button>
         </div>
       ) : (
         <>

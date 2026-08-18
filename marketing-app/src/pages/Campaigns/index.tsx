@@ -1,14 +1,27 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
 import { useCampaigns } from '../../lib/hooks/useCampaigns'
 import { Campaign } from '../../types/database'
+import { navigation } from '../../lib/navigation'
 import { CampaignList } from '../../components/modules/campaigns/CampaignList'
 import { CampaignForm } from '../../components/modules/campaigns/CampaignForm'
+import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
+const section = navigation.find((s) => s.label === 'Campaigns')!
+
 export default function CampaignsPage() {
+  const { filter } = useParams()
   const { campaigns, createCampaign, updateCampaign, deleteCampaign } = useCampaigns()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>()
+
+  const filtered = useMemo(() => {
+    if (!filter) return campaigns.data || []
+    return (campaigns.data || []).filter((c) => c.status === filter)
+  }, [campaigns.data, filter])
+
+  const activeItem = section.children.find((item) => item.path === `/campaigns${filter ? '/' + filter : ''}`)
 
   const handleCreate = () => {
     setEditingCampaign(undefined)
@@ -50,13 +63,16 @@ export default function CampaignsPage() {
 
   return (
     <>
+      <ModuleTabs section={section} className="mb-2" />
       <CampaignList
-        campaigns={campaigns.data || []}
+        campaigns={filtered}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onCreate={handleCreate}
+        title={activeItem ? activeItem.label : 'Campaigns'}
+        emptyMessage={filter ? `No ${activeItem?.label.toLowerCase() || 'matching'} campaigns` : 'No campaigns yet'}
       />
-      
+
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

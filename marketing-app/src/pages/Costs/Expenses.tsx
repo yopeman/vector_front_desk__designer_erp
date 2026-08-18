@@ -1,14 +1,16 @@
 import { useState } from 'react'
+import { navigation } from '../../lib/navigation'
 import { useExpenses } from '../../lib/hooks/useExpenses'
 import { useAuthStore } from '../../stores/authStore'
 import { Expense } from '../../types/database'
 import { ExpenseList } from '../../components/modules/expenses/ExpenseList'
 import { ExpenseForm } from '../../components/modules/expenses/ExpenseForm'
-import { BudgetDashboard } from '../../components/modules/expenses/BudgetDashboard'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
+import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
-export default function ExpensesPage() {
+const section = navigation.find((s) => s.label === 'Marketing Costs')!
+
+export default function CostsExpenses() {
   const { expenses, createExpense, updateExpense, deleteExpense, setApproval } = useExpenses()
   const { user } = useAuthStore()
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -64,26 +66,16 @@ export default function ExpensesPage() {
 
   return (
     <>
-      <Tabs defaultValue="list">
-        <TabsList>
-          <TabsTrigger value="list">Expenses</TabsTrigger>
-          <TabsTrigger value="dashboard">Budget Dashboard</TabsTrigger>
-        </TabsList>
-        <TabsContent value="list">
-          <ExpenseList
-            expenses={expenses.data || []}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onCreate={handleCreate}
-            onApprove={handleApprove}
-            onReject={handleReject}
-            canApprove={canApprove}
-          />
-        </TabsContent>
-        <TabsContent value="dashboard">
-          <BudgetDashboard />
-        </TabsContent>
-      </Tabs>
+      <ModuleTabs section={section} className="mb-2" />
+      <ExpenseList
+        expenses={expenses.data || []}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onCreate={handleCreate}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        canApprove={canApprove}
+      />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">

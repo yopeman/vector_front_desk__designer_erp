@@ -1,14 +1,42 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
 import { useActivities } from '../../lib/hooks/useActivities'
 import { Activity } from '../../types/database'
+import { NavSection } from '../../lib/navigation'
+import { useAuthStore } from '../../stores/authStore'
 import { ActivityList } from '../../components/modules/activities/ActivityList'
 import { ActivityForm } from '../../components/modules/activities/ActivityForm'
+import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
-export default function ActivitiesPage() {
+interface Props {
+  section: NavSection
+  basePath: string
+  /** Column used to filter ('type' for digital/physical, 'status' for tasks). */
+  field: 'type' | 'status'
+}
+
+/** Shared, filter-aware list page for activity sub-modules (Digital, Physical, Tasks). */
+export function ActivityListPage({ section, basePath, field }: Props) {
+  const { filter } = useParams()
+  const { user } = useAuthStore()
   const { activities, createActivity, updateActivity, deleteActivity } = useActivities()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingActivity, setEditingActivity] = useState<Activity | undefined>()
+
+  const activeItem = section.children.find(
+    (item) => item.path === `${basePath}${filter ? '/' + filter : ''}`
+  )
+
+  const filtered = useMemo(() => {
+    const all = activities.data || []
+    if (!filter) return all
+    // Special "My Tasks" scope: only activities assigned to the current user.
+    if (filter === 'my') {
+      return all.filter((a) => a.assigned_to === user?.id)
+    }
+    return all.filter((a) => (a as any)[field] === filter)
+  }, [activities.data, filter, field, user?.id])
 
   const handleCreate = () => {
     setEditingActivity(undefined)
@@ -50,13 +78,18 @@ export default function ActivitiesPage() {
 
   return (
     <>
+      <ModuleTabs section={section} className="mb-2" />
       <ActivityList
-        activities={activities.data || []}
+        activities={filtered}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onCreate={handleCreate}
+        title={activeItem ? activeItem.label : section.label}
+        emptyMessage={
+          filter ? `No ${activeItem?.label.toLowerCase() || 'matching'} activities` : 'No activities yet'
+        }
       />
-      
+
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

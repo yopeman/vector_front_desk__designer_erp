@@ -1,14 +1,29 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useParams } from 'react-router-dom'
 import { useProposals } from '../../lib/hooks/useProposals'
 import { Proposal } from '../../types/database'
+import { navigation } from '../../lib/navigation'
 import { ProposalList } from '../../components/modules/proposals/ProposalList'
 import { ProposalForm } from '../../components/modules/proposals/ProposalForm'
+import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
+const section = navigation.find((s) => s.label === 'Proposals')!
+
 export default function ProposalsPage() {
+  const { filter } = useParams()
   const { proposals, createProposal, updateProposal, deleteProposal } = useProposals()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingProposal, setEditingProposal] = useState<Proposal | undefined>()
+
+  const filtered = useMemo(() => {
+    if (!filter) return proposals.data || []
+    return (proposals.data || []).filter((p) => p.status === filter)
+  }, [proposals.data, filter])
+
+  const activeItem = section.children.find(
+    (item) => item.path === `/proposals${filter ? '/' + filter : ''}`
+  )
 
   const handleCreate = () => {
     setEditingProposal(undefined)
@@ -50,13 +65,16 @@ export default function ProposalsPage() {
 
   return (
     <>
+      <ModuleTabs section={section} className="mb-2" />
       <ProposalList
-        proposals={proposals.data || []}
+        proposals={filtered}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onCreate={handleCreate}
+        title={activeItem ? activeItem.label : 'Proposals'}
+        emptyMessage={filter ? `No ${activeItem?.label.toLowerCase() || 'matching'} proposals` : 'No proposals yet'}
       />
-      
+
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

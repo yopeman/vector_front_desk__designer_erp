@@ -8,14 +8,25 @@ interface ActivityListProps {
   onEdit: (activity: Activity) => void
   onDelete: (id: string) => void
   onCreate: () => void
+  title?: string
+  createLabel?: string
+  emptyMessage?: string
 }
 
-export function ActivityList({ activities, onEdit, onDelete, onCreate }: ActivityListProps) {
+export function ActivityList({
+  activities,
+  onEdit,
+  onDelete,
+  onCreate,
+  title = 'Activities',
+  createLabel = 'Create Activity',
+  emptyMessage = 'No activities yet',
+}: ActivityListProps) {
   if (activities.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500 mb-4">No activities yet</p>
-        <Button onClick={onCreate}>Create Activity</Button>
+        <p className="text-gray-500 mb-4">{emptyMessage}</p>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
     )
   }
@@ -23,8 +34,8 @@ export function ActivityList({ activities, onEdit, onDelete, onCreate }: Activit
   return (
     <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Activities</h2>
-        <Button onClick={onCreate}>Create Activity</Button>
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <Button onClick={onCreate}>{createLabel}</Button>
       </div>
       <div className="space-y-3">
         {activities.map((activity) => (
