@@ -4,6 +4,7 @@ import {
   Calendar, 
   FileText, 
   DollarSign, 
+  Package,
   TrendingUp, 
   Settings, 
   LogOut,
@@ -22,6 +23,7 @@ const navigation = [
   { name: 'Proformas', href: '/proformas', icon: DollarSign },
   { name: 'Tenders', href: '/tenders', icon: FileText },
   { name: 'Expenses', href: '/expenses', icon: DollarSign },
+  { name: 'Products', href: '/products', icon: Package },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

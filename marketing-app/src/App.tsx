@@ -8,7 +8,10 @@ import Register from './pages/Register'
 import Campaigns from './pages/Campaigns/index'
 import Activities from './pages/Activities/index'
 import Proposals from './pages/Proposals/index'
+import Proformas from './pages/Proformas/index'
 import Tenders from './pages/Tenders/index'
+import Expenses from './pages/Expenses/index'
+import Products from './pages/Products/index'
 import NotFound from './pages/NotFound'
 
 // Placeholder pages for routes
@@ -44,9 +47,10 @@ function App() {
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/activities" element={<Activities />} />
           <Route path="/proposals" element={<Proposals />} />
-          <Route path="/proformas" element={<PlaceholderPage title="Proformas" />} />
+          <Route path="/proformas" element={<Proformas />} />
           <Route path="/tenders" element={<Tenders />} />
-          <Route path="/expenses" element={<PlaceholderPage title="Expenses" />} />
+          <Route path="/expenses" element={<Expenses />} />
+          <Route path="/products" element={<Products />} />
           <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
         
