@@ -3,6 +3,12 @@ import DashboardLayout from './components/layouts/DashboardLayout'
 import AuthLayout from './components/layouts/AuthLayout'
 import { ProtectedRoute } from './components/shared/ProtectedRoute'
 import Home from './pages/Home'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Campaigns from './pages/Campaigns/index'
+import Activities from './pages/Activities/index'
+import Proposals from './pages/Proposals/index'
+import Tenders from './pages/Tenders/index'
 import NotFound from './pages/NotFound'
 
 // Placeholder pages for routes
@@ -22,8 +28,8 @@ function App() {
         
         {/* Auth routes */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<PlaceholderPage title="Login" />} />
-          <Route path="/register" element={<PlaceholderPage title="Register" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Route>
         
         {/* Protected routes with DashboardLayout */}
@@ -35,11 +41,11 @@ function App() {
           }
         >
           <Route path="/dashboard" element={<PlaceholderPage title="Dashboard" />} />
-          <Route path="/campaigns" element={<PlaceholderPage title="Campaigns" />} />
-          <Route path="/activities" element={<PlaceholderPage title="Activities" />} />
-          <Route path="/proposals" element={<PlaceholderPage title="Proposals" />} />
+          <Route path="/campaigns" element={<Campaigns />} />
+          <Route path="/activities" element={<Activities />} />
+          <Route path="/proposals" element={<Proposals />} />
           <Route path="/proformas" element={<PlaceholderPage title="Proformas" />} />
-          <Route path="/tenders" element={<PlaceholderPage title="Tenders" />} />
+          <Route path="/tenders" element={<Tenders />} />
           <Route path="/expenses" element={<PlaceholderPage title="Expenses" />} />
           <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
         </Route>
