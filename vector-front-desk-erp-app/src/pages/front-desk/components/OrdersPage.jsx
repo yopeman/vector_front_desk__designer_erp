@@ -879,7 +879,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                         className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                       />
                     </div>
-                    <div>
+                    {/* <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Paid Amount</label>
                       <input
                         type="number"
@@ -889,24 +889,24 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                         placeholder="0"
                         className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                       />
+                    </div> */}
+                    <div>
+                      <label className="block text-xs font-medium text-slate-500 mb-1">Payment Terms</label>
+                      <input
+                        type="text"
+                        value={formData.payment_terms}
+                        onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
+                        placeholder="Enter payment terms"
+                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                      />
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">Payment Terms</label>
-                    <input
-                      type="text"
-                      value={formData.payment_terms}
-                      onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
-                      placeholder="Enter payment terms"
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-                    />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-slate-500 mb-1">Special Instructions</label>
                     <textarea
                       value={formData.special_instructions}
                       onChange={(e) => setFormData({ ...formData, special_instructions: e.target.value })}
-                      rows="3"
+                      rows="14"
                       placeholder="Enter special instructions"
                       className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                     />
