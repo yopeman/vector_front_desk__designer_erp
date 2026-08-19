@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { ChevronDown, LogOut, Menu, X } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, Settings, X, House } from 'lucide-react'
 import { Button } from '../ui/button'
 import { useAuthStore } from '../../stores/authStore'
 import { useState, useEffect } from 'react'
@@ -115,6 +115,22 @@ export default function DashboardLayout() {
             )
           })}
 
+          {/* Frontdesk portal */}
+          <div>
+            <button
+              onClick={() => window.location.href = 'https://vectoradvert.com/erp/frontdesk/'}
+              className={cn(
+                'flex w-full items-center justify-between px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors',
+                'text-gray-700 hover:bg-gray-100'
+              )}
+            >
+              <span className="flex items-center">
+                <House className="w-5 h-5 mr-3" />
+                Front Desk
+              </span>
+            </button>
+          </div>
+          
           {/* Settings */}
           <div className="pt-1 border-t border-gray-100 mt-2">
             <Link
@@ -141,7 +157,7 @@ export default function DashboardLayout() {
               <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="w-full">
+          <Button variant="outline" size="sm" onClick={handleLogout} className="w-full text-gray-900">
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>
