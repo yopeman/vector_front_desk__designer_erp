@@ -62,7 +62,7 @@ export default function PlanCalendar() {
       {months.length === 0 ? (
         <p className="text-gray-500">No campaigns with dates yet.</p>
       ) : (
-        <div className="space-y-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {months.map((group) => (
             <div key={group.key}>
               <h2 className="mb-2 text-lg font-bold text-gray-900">{group.label}</h2>
