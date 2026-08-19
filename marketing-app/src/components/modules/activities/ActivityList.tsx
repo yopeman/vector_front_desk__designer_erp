@@ -34,10 +34,10 @@ export function ActivityList({
   return (
     <div className="space-y-4 w-full">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{title}</h2>
+        <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
         <Button onClick={onCreate}>{createLabel}</Button>
       </div>
-      <div className="space-y-3">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {activities.map((activity) => (
           <Card key={activity.id}>
             <CardHeader>

@@ -44,7 +44,7 @@ export function ProductList({
   return (
     <div className="space-y-4 w-full">
       <div className="flex flex-wrap justify-between items-center gap-3">
-        <h2 className="text-2xl font-bold">{title}</h2>
+        <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
         <Button onClick={onCreate}>{createLabel}</Button>
       </div>
 
