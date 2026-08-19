@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { getCurrentUser, signIn, signUp, signOut, onAuthStateChange } from '../lib/supabase/auth'
+import { getCurrentUser, signIn, signUp, signOut, onAuthStateChange, updatePassword, verifyCurrentPassword } from '../lib/supabase/auth'
 
 interface User {
   id: string
@@ -19,6 +19,8 @@ interface AuthState {
   register: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   checkAuth: () => Promise<void>
+  changePassword: (newPassword: string) => Promise<void>
+  verifyPassword: (password: string) => Promise<boolean>
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -107,6 +109,40 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (error: any) {
           set({ error: error.message || 'Auth check failed', user: null })
+        } finally {
+          set({ isLoading: false })
+        }
+      },
+
+      changePassword: async (newPassword: string) => {
+        set({ isLoading: true, error: null })
+        try {
+          const { error } = await updatePassword(newPassword)
+          if (error) {
+            const errorMessage = (error as any).message || 'Password update failed'
+            set({ error: errorMessage })
+            throw new Error(errorMessage)
+          }
+        } catch (error: any) {
+          const errorMessage = error?.message || 'Password update failed'
+          set({ error: errorMessage })
+          throw new Error(errorMessage)
+        } finally {
+          set({ isLoading: false })
+        }
+      },
+
+      verifyPassword: async (password: string) => {
+        const state = useAuthStore.getState()
+        if (!state.user?.email) return false
+        
+        set({ isLoading: true, error: null })
+        try {
+          const { error } = await verifyCurrentPassword(state.user.email, password)
+          if (error) return false
+          return true
+        } catch (error: any) {
+          return false
         } finally {
           set({ isLoading: false })
         }

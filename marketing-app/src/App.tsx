@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import NotFound from './pages/NotFound'
+import Settings from './pages/Settings/index'
 
 // Marketing Plan
 import PlanDashboard from './pages/Plan/Dashboard'
@@ -50,13 +51,6 @@ import PhysicalPerfAnalysis from './pages/Analysis/PhysicalPerformance'
 import ProposalFunnel from './pages/Analysis/ProposalFunnel'
 import CostsRoi from './pages/Analysis/CostsRoi'
 import Monthly from './pages/Analysis/Monthly'
-
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="text-center py-12">
-    <h1 className="text-2xl font-bold text-gray-900 mb-2">{title}</h1>
-    <p className="text-gray-600">Coming soon</p>
-  </div>
-)
 
 function App() {
   return (
@@ -134,7 +128,7 @@ function App() {
           <Route path="/analysis/costs-roi" element={<CostsRoi />} />
           <Route path="/analysis/monthly" element={<Monthly />} />
 
-          <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
 
         {/* 404 page */}
