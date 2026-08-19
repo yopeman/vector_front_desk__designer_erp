@@ -76,7 +76,7 @@ export default function CampaignsPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingCampaign ? 'Edit Campaign' : 'Create Campaign'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingCampaign ? 'Edit Campaign' : 'Create Campaign'}</DialogTitle>
           </DialogHeader>
           <CampaignForm
             campaign={editingCampaign}

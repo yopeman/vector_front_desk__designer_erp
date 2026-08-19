@@ -80,7 +80,7 @@ export default function CostsExpenses() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingExpense ? 'Edit Expense' : 'Submit Expense'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingExpense ? 'Edit Expense' : 'Submit Expense'}</DialogTitle>
           </DialogHeader>
           <ExpenseForm
             expense={editingExpense}

@@ -78,7 +78,7 @@ export default function ProductsPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
           </DialogHeader>
           <ProductForm
             product={editingProduct}

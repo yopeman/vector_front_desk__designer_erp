@@ -78,7 +78,7 @@ export default function ProposalsPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingProposal ? 'Edit Proposal' : 'Create Proposal'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingProposal ? 'Edit Proposal' : 'Create Proposal'}</DialogTitle>
           </DialogHeader>
           <ProposalForm
             proposal={editingProposal}

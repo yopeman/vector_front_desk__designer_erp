@@ -78,7 +78,7 @@ export default function TendersPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingTender ? 'Edit Tender' : 'Create Tender'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingTender ? 'Edit Tender' : 'Create Tender'}</DialogTitle>
           </DialogHeader>
           <TenderForm
             tender={editingTender}

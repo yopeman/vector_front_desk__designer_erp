@@ -93,7 +93,7 @@ export function ActivityListPage({ section, basePath, field }: Props) {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingActivity ? 'Edit Activity' : 'Create Activity'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingActivity ? 'Edit Activity' : 'Create Activity'}</DialogTitle>
           </DialogHeader>
           <ActivityForm
             activity={editingActivity}

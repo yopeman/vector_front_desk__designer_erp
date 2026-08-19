@@ -78,7 +78,7 @@ export default function MarketResearchPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingInsight ? 'Edit Insight' : 'Add Insight'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingInsight ? 'Edit Insight' : 'Add Insight'}</DialogTitle>
           </DialogHeader>
           <MarketInsightForm
             insight={editingInsight}

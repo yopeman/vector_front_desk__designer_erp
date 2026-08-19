@@ -109,7 +109,7 @@ export default function ProformasPage() {
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingProforma ? 'Edit Proforma' : 'Create Proforma'}</DialogTitle>
+            <DialogTitle className="text-gray-800">{editingProforma ? 'Edit Proforma' : 'Create Proforma'}</DialogTitle>
           </DialogHeader>
           <ProformaForm
             proforma={editingProforma}
@@ -124,7 +124,7 @@ export default function ProformasPage() {
       <Dialog open={!!viewingProforma} onOpenChange={(open) => !open && setViewingProforma(undefined)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Proforma Details</DialogTitle>
+            <DialogTitle className="text-gray-800">Proforma Details</DialogTitle>
           </DialogHeader>
           {viewingProforma && (
             <ProformaDetails
