@@ -130,3 +130,23 @@
 - is pinned
 - checklists (JSONB array)
 - owner id
+
+# Conversations
+- id
+- name
+- is group chat
+- created by
+
+# Conversation Participants
+- id
+- conversation id
+- user id
+- joined at
+
+# Messages
+- id
+- conversation id
+- sender id
+- content
+- is read
+- created at

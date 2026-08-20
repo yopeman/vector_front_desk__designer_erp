@@ -55,6 +55,9 @@ import Monthly from './pages/Analysis/Monthly'
 // Notes
 import Notes from './pages/Notes/index'
 
+// Messages
+import Messages from './pages/Messages/index'
+
 function App() {
   return (
     <Router>
@@ -131,7 +134,8 @@ function App() {
           <Route path="/analysis/costs-roi" element={<CostsRoi />} />
           <Route path="/analysis/monthly" element={<Monthly />} />
 
-          {/* Notes */}
+          {/* Communication */}
+          <Route path="/messages" element={<Messages />} />
           <Route path="/notes" element={<Notes />} />
 
           <Route path="/settings" element={<Settings />} />

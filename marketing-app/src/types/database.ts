@@ -183,6 +183,31 @@ export interface Note {
   updated_at: string
 }
 
+export interface Conversation {
+  id: string
+  name?: string
+  is_group_chat: boolean
+  created_by?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ConversationParticipant {
+  id: string
+  conversation_id: string
+  user_id: string
+  joined_at: string
+}
+
+export interface Message {
+  id: string
+  conversation_id: string
+  sender_id: string
+  content: string
+  is_read: boolean
+  created_at: string
+}
+
 // Join types with relations
 export interface CampaignWithTargets extends Campaign {
   targets?: CampaignTarget[]

@@ -49,3 +49,17 @@
 # Notes
 - id
 - owner id
+
+# Conversations
+- id
+- created by
+
+# Conversation Participants
+- id
+- conversation id
+- user id
+
+# Messages
+- id
+- conversation id
+- sender id

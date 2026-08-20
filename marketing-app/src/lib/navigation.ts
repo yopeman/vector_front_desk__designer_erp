@@ -13,6 +13,7 @@ import {
   BarChart3,
   Settings,
   StickyNote,
+  MessageSquare,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -165,10 +166,11 @@ export const navigation: NavSection[] = [
     ],
   },
   {
-    label: 'Notes',
-    icon: StickyNote,
+    label: 'Communication',
+    icon: MessageSquare,
     children: [
-      { label: 'All Notes', path: '/notes' },
+      { label: 'Messages', path: '/messages' },
+      { label: 'Notes', path: '/notes' },
     ],
   },
 ]
