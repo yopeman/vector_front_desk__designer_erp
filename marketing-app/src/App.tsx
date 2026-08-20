@@ -52,6 +52,9 @@ import ProposalFunnel from './pages/Analysis/ProposalFunnel'
 import CostsRoi from './pages/Analysis/CostsRoi'
 import Monthly from './pages/Analysis/Monthly'
 
+// Notes
+import Notes from './pages/Notes/index'
+
 function App() {
   return (
     <Router>
@@ -127,6 +130,9 @@ function App() {
           <Route path="/analysis/proposal-funnel" element={<ProposalFunnel />} />
           <Route path="/analysis/costs-roi" element={<CostsRoi />} />
           <Route path="/analysis/monthly" element={<Monthly />} />
+
+          {/* Notes */}
+          <Route path="/notes" element={<Notes />} />
 
           <Route path="/settings" element={<Settings />} />
         </Route>

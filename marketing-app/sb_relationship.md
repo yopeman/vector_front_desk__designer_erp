@@ -45,3 +45,7 @@
 # Market Insights
 - id
 - campaign id
+
+# Notes
+- id
+- owner id

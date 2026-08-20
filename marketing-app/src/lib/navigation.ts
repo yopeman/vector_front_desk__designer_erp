@@ -12,6 +12,7 @@ import {
   CheckSquare,
   BarChart3,
   Settings,
+  StickyNote,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -161,6 +162,13 @@ export const navigation: NavSection[] = [
       { label: 'Proposal Funnel', path: '/analysis/proposal-funnel' },
       { label: 'Costs & ROI', path: '/analysis/costs-roi' },
       { label: 'Monthly Analysis', path: '/analysis/monthly' },
+    ],
+  },
+  {
+    label: 'Notes',
+    icon: StickyNote,
+    children: [
+      { label: 'All Notes', path: '/notes' },
     ],
   },
 ]

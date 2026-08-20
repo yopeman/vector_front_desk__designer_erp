@@ -121,3 +121,12 @@
 - source
 - date identified
 - relevance score: 1 - 10
+
+# Notes
+- id
+- title
+- content
+- color
+- is pinned
+- checklists (JSONB array)
+- owner id

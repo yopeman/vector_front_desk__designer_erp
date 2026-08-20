@@ -165,6 +165,24 @@ export interface MarketInsight {
   updated_at: string
 }
 
+export interface ChecklistItem {
+  id: string
+  text: string
+  completed: boolean
+}
+
+export interface Note {
+  id: string
+  title: string
+  content?: string
+  color: string
+  is_pinned: boolean
+  checklists: ChecklistItem[]
+  owner_id?: string
+  created_at: string
+  updated_at: string
+}
+
 // Join types with relations
 export interface CampaignWithTargets extends Campaign {
   targets?: CampaignTarget[]
