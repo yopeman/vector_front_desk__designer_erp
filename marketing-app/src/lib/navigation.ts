@@ -71,8 +71,19 @@ export const navigation: NavSection[] = [
       { label: 'Meetings', path: '/physical/meeting', value: 'meeting' },
       { label: 'Demos', path: '/physical/demo', value: 'demo' },
       { label: 'Events', path: '/physical/event', value: 'event' },
-      { label: 'Follow-ups==========', path: '/physical/follow-up', value: 'follow_up' },
+      { label: 'Follow-ups', path: '/physical/follow_up', value: 'follow_up' },
       { label: 'Other', path: '/physical/other', value: 'other' },
+    ],
+  },
+  {
+    label: 'Tasks',
+    icon: CheckSquare,
+    children: [
+      { label: 'All', path: '/tasks' },
+      { label: 'Planned', path: '/tasks/planned', value: 'planned' },
+      { label: 'In Progress', path: '/tasks/in_progress', value: 'in_progress' },
+      { label: 'Completed', path: '/tasks/completed', value: 'completed' },
+      { label: 'Overdue', path: '/tasks/overdue', value: 'overdue' },
     ],
   },
   {
