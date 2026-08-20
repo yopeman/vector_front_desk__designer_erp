@@ -31,12 +31,8 @@ export function ActivityListPage({ section, basePath, field }: Props) {
   const filtered = useMemo(() => {
     const all = activities.data || []
     if (!filter) return all
-    // Special "My Tasks" scope: only activities assigned to the current user.
-    if (filter === 'my') {
-      return all.filter((a) => a.assigned_to === user?.id)
-    }
     return all.filter((a) => (a as any)[field] === filter)
-  }, [activities.data, filter, field, user?.id])
+  }, [activities.data, filter, field])
 
   const handleCreate = () => {
     setEditingActivity(undefined)

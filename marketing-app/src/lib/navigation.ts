@@ -68,11 +68,10 @@ export const navigation: NavSection[] = [
     children: [
       { label: 'Visits', path: '/physical/visit', value: 'visit' },
       { label: 'Meetings', path: '/physical/meeting', value: 'meeting' },
-      // The schema's activity_type enum has no 'direct_marketing' value; kept for spec parity.
-      { label: 'Direct Marketing', path: '/physical/direct-marketing', value: 'direct_marketing' },
       { label: 'Demos', path: '/physical/demo', value: 'demo' },
       { label: 'Events', path: '/physical/event', value: 'event' },
       { label: 'Follow-ups', path: '/physical/follow-up', value: 'follow_up' },
+      { label: 'Other', path: '/physical/other', value: 'other' },
     ],
   },
   {
@@ -85,6 +84,7 @@ export const navigation: NavSection[] = [
       { label: 'Follow-up', path: '/proposals/follow_up', value: 'follow_up' },
       { label: 'Accepted', path: '/proposals/accepted', value: 'accepted' },
       { label: 'Rejected', path: '/proposals/rejected', value: 'rejected' },
+      { label: 'On Hold', path: '/proposals/on_hold', value: 'on_hold' },
     ],
   },
   {
@@ -97,18 +97,21 @@ export const navigation: NavSection[] = [
       { label: 'Follow-up', path: '/proformas/follow_up', value: 'follow_up' },
       { label: 'Accepted', path: '/proformas/accepted', value: 'accepted' },
       { label: 'Rejected', path: '/proformas/rejected', value: 'rejected' },
+      { label: 'On Hold', path: '/proformas/on_hold', value: 'on_hold' },
     ],
   },
   {
     label: 'Tenders',
     icon: Landmark,
     children: [
+      { label: 'All', path: '/tenders' },
       { label: 'Opportunities', path: '/tenders/opportunity', value: 'opportunity' },
       { label: 'Preparation', path: '/tenders/preparation', value: 'preparation' },
       { label: 'Submitted', path: '/tenders/submitted', value: 'submitted' },
       { label: 'Follow-up', path: '/tenders/follow_up', value: 'follow_up' },
       { label: 'Awarded', path: '/tenders/awarded', value: 'awarded' },
       { label: 'Lost', path: '/tenders/lost', value: 'lost' },
+      { label: 'On Hold', path: '/tenders/on_hold', value: 'on_hold' },
     ],
   },
   {
@@ -125,6 +128,7 @@ export const navigation: NavSection[] = [
     label: 'Market Research',
     icon: Search,
     children: [
+      { label: 'All', path: '/market-research' },
       { label: 'Customer Needs', path: '/market-research/customer_need', value: 'customer_need' },
       { label: 'Competitors', path: '/market-research/competitor', value: 'competitor' },
       { label: 'Market Trends', path: '/market-research/market_trend', value: 'market_trend' },
@@ -145,7 +149,7 @@ export const navigation: NavSection[] = [
     label: 'Marketing Tasks',
     icon: CheckSquare,
     children: [
-      { label: 'My Tasks', path: '/tasks/my' },
+      { label: 'All Tasks', path: '/tasks' },
       { label: 'Planned', path: '/tasks/planned', value: 'planned' },
       { label: 'In Progress', path: '/tasks/in_progress', value: 'in_progress' },
       { label: 'Completed', path: '/tasks/completed', value: 'completed' },
