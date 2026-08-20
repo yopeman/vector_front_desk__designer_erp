@@ -58,6 +58,9 @@ import Notes from './pages/Notes/index'
 // Messages
 import Messages from './pages/Messages/index'
 
+// Frontdesk
+import Frontdesk from './pages/Frontdesk/index'
+
 function App() {
   return (
     <Router>
@@ -139,6 +142,7 @@ function App() {
           <Route path="/notes" element={<Notes />} />
 
           <Route path="/settings" element={<Settings />} />
+          <Route path="/frontdesk" element={<Frontdesk />} />
         </Route>
 
         {/* 404 page */}

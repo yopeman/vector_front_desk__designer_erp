@@ -3,7 +3,7 @@ import { ChevronDown, LogOut, Menu, Settings, X, House } from 'lucide-react'
 import { Button } from '../ui/button'
 import { useAuthStore } from '../../stores/authStore'
 import { useState, useEffect } from 'react'
-import { navigation, settingsNav, findSectionForPath } from '../../lib/navigation'
+import { navigation, settingsNav, frontDeskNav, findSectionForPath } from '../../lib/navigation'
 import { cn } from '../../lib/utils/cn'
 
 export default function DashboardLayout() {
@@ -115,20 +115,19 @@ export default function DashboardLayout() {
             )
           })}
 
-          {/* Frontdesk portal */}
-          <div>
-            <button
-              onClick={() => window.location.href = 'https://vectoradvert.com/erp/frontdesk/'}
+          {/* Frontdesk */}
+          <div className="pt-1 border-t border-gray-100 mt-2">
+            <Link
+              to={frontDeskNav.path}
+              onClick={() => setSidebarOpen(false)}
               className={cn(
-                'flex w-full items-center justify-between px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors',
-                'text-gray-700 hover:bg-gray-100'
+                'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
+                isSettingsActive ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100'
               )}
             >
-              <span className="flex items-center">
-                <House className="w-5 h-5 mr-3" />
-                Front Desk
-              </span>
-            </button>
+              <frontDeskNav.icon className="w-5 h-5 mr-3" />
+              {frontDeskNav.label}
+            </Link>
           </div>
           
           {/* Settings */}
