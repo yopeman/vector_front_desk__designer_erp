@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { useState, useEffect } from 'react'
 import { navigation, homeNav, settingsNav, frontDeskNav, findSectionForPath } from '../../lib/navigation'
 import { cn } from '../../lib/utils/cn'
+import TopBar from '../modules/TopBar'
 
 export default function DashboardLayout() {
   const location = useLocation()
@@ -189,6 +190,7 @@ export default function DashboardLayout() {
             <Menu className="w-6 h-6 text-gray-600" />
           </button>
           <div className="flex-1" />
+          <TopBar />
         </div>
 
         {/* Page content */}

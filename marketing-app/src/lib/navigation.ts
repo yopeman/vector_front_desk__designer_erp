@@ -186,6 +186,7 @@ export const navigation: NavSection[] = [
     label: 'Communication',
     icon: MessageSquare,
     children: [
+      { label: 'Notifications', path: '/notifications' },
       { label: 'Messages', path: '/messages' },
       { label: 'Notes', path: '/notes' },
     ],

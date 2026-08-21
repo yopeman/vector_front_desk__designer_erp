@@ -61,6 +61,9 @@ import Notes from './pages/Notes/index'
 // Messages
 import Messages from './pages/Messages/index'
 
+// Notifications
+import Notifications from './pages/Notifications/index'
+
 // Frontdesk
 import Frontdesk from './pages/Frontdesk/index'
 
@@ -146,6 +149,7 @@ function App() {
           <Route path="/analysis/monthly" element={<Monthly />} />
 
           {/* Communication */}
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/notes" element={<Notes />} />
 
