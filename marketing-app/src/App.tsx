@@ -68,9 +68,6 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Home />} />
-
         {/* Auth routes */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
@@ -85,6 +82,10 @@ function App() {
             </ProtectedRoute>
           }
         >
+
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
+
           {/* Marketing Plan */}
           <Route path="/plan/dashboard" element={<PlanDashboard />} />
           <Route path="/plan/calendar" element={<PlanCalendar />} />

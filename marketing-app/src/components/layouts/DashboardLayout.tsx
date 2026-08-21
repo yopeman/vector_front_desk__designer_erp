@@ -1,9 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { ChevronDown, LogOut, Menu, Settings, X, House } from 'lucide-react'
+import { ChevronDown, LogOut, Menu, X } from 'lucide-react'
 import { Button } from '../ui/button'
 import { useAuthStore } from '../../stores/authStore'
 import { useState, useEffect } from 'react'
-import { navigation, settingsNav, frontDeskNav, findSectionForPath } from '../../lib/navigation'
+import { navigation, homeNav, settingsNav, frontDeskNav, findSectionForPath } from '../../lib/navigation'
 import { cn } from '../../lib/utils/cn'
 
 export default function DashboardLayout() {
@@ -39,6 +39,7 @@ export default function DashboardLayout() {
     await logout()
   }
 
+  const isHomeActive = location.pathname === homeNav.path
   const isSettingsActive = location.pathname === settingsNav.path
   const isFrontDeskActive = location.pathname === frontDeskNav.path
 
@@ -61,7 +62,8 @@ export default function DashboardLayout() {
       >
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 shrink-0">
-          <h1 className="text-xl font-bold text-primary">Marketing ERP</h1>
+          <Link to="/" className="text-xl font-bold text-primary">V☰CTOR</Link>
+          {/* <h3 className="text-sm text-gray-500">Advert & Manufacturing</h3> */}
           <button className="lg:hidden" onClick={() => setSidebarOpen(false)}>
             <X className="w-6 h-6 text-gray-600" />
           </button>
@@ -69,6 +71,21 @@ export default function DashboardLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          {/* Home */}
+          <div className="mb-1">
+            <Link
+              to={homeNav.path}
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
+                isHomeActive ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100'
+              )}
+            >
+              <homeNav.icon className="w-5 h-5 mr-3" />
+              {homeNav.label}
+            </Link>
+          </div>
+
           {navigation.map((section) => {
             const isExpanded = expanded.has(section.label)
             const isSectionActive = activeSection?.label === section.label
@@ -117,7 +134,7 @@ export default function DashboardLayout() {
           })}
 
           {/* Frontdesk */}
-          <div className="pt-1 border-t border-gray-100 mt-2">
+          <div className="mb-1">
             <Link
               to={frontDeskNav.path}
               onClick={() => setSidebarOpen(false)}

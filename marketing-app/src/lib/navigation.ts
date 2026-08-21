@@ -192,6 +192,7 @@ export const navigation: NavSection[] = [
   },
 ]
 
+export const homeNav = { label: 'Home', path: '/', icon: House }
 export const settingsNav = { label: 'Settings', path: '/settings', icon: Settings }
 export const frontDeskNav = { label: 'Front Desk', path: 'https://vectoradvert.com/erp/frontdesk/', icon: House }
 
