@@ -44,7 +44,7 @@ export default function DashboardLayout() {
   const isFrontDeskActive = location.pathname === frontDeskNav.path
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -192,7 +192,7 @@ export default function DashboardLayout() {
         </div>
 
         {/* Page content */}
-        <main className="px-4 py-6 flex-1">
+        <main className="px-4 py-6 flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
