@@ -1,18 +1,80 @@
-import { useState } from 'react'
-import { Bell, MessageSquare, User, LogOut, Settings } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Bell, MessageSquare, User, LogOut, Settings, Search, ArrowRight } from 'lucide-react'
 import { Button } from '../ui/button'
 import { useAuthStore } from '../../stores/authStore'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../lib/hooks/useNotifications'
 import { useConversations } from '../../lib/hooks/useMessages'
 import { formatDistanceToNow } from 'date-fns'
+import { Dialog, DialogContent } from '../ui/dialog'
+import { Input } from '../ui/input'
+import { navigation, homeNav, settingsNav } from '../../lib/navigation'
 
 export default function TopBar() {
   const { user, logout } = useAuthStore()
+  const navigate = useNavigate()
   const [activeModal, setActiveModal] = useState<'notification' | 'message' | 'profile' | null>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0)
   
   const { unreadNotifications, markAsRead } = useNotifications(user?.id)
   const { conversations } = useConversations(user?.id)
+
+  // Flatten all navigation items for search
+  const allNavItems = [
+    { label: homeNav.label, path: homeNav.path, section: 'Home' },
+    { label: settingsNav.label, path: settingsNav.path, section: 'Settings' },
+    ...navigation.flatMap(section =>
+      section.children.map(item => ({
+        label: item.label,
+        path: item.path,
+        section: section.label
+      }))
+    )
+  ]
+
+  const filteredItems = allNavItems.filter(item =>
+    item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.section.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen(prev => !prev)
+        setSelectedIndex(0)
+        setSearchQuery('')
+      }
+      if (e.key === 'Escape') {
+        setSearchOpen(false)
+      }
+      if (searchOpen) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          setSelectedIndex(prev => (prev + 1) % filteredItems.length)
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          setSelectedIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length)
+        } else if (e.key === 'Enter' && filteredItems.length > 0) {
+          e.preventDefault()
+          navigate(filteredItems[selectedIndex].path)
+          setSearchOpen(false)
+          setSearchQuery('')
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [searchOpen, filteredItems, selectedIndex, navigate])
+
+  const handleSearchSelect = (path: string) => {
+    navigate(path)
+    setSearchOpen(false)
+    setSearchQuery('')
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -26,6 +88,18 @@ export default function TopBar() {
   return (
     <div className="relative">
       <div className="flex items-center gap-2">
+        {/* Search Button */}
+        <button
+          onClick={() => setSearchOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors text-sm text-gray-600"
+        >
+          <Search className="w-4 h-4" />
+          <span className="hidden sm:inline">Search...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-xs text-gray-500">
+            <span>⌘</span>K
+          </kbd>
+        </button>
+
         {/* Notification Icon */}
         <button
           onClick={() => setActiveModal(activeModal === 'notification' ? null : 'notification')}
@@ -174,6 +248,50 @@ export default function TopBar() {
           onClick={() => setActiveModal(null)}
         />
       )}
+
+      {/* Search Dialog */}
+      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <DialogContent className="sm:max-w-lg p-0">
+          <div className="flex items-center border-b px-3">
+            <Search className="w-4 h-4 text-gray-400 mr-2" />
+            <Input
+              placeholder="Search navigation..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                setSelectedIndex(0)
+              }}
+              className="border-0 focus-visible:ring-0 shadow-none"
+              autoFocus
+            />
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {filteredItems.length === 0 ? (
+              <div className="p-4 text-center text-sm text-gray-500">No results found</div>
+            ) : (
+              filteredItems.map((item, index) => (
+                <button
+                  key={item.path}
+                  onClick={() => handleSearchSelect(item.path)}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
+                    index === selectedIndex ? 'bg-gray-100' : ''
+                  }`}
+                >
+                  <div>
+                    <div className="font-medium text-gray-900">{item.label}</div>
+                    <div className="text-xs text-gray-500">{item.section}</div>
+                  </div>
+                  {index === selectedIndex && <ArrowRight className="w-4 h-4 text-gray-400" />}
+                </button>
+              ))
+            )}
+          </div>
+          <div className="border-t p-2 text-xs text-gray-500 flex justify-between">
+            <span>↑↓ to navigate</span>
+            <span>↵ to select</span>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
