@@ -291,7 +291,14 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
                 key={index}
                 className="flex items-center justify-between text-sm p-2 bg-muted rounded"
               >
-                <span className="truncate">{attachment}</span>
+                <a
+                  href={`#${attachment}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate text-blue-600 hover:text-blue-800 hover:underline flex-1 mr-2"
+                >
+                  {attachment}
+                </a>
                 <Button
                   type="button"
                   variant="ghost"

@@ -87,7 +87,7 @@ export function ActivityListPage({ section, basePath, field }: Props) {
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-gray-800">{editingActivity ? 'Edit Activity' : 'Create Activity'}</DialogTitle>
           </DialogHeader>
