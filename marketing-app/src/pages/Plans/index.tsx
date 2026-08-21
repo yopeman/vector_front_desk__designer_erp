@@ -91,6 +91,7 @@ export default function PlansPage() {
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             isLoading={createPlan.isPending || updatePlan.isPending}
+            plans={plans.data || []}
           />
         </DialogContent>
       </Dialog>

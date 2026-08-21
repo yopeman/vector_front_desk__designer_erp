@@ -50,9 +50,6 @@ export const navigation: NavSection[] = [
       { label: 'Quarterly', path: '/plans/quarterly', value: 'quarterly' },
       { label: 'Monthly', path: '/plans/monthly', value: 'monthly' },
       { label: 'Weekly', path: '/plans/weekly', value: 'weekly' },
-      { label: 'Draft', path: '/plans/draft', value: 'draft' },
-      { label: 'Active', path: '/plans/active', value: 'active' },
-      { label: 'Archived', path: '/plans/archived', value: 'archived' },
     ],
   },
   {

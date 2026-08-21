@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plan, PlanType, PlanStatus } from '../../../types/database'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
@@ -10,6 +10,7 @@ interface PlanFormProps {
   onSubmit: (data: Partial<Plan>) => void
   onCancel: () => void
   isLoading?: boolean
+  plans?: Plan[]
 }
 
 const typeOptions: { value: PlanType; label: string }[] = [
@@ -25,18 +26,37 @@ const statusOptions: { value: PlanStatus; label: string }[] = [
   { value: 'archived', label: 'Archived' },
 ]
 
-export function PlanForm({ plan, onSubmit, onCancel, isLoading }: PlanFormProps) {
+export function PlanForm({ plan, onSubmit, onCancel, isLoading, plans = [] }: PlanFormProps) {
   const [formData, setFormData] = useState({
     name: plan?.name || '',
     description: plan?.description || '',
     type: plan?.type || 'annual',
     status: plan?.status || 'draft',
+    parent_plan_id: plan?.parent_plan_id || '',
     start_date: plan?.start_date || '',
     end_date: plan?.end_date || '',
     target_revenue: plan?.target_revenue || 0,
     target_leads: plan?.target_leads || 0,
     notes: plan?.notes || '',
   })
+
+  // Filter parent plans based on the selected type
+  const availableParentPlans = useMemo(() => {
+    if (formData.type === 'annual') {
+      // Annual plans have no parent
+      return []
+    } else if (formData.type === 'quarterly') {
+      // Quarterly plans can have annual parents
+      return plans.filter(p => p.type === 'annual' && p.id !== plan?.id)
+    } else if (formData.type === 'monthly') {
+      // Monthly plans can have annual or quarterly parents
+      return plans.filter(p => (p.type === 'annual' || p.type === 'quarterly') && p.id !== plan?.id)
+    } else if (formData.type === 'weekly') {
+      // Weekly plans can have monthly parents
+      return plans.filter(p => p.type === 'monthly' && p.id !== plan?.id)
+    }
+    return []
+  }, [formData.type, plans, plan?.id])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,6 +65,7 @@ export function PlanForm({ plan, onSubmit, onCancel, isLoading }: PlanFormProps)
       description: formData.description || undefined,
       type: formData.type,
       status: formData.status,
+      parent_plan_id: formData.parent_plan_id || undefined,
       start_date: formData.start_date,
       end_date: formData.end_date,
       target_revenue: formData.target_revenue,
@@ -119,6 +140,29 @@ export function PlanForm({ plan, onSubmit, onCancel, isLoading }: PlanFormProps)
           </Select>
         </div>
       </div>
+
+      {formData.type !== 'annual' && (
+        <div className="space-y-2">
+          <Label htmlFor="parent_plan_id">Parent Plan</Label>
+          <Select
+            value={formData.parent_plan_id}
+            onValueChange={(value) => setFormData({ ...formData, parent_plan_id: value || '' })}
+            disabled={isLoading || availableParentPlans.length === 0}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={availableParentPlans.length === 0 ? 'No parent plans available' : 'Select a parent plan'} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No parent</SelectItem>
+              {availableParentPlans.map((parentPlan) => (
+                <SelectItem key={parentPlan.id} value={parentPlan.id}>
+                  {parentPlan.name} ({parentPlan.type})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
