@@ -276,7 +276,7 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label>Checklist</Label>
+          <Label>Tasks</Label>
           <Button
             type="button"
             variant="outline"
@@ -285,7 +285,7 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
             disabled={isLoading}
           >
             <Plus className="size-3" />
-            Add Item
+            Add Task
           </Button>
         </div>
         <div className="space-y-2">
@@ -299,7 +299,7 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
               <Input
                 value={item.text}
                 onChange={(e) => updateChecklistItem(item.id, e.target.value)}
-                placeholder="Checklist item"
+                placeholder="Task"
                 disabled={isLoading}
                 className="flex-1"
               />
