@@ -51,11 +51,10 @@ CREATE OR REPLACE FUNCTION create_notification(
     p_link TEXT DEFAULT NULL,
     p_metadata JSONB DEFAULT '{}'::jsonb
 )
-RETURNS UUID AS $$
+RETURNS VOID AS $$
 BEGIN
     INSERT INTO notifications (user_id, type, title, message, link, metadata)
-    VALUES (p_user_id, p_type, p_title, p_message, p_link, p_metadata)
-    RETURNING id;
+    VALUES (p_user_id, p_type, p_title, p_message, p_link, p_metadata);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -66,15 +65,21 @@ $$ LANGUAGE plpgsql;
 -- Campaign created notification
 CREATE OR REPLACE FUNCTION notify_campaign_created()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_user_id uuid;
 BEGIN
-    PERFORM create_notification(
-        NEW.owner_id,
-        'campaign_created',
-        'New Campaign Created',
-        'Campaign "' || NEW.name || '" has been created successfully.',
-        '/campaigns',
-        jsonb_build_object('campaign_id', NEW.id, 'campaign_name', NEW.name)
-    );
+    target_user_id := COALESCE(NEW.owner_id, auth.uid());
+    
+    IF target_user_id IS NOT NULL THEN
+        PERFORM create_notification(
+            target_user_id,
+            'campaign_created',
+            'New Campaign Created',
+            'Campaign "' || NEW.name || '" has been created successfully.',
+            '/campaigns',
+            jsonb_build_object('campaign_id', NEW.id, 'campaign_name', NEW.name)
+        );
+    END IF;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -87,16 +92,22 @@ CREATE TRIGGER trigger_campaign_created
 -- Campaign status changed notification
 CREATE OR REPLACE FUNCTION notify_campaign_status_changed()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_user_id uuid;
 BEGIN
     IF OLD.status IS DISTINCT FROM NEW.status THEN
-        PERFORM create_notification(
-            NEW.owner_id,
-            'campaign_status_changed',
-            'Campaign Status Changed',
-            'Campaign "' || NEW.name || '" status changed from ' || OLD.status || ' to ' || NEW.status,
-            '/campaigns',
-            jsonb_build_object('campaign_id', NEW.id, 'campaign_name', NEW.name, 'old_status', OLD.status, 'new_status', NEW.status)
-        );
+        target_user_id := COALESCE(NEW.owner_id, auth.uid());
+        
+        IF target_user_id IS NOT NULL THEN
+            PERFORM create_notification(
+                target_user_id,
+                'campaign_status_changed',
+                'Campaign Status Changed',
+                'Campaign "' || NEW.name || '" status changed from ' || OLD.status || ' to ' || NEW.status,
+                '/campaigns',
+                jsonb_build_object('campaign_id', NEW.id, 'campaign_name', NEW.name, 'old_status', OLD.status, 'new_status', NEW.status)
+            );
+        END IF;
     END IF;
     RETURN NEW;
 END;
@@ -133,16 +144,22 @@ CREATE TRIGGER trigger_activity_assigned
 -- Proposal submitted notification
 CREATE OR REPLACE FUNCTION notify_proposal_submitted()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_user_id uuid;
 BEGIN
     IF NEW.status = 'submitted' AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM NEW.status) THEN
-        PERFORM create_notification(
-            NEW.owner_id,
-            'proposal_submitted',
-            'Proposal Submitted',
-            'Proposal for "' || NEW.client_name || '" has been submitted.',
-            '/proposals',
-            jsonb_build_object('proposal_id', NEW.id, 'client_name', NEW.client_name)
-        );
+        target_user_id := COALESCE(NEW.owner_id, auth.uid());
+        
+        IF target_user_id IS NOT NULL THEN
+            PERFORM create_notification(
+                target_user_id,
+                'proposal_submitted',
+                'Proposal Submitted',
+                'Proposal for "' || NEW.client_name || '" has been submitted.',
+                '/proposals',
+                jsonb_build_object('proposal_id', NEW.id, 'client_name', NEW.client_name)
+            );
+        END IF;
     END IF;
     RETURN NEW;
 END;
@@ -156,16 +173,22 @@ CREATE TRIGGER trigger_proposal_submitted
 -- Proposal accepted notification
 CREATE OR REPLACE FUNCTION notify_proposal_accepted()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_user_id uuid;
 BEGIN
     IF NEW.status = 'accepted' AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM NEW.status) THEN
-        PERFORM create_notification(
-            NEW.owner_id,
-            'proposal_accepted',
-            'Proposal Accepted!',
-            'Proposal for "' || NEW.client_name || '" has been accepted!',
-            '/proposals',
-            jsonb_build_object('proposal_id', NEW.id, 'client_name', NEW.client_name)
-        );
+        target_user_id := COALESCE(NEW.owner_id, auth.uid());
+        
+        IF target_user_id IS NOT NULL THEN
+            PERFORM create_notification(
+                target_user_id,
+                'proposal_accepted',
+                'Proposal Accepted!',
+                'Proposal for "' || NEW.client_name || '" has been accepted!',
+                '/proposals',
+                jsonb_build_object('proposal_id', NEW.id, 'client_name', NEW.client_name)
+            );
+        END IF;
     END IF;
     RETURN NEW;
 END;
@@ -179,16 +202,22 @@ CREATE TRIGGER trigger_proposal_accepted
 -- Proforma requested notification
 CREATE OR REPLACE FUNCTION notify_proforma_requested()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_user_id uuid;
 BEGIN
     IF NEW.status = 'requested' AND (TG_OP = 'INSERT' OR OLD.status IS DISTINCT FROM NEW.status) THEN
-        PERFORM create_notification(
-            NEW.owner_id,
-            'proforma_requested',
-            'Proforma Requested',
-            'Proforma for "' || NEW.client_name || '" has been requested.',
-            '/proformas',
-            jsonb_build_object('proforma_id', NEW.id, 'client_name', NEW.client_name)
-        );
+        target_user_id := COALESCE(NEW.owner_id, auth.uid());
+        
+        IF target_user_id IS NOT NULL THEN
+            PERFORM create_notification(
+                target_user_id,
+                'proforma_requested',
+                'Proforma Requested',
+                'Proforma for "' || NEW.client_name || '" has been requested.',
+                '/proformas',
+                jsonb_build_object('proforma_id', NEW.id, 'client_name', NEW.client_name)
+            );
+        END IF;
     END IF;
     RETURN NEW;
 END;
@@ -202,17 +231,23 @@ CREATE TRIGGER trigger_proforma_requested
 -- Expense pending approval notification
 CREATE OR REPLACE FUNCTION notify_expense_pending()
 RETURNS TRIGGER AS $$
+DECLARE
+    target_user_id uuid;
 BEGIN
     IF NEW.approval_status = 'pending' AND (TG_OP = 'INSERT' OR OLD.approval_status IS DISTINCT FROM NEW.approval_status) THEN
-        -- Notify admin users (you may want to adjust this logic based on your user roles)
-        PERFORM create_notification(
-            NEW.submitted_by,
-            'expense_pending_approval',
-            'Expense Pending Approval',
-            'Expense of $' || NEW.amount || ' is pending approval.',
-            '/costs/expenses',
-            jsonb_build_object('expense_id', NEW.id, 'amount', NEW.amount)
-        );
+        target_user_id := COALESCE(NEW.submitted_by, auth.uid());
+        
+        IF target_user_id IS NOT NULL THEN
+            -- Notify admin users (you may want to adjust this logic based on your user roles)
+            PERFORM create_notification(
+                target_user_id,
+                'expense_pending_approval',
+                'Expense Pending Approval',
+                'Expense of $' || NEW.amount || ' is pending approval.',
+                '/costs/expenses',
+                jsonb_build_object('expense_id', NEW.id, 'amount', NEW.amount)
+            );
+        END IF;
     END IF;
     RETURN NEW;
 END;
@@ -295,6 +330,7 @@ CREATE OR REPLACE FUNCTION check_tender_deadlines()
 RETURNS void AS $$
 DECLARE
     due_tenders RECORD;
+    target_user_id uuid;
 BEGIN
     -- Tenders due within 48 hours
     FOR due_tenders IN 
@@ -303,14 +339,16 @@ BEGIN
         WHERE deadline BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '2 days'
         AND status NOT IN ('submitted', 'awarded', 'lost')
     LOOP
-        IF NOT EXISTS (
+        target_user_id := COALESCE(due_tenders.owner_id, auth.uid());
+        
+        IF target_user_id IS NOT NULL AND NOT EXISTS (
             SELECT 1 FROM notifications 
             WHERE type = 'tender_deadline_soon' 
             AND metadata->>'tender_id' = due_tenders.id::text
             AND created_at > CURRENT_DATE
         ) THEN
             PERFORM create_notification(
-                due_tenders.owner_id,
+                target_user_id,
                 'tender_deadline_soon',
                 'Tender Deadline Approaching',
                 'Tender "' || due_tenders.title || '" deadline is in 2 days.',
@@ -327,6 +365,7 @@ CREATE OR REPLACE FUNCTION check_proposal_followups()
 RETURNS void AS $$
 DECLARE
     followup_proposals RECORD;
+    target_user_id uuid;
 BEGIN
     -- Proposals needing follow-up
     FOR followup_proposals IN 
@@ -336,14 +375,16 @@ BEGIN
         AND follow_up_at BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'
         AND status = 'submitted'
     LOOP
-        IF NOT EXISTS (
+        target_user_id := COALESCE(followup_proposals.owner_id, auth.uid());
+        
+        IF target_user_id IS NOT NULL AND NOT EXISTS (
             SELECT 1 FROM notifications 
             WHERE type = 'proposal_follow_up' 
             AND metadata->>'proposal_id' = followup_proposals.id::text
             AND created_at > CURRENT_DATE
         ) THEN
             PERFORM create_notification(
-                followup_proposals.owner_id,
+                target_user_id,
                 'proposal_follow_up',
                 'Proposal Follow-up Due',
                 'Follow-up for proposal to "' || followup_proposals.client_name || '" is due today.',
