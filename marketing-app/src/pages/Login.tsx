@@ -13,7 +13,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  const from = (location.state as any)?.from?.pathname || '/dashboard'
+  const from = (location.state as any)?.from?.pathname || '/'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,16 +61,16 @@ export default function Login() {
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white" disabled={isLoading}>
         {isLoading ? 'Signing in...' : 'Sign In'}
       </Button>
 
-      <p className="text-sm text-center text-gray-600">
+      {/* <p className="text-sm text-center text-gray-600">
         Don't have an account?{' '}
         <Link to="/register" className="text-primary hover:underline">
           Sign up
         </Link>
-      </p>
+      </p> */}
     </form>
   )
 }

@@ -29,7 +29,7 @@ export default function Register() {
     
     try {
       await register(email, password)
-      navigate('/dashboard')
+      navigate('/')
     } catch (err: any) {
       setError(err.message || 'Registration failed')
     }
@@ -82,7 +82,7 @@ export default function Register() {
         </div>
       )}
 
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      <Button type="submit" className="w-full text-white bg-primary hover:bg-primary/90" disabled={isLoading}>
         {isLoading ? 'Creating account...' : 'Sign Up'}
       </Button>
 
