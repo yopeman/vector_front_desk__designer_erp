@@ -93,7 +93,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-6 text-gray-800">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
@@ -101,7 +101,7 @@ export default function NotificationsPage() {
             {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 text-gray-800">
           {unreadCount > 0 && (
             <Button variant="outline" onClick={handleMarkAllAsRead}>
               <CheckCheck className="w-4 h-4 mr-2" />
@@ -120,12 +120,14 @@ export default function NotificationsPage() {
       {/* Filter Tabs */}
       <div className="flex gap-2">
         <Button
+          className={filter === 'all' ? '' : 'text-gray-800'}
           variant={filter === 'all' ? 'default' : 'outline'}
           onClick={() => setFilter('all')}
         >
           All ({notificationsCount})
         </Button>
         <Button
+          className={filter === 'unread' ? '' : 'text-gray-800'}
           variant={filter === 'unread' ? 'default' : 'outline'}
           onClick={() => setFilter('unread')}
         >
@@ -171,7 +173,7 @@ export default function NotificationsPage() {
                       <div className="flex items-center gap-2 shrink-0">
                         {notification.link && (
                           <a
-                            href={notification.link}
+                            href={`#${notification.link}`}
                             className="flex items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition-colors"
                           >
                             <ExternalLink className="w-4 h-4" />

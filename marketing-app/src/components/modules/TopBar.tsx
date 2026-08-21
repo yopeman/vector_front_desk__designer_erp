@@ -86,7 +86,7 @@ export default function TopBar() {
               <div className="text-center text-gray-500 text-sm">No new notifications</div>
             )}
           </div>
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 text-gray-800">
             <Link to="/notifications" onClick={() => setActiveModal(null)}>
               <Button variant="outline" size="sm" className="w-full">
                 View All Notifications
@@ -125,7 +125,7 @@ export default function TopBar() {
               <div className="text-center text-gray-500 text-sm">No conversations yet</div>
             )}
           </div>
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-gray-200 text-gray-800">
             <Link to="/messages" onClick={() => setActiveModal(null)}>
               <Button variant="outline" size="sm" className="w-full">
                 View All Messages
