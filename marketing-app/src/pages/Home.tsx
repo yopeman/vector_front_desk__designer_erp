@@ -2,20 +2,11 @@ import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase/client'
 import { 
-  LayoutDashboard, 
-  Target, 
   Rocket, 
-  Monitor, 
-  Handshake, 
   CheckSquare, 
   FileText, 
-  FileSpreadsheet, 
-  Landmark, 
-  Package, 
-  Search, 
   Wallet, 
   BarChart3, 
-  MessageSquare, 
   ArrowRight,
   TrendingUp,
   TrendingDown,
@@ -297,7 +288,7 @@ export default function Home() {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {campaignStatusData.map((entry, index) => (
+                {campaignStatusData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
