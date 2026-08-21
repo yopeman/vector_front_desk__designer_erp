@@ -67,6 +67,8 @@ export interface Activity {
   assigned_to?: string
   location?: string
   notes?: string
+  checklists?: ChecklistItem[]
+  attachments?: string[]
   created_at: string
   updated_at: string
 }

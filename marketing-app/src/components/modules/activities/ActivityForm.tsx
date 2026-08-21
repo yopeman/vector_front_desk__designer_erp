@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Activity, ActivityType, ActivityStatus } from '../../../types/database'
+import { Activity, ActivityType, ActivityStatus, ChecklistItem } from '../../../types/database'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
+import { Checkbox } from '../../ui/checkbox'
+import { Trash2, Plus, Upload } from 'lucide-react'
 
 interface ActivityFormProps {
   activity?: Activity
@@ -41,7 +43,62 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
     scheduled_end: activity?.scheduled_end || '',
     location: activity?.location || '',
     notes: activity?.notes || '',
+    checklists: activity?.checklists || [],
+    attachments: activity?.attachments || [],
   })
+
+  const addChecklistItem = () => {
+    const newItem: ChecklistItem = {
+      id: crypto.randomUUID(),
+      text: '',
+      completed: false,
+    }
+    setFormData({ ...formData, checklists: [...formData.checklists, newItem] })
+  }
+
+  const updateChecklistItem = (id: string, text: string) => {
+    setFormData({
+      ...formData,
+      checklists: formData.checklists.map(item => 
+        item.id === id ? { ...item, text } : item
+      ),
+    })
+  }
+
+  const toggleChecklistItem = (id: string) => {
+    setFormData({
+      ...formData,
+      checklists: formData.checklists.map(item => 
+        item.id === id ? { ...item, completed: !item.completed } : item
+      ),
+    })
+  }
+
+  const removeChecklistItem = (id: string) => {
+    setFormData({
+      ...formData,
+      checklists: formData.checklists.filter(item => item.id !== id),
+    })
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    // For now, just store file names. In production, upload to Supabase storage
+    const newAttachments = Array.from(files).map(file => file.name)
+    setFormData({
+      ...formData,
+      attachments: [...formData.attachments, ...newAttachments],
+    })
+  }
+
+  const removeAttachment = (index: number) => {
+    setFormData({
+      ...formData,
+      attachments: formData.attachments.filter((_, i) => i !== index),
+    })
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,6 +109,8 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
       status: formData.status,
       location: formData.location || undefined,
       notes: formData.notes || undefined,
+      checklists: formData.checklists,
+      attachments: formData.attachments,
     }
     
     if (formData.scheduled_start) {
@@ -161,6 +220,91 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           disabled={isLoading}
         />
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Checklist</Label>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={addChecklistItem}
+            disabled={isLoading}
+          >
+            <Plus className="size-3" />
+            Add Item
+          </Button>
+        </div>
+        <div className="space-y-2">
+          {formData.checklists.map((item) => (
+            <div key={item.id} className="flex items-center gap-2">
+              <Checkbox
+                checked={item.completed}
+                onCheckedChange={() => toggleChecklistItem(item.id)}
+                disabled={isLoading}
+              />
+              <Input
+                value={item.text}
+                onChange={(e) => updateChecklistItem(item.id, e.target.value)}
+                placeholder="Checklist item"
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={() => removeChecklistItem(item.id)}
+                disabled={isLoading}
+              >
+                <Trash2 className="size-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Attachments</Label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="file"
+            onChange={handleFileUpload}
+            disabled={isLoading}
+            multiple
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={isLoading}
+          >
+            <Upload className="size-4" />
+          </Button>
+        </div>
+        {formData.attachments.length > 0 && (
+          <div className="space-y-1">
+            {formData.attachments.map((attachment, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between text-sm p-2 bg-muted rounded"
+              >
+                <span className="truncate">{attachment}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => removeAttachment(index)}
+                  disabled={isLoading}
+                >
+                  <Trash2 className="size-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 justify-end">
