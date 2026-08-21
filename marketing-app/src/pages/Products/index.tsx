@@ -8,7 +8,7 @@ import { ProductForm } from '../../components/modules/products/ProductForm'
 import { ModuleTabs } from '../../components/shared/ModuleTabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog'
 
-const section = navigation.find((s) => s.label === 'Product & Service Marketing')!
+const section = navigation.find((s) => s.label === 'Product & Service')!
 
 export default function ProductsPage() {
   const { filter } = useParams()

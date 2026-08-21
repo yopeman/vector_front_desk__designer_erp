@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { formatCurrency, formatNumber } from '../../lib/utils/formatters'
 import { TrendingUp } from 'lucide-react'
 
-const section = navigation.find((s) => s.label === 'Product & Service Marketing')!
+const section = navigation.find((s) => s.label === 'Product & Service')!
 
 export default function ProductPerformance() {
   const { proposalItems, proformaItems, isLoading } = useLineItems()

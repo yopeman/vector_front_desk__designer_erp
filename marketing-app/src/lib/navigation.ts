@@ -139,7 +139,7 @@ export const navigation: NavSection[] = [
     ],
   },
   {
-    label: 'Product & Service Marketing',
+    label: 'Product & Service',
     icon: Package,
     children: [
       { label: 'Products', path: '/products/product', value: 'product' },

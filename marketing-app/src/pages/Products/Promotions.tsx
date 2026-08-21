@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { StatusBadge } from '../../components/shared/StatusBadge'
 import { formatCurrency } from '../../lib/utils/formatters'
 
-const section = navigation.find((s) => s.label === 'Product & Service Marketing')!
+const section = navigation.find((s) => s.label === 'Product & Service')!
 
 export default function Promotions() {
   const { campaigns } = useCampaigns()
