@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useCampaigns } from '../../lib/hooks/useCampaigns'
+import { usePlans } from '../../lib/hooks/usePlans'
 import { Campaign } from '../../types/database'
 import { navigation } from '../../lib/navigation'
 import { CampaignList } from '../../components/modules/campaigns/CampaignList'
@@ -13,6 +14,7 @@ const section = navigation.find((s) => s.label === 'Campaigns')!
 export default function CampaignsPage() {
   const { filter } = useParams()
   const { campaigns, createCampaign, updateCampaign, deleteCampaign } = useCampaigns()
+  const { plans } = usePlans()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingCampaign, setEditingCampaign] = useState<Campaign | undefined>()
 
@@ -83,6 +85,7 @@ export default function CampaignsPage() {
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             isLoading={createCampaign.isPending || updateCampaign.isPending}
+            plans={plans.data || []}
           />
         </DialogContent>
       </Dialog>

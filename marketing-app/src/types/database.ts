@@ -8,8 +8,27 @@ export type TenderStatus = 'opportunity' | 'preparation' | 'submitted' | 'follow
 export type ExpenseCategory = 'advertising' | 'content' | 'events' | 'travel' | 'software' | 'personnel' | 'other'
 export type InsightType = 'customer_need' | 'competitor' | 'market_trend' | 'new_opportunity'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+export type PlanType = 'annual' | 'monthly' | 'weekly' | 'quarterly'
+export type PlanStatus = 'draft' | 'active' | 'archived'
 
 // Database Tables
+export interface Plan {
+  id: string
+  name: string
+  description?: string
+  type: PlanType
+  status: PlanStatus
+  parent_plan_id?: string
+  start_date: string
+  end_date: string
+  target_revenue: number
+  target_leads: number
+  owner_id?: string
+  notes?: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Campaign {
   id: string
   name: string
@@ -18,6 +37,7 @@ export interface Campaign {
   start_date?: string
   end_date?: string
   budget_estimated: number
+  plan_id?: string
   owner_id?: string
   notes?: string
   created_at: string

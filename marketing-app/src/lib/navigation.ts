@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Target,
   Rocket,
   Monitor,
   Handshake,
@@ -38,6 +39,20 @@ export const navigation: NavSection[] = [
       { label: 'Dashboard', path: '/plan' },
       { label: 'Calendar', path: '/plan/calendar' },
       { label: 'Targets', path: '/plan/targets' },
+    ],
+  },
+  {
+    label: 'Plans',
+    icon: Target,
+    children: [
+      { label: 'All', path: '/plans' },
+      { label: 'Annual', path: '/plans/annual', value: 'annual' },
+      { label: 'Quarterly', path: '/plans/quarterly', value: 'quarterly' },
+      { label: 'Monthly', path: '/plans/monthly', value: 'monthly' },
+      { label: 'Weekly', path: '/plans/weekly', value: 'weekly' },
+      { label: 'Draft', path: '/plans/draft', value: 'draft' },
+      { label: 'Active', path: '/plans/active', value: 'active' },
+      { label: 'Archived', path: '/plans/archived', value: 'archived' },
     ],
   },
   {

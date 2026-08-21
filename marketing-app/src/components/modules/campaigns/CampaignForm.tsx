@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Campaign, CampaignStatus } from '../../../types/database'
+import { Campaign, CampaignStatus, Plan } from '../../../types/database'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
 import { Label } from '../../ui/label'
@@ -10,6 +10,7 @@ interface CampaignFormProps {
   onSubmit: (data: Partial<Campaign>) => void
   onCancel: () => void
   isLoading?: boolean
+  plans?: Plan[]
 }
 
 const statusOptions: { value: CampaignStatus; label: string }[] = [
@@ -20,7 +21,7 @@ const statusOptions: { value: CampaignStatus; label: string }[] = [
   { value: 'archived', label: 'Archived' },
 ]
 
-export function CampaignForm({ campaign, onSubmit, onCancel, isLoading }: CampaignFormProps) {
+export function CampaignForm({ campaign, onSubmit, onCancel, isLoading, plans = [] }: CampaignFormProps) {
   const [formData, setFormData] = useState({
     name: campaign?.name || '',
     description: campaign?.description || '',
@@ -28,6 +29,7 @@ export function CampaignForm({ campaign, onSubmit, onCancel, isLoading }: Campai
     start_date: campaign?.start_date || '',
     end_date: campaign?.end_date || '',
     budget_estimated: campaign?.budget_estimated || 0,
+    plan_id: campaign?.plan_id || '',
     notes: campaign?.notes || '',
   })
 
@@ -39,6 +41,7 @@ export function CampaignForm({ campaign, onSubmit, onCancel, isLoading }: Campai
       description: formData.description || undefined,
       status: formData.status,
       budget_estimated: formData.budget_estimated,
+      plan_id: formData.plan_id || undefined,
       notes: formData.notes || undefined,
     }
     
@@ -89,6 +92,27 @@ export function CampaignForm({ campaign, onSubmit, onCancel, isLoading }: Campai
             {statusOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="plan_id">Plan</Label>
+        <Select
+          value={formData.plan_id}
+          onValueChange={(value) => setFormData({ ...formData, plan_id: value || '' })}
+          disabled={isLoading}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a plan (optional)" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">No plan</SelectItem>
+            {plans.map((plan) => (
+              <SelectItem key={plan.id} value={plan.id}>
+                {plan.name} ({plan.type})
               </SelectItem>
             ))}
           </SelectContent>

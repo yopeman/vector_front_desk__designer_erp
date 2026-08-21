@@ -16,6 +16,9 @@ import PlanTargets from './pages/Plan/Targets'
 // Campaigns
 import Campaigns from './pages/Campaigns/index'
 
+// Plans
+import Plans from './pages/Plans/index'
+
 // Digital & Physical Marketing
 import Digital from './pages/Digital/index'
 import DigitalPerformance from './pages/Digital/Performance'
@@ -90,6 +93,10 @@ function App() {
           {/* Campaigns */}
           <Route path="/campaigns" element={<Campaigns />} />
           <Route path="/campaigns/:filter" element={<Campaigns />} />
+
+          {/* Plans */}
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/plans/:filter" element={<Plans />} />
 
           {/* Digital Marketing */}
           <Route path="/digital" element={<Digital />} />
