@@ -73,6 +73,7 @@ export default function CampaignsPage() {
         onCreate={handleCreate}
         title={activeItem ? activeItem.label : 'Campaigns'}
         emptyMessage={filter ? `No ${activeItem?.label.toLowerCase() || 'matching'} campaigns` : 'No campaigns yet'}
+        plans={plans.data || []}
       />
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>

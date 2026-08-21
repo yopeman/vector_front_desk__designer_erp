@@ -8,9 +8,10 @@ interface CampaignCardProps {
   campaign: Campaign
   onEdit: (campaign: Campaign) => void
   onDelete: (id: string) => void
+  planName?: string
 }
 
-export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) {
+export function CampaignCard({ campaign, onEdit, onDelete, planName }: CampaignCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -23,6 +24,12 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
         <div className="space-y-2">
           {campaign.description && (
             <p className="text-sm text-gray-600 line-clamp-2">{campaign.description}</p>
+          )}
+          {planName && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Plan:</span>
+              <span className="font-medium">{planName}</span>
+            </div>
           )}
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Budget:</span>

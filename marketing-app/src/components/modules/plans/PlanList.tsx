@@ -13,6 +13,9 @@ interface PlanListProps {
 }
 
 export function PlanList({ plans, onEdit, onDelete, onCreate, title, emptyMessage }: PlanListProps) {
+  // Create a map of plan IDs to names for parent lookup
+  const planMap = new Map(plans.map(p => [p.id, p.name]))
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -35,6 +38,7 @@ export function PlanList({ plans, onEdit, onDelete, onCreate, title, emptyMessag
               plan={plan}
               onEdit={onEdit}
               onDelete={onDelete}
+              parentPlanName={plan.parent_plan_id ? planMap.get(plan.parent_plan_id) : undefined}
             />
           ))}
         </div>

@@ -66,8 +66,8 @@ export function PlanForm({ plan, onSubmit, onCancel, isLoading, plans = [] }: Pl
       type: formData.type,
       status: formData.status,
       parent_plan_id: formData.parent_plan_id || undefined,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
+      start_date: formData.start_date || undefined,
+      end_date: formData.end_date || undefined,
       target_revenue: formData.target_revenue,
       target_leads: formData.target_leads,
       notes: formData.notes || undefined,
@@ -172,7 +172,6 @@ export function PlanForm({ plan, onSubmit, onCancel, isLoading, plans = [] }: Pl
             type="date"
             value={formData.start_date}
             onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-            required
             disabled={isLoading}
           />
         </div>
@@ -184,7 +183,6 @@ export function PlanForm({ plan, onSubmit, onCancel, isLoading, plans = [] }: Pl
             type="date"
             value={formData.end_date}
             onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-            required
             disabled={isLoading}
           />
         </div>

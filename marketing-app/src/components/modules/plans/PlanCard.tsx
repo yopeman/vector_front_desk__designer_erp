@@ -8,6 +8,7 @@ interface PlanCardProps {
   plan: Plan
   onEdit: (plan: Plan) => void
   onDelete: (id: string) => void
+  parentPlanName?: string
 }
 
 const typeLabels: Record<string, string> = {
@@ -23,7 +24,7 @@ const statusColors: Record<string, string> = {
   archived: 'bg-red-100 text-red-800',
 }
 
-export function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
+export function PlanCard({ plan, onEdit, onDelete, parentPlanName }: PlanCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
@@ -56,6 +57,12 @@ export function PlanCard({ plan, onEdit, onDelete }: PlanCardProps) {
       <CardContent>
         {plan.description && (
           <p className="text-sm text-gray-600 mb-3">{plan.description}</p>
+        )}
+        {parentPlanName && (
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-gray-500">Parent Plan:</span>
+            <span className="font-medium">{parentPlanName}</span>
+          </div>
         )}
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>

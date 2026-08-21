@@ -14,8 +14,8 @@ CREATE TABLE plans (
     parent_plan_id UUID REFERENCES plans(id) ON DELETE CASCADE,
     
     -- Time boundaries
-    start_date DATE NOT NULL,
-    end_date DATE NOT NULL,
+    start_date DATE,
+    end_date DATE,
     
     -- Strategic targets (high-level)
     target_revenue NUMERIC(12, 2) DEFAULT 0,

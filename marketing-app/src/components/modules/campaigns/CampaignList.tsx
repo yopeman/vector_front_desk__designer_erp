@@ -1,4 +1,4 @@
-import { Campaign } from '../../../types/database'
+import { Campaign, Plan } from '../../../types/database'
 import { CampaignCard } from './CampaignCard'
 import { Button } from '../../ui/button'
 
@@ -10,6 +10,7 @@ interface CampaignListProps {
   title?: string
   createLabel?: string
   emptyMessage?: string
+  plans?: Plan[]
 }
 
 export function CampaignList({
@@ -20,7 +21,11 @@ export function CampaignList({
   title = 'Campaigns',
   createLabel = 'Create Campaign',
   emptyMessage = 'No campaigns yet',
+  plans = [],
 }: CampaignListProps) {
+  // Create a map of plan IDs to names for plan lookup
+  const planMap = new Map(plans.map(p => [p.id, p.name]))
+
   if (campaigns.length === 0) {
     return (
       <div className="text-center py-12">
@@ -43,6 +48,7 @@ export function CampaignList({
             campaign={campaign}
             onEdit={onEdit}
             onDelete={onDelete}
+            planName={campaign.plan_id ? planMap.get(campaign.plan_id) : undefined}
           />
         ))}
       </div>
