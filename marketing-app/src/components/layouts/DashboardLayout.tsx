@@ -40,6 +40,7 @@ export default function DashboardLayout() {
   }
 
   const isSettingsActive = location.pathname === settingsNav.path
+  const isFrontDeskActive = location.pathname === frontDeskNav.path
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -122,7 +123,7 @@ export default function DashboardLayout() {
               onClick={() => setSidebarOpen(false)}
               className={cn(
                 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                isSettingsActive ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100'
+                isFrontDeskActive ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100'
               )}
             >
               <frontDeskNav.icon className="w-5 h-5 mr-3" />
