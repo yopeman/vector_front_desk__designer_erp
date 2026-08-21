@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Activity, ActivityType, ActivityStatus, ChecklistItem } from '../../../types/database'
 import { Button } from '../../ui/button'
 import { Input } from '../../ui/input'
@@ -6,6 +6,7 @@ import { Label } from '../../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select'
 import { Checkbox } from '../../ui/checkbox'
 import { Trash2, Plus, Upload } from 'lucide-react'
+import { supabase } from '../../../lib/supabase/client'
 
 interface ActivityFormProps {
   activity?: Activity
@@ -46,6 +47,34 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
     checklists: activity?.checklists || [],
     attachments: activity?.attachments || [],
   })
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({})
+
+  const getFileUrl = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('activity-attachments')
+        .createSignedUrl(filePath, 3600)
+      if (error) throw error
+      return data.signedUrl
+    } catch (error) {
+      console.error('Error getting file URL:', error)
+      return null
+    }
+  }
+
+  useEffect(() => {
+    const loadUrls = async () => {
+      const urls: Record<string, string> = {}
+      for (const attachment of formData.attachments) {
+        const url = await getFileUrl(attachment)
+        if (url) {
+          urls[attachment] = url
+        }
+      }
+      setAttachmentUrls(urls)
+    }
+    loadUrls()
+  }, [formData.attachments])
 
   const addChecklistItem = () => {
     const newItem: ChecklistItem = {
@@ -85,12 +114,35 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
     const files = e.target.files
     if (!files) return
 
-    // For now, just store file names. In production, upload to Supabase storage
-    const newAttachments = Array.from(files).map(file => file.name)
-    setFormData({
-      ...formData,
-      attachments: [...formData.attachments, ...newAttachments],
-    })
+    const newAttachments: string[] = []
+    
+    for (const file of Array.from(files)) {
+      try {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Math.random()}.${fileExt}`
+        const filePath = `${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('activity-attachments')
+          .upload(filePath, file)
+
+        if (uploadError) {
+          console.error('Error uploading file:', uploadError)
+          continue
+        }
+
+        newAttachments.push(filePath)
+      } catch (error) {
+        console.error('Error uploading file:', error)
+      }
+    }
+
+    if (newAttachments.length > 0) {
+      setFormData({
+        ...formData,
+        attachments: [...formData.attachments, ...newAttachments],
+      })
+    }
   }
 
   const removeAttachment = (index: number) => {
@@ -292,10 +344,15 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
                 className="flex items-center justify-between text-sm p-2 bg-muted rounded"
               >
                 <a
-                  href={`#${attachment}`}
+                  href={attachmentUrls[attachment] || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="truncate text-blue-600 hover:text-blue-800 hover:underline flex-1 mr-2"
+                  onClick={(e) => {
+                    if (!attachmentUrls[attachment]) {
+                      e.preventDefault()
+                    }
+                  }}
                 >
                   {attachment}
                 </a>
