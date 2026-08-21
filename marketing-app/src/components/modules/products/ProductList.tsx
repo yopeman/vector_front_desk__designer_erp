@@ -62,16 +62,6 @@ export function ProductList({
               onChange={(e) => setSearch(e.target.value)}
               className="max-w-xs"
             />
-            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value ?? 'all')}>
-              <SelectTrigger>
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="product">Product</SelectItem>
-                <SelectItem value="service">Service</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           <div className="rounded-lg border bg-white text-gray-800 shadow-sm overflow-hidden">

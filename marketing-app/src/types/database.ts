@@ -153,6 +153,10 @@ export interface ProductService {
   unit_cost: number
   unit_price: number
   sku?: string
+  marketing?: string
+  strategy?: string
+  date?: string
+  status?: string
   created_at: string
   updated_at: string
 }

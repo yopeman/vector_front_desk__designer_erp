@@ -21,6 +21,10 @@ export function ProductForm({ product, onSubmit, onCancel, isLoading }: ProductF
     unit_cost: product?.unit_cost || 0,
     unit_price: product?.unit_price || 0,
     description: product?.description || '',
+    marketing: product?.marketing || '',
+    strategy: product?.strategy || '',
+    date: product?.date || '',
+    status: product?.status || '',
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -33,6 +37,10 @@ export function ProductForm({ product, onSubmit, onCancel, isLoading }: ProductF
       unit_cost: formData.unit_cost,
       unit_price: formData.unit_price,
       description: formData.description || undefined,
+      marketing: formData.marketing || undefined,
+      strategy: formData.strategy || undefined,
+      date: formData.date || undefined,
+      status: formData.status || undefined,
     }
     onSubmit(submitData)
   }
@@ -124,6 +132,49 @@ export function ProductForm({ product, onSubmit, onCancel, isLoading }: ProductF
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           disabled={isLoading}
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="marketing">Marketing</Label>
+          <Input
+            id="marketing"
+            value={formData.marketing}
+            onChange={(e) => setFormData({ ...formData, marketing: e.target.value })}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="strategy">Strategy</Label>
+          <Input
+            id="strategy"
+            value={formData.strategy}
+            onChange={(e) => setFormData({ ...formData, strategy: e.target.value })}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="date">Date</Label>
+          <Input
+            id="date"
+            type="date"
+            value={formData.date}
+            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Input
+            id="status"
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            disabled={isLoading}
+          />
+        </div>
       </div>
 
       <div className="flex gap-2 justify-end">
