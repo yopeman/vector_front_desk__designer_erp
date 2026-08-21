@@ -36,7 +36,7 @@ export const navigation: NavSection[] = [
     label: 'Marketing Plan',
     icon: LayoutDashboard,
     children: [
-      { label: 'Dashboard', path: '/plan' },
+      { label: 'Dashboard', path: '/plan/dashboard' },
       { label: 'Calendar', path: '/plan/calendar' },
       { label: 'Targets', path: '/plan/targets' },
     ],

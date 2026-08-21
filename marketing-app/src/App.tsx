@@ -86,7 +86,7 @@ function App() {
           }
         >
           {/* Marketing Plan */}
-          <Route path="/plan" element={<PlanDashboard />} />
+          <Route path="/plan/dashboard" element={<PlanDashboard />} />
           <Route path="/plan/calendar" element={<PlanCalendar />} />
           <Route path="/plan/targets" element={<PlanTargets />} />
 
