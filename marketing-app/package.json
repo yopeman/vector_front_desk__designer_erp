@@ -31,6 +31,7 @@
     "react-router-dom": "^6.30.4",
     "recharts": "^2.15.4",
     "tailwind-merge": "^2.6.1",
+    "vite-plugin-singlefile": "^2.3.3",
     "zod": "^3.25.76",
     "zustand": "^4.5.7"
   },
