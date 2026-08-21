@@ -46,7 +46,7 @@ export function ExpenseList({ expenses, onEdit, onDelete, onCreate, onApprove, o
         </div>
       ) : (
         <>
-          <div className="flex gap-3">
+          <div className="flex gap-3 text-gray-800">
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value ?? 'all')}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
@@ -74,7 +74,7 @@ export function ExpenseList({ expenses, onEdit, onDelete, onCreate, onApprove, o
             </Select>
           </div>
 
-          <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+          <div className="rounded-lg border bg-white shadow-sm overflow-hidden text-gray-800">
             <Table>
               <TableHeader>
                 <TableRow>

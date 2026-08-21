@@ -55,7 +55,7 @@ export function ProductList({
         </div>
       ) : (
         <>
-          <div className="flex gap-3">
+          <div className="flex gap-3 text-gray-800">
             <Input
               placeholder="Search by name, category or SKU..."
               value={search}
@@ -74,7 +74,7 @@ export function ProductList({
             </Select>
           </div>
 
-          <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+          <div className="rounded-lg border bg-white text-gray-800 shadow-sm overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>

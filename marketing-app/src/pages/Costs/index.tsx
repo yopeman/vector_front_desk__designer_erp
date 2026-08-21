@@ -36,7 +36,7 @@ export default function BudgetOverview() {
       {!campaigns.data?.length ? (
         <p className="text-gray-500">No campaigns yet.</p>
       ) : (
-        <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+        <div className="rounded-lg border bg-white shadow-sm overflow-hidden text-gray-800">
           <Table>
             <TableHeader>
               <TableRow>
