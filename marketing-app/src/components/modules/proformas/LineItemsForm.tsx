@@ -39,7 +39,7 @@ export function LineItemsForm({ proformaId }: LineItemsFormProps) {
 
   return (
     <div className="space-y-4">
-      <div>
+      <div className="text-gray-800">
         <h4 className="text-sm font-medium mb-2">Line Items</h4>
         {items.isLoading ? (
           <p className="text-sm text-gray-500">Loading items...</p>

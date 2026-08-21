@@ -55,7 +55,7 @@ export default function DigitalPerformance() {
       {rows.length === 0 ? (
         <p className="text-gray-500">No digital performance targets yet.</p>
       ) : (
-        <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+        <div className="rounded-lg border bg-white shadow-sm overflow-hidden text-gray-800">
           <Table>
             <TableHeader>
               <TableRow>

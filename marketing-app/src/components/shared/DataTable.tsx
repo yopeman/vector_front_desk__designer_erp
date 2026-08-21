@@ -29,7 +29,7 @@ export function DataTable<T>({ data, columns, emptyMessage = 'No data available'
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border text-gray-800">
       <Table>
         <TableHeader>
           <TableRow>

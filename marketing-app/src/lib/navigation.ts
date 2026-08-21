@@ -170,17 +170,6 @@ export const navigation: NavSection[] = [
     ],
   },
   {
-    label: 'Marketing Tasks',
-    icon: CheckSquare,
-    children: [
-      { label: 'All Tasks', path: '/tasks' },
-      { label: 'Planned', path: '/tasks/planned', value: 'planned' },
-      { label: 'In Progress', path: '/tasks/in_progress', value: 'in_progress' },
-      { label: 'Completed', path: '/tasks/completed', value: 'completed' },
-      { label: 'Overdue', path: '/tasks/overdue', value: 'overdue' },
-    ],
-  },
-  {
     label: 'Marketing Analysis',
     icon: BarChart3,
     children: [

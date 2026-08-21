@@ -38,7 +38,7 @@ export default function LeadConversion() {
         <StatCard title="Tender Win Rate" value={`${stats.tenderWinRate}%`} icon={Landmark} accent="text-primary" />
       </div>
 
-      <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+      <div className="rounded-lg border bg-white shadow-sm overflow-hidden text-gray-800">
         <Table>
           <TableHeader>
             <TableRow>
