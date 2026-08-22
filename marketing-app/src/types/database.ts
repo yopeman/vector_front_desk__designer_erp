@@ -232,6 +232,7 @@ export interface Message {
   content: string
   is_read: boolean
   created_at: string
+  attached_files?: string[]
 }
 
 // Join types with relations

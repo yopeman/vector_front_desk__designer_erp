@@ -1,126 +1,100 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { conversationsApi, messagesApi, participantsApi, usersApi } from '../api/messages'
-import { Conversation, Message } from '../../types/database'
+import { messagesApi, usersApi } from '../api/messages'
+import { Message, User } from '../../types/database'
+import { useEffect, useState } from 'react'
+import { supabase } from '../supabase/client'
 
-export function useConversations(userId: string | undefined) {
+export function useMessages(otherUserId: string | undefined) {
   const queryClient = useQueryClient()
-
-  const conversations = useQuery({
-    queryKey: ['conversations', userId],
-    queryFn: () => conversationsApi.getAll(userId!),
-    enabled: !!userId,
-  })
-
-  const createConversation = useMutation({
-    mutationFn: ({ conversation, participantIds }: { conversation: any; participantIds: string[] }) =>
-      conversationsApi.create(conversation, participantIds),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-    },
-  })
-
-  const updateConversation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Conversation> }) =>
-      conversationsApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-    },
-  })
-
-  const deleteConversation = useMutation({
-    mutationFn: conversationsApi.delete,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
-      queryClient.invalidateQueries({ queryKey: ['messages'] })
-    },
-  })
-
-  return {
-    conversations,
-    createConversation,
-    updateConversation,
-    deleteConversation,
-  }
-}
-
-export function useMessages(conversationId: string | undefined) {
-  const queryClient = useQueryClient()
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [notification, setNotification] = useState<{ show: boolean; title: string; message: string }>({ show: false, title: '', message: '' })
 
   const messages = useQuery({
-    queryKey: ['messages', conversationId],
-    queryFn: () => messagesApi.getByConversation(conversationId!),
-    enabled: !!conversationId,
+    queryKey: ['messages', otherUserId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user?.id || !otherUserId) return []
+      setCurrentUser({ id: user.id, email: user.email || '', full_name: user.user_metadata?.full_name, role: user.user_metadata?.role })
+      return messagesApi.getByUsers(user.id, otherUserId)
+    },
+    enabled: !!otherUserId,
   })
 
   const createMessage = useMutation({
     mutationFn: messagesApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] })
-      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+      queryClient.invalidateQueries({ queryKey: ['messages', otherUserId] })
     },
   })
 
-  const updateMessage = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Message> }) =>
-      messagesApi.update(id, data),
+  const markAsRead = useMutation({
+    mutationFn: () => {
+      if (!currentUser?.id || !otherUserId) return Promise.resolve()
+      return messagesApi.markAsRead(currentUser.id, otherUserId)
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] })
+      queryClient.invalidateQueries({ queryKey: ['messages', otherUserId] })
     },
   })
 
   const deleteMessage = useMutation({
     mutationFn: messagesApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] })
+      queryClient.invalidateQueries({ queryKey: ['messages', otherUserId] })
     },
   })
 
-  const markAsRead = useMutation({
-    mutationFn: ({ conversationId, userId }: { conversationId: string; userId: string }) =>
-      messagesApi.markAsRead(conversationId, userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] })
-    },
-  })
+  useEffect(() => {
+    if (!otherUserId || !currentUser?.id) return
+
+    let channel: any
+
+    const setupSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const currentUserId = user?.id
+
+      channel = supabase
+        .channel(`messages-channel-${otherUserId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `or(and(sender_id.eq.${currentUserId},receiver_id.eq.${otherUserId}),and(sender_id.eq.${otherUserId},receiver_id.eq.${currentUserId}))`,
+          },
+          async (payload: any) => {
+            queryClient.invalidateQueries({ queryKey: ['messages', otherUserId] })
+            
+            if (payload.new.sender_id !== currentUserId) {
+              setNotification({
+                show: true,
+                title: 'New Message',
+                message: 'You have a new message'
+              })
+            }
+          }
+        )
+        .subscribe()
+    }
+
+    setupSubscription()
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
+    }
+  }, [otherUserId, currentUser?.id, queryClient])
 
   return {
     messages,
     createMessage,
-    updateMessage,
-    deleteMessage,
     markAsRead,
-  }
-}
-
-export function useParticipants(conversationId: string | undefined) {
-  const queryClient = useQueryClient()
-
-  const participants = useQuery({
-    queryKey: ['participants', conversationId],
-    queryFn: () => participantsApi.getByConversation(conversationId!),
-    enabled: !!conversationId,
-  })
-
-  const addParticipant = useMutation({
-    mutationFn: ({ conversationId, userId }: { conversationId: string; userId: string }) =>
-      participantsApi.addParticipant(conversationId, userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['participants', conversationId] })
-    },
-  })
-
-  const removeParticipant = useMutation({
-    mutationFn: ({ conversationId, userId }: { conversationId: string; userId: string }) =>
-      participantsApi.removeParticipant(conversationId, userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['participants', conversationId] })
-    },
-  })
-
-  return {
-    participants,
-    addParticipant,
-    removeParticipant,
+    deleteMessage,
+    notification,
+    setNotification,
+    currentUser,
   }
 }
 
@@ -128,13 +102,6 @@ export function useUsers() {
   const users = useQuery({
     queryKey: ['users'],
     queryFn: () => usersApi.getAll(),
-  })
-
-  console.log('useUsers hook state:', {
-    isLoading: users.isLoading,
-    error: users.error,
-    data: users.data,
-    dataLength: users.data?.length
   })
 
   return {

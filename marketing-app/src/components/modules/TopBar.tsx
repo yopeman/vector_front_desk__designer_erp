@@ -4,7 +4,6 @@ import { Button } from '../ui/button'
 import { useAuthStore } from '../../stores/authStore'
 import { Link, useNavigate } from 'react-router-dom'
 import { useNotifications } from '../../lib/hooks/useNotifications'
-import { useConversations } from '../../lib/hooks/useMessages'
 import { formatDistanceToNow } from 'date-fns'
 import { Dialog, DialogContent } from '../ui/dialog'
 import { Input } from '../ui/input'
@@ -19,7 +18,6 @@ export default function TopBar() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   
   const { unreadNotifications, markAsRead, newNotification, setNewNotification } = useNotifications(user?.id)
-  const { conversations } = useConversations(user?.id)
   const [notificationModal, setNotificationModal] = useState({
     show: false,
     title: '',
@@ -128,15 +126,14 @@ export default function TopBar() {
         </button>
 
         {/* Message Icon */}
-        <button
-          onClick={() => setActiveModal(activeModal === 'message' ? null : 'message')}
-          className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <MessageSquare className="w-5 h-5 text-gray-600" />
-          {conversations.data && conversations.data.length > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          )}
-        </button>
+        <Link to="/messages">
+          <button
+            onClick={() => setActiveModal(null)}
+            className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <MessageSquare className="w-5 h-5 text-gray-600" />
+          </button>
+        </Link>
 
         {/* Profile Icon */}
         <button
@@ -190,45 +187,6 @@ export default function TopBar() {
             <Link to="/notifications" onClick={() => setActiveModal(null)}>
               <Button variant="outline" size="sm" className="w-full">
                 View All Notifications
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* Message Modal */}
-      {activeModal === 'message' && (
-        <div className="absolute right-0 top-12 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">Messages</h3>
-          </div>
-          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
-            {conversations.isLoading ? (
-              <div className="text-center text-gray-500 text-sm">Loading conversations...</div>
-            ) : conversations.data && conversations.data.length > 0 ? (
-              conversations.data.slice(0, 5).map((conversation: any) => (
-                <div
-                  key={conversation.id}
-                  className="p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
-                  onClick={() => {
-                    setActiveModal(null)
-                    window.location.href = `/messages`
-                  }}
-                >
-                  <p className="text-sm font-medium text-gray-900">{conversation.name || 'Conversation'}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatDistanceToNow(new Date(conversation.updated_at), { addSuffix: true })}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-500 text-sm">No conversations yet</div>
-            )}
-          </div>
-          <div className="p-4 border-t border-gray-200 text-gray-800">
-            <Link to="/messages" onClick={() => setActiveModal(null)}>
-              <Button variant="outline" size="sm" className="w-full">
-                View All Messages
               </Button>
             </Link>
           </div>
