@@ -24,11 +24,21 @@ type NotificationType =
   | 'message_received'
   | 'task_assigned'
 
-const getNotificationIcon = (_type: NotificationType) => {
+const getNotificationIcon = (type: NotificationType, icon?: string) => {
+  // If a custom icon is provided, use it (for FontAwesome icons)
+  if (icon) {
+    return <span className={`fa-solid ${icon} text-lg`} />
+  }
+  // Default icon based on type
   return <Bell className="w-5 h-5" />
 }
 
-const getNotificationColor = (type: NotificationType) => {
+const getNotificationColor = (type: NotificationType, color?: string) => {
+  // If a custom color is provided, use it
+  if (color) {
+    return color
+  }
+  // Default color based on type
   const colors: Record<NotificationType, string> = {
     campaign_created: 'bg-blue-50 border-blue-200',
     campaign_status_changed: 'bg-purple-50 border-purple-200',
@@ -154,8 +164,8 @@ export default function NotificationsPage() {
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg ${getNotificationColor(notification.type)}`}>
-                    {getNotificationIcon(notification.type)}
+                  <div className={`p-3 rounded-lg ${getNotificationColor(notification.type, notification.color)}`}>
+                    {getNotificationIcon(notification.type, notification.icon)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">

@@ -13,13 +13,29 @@ import { navigation, homeNav, settingsNav } from '../../lib/navigation'
 export default function TopBar() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
-  const [activeModal, setActiveModal] = useState<'notification' | 'message' | 'profile' | null>(null)
+  const [activeModal, setActiveModal] = useState<'notification' | 'message' | 'profile' | 'search' | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   
-  const { unreadNotifications, markAsRead } = useNotifications(user?.id)
+  const { unreadNotifications, markAsRead, newNotification, setNewNotification } = useNotifications(user?.id)
   const { conversations } = useConversations(user?.id)
+  const [notificationModal, setNotificationModal] = useState({
+    show: false,
+    title: '',
+    message: ''
+  })
+
+  // Show popup when new notification arrives
+  useEffect(() => {
+    if (newNotification) {
+      setNotificationModal({
+        show: true,
+        title: newNotification.title,
+        message: newNotification.message || newNotification.body
+      })
+    }
+  }, [newNotification])
 
   // Flatten all navigation items for search
   const allNavItems = [
@@ -144,16 +160,26 @@ export default function TopBar() {
               unreadNotifications.data.slice(0, 5).map((notification: any) => (
                 <div
                   key={notification.id}
-                  className="p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                  className="p-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  style={{ backgroundColor: notification.is_read ? '#f8fafc' : '#f0f9ff' }}
                   onClick={() => handleMarkAsRead(notification.id)}
                 >
-                  <p className="text-sm text-gray-900">{notification.title}</p>
-                  {notification.message && (
-                    <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                  </p>
+                  <div className="flex items-start gap-3">
+                    {notification.icon ? (
+                      <span className={`fa-solid ${notification.icon} text-sm mt-0.5`} style={{ color: notification.color || '#3b82f6' }} />
+                    ) : (
+                      <Bell className="w-4 h-4 mt-0.5 text-blue-500" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900">{notification.title}</p>
+                      {notification.message && (
+                        <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (
@@ -292,6 +318,40 @@ export default function TopBar() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Notification Popup Modal */}
+      {notificationModal.show && (
+        <div
+          className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 p-4"
+          onClick={() => setNotificationModal({ ...notificationModal, show: false })}
+        >
+          <div
+            className="bg-white rounded-xl border border-gray-200 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Bell className="text-blue-600 text-xl" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">{notificationModal.title}</h3>
+                  <p className="text-sm text-gray-600">{notificationModal.message}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setNotificationModal({ ...notificationModal, show: false })
+                  setNewNotification(null)
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium text-sm cursor-pointer border-none transition-colors"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -150,3 +150,22 @@
 - content
 - is read
 - created at
+
+# Notifications
+- id
+- user id
+- title
+- message (or body)
+- type
+- is read
+- created at
+- icon (optional, for FontAwesome icons)
+- color (optional, for custom styling)
+- link (optional, for navigation)
+
+# Read Notifications
+- id
+- user id
+- notification id
+- is read
+- read at
