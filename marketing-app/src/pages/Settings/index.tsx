@@ -161,7 +161,7 @@ export default function Settings() {
                 </div>
               )}
 
-              <Button type="button" onClick={handlePasswordChange} disabled={isLoading}>
+              <Button type="button" className="text-white" onClick={handlePasswordChange} disabled={isLoading}>
                 {isLoading ? 'Updating...' : 'Update Password'}
               </Button>
             </div>
