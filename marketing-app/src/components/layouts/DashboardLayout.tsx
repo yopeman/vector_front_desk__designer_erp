@@ -57,16 +57,15 @@ export default function DashboardLayout() {
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:inset-0 flex flex-col',
+          'fixed inset-y-0 left-0 z-50 w-72 bg-primary border-r border-white/7 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:inset-0 flex flex-col',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 shrink-0">
-          <Link to="/" className="text-xl font-bold text-primary">V☰CTOR</Link>
-          {/* <h3 className="text-sm text-gray-500">Advert & Manufacturing</h3> */}
+        <div className="flex items-center justify-between h-16 px-6 border-b border-white/7 shrink-0">
+          <Link to="/" className="text-xl font-bold text-white">V☰CTOR</Link>
           <button className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-            <X className="w-6 h-6 text-gray-600" />
+            <X className="w-6 h-6 text-white" />
           </button>
         </div>
 
@@ -79,8 +78,11 @@ export default function DashboardLayout() {
               onClick={() => setSidebarOpen(false)}
               className={cn(
                 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                isHomeActive ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100'
+                isHomeActive 
+                  ? 'text-white bg-white/20 border-l-3 border-white' 
+                  : 'text-white/90 hover:bg-white/15 hover:text-white'
               )}
+              style={isHomeActive ? { borderLeft: '3px solid white' } : {}}
             >
               <homeNav.icon className="w-5 h-5 mr-3" />
               {homeNav.label}
@@ -96,8 +98,11 @@ export default function DashboardLayout() {
                   onClick={() => toggleSection(section.label)}
                   className={cn(
                     'flex w-full items-center justify-between px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors',
-                    isSectionActive ? 'text-primary' : 'text-gray-700 hover:bg-gray-100'
+                    isSectionActive 
+                      ? 'text-white bg-white/20' 
+                      : 'text-white/90 hover:bg-white/15 hover:text-white'
                   )}
+                  style={isSectionActive ? { borderLeft: '3px solid white' } : {}}
                 >
                   <span className="flex items-center">
                     <section.icon className="w-5 h-5 mr-3" />
@@ -120,9 +125,10 @@ export default function DashboardLayout() {
                           className={cn(
                             'flex items-center px-3 py-2 text-sm rounded-lg transition-colors',
                             isActive
-                              ? 'bg-primary text-white font-medium'
-                              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                              ? 'text-white font-medium bg-white/10'
+                              : 'text-white/80 hover:text-white'
                           )}
+                          style={isActive ? { borderLeft: '2px solid white', paddingLeft: '0.75rem' } : {}}
                         >
                           {item.label}
                         </Link>
@@ -141,8 +147,11 @@ export default function DashboardLayout() {
               onClick={() => setSidebarOpen(false)}
               className={cn(
                 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                isFrontDeskActive ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100'
+                isFrontDeskActive 
+                  ? 'text-white bg-white/20' 
+                  : 'text-white/90 hover:bg-white/15 hover:text-white'
               )}
+              style={isFrontDeskActive ? { borderLeft: '3px solid white' } : {}}
             >
               <frontDeskNav.icon className="w-5 h-5 mr-3" />
               {frontDeskNav.label}
@@ -150,14 +159,17 @@ export default function DashboardLayout() {
           </div>
           
           {/* Settings */}
-          <div className="pt-1 border-t border-gray-100 mt-2">
+          <div className="pt-1 border-t border-white/15 mt-2">
             <Link
               to={settingsNav.path}
               onClick={() => setSidebarOpen(false)}
               className={cn(
                 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors',
-                isSettingsActive ? 'bg-primary text-white' : 'text-gray-700 hover:bg-gray-100'
+                isSettingsActive 
+                  ? 'text-white bg-white/20' 
+                  : 'text-white/90 hover:bg-white/15 hover:text-white'
               )}
+              style={isSettingsActive ? { borderLeft: '3px solid white' } : {}}
             >
               <settingsNav.icon className="w-5 h-5 mr-3" />
               {settingsNav.label}
@@ -166,16 +178,16 @@ export default function DashboardLayout() {
         </nav>
 
         {/* User info */}
-        <div className="px-6 py-4 border-t border-gray-200 shrink-0">
+        <div className="px-6 py-4 border-t border-white/15 shrink-0">
           <div className="flex items-center mb-4">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-medium">
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white font-medium">
               {user?.email?.[0].toUpperCase()}
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
+              <p className="text-sm font-medium text-white truncate">{user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleLogout} className="w-full text-gray-900">
+          <Button variant="outline" size="sm" onClick={handleLogout} className="w-full text-white border-white/20 hover:bg-white/15 hover:text-white">
             <LogOut className="w-4 h-4 mr-2" />
             Logout
           </Button>
