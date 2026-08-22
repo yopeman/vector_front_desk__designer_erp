@@ -124,9 +124,9 @@ create trigger trg_mrk_market_requests_approval
   before update on public.mrk_market_requests
   for each row execute function public.stamp_market_request_approval();
 
--- ----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 -- 6. CLIENT REGISTRY
--- ----------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 create table public.mrk_clients (
   id              uuid primary key default gen_random_uuid(),
   client_date     date not null default current_date,
