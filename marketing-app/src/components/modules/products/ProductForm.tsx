@@ -181,7 +181,7 @@ export function ProductForm({ product, onSubmit, onCancel, isLoading }: ProductF
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" className="text-white" disabled={isLoading}>
           {isLoading ? 'Saving...' : product ? 'Update' : 'Add'}
         </Button>
       </div>

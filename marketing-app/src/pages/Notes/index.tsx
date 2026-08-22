@@ -288,6 +288,7 @@ export default function NotesPage() {
                 Cancel
               </Button>
               <Button
+                className="text-white"
                 onClick={handleSubmit}
                 disabled={!title.trim() || createNote.isPending || updateNote.isPending}
               >

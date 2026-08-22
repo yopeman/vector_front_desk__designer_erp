@@ -150,7 +150,7 @@ export function MarketInsightForm({ insight, onSubmit, onCancel, isLoading }: Ma
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" className="text-white" disabled={isLoading}>
           {isLoading ? 'Saving...' : insight ? 'Update' : 'Add'}
         </Button>
       </div>

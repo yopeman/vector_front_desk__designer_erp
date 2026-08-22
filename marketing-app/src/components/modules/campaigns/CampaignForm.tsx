@@ -169,7 +169,7 @@ export function CampaignForm({ campaign, onSubmit, onCancel, isLoading, plans = 
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" className="text-white" disabled={isLoading}>
           {isLoading ? 'Saving...' : campaign ? 'Update' : 'Create'}
         </Button>
       </div>

@@ -129,7 +129,7 @@ export function ProformaForm({ proforma, onSubmit, onCancel, isLoading }: Profor
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" className="text-white" disabled={isLoading}>
           {isLoading ? 'Saving...' : proforma ? 'Update' : 'Create'}
         </Button>
       </div>

@@ -375,7 +375,7 @@ export function ActivityForm({ activity, onSubmit, onCancel, isLoading }: Activi
         <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" className="text-white" disabled={isLoading}>
           {isLoading ? 'Saving...' : activity ? 'Update' : 'Create'}
         </Button>
       </div>
