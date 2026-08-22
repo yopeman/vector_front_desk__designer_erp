@@ -7,7 +7,7 @@ type TenderUpdate = Partial<TenderInsert>
 export const tendersApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('tenders')
+      .from('mrkt_tenders')
       .select('*')
       .order('created_at', { ascending: false })
     
@@ -17,7 +17,7 @@ export const tendersApi = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('tenders')
+      .from('mrkt_tenders')
       .select('*')
       .eq('id', id)
       .single()
@@ -28,7 +28,7 @@ export const tendersApi = {
 
   async create(tender: TenderInsert) {
     const { data, error } = await supabase
-      .from('tenders')
+      .from('mrkt_tenders')
       .insert(tender)
       .select()
       .single()
@@ -39,7 +39,7 @@ export const tendersApi = {
 
   async update(id: string, tender: TenderUpdate) {
     const { data, error } = await supabase
-      .from('tenders')
+      .from('mrkt_tenders')
       .update(tender)
       .eq('id', id)
       .select()
@@ -51,7 +51,7 @@ export const tendersApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('tenders')
+      .from('mrkt_tenders')
       .delete()
       .eq('id', id)
     

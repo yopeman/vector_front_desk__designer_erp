@@ -7,7 +7,7 @@ type ActivityUpdate = Partial<ActivityInsert>
 export const activitiesApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('activities')
+      .from('mrkt_activities')
       .select('*')
       .order('created_at', { ascending: false })
     
@@ -17,7 +17,7 @@ export const activitiesApi = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('activities')
+      .from('mrkt_activities')
       .select('*')
       .eq('id', id)
       .single()
@@ -28,7 +28,7 @@ export const activitiesApi = {
 
   async create(activity: ActivityInsert) {
     const { data, error } = await supabase
-      .from('activities')
+      .from('mrkt_activities')
       .insert(activity)
       .select()
       .single()
@@ -39,7 +39,7 @@ export const activitiesApi = {
 
   async update(id: string, activity: ActivityUpdate) {
     const { data, error } = await supabase
-      .from('activities')
+      .from('mrkt_activities')
       .update(activity)
       .eq('id', id)
       .select()
@@ -51,7 +51,7 @@ export const activitiesApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('activities')
+      .from('mrkt_activities')
       .delete()
       .eq('id', id)
     

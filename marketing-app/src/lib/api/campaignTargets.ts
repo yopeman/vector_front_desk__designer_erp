@@ -7,7 +7,7 @@ type CampaignTargetUpdate = Partial<CampaignTargetInsert>
 export const campaignTargetsApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('campaign_targets')
+      .from('mrkt_campaign_targets')
       .select('*')
       .order('target_date', { ascending: false })
 
@@ -17,7 +17,7 @@ export const campaignTargetsApi = {
 
   async getByCampaign(campaignId: string) {
     const { data, error } = await supabase
-      .from('campaign_targets')
+      .from('mrkt_campaign_targets')
       .select('*')
       .eq('campaign_id', campaignId)
       .order('target_date', { ascending: false })
@@ -28,7 +28,7 @@ export const campaignTargetsApi = {
 
   async create(target: CampaignTargetInsert) {
     const { data, error } = await supabase
-      .from('campaign_targets')
+      .from('mrkt_campaign_targets')
       .insert(target)
       .select()
       .single()
@@ -39,7 +39,7 @@ export const campaignTargetsApi = {
 
   async update(id: string, target: CampaignTargetUpdate) {
     const { data, error } = await supabase
-      .from('campaign_targets')
+      .from('mrkt_campaign_targets')
       .update(target)
       .eq('id', id)
       .select()
@@ -51,7 +51,7 @@ export const campaignTargetsApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('campaign_targets')
+      .from('mrkt_campaign_targets')
       .delete()
       .eq('id', id)
 

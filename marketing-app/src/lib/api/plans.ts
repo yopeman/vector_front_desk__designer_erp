@@ -7,7 +7,7 @@ type PlanUpdate = Partial<PlanInsert>
 export const plansApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('plans')
+      .from('mrkt_plans')
       .select('*')
       .order('created_at', { ascending: false })
     
@@ -17,7 +17,7 @@ export const plansApi = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('plans')
+      .from('mrkt_plans')
       .select('*')
       .eq('id', id)
       .single()
@@ -28,7 +28,7 @@ export const plansApi = {
 
   async create(plan: PlanInsert) {
     const { data, error } = await supabase
-      .from('plans')
+      .from('mrkt_plans')
       .insert(plan)
       .select()
       .single()
@@ -39,7 +39,7 @@ export const plansApi = {
 
   async update(id: string, plan: PlanUpdate) {
     const { data, error } = await supabase
-      .from('plans')
+      .from('mrkt_plans')
       .update(plan)
       .eq('id', id)
       .select()
@@ -51,7 +51,7 @@ export const plansApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('plans')
+      .from('mrkt_plans')
       .delete()
       .eq('id', id)
     

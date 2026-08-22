@@ -5,7 +5,7 @@ import { ProposalItem, ProformaItem } from '../../types/database'
 export const lineItemsApi = {
   async getAllProposalItems() {
     const { data, error } = await supabase
-      .from('proposal_items')
+      .from('mrkt_proposal_items')
       .select('*')
       .order('created_at', { ascending: false })
 
@@ -15,7 +15,7 @@ export const lineItemsApi = {
 
   async getAllProformaItems() {
     const { data, error } = await supabase
-      .from('proforma_items')
+      .from('mrkt_proforma_items')
       .select('*')
       .order('created_at', { ascending: false })
 
@@ -26,8 +26,8 @@ export const lineItemsApi = {
   /** Fetches items joined with their parent doc status (for funnel reporting). */
   async getProposalItemsWithStatus() {
     const { data, error } = await supabase
-      .from('proposal_items')
-      .select('*, proposals(status)')
+      .from('mrkt_proposal_items')
+      .select('*, mrkt_proposals(status)')
 
     if (error) throw error
     return data as (ProposalItem & { proposals: { status: string } | null })[]

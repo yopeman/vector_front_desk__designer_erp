@@ -7,7 +7,7 @@ type ProductUpdate = Partial<ProductInsert>
 export const productsApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('products_services')
+      .from('mrkt_products_services')
       .select('*')
       .order('name', { ascending: true })
 
@@ -17,7 +17,7 @@ export const productsApi = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('products_services')
+      .from('mrkt_products_services')
       .select('*')
       .eq('id', id)
       .single()
@@ -28,7 +28,7 @@ export const productsApi = {
 
   async create(product: ProductInsert) {
     const { data, error } = await supabase
-      .from('products_services')
+      .from('mrkt_products_services')
       .insert(product)
       .select()
       .single()
@@ -39,7 +39,7 @@ export const productsApi = {
 
   async update(id: string, product: ProductUpdate) {
     const { data, error } = await supabase
-      .from('products_services')
+      .from('mrkt_products_services')
       .update(product)
       .eq('id', id)
       .select()
@@ -51,7 +51,7 @@ export const productsApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('products_services')
+      .from('mrkt_products_services')
       .delete()
       .eq('id', id)
 

@@ -7,7 +7,7 @@ type ProposalUpdate = Partial<ProposalInsert>
 export const proposalsApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('proposals')
+      .from('mrkt_proposals')
       .select('*')
       .order('created_at', { ascending: false })
     
@@ -17,7 +17,7 @@ export const proposalsApi = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('proposals')
+      .from('mrkt_proposals')
       .select('*')
       .eq('id', id)
       .single()
@@ -28,7 +28,7 @@ export const proposalsApi = {
 
   async create(proposal: ProposalInsert) {
     const { data, error } = await supabase
-      .from('proposals')
+      .from('mrkt_proposals')
       .insert(proposal)
       .select()
       .single()
@@ -39,7 +39,7 @@ export const proposalsApi = {
 
   async update(id: string, proposal: ProposalUpdate) {
     const { data, error } = await supabase
-      .from('proposals')
+      .from('mrkt_proposals')
       .update(proposal)
       .eq('id', id)
       .select()
@@ -51,7 +51,7 @@ export const proposalsApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('proposals')
+      .from('mrkt_proposals')
       .delete()
       .eq('id', id)
     

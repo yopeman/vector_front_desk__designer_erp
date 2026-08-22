@@ -7,7 +7,7 @@ type MarketInsightUpdate = Partial<MarketInsightInsert>
 export const marketInsightsApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('market_insights')
+      .from('mrkt_market_insights')
       .select('*')
       .order('date_identified', { ascending: false })
 
@@ -17,7 +17,7 @@ export const marketInsightsApi = {
 
   async create(insight: MarketInsightInsert) {
     const { data, error } = await supabase
-      .from('market_insights')
+      .from('mrkt_market_insights')
       .insert(insight)
       .select()
       .single()
@@ -28,7 +28,7 @@ export const marketInsightsApi = {
 
   async update(id: string, insight: MarketInsightUpdate) {
     const { data, error } = await supabase
-      .from('market_insights')
+      .from('mrkt_market_insights')
       .update(insight)
       .eq('id', id)
       .select()
@@ -40,7 +40,7 @@ export const marketInsightsApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('market_insights')
+      .from('mrkt_market_insights')
       .delete()
       .eq('id', id)
 

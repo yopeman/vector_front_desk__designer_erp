@@ -9,7 +9,7 @@ type ProformaItemUpdate = Partial<ProformaItemInsert>
 export const proformasApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('proformas')
+      .from('mrkt_proformas')
       .select('*')
       .order('created_at', { ascending: false })
 
@@ -19,7 +19,7 @@ export const proformasApi = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('proformas')
+      .from('mrkt_proformas')
       .select('*')
       .eq('id', id)
       .single()
@@ -30,7 +30,7 @@ export const proformasApi = {
 
   async create(proforma: ProformaInsert) {
     const { data, error } = await supabase
-      .from('proformas')
+      .from('mrkt_proformas')
       .insert(proforma)
       .select()
       .single()
@@ -41,7 +41,7 @@ export const proformasApi = {
 
   async update(id: string, proforma: ProformaUpdate) {
     const { data, error } = await supabase
-      .from('proformas')
+      .from('mrkt_proformas')
       .update(proforma)
       .eq('id', id)
       .select()
@@ -53,7 +53,7 @@ export const proformasApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('proformas')
+      .from('mrkt_proformas')
       .delete()
       .eq('id', id)
 
@@ -63,7 +63,7 @@ export const proformasApi = {
   // ---- Line items ----
   async getItems(proformaId: string) {
     const { data, error } = await supabase
-      .from('proforma_items')
+      .from('mrkt_proforma_items')
       .select('*')
       .eq('proforma_id', proformaId)
       .order('created_at', { ascending: true })
@@ -74,7 +74,7 @@ export const proformasApi = {
 
   async addItem(item: ProformaItemInsert) {
     const { data, error } = await supabase
-      .from('proforma_items')
+      .from('mrkt_proforma_items')
       .insert(item)
       .select()
       .single()
@@ -85,7 +85,7 @@ export const proformasApi = {
 
   async updateItem(id: string, item: ProformaItemUpdate) {
     const { data, error } = await supabase
-      .from('proforma_items')
+      .from('mrkt_proforma_items')
       .update(item)
       .eq('id', id)
       .select()
@@ -97,7 +97,7 @@ export const proformasApi = {
 
   async deleteItem(id: string) {
     const { error } = await supabase
-      .from('proforma_items')
+      .from('mrkt_proforma_items')
       .delete()
       .eq('id', id)
 
@@ -111,20 +111,20 @@ export const proformasApi = {
     itemsCopied: number
   }> {
     const { data: proforma, error: pErr } = await supabase
-      .from('proformas')
+      .from('mrkt_proformas')
       .select('*')
       .eq('id', proformaId)
       .single()
     if (pErr) throw pErr
 
     const { data: items, error: iErr } = await supabase
-      .from('proforma_items')
+      .from('mrkt_proforma_items')
       .select('*')
       .eq('proforma_id', proformaId)
     if (iErr) throw iErr
 
     const { data: proposal, error: cErr } = await supabase
-      .from('proposals')
+      .from('mrkt_proposals')
       .insert({
         campaign_id: proforma.campaign_id,
         client_name: proforma.client_name,
@@ -149,7 +149,7 @@ export const proformasApi = {
         unit_price: it.unit_price,
       }))
       const { error: itemErr } = await supabase
-        .from('proposal_items')
+        .from('mrkt_proposal_items')
         .insert(mapped)
       if (itemErr) throw itemErr
       itemsCopied = mapped.length

@@ -7,7 +7,7 @@ type ExpenseUpdate = Partial<ExpenseInsert>
 export const expensesApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('expenses')
+      .from('mrkt_expenses')
       .select('*')
       .order('expense_date', { ascending: false })
 
@@ -17,7 +17,7 @@ export const expensesApi = {
 
   async getById(id: string) {
     const { data, error } = await supabase
-      .from('expenses')
+      .from('mrkt_expenses')
       .select('*')
       .eq('id', id)
       .single()
@@ -28,7 +28,7 @@ export const expensesApi = {
 
   async create(expense: ExpenseInsert) {
     const { data, error } = await supabase
-      .from('expenses')
+      .from('mrkt_expenses')
       .insert(expense)
       .select()
       .single()
@@ -39,7 +39,7 @@ export const expensesApi = {
 
   async update(id: string, expense: ExpenseUpdate) {
     const { data, error } = await supabase
-      .from('expenses')
+      .from('mrkt_expenses')
       .update(expense)
       .eq('id', id)
       .select()
@@ -51,7 +51,7 @@ export const expensesApi = {
 
   async delete(id: string) {
     const { error } = await supabase
-      .from('expenses')
+      .from('mrkt_expenses')
       .delete()
       .eq('id', id)
 
@@ -60,7 +60,7 @@ export const expensesApi = {
 
   async setApproval(id: string, approval_status: ApprovalStatus, approved_by?: string) {
     const { data, error } = await supabase
-      .from('expenses')
+      .from('mrkt_expenses')
       .update({ approval_status, approved_by: approved_by ?? null })
       .eq('id', id)
       .select()
