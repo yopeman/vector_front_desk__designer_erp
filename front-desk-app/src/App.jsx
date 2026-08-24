@@ -8,6 +8,8 @@ import FrontDeskPage from './pages/front-desk/FrontDeskPage';
 import DesignerPage from './pages/DesignerPage';
 import ClientPage from './pages/ClientPage';
 import PendingPage from './pages/PendingPage';
+import ReportPage from './pages/front-desk/components/ReportPage';
+import Sidebar from './pages/front-desk/components/Sidebar';
 
 export default function App() {
   return (
@@ -15,6 +17,17 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+
+          {/* Public report routes */}
+          <Route path="/frontdesk-public-report" element={
+            <div style={{ display: 'flex' }}>
+              <Sidebar currentPage="report" collapsed={false}/>
+              <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+                <ReportPage />
+              </div>
+            </div>
+          } />
+          <Route path="/design-public-report" element={<DesignerPage />} />
 
           {/* Pending approval page */}
           <Route
