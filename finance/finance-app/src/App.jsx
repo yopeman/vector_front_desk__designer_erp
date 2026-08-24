@@ -35,6 +35,7 @@ function App() {
         <HashRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/finance-public-report" element={<MainLayout><Reports /></MainLayout>} />
             <Route
               path="/*"
               element={
