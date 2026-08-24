@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../lib/auth';
 import './dashboard.css';
 import Sidebar from './components/Sidebar';
 import TopHeader from './components/TopHeader';
@@ -35,7 +36,14 @@ import NotesPage from './components/NotesPage';
 import SettingsPage from './components/SettingsPage';
 
 export default function FrontDeskPage() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const { user } = useAuth();
+  const [currentPage, setCurrentPage] = useState(() => {
+    // Check if accessing via public report URL
+    if (window.location.hash === '#/frontdesk-public-report') {
+      return 'report';
+    }
+    return 'dashboard';
+  });
   const [preselectedOrderId, setPreselectedOrderId] = useState(null);
   const [prefillOrderData, setPrefillOrderData] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -43,12 +51,28 @@ export default function FrontDeskPage() {
 
   const handleMenuClick = (page, orderId = null) => {
     console.log('Menu clicked:', page, '- setting currentPage to:', page);
+    
+    // Check if user is trying to navigate away from public reports without auth
+    if (window.location.hash === '#/frontdesk-public-report' && page !== 'report') {
+      if (!user) {
+        window.location.hash = '#/login';
+        return;
+      }
+    }
+    
     setPreselectedOrderId(orderId);
     setCurrentPage(page);
     console.log('currentPage set to:', page);
   };
 
   const handleUpgradeToOrder = (orderData) => {
+    // Check if user is trying to navigate away from public reports without auth
+    if (window.location.hash === '#/frontdesk-public-report') {
+      if (!user) {
+        window.location.hash = '#/login';
+        return;
+      }
+    }
     setPrefillOrderData(orderData);
     setCurrentPage('orders');
   };
