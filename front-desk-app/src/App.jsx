@@ -12,22 +12,6 @@ import ReportPage from './pages/front-desk/components/ReportPage';
 import Sidebar from './pages/front-desk/components/Sidebar';
 import TopHeader from './pages/front-desk/components/TopHeader';
 
-function PublicReportSidebar() {
-  const { user } = useAuth();
-
-  const handleMenuClick = (page) => {
-    // Check if user is trying to navigate away from public reports without auth
-    if (window.location.hash === '#/frontdesk-public-report' && page !== 'report') {
-      if (!user) {
-        window.location.hash = '#/login';
-        return;
-      }
-    }
-  };
-
-  return <Sidebar onMenuClick={handleMenuClick} currentPage="report" collapsed={false} setCollapsed={() => {}} />;
-}
-
 export default function App() {
   return (
     <HashRouter>
