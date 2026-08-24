@@ -114,12 +114,6 @@ export default function NotificationsPage() {
               Mark All Read
             </Button>
           )}
-          {notificationsCount > 0 && (
-            <Button variant="outline" onClick={handleClearAll} className="text-red-600 hover:text-red-700">
-              <Trash2 className="w-4 h-4 mr-2" />
-              Clear All
-            </Button>
-          )}
         </div>
       </div>
 
@@ -197,15 +191,6 @@ export default function NotificationsPage() {
                               <Check className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(notification.id)}
-                            className="text-red-600 hover:text-red-700"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                         </div>
                       </div>
                     </div>

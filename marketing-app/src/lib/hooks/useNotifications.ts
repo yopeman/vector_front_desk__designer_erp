@@ -87,7 +87,11 @@ export function useNotifications(userId: string | undefined) {
       if (!userId) return Promise.resolve()
       return notificationsApi.markAsRead(userId, notificationId)
     },
-    onSuccess: () => {
+    onSuccess: (_, { notificationId }) => {
+      setReadNotifications(prev => [
+        ...prev,
+        { notification_id: notificationId, user_id: userId, is_read: true }
+      ])
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
       queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', userId] })
     },
@@ -98,7 +102,16 @@ export function useNotifications(userId: string | undefined) {
       if (!userId) return
       await notificationsApi.markAllAsRead(userId)
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try {
+        const { data } = await supabase
+          .from('read_notifications')
+          .select('*')
+          .eq('user_id', userId)
+        setReadNotifications(data || [])
+      } catch (error) {
+        console.error('Error fetching read notifications:', error)
+      }
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
       queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', userId] })
     },
