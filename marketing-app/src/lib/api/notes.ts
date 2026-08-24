@@ -9,7 +9,7 @@ export const notesApi = {
     const { data, error } = await supabase
       .from('notes')
       .select('*')
-      .order('is_pinned', { ascending: false })
+      .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
     
     if (error) throw error

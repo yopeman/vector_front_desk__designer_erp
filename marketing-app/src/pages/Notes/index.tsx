@@ -26,23 +26,23 @@ export default function NotesPage() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [color, setColor] = useState('#ffffff')
-  const [checklists, setChecklists] = useState<ChecklistItem[]>([])
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([])
 
   const handleCreate = () => {
     setEditingNote(undefined)
     setTitle('')
     setContent('')
     setColor('#ffffff')
-    setChecklists([])
+    setChecklist([])
     setIsFormOpen(true)
   }
 
   const handleEdit = (note: Note) => {
     setEditingNote(note)
-    setTitle(note.title)
+    setTitle(note.title || '')
     setContent(note.content || '')
     setColor(note.color)
-    setChecklists(note.checklists || [])
+    setChecklist(note.checklist || [])
     setIsFormOpen(true)
   }
 
@@ -53,7 +53,7 @@ export default function NotesPage() {
   }
 
   const handleTogglePin = async (note: Note) => {
-    await updateNote.mutateAsync({ id: note.id, data: { is_pinned: !note.is_pinned } })
+    await updateNote.mutateAsync({ id: note.id, data: { pinned: !note.pinned } })
   }
 
   const handleSubmit = async () => {
@@ -63,8 +63,8 @@ export default function NotesPage() {
       title,
       content,
       color,
-      is_pinned: editingNote?.is_pinned || false,
-      checklists,
+      pinned: editingNote?.pinned || false,
+      checklist,
     }
 
     if (editingNote) {
@@ -81,19 +81,19 @@ export default function NotesPage() {
   }
 
   const addChecklistItem = () => {
-    setChecklists([...checklists, { id: Date.now().toString(), text: '', completed: false }])
+    setChecklist([...checklist, { id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, text: '', completed: false }])
   }
 
   const updateChecklistItem = (id: string, text: string) => {
-    setChecklists(checklists.map(item => item.id === id ? { ...item, text } : item))
+    setChecklist(checklist.map(item => item.id === id ? { ...item, text } : item))
   }
 
   const toggleChecklistItem = (id: string) => {
-    setChecklists(checklists.map(item => item.id === id ? { ...item, completed: !item.completed } : item))
+    setChecklist(checklist.map(item => item.id === id ? { ...item, completed: !item.completed } : item))
   }
 
   const deleteChecklistItem = (id: string) => {
-    setChecklists(checklists.filter(item => item.id !== id))
+    setChecklist(checklist.filter(item => item.id !== id))
   }
 
   if (notes.isLoading) {
@@ -139,7 +139,7 @@ export default function NotesPage() {
                     handleTogglePin(note)
                   }}
                 >
-                  {note.is_pinned ? (
+                  {note.pinned ? (
                     <Pin className="w-4 h-4 text-primary" fill="currentColor" />
                   ) : (
                     <PinOff className="w-4 h-4 text-gray-400" />
@@ -151,10 +151,10 @@ export default function NotesPage() {
               {note.content && (
                 <p className="text-sm text-gray-700 mb-3 line-clamp-3">{note.content}</p>
               )}
-              {note.checklists && note.checklists.length > 0 && (
+              {note.checklist && note.checklist.length > 0 && (
                 <div className="space-y-1">
-                  {note.checklists.slice(0, 3).map((item) => (
-                    <div key={item.id} className="flex items-center gap-2 text-sm">
+                  {note.checklist.slice(0, 3).map((item, index) => (
+                    <div key={item.id || index} className="flex items-center gap-2 text-sm">
                       {item.completed ? (
                         <Check className="w-4 h-4 text-green-600" />
                       ) : (
@@ -165,8 +165,8 @@ export default function NotesPage() {
                       </span>
                     </div>
                   ))}
-                  {note.checklists.length > 3 && (
-                    <p className="text-xs text-gray-500">+{note.checklists.length - 3} more items</p>
+                  {note.checklist.length > 3 && (
+                    <p className="text-xs text-gray-500">+{note.checklist.length - 3} more items</p>
                   )}
                 </div>
               )}
@@ -253,8 +253,8 @@ export default function NotesPage() {
                 </Button>
               </div>
               <div className="space-y-2">
-                {checklists.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2">
+                {checklist.map((item, index) => (
+                  <div key={item.id || index} className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => toggleChecklistItem(item.id)}
@@ -290,7 +290,7 @@ export default function NotesPage() {
               <Button
                 className="text-white"
                 onClick={handleSubmit}
-                disabled={!title.trim() || createNote.isPending || updateNote.isPending}
+                disabled={!title?.trim() || createNote.isPending || updateNote.isPending}
               >
                 {editingNote ? 'Update' : 'Create'}
               </Button>

@@ -202,8 +202,8 @@ export interface Note {
   title: string
   content?: string
   color: string
-  is_pinned: boolean
-  checklists: ChecklistItem[]
+  pinned: boolean
+  checklist: ChecklistItem[]
   owner_id?: string
   created_at: string
   updated_at: string
