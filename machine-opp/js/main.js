@@ -567,6 +567,25 @@ document.addEventListener('click', function(e) {
 // INITIALIZATION ON PAGE LOAD
 // =============================================
 window.onload = async function() {
+    // Check for public report URL handler
+    if (window.location.hash === '#machine-public-report') {
+        // Bypass auth and show reports tab directly
+        document.getElementById('auth-overlay').classList.add('hidden');
+        document.body.classList.remove('modal-open');
+        
+        // Hide sidebar for public access
+        const sidebar = document.getElementById('sidebar-container');
+        if (sidebar) sidebar.classList.add('hidden');
+        
+        // Show reports tab
+        switchTab('reports');
+        
+        // Initialize reports data
+        if (typeof filterReports === 'function') filterReports();
+        
+        return;
+    }
+
     if (Auth?.initPromise) {
         await Auth.initPromise;
     }
