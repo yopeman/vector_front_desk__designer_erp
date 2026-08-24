@@ -77,6 +77,9 @@ function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
+        {/* Public report route */}
+        <Route path="/marketing-public-report" element={<Tasks />} />
+
         {/* Protected routes with DashboardLayout */}
         <Route
           element={
