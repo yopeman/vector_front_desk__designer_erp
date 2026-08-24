@@ -25,20 +25,16 @@ type NotificationType =
   | 'task_assigned'
 
 const getNotificationIcon = (type: NotificationType, icon?: string) => {
-  // If a custom icon is provided, use it (for FontAwesome icons)
   if (icon) {
     return <span className={`fa-solid ${icon} text-lg`} />
   }
-  // Default icon based on type
   return <Bell className="w-5 h-5" />
 }
 
 const getNotificationColor = (type: NotificationType, color?: string) => {
-  // If a custom color is provided, use it
   if (color) {
     return color
   }
-  // Default color based on type
   const colors: Record<NotificationType, string> = {
     campaign_created: 'bg-blue-50 border-blue-200',
     campaign_status_changed: 'bg-purple-50 border-purple-200',
@@ -62,13 +58,14 @@ const getNotificationColor = (type: NotificationType, color?: string) => {
 
 export default function NotificationsPage() {
   const { user } = useAuthStore()
-  const { notifications, markAsRead, markAllAsRead, deleteNotification, deleteAll } = useNotifications(user?.id)
+  const { notifications, unreadNotifications, markAsRead, markAllAsRead, deleteNotification, deleteAll, isRead } = useNotifications(user?.id)
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
 
-  const unreadCount = notifications.data?.filter((n: any) => !n.is_read).length || 0
+  const allNotifications = notifications.data || []
+  const unreadCount = unreadNotifications.data?.length || 0
 
   const handleMarkAsRead = async (id: string) => {
-    await markAsRead.mutateAsync(id)
+    await markAsRead.mutateAsync({ notificationId: id })
   }
 
   const handleMarkAllAsRead = async () => {
@@ -87,12 +84,11 @@ export default function NotificationsPage() {
     }
   }
 
-  const allNotifications = notifications.data || []
   const notificationsCount = allNotifications.length
 
   const filteredNotifications = filter === 'unread' 
-    ? allNotifications.filter((n: any) => !n.is_read) || []
-    : allNotifications || []
+    ? (unreadNotifications.data || [])
+    : allNotifications
 
   if (notifications.isLoading) {
     return <div className="text-center py-12">Loading notifications...</div>
@@ -157,64 +153,67 @@ export default function NotificationsPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredNotifications.map((notification: any) => (
-            <Card
-              key={notification.id}
-              className={`transition-all ${!notification.is_read ? 'border-l-4 border-l-primary' : ''}`}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg ${getNotificationColor(notification.type, notification.color)}`}>
-                    {getNotificationIcon(notification.type, notification.icon)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className={`font-semibold ${!notification.is_read ? 'text-gray-900' : 'text-gray-600'}`}>
-                          {notification.title}
-                        </h3>
-                        {notification.message && (
-                          <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
-                        )}
-                        <p className="text-xs text-gray-500 mt-2">
-                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {notification.link && (
-                          <a
-                            href={`#${notification.link}`}
-                            className="flex items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </a>
-                        )}
-                        {!notification.is_read && (
+          filteredNotifications.map((notification: any) => {
+            const read = isRead(notification.id)
+            return (
+              <Card
+                key={notification.id}
+                className={`transition-all ${!read ? 'border-l-4 border-l-primary' : ''}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-lg ${getNotificationColor(notification.type, notification.color)}`}>
+                      {getNotificationIcon(notification.type, notification.icon)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <h3 className={`font-semibold ${!read ? 'text-gray-900' : 'text-gray-600'}`}>
+                            {notification.title}
+                          </h3>
+                          {notification.message && (
+                            <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-2">
+                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {notification.link && (
+                            <a
+                              href={`#${notification.link}`}
+                              className="flex items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          )}
+                          {!read && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                              title="Mark as read"
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleMarkAsRead(notification.id)}
-                            title="Mark as read"
+                            onClick={() => handleDelete(notification.id)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Delete"
                           >
-                            <Check className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(notification.id)}
-                          className="text-red-600 hover:text-red-700"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            )
+          })
         )}
       </div>
     </div>

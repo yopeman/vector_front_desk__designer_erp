@@ -4,11 +4,10 @@ type NotificationInsert = Omit<any, 'id' | 'created_at'>
 type NotificationUpdate = Partial<NotificationInsert>
 
 export const notificationsApi = {
-  async getAll(userId: string) {
+  async getAll() {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false })
     
     if (error) throw error
@@ -19,12 +18,26 @@ export const notificationsApi = {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
-      .eq('user_id', userId)
-      .eq('is_read', false)
       .order('created_at', { ascending: false })
     
     if (error) throw error
-    return data
+    
+    if (!data) return []
+    
+    const { data: readData, error: readError } = await supabase
+      .from('read_notifications')
+      .select('notification_id, is_read')
+      .eq('user_id', userId)
+    
+    if (readError) throw readError
+    
+    const readNotificationIds = new Set(
+      (readData || [])
+        .filter(rn => rn.is_read)
+        .map(rn => rn.notification_id)
+    )
+    
+    return data.filter(n => !readNotificationIds.has(n.id))
   },
 
   async getById(id: string) {
@@ -61,26 +74,70 @@ export const notificationsApi = {
     return data
   },
 
-  async markAsRead(id: string) {
-    const { data, error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('id', id)
-      .select()
+  async markAsRead(userId: string, notificationId: string) {
+    const existing = await supabase
+      .from('read_notifications')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('notification_id', notificationId)
       .single()
     
-    if (error) throw error
-    return data
+    if (existing.data) {
+      const { error } = await supabase
+        .from('read_notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', existing.data.id)
+      
+      if (error) throw error
+    } else {
+      const { error } = await supabase
+        .from('read_notifications')
+        .insert({
+          user_id: userId,
+          notification_id: notificationId,
+          is_read: true,
+          read_at: new Date().toISOString(),
+        })
+      
+      if (error) throw error
+    }
   },
 
   async markAllAsRead(userId: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', userId)
-      .eq('is_read', false)
+      .select('id')
     
     if (error) throw error
+    
+    const notifications = data || []
+    
+    await Promise.all(
+      notifications.map(async (notif) => {
+        const existing = await supabase
+          .from('read_notifications')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('notification_id', notif.id)
+          .single()
+        
+        if (existing.data) {
+          await supabase
+            .from('read_notifications')
+            .update({ is_read: true, read_at: new Date().toISOString() })
+            .eq('id', existing.data.id)
+        } else {
+          await supabase
+            .from('read_notifications')
+            .insert({
+              user_id: userId,
+              notification_id: notif.id,
+              is_read: true,
+              read_at: new Date().toISOString(),
+            })
+        }
+      })
+    )
   },
 
   async delete(id: string) {
@@ -93,11 +150,22 @@ export const notificationsApi = {
   },
 
   async deleteAll(userId: string) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('notifications')
-      .delete()
-      .eq('user_id', userId)
+      .select('id')
     
     if (error) throw error
+    
+    const notifications = data || []
+    
+    await Promise.all(
+      notifications.map(notif =>
+        supabase
+          .from('read_notifications')
+          .delete()
+          .eq('user_id', userId)
+          .eq('notification_id', notif.id)
+      )
+    )
   },
 }

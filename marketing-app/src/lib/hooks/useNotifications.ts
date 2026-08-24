@@ -5,34 +5,60 @@ import { useEffect, useState } from 'react'
 
 export function useNotifications(userId: string | undefined) {
   const queryClient = useQueryClient()
+  const [readNotifications, setReadNotifications] = useState<any[]>([])
   const [newNotification, setNewNotification] = useState<any>(null)
 
   const notifications = useQuery({
-    queryKey: ['notifications', userId],
-    queryFn: () => notificationsApi.getAll(userId!),
-    enabled: !!userId,
+    queryKey: ['notifications'],
+    queryFn: async () => {
+      const data = await notificationsApi.getAll()
+      return data || []
+    },
   })
 
   const unreadNotifications = useQuery({
-    queryKey: ['notifications', userId, 'unread'],
-    queryFn: () => notificationsApi.getUnread(userId!),
+    queryKey: ['notifications', 'unread', userId],
+    queryFn: async () => {
+      if (!userId) return []
+      return notificationsApi.getUnread(userId)
+    },
     enabled: !!userId,
   })
 
-  // Real-time subscription for new notifications
+  const isRead = (notifId: string) => {
+    return readNotifications.some(
+      (rn) => rn.notification_id === notifId && rn.is_read
+    )
+  }
+
   useEffect(() => {
     if (!userId) return
 
-    const channelName = `notifications-${userId}`
+    const fetchReadNotifications = async () => {
+      try {
+        const { data } = await supabase
+          .from('read_notifications')
+          .select('*')
+          .eq('user_id', userId)
+        
+        setReadNotifications(data || [])
+      } catch (error) {
+        console.error('Error fetching read notifications:', error)
+      }
+    }
+
+    fetchReadNotifications()
+  }, [userId])
+
+  useEffect(() => {
     const channel = supabase
-      .channel(channelName)
+      .channel(`notifications-channel-${Date.now()}-${Math.random()*1_000_000_000}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${userId}`
         },
         (payload: any) => {
           queryClient.invalidateQueries({ queryKey: ['notifications'] })
@@ -54,19 +80,27 @@ export function useNotifications(userId: string | undefined) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [userId, queryClient])
+  }, [queryClient])
 
   const markAsRead = useMutation({
-    mutationFn: notificationsApi.markAsRead,
+    mutationFn: ({ notificationId }: { notificationId: string }) => {
+      if (!userId) return Promise.resolve()
+      return notificationsApi.markAsRead(userId, notificationId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', userId] })
     },
   })
 
   const markAllAsRead = useMutation({
-    mutationFn: () => notificationsApi.markAllAsRead(userId!),
+    mutationFn: async () => {
+      if (!userId) return
+      await notificationsApi.markAllAsRead(userId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', userId] })
     },
   })
 
@@ -74,13 +108,18 @@ export function useNotifications(userId: string | undefined) {
     mutationFn: notificationsApi.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', userId] })
     },
   })
 
   const deleteAll = useMutation({
-    mutationFn: () => notificationsApi.deleteAll(userId!),
+    mutationFn: async () => {
+      if (!userId) return
+      await notificationsApi.deleteAll(userId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread', userId] })
     },
   })
 
@@ -93,5 +132,7 @@ export function useNotifications(userId: string | undefined) {
     deleteAll,
     newNotification,
     setNewNotification,
+    isRead,
+    readNotifications,
   }
 }
