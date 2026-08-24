@@ -58,14 +58,6 @@ const menuItems: MenuCategory[] = [
       { name: 'Market Insights', icon: 'fa-lightbulb' },
     ]
   },
-  {
-    name: 'Communication',
-    submenu: [
-      { name: 'Notes', icon: 'fa-sticky-note' },
-      { name: 'Conversations', icon: 'fa-comments' },
-      { name: 'Messages', icon: 'fa-envelope' },
-    ]
-  },
 ]
 
 export default function ReportPage() {
@@ -473,7 +465,7 @@ export default function ReportPage() {
               type="date"
               value={data.length === 0 ? fromDate : fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="border border-slate-300 rounded-lg px-3 py-2 text-xs text-black bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
           </div>
           <div>
@@ -482,7 +474,7 @@ export default function ReportPage() {
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+              className="border border-slate-300 rounded-lg px-3 py-2 text-xs text-black bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
           </div>
           <div>
@@ -493,7 +485,7 @@ export default function ReportPage() {
                 setItemsPerPage(Number(e.target.value))
                 setTableCurrentPages({})
               }}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+              className="border border-slate-300 rounded-lg px-3 py-2 text-xs text-black focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
             >
               <option value={5}>5</option>
               <option value={10}>10</option>
@@ -510,7 +502,7 @@ export default function ReportPage() {
         <div className="relative">
           <button
             onClick={() => setShowReportDropdown(!showReportDropdown)}
-            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white text-left flex justify-between items-center"
+            className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs text-black focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white text-left flex justify-between items-center"
           >
             <span>
               {selectedSubmenus.length === 0 
@@ -525,17 +517,26 @@ export default function ReportPage() {
               <div className="space-y-4">
                 {menuItems.map(menu => (
                   <div key={menu.name}>
-                    <div className="text-sm font-semibold text-slate-800 mb-2">{menu.name}</div>
+                    <div className="text-sm font-semibold text-black mb-2">{menu.name}</div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {menu.submenu.map(sub => (
                         <label key={sub.name} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedSubmenus.includes(sub.name)}
-                            onChange={() => toggleSubmenu(sub.name)}
-                            className="w-4 h-4 border border-slate-300 rounded focus:ring-1 focus:ring-blue-500"
-                          />
-                          <span className="text-xs text-slate-600">{sub.name}</span>
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              checked={selectedSubmenus.includes(sub.name)}
+                              onChange={() => toggleSubmenu(sub.name)}
+                              className="sr-only"
+                            />
+                            <div className={`w-4 h-4 border border-slate-300 rounded flex items-center justify-center ${selectedSubmenus.includes(sub.name) ? 'bg-white' : 'bg-white'}`}>
+                              {selectedSubmenus.includes(sub.name) && (
+                                <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-xs text-black">{sub.name}</span>
                         </label>
                       ))}
                     </div>
@@ -590,7 +591,7 @@ export default function ReportPage() {
                       ...prev,
                       [submenu]: e.target.value
                     }))}
-                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs text-black bg-white placeholder:text-slate-400 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -611,28 +612,28 @@ export default function ReportPage() {
                 </div>
               </div>
             </div>
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+            <table className="w-full text-black">
+              <thead className="bg-slate-50 border-b border-slate-200 text-black">
                 <tr>
-                  <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
+                  <th className="p-4 text-left text-xs font-semibold text-black">#</th>
                   {visibleColumnsForSubmenu.map(col => (
-                    <th key={col.key} className="p-4 text-left text-xs font-semibold text-slate-600">{col.label}</th>
+                    <th key={col.key} className="p-4 text-left text-xs font-semibold text-black">{col.label}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-100 text-xs text-black">
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan={visibleColumnsForSubmenu.length + 1} className="p-8 text-center text-slate-400">
+                    <td colSpan={visibleColumnsForSubmenu.length + 1} className="p-8 text-center text-black">
                       No data found
                     </td>
                   </tr>
                 ) : (
                   paginatedData.map((row, index) => (
                     <tr key={row.id} className="hover:bg-slate-50">
-                      <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="p-4 text-center text-black">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       {visibleColumnsForSubmenu.map(col => (
-                        <td key={col.key} className="p-4">
+                        <td key={col.key} className="p-4 text-black">
                           {renderCellValue(row, col.key)}
                         </td>
                       ))}
