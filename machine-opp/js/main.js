@@ -6,6 +6,17 @@
 // TAB ROUTING & NAVIGATION
 // =============================================
 function switchTab(targetId) {
+    // Check if user is trying to navigate away from public reports without auth
+    if (window.location.hash === '#machine-public-report' && targetId !== 'reports') {
+        // Redirect to login if not authenticated
+        if (!Auth.isAuthenticated()) {
+            document.getElementById('auth-overlay').classList.remove('hidden');
+            document.body.classList.add('modal-open');
+            window.location.hash = '';
+            return;
+        }
+    }
+
     document.querySelectorAll('.container-tab').forEach(el => el.classList.add('hidden'));
 
     const targetContent = document.getElementById(`content-${targetId}`);
@@ -572,10 +583,6 @@ window.onload = async function() {
         // Bypass auth and show reports tab directly
         document.getElementById('auth-overlay').classList.add('hidden');
         document.body.classList.remove('modal-open');
-        
-        // Hide sidebar for public access
-        const sidebar = document.getElementById('sidebar-container');
-        if (sidebar) sidebar.classList.add('hidden');
         
         // Show reports tab
         switchTab('reports');
