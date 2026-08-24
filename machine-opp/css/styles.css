@@ -13,11 +13,32 @@
    ================================================ */
 body { 
     font-family: 'Inter', sans-serif; 
+    overflow: hidden;
+    height: 100vh;
 }
 
 /* ================================================
    SIDEBAR NAVIGATION STYLES
    ================================================ */
+#sidebar-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100vh;
+}
+
+#sidebar-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#sidebar-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#sidebar-container::-webkit-scrollbar-thumb {
+    background: rgba(0,206,209,0.3);
+    border-radius: 10px;
+}
+
 .nav-item {
     position: relative;
     overflow: hidden;
