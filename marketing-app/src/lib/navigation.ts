@@ -15,6 +15,7 @@ import {
   Settings,
   House,
   MessageSquare,
+  FileBarChart,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -189,6 +190,13 @@ export const navigation: NavSection[] = [
       { label: 'Notifications', path: '/notifications' },
       { label: 'Messages', path: '/messages' },
       { label: 'Notes', path: '/notes' },
+    ],
+  },
+  {
+    label: 'Reports',
+    icon: FileBarChart,
+    children: [
+      { label: 'Reports', path: '/reports' },
     ],
   },
 ]
