@@ -23,7 +23,6 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 export async function checkLocation(): Promise<LocationResult> {
-
   return { success: true, distance: 0 };
 
   return new Promise((resolve) => {
