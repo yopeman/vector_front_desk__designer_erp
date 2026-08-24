@@ -73,13 +73,13 @@ export default function Home() {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch KPI data
+      // Fetch KPI data - include created_at for month-over-month calculations
       const [campaignsRes, activitiesRes, proposalsRes, expensesRes, targetsRes] = await Promise.all([
-        supabase.from('campaigns').select('*').eq('status', 'active'),
-        supabase.from('activities').select('*').in('status', ['planned', 'in_progress']),
-        supabase.from('proposals').select('*').eq('status', 'submitted'),
-        supabase.from('expenses').select('*'),
-        supabase.from('campaign_targets').select('*'),
+        supabase.from('mrkt_campaigns').select('*').eq('status', 'active'),
+        supabase.from('mrkt_activities').select('*').in('status', ['planned', 'in_progress']),
+        supabase.from('mrkt_proposals').select('*').eq('status', 'submitted'),
+        supabase.from('mrkt_expenses').select('*'),
+        supabase.from('mrkt_campaign_targets').select('*'),
       ])
 
       const activeCampaigns = campaignsRes.data?.length || 0
@@ -97,17 +97,99 @@ export default function Home() {
       const actualConversions = conversionTargets.reduce((sum, t) => sum + (t.actual_value || 0), 0)
       const conversionRate = totalTargetConversions > 0 ? ((actualConversions / totalTargetConversions) * 100).toFixed(1) : '0'
 
-      setKpiData([
-        { label: 'Active Campaigns', value: activeCampaigns, change: 8, icon: Rocket, trend: 'up' },
-        { label: 'Pending Tasks', value: pendingTasks, change: -3, icon: CheckSquare, trend: 'down' },
-        { label: 'Proposals Sent', value: proposalsSent, change: 15, icon: FileText, trend: 'up' },
-        { label: 'Budget Used', value: `$${(totalBudgetUsed / 1000).toFixed(1)}K`, change: 12, icon: Wallet, trend: 'up' },
-        { label: 'Conversion Rate', value: `${conversionRate}%`, change: 5, icon: BarChart3, trend: 'up' },
-        { label: 'Leads Generated', value: leadsGenerated, change: 22, icon: Users, trend: 'up' },
+      // Calculate month-over-month changes
+      const now = new Date()
+      const currentMonth = now.getMonth()
+      const currentYear = now.getFullYear()
+      const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1
+      const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear
+
+      // Helper to get count for a specific month
+      const getCountForMonth = (items: any[], dateField: string) => {
+        return items?.filter(item => {
+          const date = new Date(item[dateField])
+          return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+        }).length || 0
+      }
+
+      const getCountForLastMonth = (items: any[], dateField: string) => {
+        return items?.filter(item => {
+          const date = new Date(item[dateField])
+          return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear
+        }).length || 0
+      }
+
+      // Calculate change percentage
+      const calculateChange = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0
+        return ((current - previous) / previous) * 100
+      }
+
+      // Fetch all data for month-over-month comparison
+      const [allCampaignsData, allActivitiesData, allProposalsData] = await Promise.all([
+        supabase.from('mrkt_campaigns').select('*'),
+        supabase.from('mrkt_activities').select('*'),
+        supabase.from('mrkt_proposals').select('*'),
       ])
 
-      // Fetch campaign status data
-      const { data: allCampaigns } = await supabase.from('campaigns').select('status')
+      const currentMonthCampaigns = getCountForMonth(allCampaignsData.data || [], 'created_at')
+      const lastMonthCampaigns = getCountForLastMonth(allCampaignsData.data || [], 'created_at')
+      const campaignsChange = calculateChange(currentMonthCampaigns, lastMonthCampaigns)
+
+      const currentMonthTasks = getCountForMonth(allActivitiesData.data || [], 'created_at')
+      const lastMonthTasks = getCountForLastMonth(allActivitiesData.data || [], 'created_at')
+      const tasksChange = calculateChange(currentMonthTasks, lastMonthTasks)
+
+      const currentMonthProposals = getCountForMonth(allProposalsData.data || [], 'created_at')
+      const lastMonthProposals = getCountForLastMonth(allProposalsData.data || [], 'created_at')
+      const proposalsChange = calculateChange(currentMonthProposals, lastMonthProposals)
+
+      const currentMonthExpenses = expensesRes.data?.filter(exp => {
+        const date = new Date(exp.expense_date)
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+      }).reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0
+
+      const lastMonthExpenses = expensesRes.data?.filter(exp => {
+        const date = new Date(exp.expense_date)
+        return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear
+      }).reduce((sum, exp) => sum + (exp.amount || 0), 0) || 0
+
+      const budgetChange = calculateChange(currentMonthExpenses, lastMonthExpenses)
+
+      const currentMonthLeads = leadsTargets.filter(t => {
+        const date = new Date(t.target_date)
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+      }).reduce((sum, t) => sum + (t.actual_value || 0), 0)
+
+      const lastMonthLeads = leadsTargets.filter(t => {
+        const date = new Date(t.target_date)
+        return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear
+      }).reduce((sum, t) => sum + (t.actual_value || 0), 0)
+
+      const leadsChange = calculateChange(currentMonthLeads, lastMonthLeads)
+
+      const currentMonthConversions = conversionTargets.filter(t => {
+        const date = new Date(t.target_date)
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear
+      }).reduce((sum, t) => sum + (t.actual_value || 0), 0)
+
+      const lastMonthConversions = conversionTargets.filter(t => {
+        const date = new Date(t.target_date)
+        return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear
+      }).reduce((sum, t) => sum + (t.actual_value || 0), 0)
+
+      const conversionChange = calculateChange(currentMonthConversions, lastMonthConversions)
+
+      setKpiData([
+        { label: 'Active Campaigns', value: activeCampaigns, change: Math.round(campaignsChange), icon: Rocket, trend: campaignsChange >= 0 ? 'up' : 'down' },
+        { label: 'Pending Tasks', value: pendingTasks, change: Math.round(tasksChange), icon: CheckSquare, trend: tasksChange >= 0 ? 'up' : 'down' },
+        { label: 'Proposals Sent', value: proposalsSent, change: Math.round(proposalsChange), icon: FileText, trend: proposalsChange >= 0 ? 'up' : 'down' },
+        { label: 'Budget Used', value: `$${(totalBudgetUsed / 1000).toFixed(1)}K`, change: Math.round(budgetChange), icon: Wallet, trend: budgetChange >= 0 ? 'up' : 'down' },
+        { label: 'Conversion Rate', value: `${conversionRate}%`, change: Math.round(conversionChange), icon: BarChart3, trend: conversionChange >= 0 ? 'up' : 'down' },
+        { label: 'Leads Generated', value: leadsGenerated, change: Math.round(leadsChange), icon: Users, trend: leadsChange >= 0 ? 'up' : 'down' },
+      ])
+
+      // Fetch campaign status data - use already fetched data
       const statusCounts = {
         planned: 0,
         active: 0,
@@ -115,7 +197,7 @@ export default function Home() {
         on_hold: 0,
         archived: 0,
       }
-      allCampaigns?.forEach(c => {
+      allCampaignsData.data?.forEach((c: any) => {
         if (statusCounts.hasOwnProperty(c.status)) {
           statusCounts[c.status as keyof typeof statusCounts]++
         }
@@ -128,8 +210,8 @@ export default function Home() {
         { name: 'Archived', value: statusCounts.archived },
       ])
 
-      // Fetch budget data by category
-      const { data: allExpenses } = await supabase.from('expenses').select('category, amount')
+      // Fetch budget data by category - only showing actual spend (no budget comparison as schema doesn't have category-level budgets)
+      const { data: allExpenses } = await supabase.from('mrkt_expenses').select('category, amount')
       const categorySpend = {
         advertising: 0,
         content: 0,
@@ -143,15 +225,17 @@ export default function Home() {
         }
       })
       setBudgetData([
-        { category: 'Advertising', budget: 15000, spent: categorySpend.advertising },
-        { category: 'Content', budget: 8000, spent: categorySpend.content },
-        { category: 'Events', budget: 20000, spent: categorySpend.events },
-        { category: 'Travel', budget: 12000, spent: categorySpend.travel },
-        { category: 'Software', budget: 5000, spent: categorySpend.software },
+        { category: 'Advertising', budget: categorySpend.advertising, spent: categorySpend.advertising },
+        { category: 'Content', budget: categorySpend.content, spent: categorySpend.content },
+        { category: 'Events', budget: categorySpend.events, spent: categorySpend.events },
+        { category: 'Travel', budget: categorySpend.travel, spent: categorySpend.travel },
+        { category: 'Software', budget: categorySpend.software, spent: categorySpend.software },
       ])
 
-      // Fetch monthly data (simplified - using campaigns created per month)
-      const { data: campaignsByMonth } = await supabase.from('campaigns').select('start_date')
+      // Fetch monthly data - campaigns by start_date, leads and conversions from targets by target_date
+      const campaignsByMonth = await supabase.from('mrkt_campaigns').select('start_date')
+      const targetsByMonth = await supabase.from('mrkt_campaign_targets').select('*')
+      
       const monthData = [
         { month: 'Jan', campaigns: 0, leads: 0, conversions: 0 },
         { month: 'Feb', campaigns: 0, leads: 0, conversions: 0 },
@@ -160,7 +244,9 @@ export default function Home() {
         { month: 'May', campaigns: 0, leads: 0, conversions: 0 },
         { month: 'Jun', campaigns: 0, leads: 0, conversions: 0 },
       ]
-      campaignsByMonth?.forEach(c => {
+      
+      // Count campaigns by month
+      campaignsByMonth.data?.forEach((c: any) => {
         if (c.start_date) {
           const month = new Date(c.start_date).getMonth()
           if (month >= 0 && month < 6) {
@@ -168,6 +254,21 @@ export default function Home() {
           }
         }
       })
+      
+      // Aggregate leads and conversions by month from targets
+      targetsByMonth.data?.forEach((t: any) => {
+        if (t.target_date) {
+          const month = new Date(t.target_date).getMonth()
+          if (month >= 0 && month < 6) {
+            if (t.metric === 'leads') {
+              monthData[month].leads += (t.actual_value || 0)
+            } else if (t.metric === 'conversions') {
+              monthData[month].conversions += (t.actual_value || 0)
+            }
+          }
+        }
+      })
+      
       setMonthlyData(monthData)
 
     } catch (error) {
