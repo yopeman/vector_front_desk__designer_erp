@@ -35,6 +35,9 @@ export default function RoleRouter() {
       case 'front_desk':
         // Already at "/" — no redirect needed
         break;
+      case 'admin_marketer':
+        // Already at "/" — no redirect needed
+        break;
       default:
         navigate('/pending', { replace: true });
     }

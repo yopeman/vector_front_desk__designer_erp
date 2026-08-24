@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { getCurrentUser, signIn, signUp, signOut, onAuthStateChange, updatePassword, verifyCurrentPassword } from '../lib/supabase/auth'
+import { supabase } from '../lib/supabase/client'
 
 interface User {
   id: string
@@ -40,11 +41,22 @@ export const useAuthStore = create<AuthState>()(
           const { data, error } = await signIn(email, password)
           if (error) throw error
           if (data.user) {
+            const { data: profileData } = await supabase
+              .from('users')
+              .select('role')
+              .eq('id', data.user.id)
+              .single()
+            
+            const role = profileData?.role
+            console.log({role});            
+            if (role !== 'marketer' && role !== 'admin_marketer') {
+              throw new Error('Access denied. Only marketers can access this application.')
+            }
             set({ 
               user: { 
                 id: data.user.id, 
                 email: data.user.email || '',
-                role: data.user.user_metadata?.role 
+                role: role 
               } 
             })
           }
