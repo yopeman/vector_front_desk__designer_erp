@@ -92,9 +92,9 @@ export default function MessagesPage() {
       await createMsg.mutateAsync({
         sender_id: user.id,
         receiver_id: selectedUserId,
-        content: messageInput.trim(),
+        text: messageInput.trim(),
         is_read: false,
-        attached_files: filePaths.length > 0 ? filePaths : undefined,
+        attached_file_ids: filePaths.length > 0 ? filePaths : undefined,
       })
 
       setMessageInput('')
@@ -141,12 +141,12 @@ export default function MessagesPage() {
                     <span className={`text-sm font-medium ${
                       selectedUserId === userItem.id ? 'text-white' : 'text-primary'
                     }`}>
-                      {getUserInitials(userItem.email || userItem.full_name)}
+                      {getUserInitials(userItem.email || userItem.username)}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate text-sm">
-                      {userItem.full_name || userItem.email?.split('@')[0] || 'User'}
+                      {userItem.username || userItem.email?.split('@')[0] || 'User'}
                     </p>
                     <p className={`text-xs truncate ${
                       selectedUserId === userItem.id ? 'text-white/70' : 'text-muted-foreground'
@@ -176,10 +176,10 @@ export default function MessagesPage() {
                   'bg-primary/10'
                 }`}>
                   <span className={`text-sm font-medium text-primary`}>
-                    {getUserInitials(selectedUser.email || selectedUser.full_name)}
+                    {getUserInitials(selectedUser.email || selectedUser.username)}
                   </span>
                 </div>
-                {selectedUser.full_name || selectedUser.email?.split('@')[0] || 'User'}
+                {selectedUser.username || selectedUser.email?.split('@')[0] || 'User'}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col overflow-hidden p-0">
@@ -193,12 +193,12 @@ export default function MessagesPage() {
                       <Users className="w-8 h-8 text-gray-400" />
                     </div>
                     <p className="text-gray-500 font-medium">No messages yet</p>
-                    <p className="text-sm text-gray-400 mt-1">Send a message to {selectedUser.full_name || selectedUser.email?.split('@')[0] || 'this user'}</p>
+                    <p className="text-sm text-gray-400 mt-1">Send a message to {selectedUser.username || selectedUser.email?.split('@')[0] || 'this user'}</p>
                   </div>
                 ) : (
                   messages.data?.map((message, idx) => {
                     const isOwn = message.sender_id === user?.id
-                    const otherUser = isOwn ? selectedUser : { email: selectedUser.email, full_name: selectedUser.full_name }
+                    const otherUser = isOwn ? selectedUser : { email: selectedUser.email, username: selectedUser.username }
                     const showSenderName = !isOwn && (idx === 0 || messages.data?.[idx - 1]?.sender_id !== message.sender_id)
 
                     return (
@@ -210,14 +210,14 @@ export default function MessagesPage() {
                           {!isOwn && (
                             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                               <span className="text-xs font-medium text-primary">
-                                {getUserInitials(otherUser?.email || otherUser?.full_name)}
+                                {getUserInitials(otherUser?.email || otherUser?.username)}
                               </span>
                             </div>
                           )}
                           <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
                             {!isOwn && showSenderName && (
                               <span className="text-xs text-gray-500 mb-1 ml-1">
-                                {otherUser?.full_name || otherUser?.email || 'Unknown'}
+                                {otherUser?.username || otherUser?.email || 'Unknown'}
                               </span>
                             )}
                             <div
@@ -227,12 +227,12 @@ export default function MessagesPage() {
                                   : 'bg-gray-100 text-gray-900'
                               }`}
                             >
-                              {message.content && (
-                                <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                              {message.text && (
+                                <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
                               )}
-                              {message.attached_files && message.attached_files.length > 0 && (
+                              {message.attached_file_ids && message.attached_file_ids.length > 0 && (
                                 <div className="mt-2 space-y-1">
-                                  {message.attached_files.map((filePath, fileIdx) => {
+                                  {message.attached_file_ids.map((filePath: string, fileIdx: number) => {
                                     const fileName = filePath.split('/').pop() || `Attachment ${fileIdx + 1}`
                                     return (
                                       <div
@@ -290,7 +290,7 @@ export default function MessagesPage() {
               {/* Message Input */}
               <div className="p-4 border-t">
                 <div className="flex gap-2 items-end">
-                  <label htmlFor="msg-file-input" className="cursor-pointer">
+                  {/* <label htmlFor="msg-file-input" className="cursor-pointer">
                     <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
                       <Paperclip className="w-4 h-4" />
                     </div>
@@ -301,7 +301,7 @@ export default function MessagesPage() {
                       onChange={handleFileChange}
                       className="hidden"
                     />
-                  </label>
+                  </label> */}
                   <Input
                     value={messageInput}
                     onChange={(e) => setMessageInput(e.target.value)}
@@ -322,7 +322,7 @@ export default function MessagesPage() {
                     {sending ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      <Send className="w-4 h-4" />
+                      <Send className="w-4 h-4 text-white" />
                     )}
                   </Button>
                 </div>

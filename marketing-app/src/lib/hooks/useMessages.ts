@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { messagesApi, usersApi } from '../api/messages'
-import { Message, User } from '../../types/database'
+import { User } from '../../types/database'
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase/client'
 
@@ -14,7 +14,7 @@ export function useMessages(otherUserId: string | undefined) {
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user?.id || !otherUserId) return []
-      setCurrentUser({ id: user.id, email: user.email || '', full_name: user.user_metadata?.full_name, role: user.user_metadata?.role })
+      setCurrentUser({ id: user.id, email: user.email || '', username: user.user_metadata?.username, role: user.user_metadata?.role })
       return messagesApi.getByUsers(user.id, otherUserId)
     },
     enabled: !!otherUserId,

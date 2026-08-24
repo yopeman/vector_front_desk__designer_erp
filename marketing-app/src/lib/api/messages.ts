@@ -1,7 +1,7 @@
 import { supabase } from '../supabase/client'
-import { Message, User } from '../../types/database'
+import { Message } from '../../types/database'
 
-type MessageInsert = Omit<Message, 'id' | 'created_at'>
+type MessageInsert = Omit<Message, 'id' | 'created_at' | 'sent_at'>
 type MessageUpdate = Partial<MessageInsert>
 
 export const messagesApi = {
@@ -19,7 +19,13 @@ export const messagesApi = {
   async create(message: MessageInsert) {
     const { data, error } = await supabase
       .from('messages')
-      .insert(message)
+      .insert({
+        sender_id: message.sender_id,
+        receiver_id: message.receiver_id,
+        text: message.text,
+        is_read: message.is_read,
+        attached_file_ids: message.attached_file_ids,
+      })
       .select()
       .single()
     
@@ -65,7 +71,7 @@ export const messagesApi = {
     const filePath = `messages/${fileName}`
 
     const { error: uploadError } = await supabase.storage
-      .from('message-attachments')
+      .from('messages')
       .upload(filePath, file)
 
     if (uploadError) throw uploadError
@@ -75,7 +81,7 @@ export const messagesApi = {
 
   async getFileUrl(filePath: string) {
     const { data, error } = await supabase.storage
-      .from('message-attachments')
+      .from('messages')
       .createSignedUrl(filePath, 3600)
 
     if (error) throw error
@@ -84,7 +90,7 @@ export const messagesApi = {
 
   async deleteFile(filePath: string) {
     const { error } = await supabase.storage
-      .from('message-attachments')
+      .from('messages')
       .remove([filePath])
 
     if (error) throw error
@@ -94,14 +100,14 @@ export const messagesApi = {
 export const usersApi = {
   async getAll() {
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, role')
+      .from('users')
+      .select('id, email, username, role')
       .order('created_at', { ascending: false })
     
     if (error) {
-      console.error('Error fetching users from profiles:', error)
+      console.error('Error fetching users from users:', error)
       throw error
     }
-    return data as Array<{ id: string; email: string; full_name?: string; role?: string }>
+    return data as Array<{ id: string; email: string; username?: string; role?: string }>
   },
 }

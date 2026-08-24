@@ -227,12 +227,13 @@ export interface ConversationParticipant {
 
 export interface Message {
   id: string
-  conversation_id: string
   sender_id: string
-  content: string
+  receiver_id: string
+  text: string
   is_read: boolean
+  attached_file_ids?: string[]
+  sent_at?: string
   created_at: string
-  attached_files?: string[]
 }
 
 // Join types with relations
@@ -246,4 +247,11 @@ export interface ProposalWithItems extends Proposal {
 
 export interface ProformaWithItems extends Proforma {
   items?: ProformaItem[]
+}
+
+export interface User {
+  id: string
+  email: string
+  username?: string
+  role?: string
 }
