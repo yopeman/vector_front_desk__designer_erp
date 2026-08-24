@@ -80,7 +80,7 @@ export const notificationsApi = {
       .select('id')
       .eq('user_id', userId)
       .eq('notification_id', notificationId)
-      .single()
+      .maybeSingle()
     
     if (existing.data) {
       const { error } = await supabase
@@ -119,7 +119,7 @@ export const notificationsApi = {
           .select('id')
           .eq('user_id', userId)
           .eq('notification_id', notif.id)
-          .single()
+          .maybeSingle()
         
         if (existing.data) {
           await supabase

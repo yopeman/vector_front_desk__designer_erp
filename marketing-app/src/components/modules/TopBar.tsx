@@ -96,7 +96,7 @@ export default function TopBar() {
   }
 
   const handleMarkAsRead = async (id: string) => {
-    await markAsRead.mutateAsync(id)
+    await markAsRead.mutateAsync({ notificationId: id })
   }
 
   return (
