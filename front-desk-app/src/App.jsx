@@ -10,6 +10,7 @@ import ClientPage from './pages/ClientPage';
 import PendingPage from './pages/PendingPage';
 import ReportPage from './pages/front-desk/components/ReportPage';
 import Sidebar from './pages/front-desk/components/Sidebar';
+import TopHeader from './pages/front-desk/components/TopHeader';
 
 function PublicReportSidebar() {
   const { user } = useAuth();
@@ -35,14 +36,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
 
           {/* Public report routes */}
-          <Route path="/frontdesk-public-report" element={
-            <div style={{ display: 'flex' }}>
-              <PublicReportSidebar />
-              <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-                <ReportPage />
-              </div>
-            </div>
-          } />
+          <Route path="/frontdesk-public-report" element={<FrontDeskPage />} />
           <Route path="/design-public-report" element={<DesignerPage />} />
 
           {/* Pending approval page */}
