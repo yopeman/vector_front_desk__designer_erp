@@ -16,7 +16,13 @@ export default function DesignerPage() {
   const [designs, setDesigns] = useState([]);
   const [myTasks, setMyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('overview-section');
+  const [activeSection, setActiveSection] = useState(() => {
+    // Check if accessing via public report URL
+    if (window.location.hash === '#/design-public-report') {
+      return 'reports-section';
+    }
+    return 'overview-section';
+  });
   const [clockedIn, setClockedIn] = useState(true);
   const [clockInTime, setClockInTime] = useState('08:58 AM');
   const [clockOutTime, setClockOutTime] = useState('--:-- --');
@@ -608,6 +614,14 @@ export default function DesignerPage() {
   }
 
   function handleSectionChange(section) {
+    // Check if user is trying to navigate away from public reports without auth
+    if (window.location.hash === '#/design-public-report' && section !== 'reports-section') {
+      // Redirect to login if not authenticated
+      if (!user) {
+        window.location.hash = '#/login';
+        return;
+      }
+    }
     setActiveSection(section);
   }
 

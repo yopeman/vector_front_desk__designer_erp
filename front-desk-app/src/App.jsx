@@ -1,5 +1,5 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './lib/auth';
+import { AuthProvider, useAuth } from './lib/auth';
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleRouter from './components/RoleRouter';
 import LoginPage from './pages/LoginPage';
@@ -11,6 +11,22 @@ import PendingPage from './pages/PendingPage';
 import ReportPage from './pages/front-desk/components/ReportPage';
 import Sidebar from './pages/front-desk/components/Sidebar';
 
+function PublicReportSidebar() {
+  const { user } = useAuth();
+
+  const handleMenuClick = (page) => {
+    // Check if user is trying to navigate away from public reports without auth
+    if (window.location.hash === '#/frontdesk-public-report' && page !== 'report') {
+      if (!user) {
+        window.location.hash = '#/login';
+        return;
+      }
+    }
+  };
+
+  return <Sidebar onMenuClick={handleMenuClick} currentPage="report" collapsed={false} setCollapsed={() => {}} />;
+}
+
 export default function App() {
   return (
     <HashRouter>
@@ -21,7 +37,7 @@ export default function App() {
           {/* Public report routes */}
           <Route path="/frontdesk-public-report" element={
             <div style={{ display: 'flex' }}>
-              <Sidebar currentPage="report" collapsed={false}/>
+              <PublicReportSidebar />
               <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
                 <ReportPage />
               </div>
