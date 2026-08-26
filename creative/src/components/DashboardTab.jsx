@@ -191,11 +191,11 @@ const DashboardTab = ({ isActive, onTabSwitch, prototypeCount, ideaCount, design
             <span>Add Design</span>
           </button>
           <button
-            onClick={() => onTabSwitch('leaveTab')}
+            onClick={() => onTabSwitch('reportsTab')}
             className="p-4 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200/60 font-semibold text-xs text-slate-600 transition text-center space-y-2"
           >
-            <i className="fa-solid fa-calendar-minus text-lg block text-primary-500"></i>
-            <span>Request Leave</span>
+            <i className="fa-solid fa-chart-bar text-lg block text-primary-500"></i>
+            <span>View Reports</span>
           </button>
         </div>
       </div>

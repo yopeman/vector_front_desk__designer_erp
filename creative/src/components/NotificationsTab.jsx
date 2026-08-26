@@ -199,12 +199,6 @@ const NotificationsTab = ({ isActive }) => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4">
                       <h3 className="font-semibold text-slate-800 text-lg">{notification.title}</h3>
-                      <button
-                        onClick={(e) => handleDelete(notification.id, e)}
-                        className="text-slate-400 hover:text-red-500 transition shrink-0"
-                      >
-                        <i className="fa-solid fa-times text-lg"></i>
-                      </button>
                     </div>
                     <p className="text-slate-600 mt-2">{notification.message}</p>
                     <div className="flex items-center gap-3 mt-3">

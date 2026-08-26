@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { useCreativeAuth } from '../contexts/CreativeAuthContext'
 
 const NotesTab = ({ isActive, searchQuery }) => {
+  const { user } = useCreativeAuth()
   const [notes, setNotes] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
@@ -26,10 +28,13 @@ const NotesTab = ({ isActive, searchQuery }) => {
   }, [isActive])
 
   const fetchNotes = async () => {
+    if (!user?.id) return
+    
     try {
       const { data, error } = await supabase
         .from('notes')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
       
       if (error) {
@@ -69,7 +74,8 @@ const NotesTab = ({ isActive, searchQuery }) => {
         .insert([{
           title: formData.title,
           content: formData.content,
-          color: formData.color
+          color: formData.color,
+          user_id: user.id
         }])
       
       if (error) {
