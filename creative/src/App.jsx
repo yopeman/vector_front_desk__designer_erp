@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './lib/supabaseClient'
 import { CreativeAuthProvider, useCreativeAuth } from './contexts/CreativeAuthContext'
 import Sidebar from './components/Sidebar'
@@ -21,6 +22,7 @@ import NotesTab from './components/NotesTab'
 import ReportsTab from './components/ReportsTab'
 import NotificationsTab from './components/NotificationsTab'
 import SettingsTab from './components/SettingsTab'
+import PublicReport from './components/PublicReport'
 import './index.css'
 
 function CreativeApp() {
@@ -73,7 +75,7 @@ function CreativeApp() {
       <main className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200">
         <Header onTabSwitch={handleTabSwitch} />
         
-        <div className="p-6 md:p-8 space-y-8 max-w-7xl w-full mx-auto flex-1">
+        <div className="p-6">
           <DashboardTab 
             isActive={activeTab === 'dashboardTab'} 
             onTabSwitch={handleTabSwitch}
@@ -108,22 +110,40 @@ function CreativeApp() {
 function App() {
   const { loading, isAuthenticated } = useCreativeAuth()
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-slate-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return <CreativeLogin />
-  }
-
-  return <CreativeApp />
+  return (
+    <Routes>
+      <Route path="/creative-public-report" element={<PublicReport />} />
+      
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/" replace />
+          ) : (
+            <CreativeLogin />
+          )
+        }
+      />
+      
+      <Route
+        path="/*"
+        element={
+          loading ? (
+            <div className="min-h-screen bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+                <p className="mt-4 text-slate-600">Loading...</p>
+              </div>
+            </div>
+          ) : !isAuthenticated ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <CreativeApp />
+          )
+        }
+      />
+    </Routes>
+  )
 }
 
 export default App
