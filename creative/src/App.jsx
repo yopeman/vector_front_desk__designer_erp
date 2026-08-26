@@ -41,10 +41,10 @@ function CreativeApp() {
   const fetchDashboardCounts = async () => {
     try {
       const [protoCount, ideaCount, designCount, leaveCount] = await Promise.all([
-        supabase.from('prototype_requests').select('*', { count: 'exact', head: true }),
-        supabase.from('idea_hub').select('*', { count: 'exact', head: true }),
-        supabase.from('design_bom').select('*', { count: 'exact', head: true }),
-        supabase.from('staff_leaves').select('*', { count: 'exact', head: true })
+        supabase.from('crt_prototype_requests').select('*', { count: 'exact', head: true }),
+        supabase.from('crt_idea_hub').select('*', { count: 'exact', head: true }),
+        supabase.from('crt_design_bom').select('*', { count: 'exact', head: true }),
+        supabase.from('crt_staff_leaves').select('*', { count: 'exact', head: true })
       ])
 
       setCounts({

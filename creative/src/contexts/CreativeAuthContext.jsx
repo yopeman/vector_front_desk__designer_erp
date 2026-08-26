@@ -21,28 +21,13 @@ export function CreativeAuthProvider({ children }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        // Check if user is creative admin
-        await checkCreativeAdmin(session.user.id, session.user.email);
+        // All authenticated users have admin privileges
+        setIsCreativeAdmin(true);
       }
     } catch (error) {
       console.error('Session check error:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkCreativeAdmin = async (userId, email) => {
-    try {
-      const { data } = await supabase
-        .from('creative_admins')
-        .select('*')
-        .eq('email', email)
-        .single();
-      
-      setIsCreativeAdmin(!!data && data.is_active);
-    } catch (error) {
-      console.error('Creative admin check error:', error);
-      setIsCreativeAdmin(false);
     }
   };
 
@@ -53,7 +38,7 @@ export function CreativeAuthProvider({ children }) {
     });
     if (error) throw error;
     setUser(data.user);
-    await checkCreativeAdmin(data.user.id, data.user.email);
+    setIsCreativeAdmin(true);
     return data;
   };
 

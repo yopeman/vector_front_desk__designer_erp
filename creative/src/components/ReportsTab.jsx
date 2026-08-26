@@ -4,9 +4,9 @@ import { useCreativeAuth } from '../contexts/CreativeAuthContext'
 import jsPDF from 'jspdf'
 
 const REPORT_MODULES = [
-  { id: 'prototype', label: 'Prototype Request', table: 'prototype_requests' },
-  { id: 'idea', label: 'Idea', table: 'idea_hub' },
-  { id: 'design', label: 'Design Log', table: 'design_bom' },
+  { id: 'prototype', label: 'Prototype Request', table: 'crt_prototype_requests' },
+  { id: 'idea', label: 'Idea', table: 'crt_idea_hub' },
+  { id: 'design', label: 'Design Log', table: 'crt_design_bom' },
 ]
 
 const ReportTable = ({ module, data, loading, onSearch, onPaginationChange, onColumnVisibilityChange, initialColumnVisibility }) => {

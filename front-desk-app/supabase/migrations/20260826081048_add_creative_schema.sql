@@ -117,23 +117,3 @@ CREATE TRIGGER update_crt_design_bom_updated_at BEFORE UPDATE ON crt_design_bom
 DROP TRIGGER IF EXISTS update_crt_staff_leaves_updated_at ON crt_staff_leaves;
 CREATE TRIGGER update_crt_staff_leaves_updated_at BEFORE UPDATE ON crt_staff_leaves
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- ============================================================================
--- SAMPLE DATA (Optional - for testing)
--- ============================================================================
-
-INSERT INTO crt_prototype_requests (request_date, request_number, department, description, priority, deadline, assigned_technologist, status) VALUES
-('2026-06-15', 'REQ-0941', 'Marketing Dept', 'Acrylic custom sign mockup fabrication', 'High', '2026-06-25', 'Engineer Alemu', 'On Progress')
-ON CONFLICT (request_number) DO NOTHING;
-
-INSERT INTO crt_idea_hub (idea_date, idea_code, title, source, priority, target_date, estimated_cost, status) VALUES
-('2026-06-14', 'IDEA-224', 'Modular LED Profile Box', 'Staff Generated', 'Normal', '2026-07-02', 12500, 'Approved')
-ON CONFLICT (idea_code) DO NOTHING;
-
-INSERT INTO crt_design_bom (design_date, design_reference, project_title, priority, machine_routes, bom_item, bom_quantity, total_price, status) VALUES
-('2026-06-12', 'DSGN-883', 'Vector Acrylic Frame', 'High', ARRAY['CNC Router', 'CO2 Laser'], 'Acrylic Sheet 3mm', 2, 900.00, 'Ready')
-ON CONFLICT (design_reference) DO NOTHING;
-
-INSERT INTO crt_staff_leaves (application_date, leave_id, employee_name, leave_from, leave_to, leave_type, justification, status) VALUES
-('2026-06-10', 'LEAVE-04', 'Girmawi Zekariyas', '2026-06-12', '2026-06-20', 'Annual Year Leave', 'Family personal matters administration', 'Under Review')
-ON CONFLICT (leave_id) DO NOTHING;

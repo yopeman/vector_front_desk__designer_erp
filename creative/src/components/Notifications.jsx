@@ -15,20 +15,17 @@ const Notifications = ({ onTabSwitch }) => {
   // Load notifications on mount and when user changes
   useEffect(() => {
     if (user) {
-      console.log('🔔 [UI DEBUG] User mounted, loading notifications');
       loadNotifications();
       loadUnreadCount();
       
       // Subscribe to real-time notifications
       try {
         subscriptionRef.current = subscribeToCreativeNotifications(user.id, (payload) => {
-          console.log('🔔 [UI DEBUG] New notification received via subscription:', payload);
           loadNotifications();
           loadUnreadCount();
         });
-        console.log('🔔 [UI DEBUG] Notification subscription set up');
       } catch (error) {
-        console.error('🔔 [UI ERROR] Failed to set up notification subscription:', error);
+        console.error('Failed to set up notification subscription:', error);
       }
     }
 
@@ -36,9 +33,8 @@ const Notifications = ({ onTabSwitch }) => {
       if (subscriptionRef.current) {
         try {
           unsubscribeFromNotifications(subscriptionRef.current);
-          console.log('🔔 [UI DEBUG] Notification subscription cleaned up');
         } catch (error) {
-          console.error('🔔 [UI ERROR] Failed to cleanup notification subscription:', error);
+          console.error('Failed to cleanup notification subscription:', error);
         }
       }
     };
@@ -59,16 +55,13 @@ const Notifications = ({ onTabSwitch }) => {
   const loadNotifications = async () => {
     if (!user) return;
     
-    console.log('🔔 [UI DEBUG] Loading notifications for user:', user.id, user.email);
     setLoading(true);
     try {
       const data = await getCreativeNotifications(user.id, 10);
-      console.log('🔔 [UI DEBUG] Notifications loaded:', data);
-      console.log('🔔 [UI DEBUG] Notifications count:', data?.length || 0);
       setNotifications(data || []);
     } catch (error) {
-      console.error('🔔 [UI ERROR] Error loading notifications:', error);
-      setNotifications([]); // Set empty array on error to prevent crashes
+      console.error('Error loading notifications:', error);
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -157,18 +150,6 @@ const Notifications = ({ onTabSwitch }) => {
         return 'fa-compass-drafting';
       case 'leave':
         return 'fa-user-clock';
-      case 'resignation':
-        return 'fa-user-minus';
-      case 'experience':
-        return 'fa-briefcase';
-      case 'transfer':
-        return 'fa-arrow-right-arrow-left';
-      case 'promotion':
-        return 'fa-arrow-up';
-      case 'hire':
-        return 'fa-user-plus';
-      case 'budget':
-        return 'fa-wallet';
       default:
         return 'fa-bell';
     }
@@ -245,8 +226,8 @@ const Notifications = ({ onTabSwitch }) => {
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg bg-primary-100`}>
-                      <i className={`fa-solid ${getCategoryIcon(notification.category)} text-primary-600`}></i>
+                    <div className={`p-2 rounded-lg`} style={{ backgroundColor: notification.color || '#e2e8f0', color: '#fff' }}>
+                      <i className={`fa-solid ${notification.icon || 'fa-bell'}`}></i>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
@@ -258,7 +239,7 @@ const Notifications = ({ onTabSwitch }) => {
                           <i className="fa-solid fa-times text-xs"></i>
                         </button>
                       </div>
-                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">{notification.message}</p>
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">{notification.body || notification.message}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-slate-400">{formatTime(notification.created_at)}</span>
                         {!notification.is_read && (

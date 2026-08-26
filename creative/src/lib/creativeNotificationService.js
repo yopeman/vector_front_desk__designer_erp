@@ -16,99 +16,87 @@ export async function createCreativeNotification({
   relatedEntityId = null,
   actionUrl = null
 }) {
-  console.log('🔔 [NOTIFICATION DEBUG] Creating single notification');
-  console.log('🔔 [NOTIFICATION DEBUG] User ID:', userId);
-  console.log('🔔 [NOTIFICATION DEBUG] Title:', title);
-  
   try {
     const notificationData = {
-      user_id: userId,
       title,
-      message,
-      type,
-      category,
-      related_entity_type: relatedEntityType,
-      related_entity_id: relatedEntityId,
-      action_url: actionUrl,
-      is_read: false
+      body: message,
+      icon: 'fa-bell',
+      color: '#3b82f6'
     };
     
-    console.log('🔔 [NOTIFICATION DEBUG] Notification data:', notificationData);
-    
     const { data, error } = await supabase
-      .from('creative_notifications')
+      .from('notifications')
       .insert(notificationData)
       .select()
       .single();
 
-    if (error) {
-      console.error('🔔 [NOTIFICATION ERROR] Create failed:', error);
-      throw error;
-    }
-    
-    console.log('🔔 [NOTIFICATION SUCCESS] Notification created:', data);
+    if (error) throw error;
     return data;
   } catch (error) {
-    console.error('🔔 [NOTIFICATION CRITICAL ERROR] createCreativeNotification failed:', error);
+    console.error('Error creating notification:', error);
     throw error;
   }
 }
 
 // Get notifications for a user
 export async function getCreativeNotifications(userId, limit = 20) {
-  console.log('🔔 [NOTIFICATION DEBUG] Fetching notifications for user:', userId);
-  
   try {
-    // Try to get notifications by user ID first
-    const { data, error } = await supabase
-      .from('creative_notifications')
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+
+    // Get all notifications
+    const { data: notifications, error: notifError } = await supabase
+      .from('notifications')
       .select('*')
-      .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (error) {
-      console.error('🔔 [NOTIFICATION ERROR] Error fetching by ID:', error);
-      // Fallback: try to get by email if user ID doesn't work
-      console.log('🔔 [NOTIFICATION DEBUG] Trying email fallback...');
-      const { data: emailData, error: emailError } = await supabase
-        .from('creative_notifications')
-        .select('*')
-        .eq('user_id', userId) // In case userId is actually an email
-        .order('created_at', { ascending: false })
-        .limit(limit);
+    if (notifError) throw notifError;
 
-      if (emailError) {
-        console.error('🔔 [NOTIFICATION ERROR] Email fallback also failed:', emailError);
-        throw emailError;
-      }
-      
-      console.log('🔔 [NOTIFICATION SUCCESS] Fetched notifications via email fallback:', emailData);
-      return emailData;
-    }
+    // Get read notifications for current user
+    const { data: readNotifications, error: readError } = await supabase
+      .from('read_notifications')
+      .select('*')
+      .eq('user_id', currentUserId);
 
-    console.log('🔔 [NOTIFICATION SUCCESS] Fetched notifications:', data);
-    return data;
+    if (readError) throw readError;
+
+    // Mark notifications as read based on read_notifications table
+    const readNotifIds = new Set(readNotifications?.map(rn => rn.notification_id) || []);
+    const notificationsWithReadStatus = (notifications || []).map(notif => ({
+      ...notif,
+      is_read: readNotifIds.has(notif.id),
+      message: notif.body
+    }));
+
+    return notificationsWithReadStatus;
   } catch (error) {
-    console.error('🔔 [NOTIFICATION CRITICAL ERROR] getCreativeNotifications failed:', error);
-    return []; // Return empty array instead of throwing to prevent UI crashes
+    console.error('Error fetching notifications:', error);
+    return [];
   }
 }
 
 // Get unread notification count
 export async function getUnreadNotificationCount(userId) {
   try {
-    const { count, error } = await supabase
-      .from('creative_notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('is_read', false);
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
 
-    if (error) {
-      console.error('Error fetching unread notification count:', error);
-      return 0;
-    }
-    return count || 0;
+    const { data: notifications, error } = await supabase
+      .from('notifications')
+      .select('id');
+
+    if (error) throw error;
+
+    const { data: readNotifications } = await supabase
+      .from('read_notifications')
+      .select('notification_id')
+      .eq('user_id', currentUserId);
+
+    const readNotifIds = new Set(readNotifications?.map(rn => rn.notification_id) || []);
+    const unreadCount = (notifications || []).filter(n => !readNotifIds.has(n.id)).length;
+
+    return unreadCount;
   } catch (error) {
     console.error('Error fetching unread notification count:', error);
     return 0;
@@ -118,12 +106,33 @@ export async function getUnreadNotificationCount(userId) {
 // Mark notification as read
 export async function markNotificationAsRead(notificationId) {
   try {
-    const { error } = await supabase
-      .from('creative_notifications')
-      .update({ is_read: true })
-      .eq('id', notificationId);
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
 
-    if (error) throw error;
+    const { data: existing } = await supabase
+      .from('read_notifications')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .eq('notification_id', notificationId)
+      .single();
+
+    if (existing) {
+      const { error } = await supabase
+        .from('read_notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('read_notifications')
+        .insert({
+          user_id: currentUserId,
+          notification_id: notificationId,
+          is_read: true,
+          read_at: new Date().toISOString()
+        });
+      if (error) throw error;
+    }
     return true;
   } catch (error) {
     console.error('Error marking notification as read:', error);
@@ -134,13 +143,25 @@ export async function markNotificationAsRead(notificationId) {
 // Mark all notifications as read for a user
 export async function markAllNotificationsAsRead(userId) {
   try {
-    const { error } = await supabase
-      .from('creative_notifications')
-      .update({ is_read: true })
-      .eq('user_id', userId)
-      .eq('is_read', false);
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
 
-    if (error) throw error;
+    const { data: notifications } = await supabase
+      .from('notifications')
+      .select('id');
+
+    const { data: readNotifications } = await supabase
+      .from('read_notifications')
+      .select('notification_id')
+      .eq('user_id', currentUserId);
+
+    const readNotifIds = new Set(readNotifications?.map(rn => rn.notification_id) || []);
+    const unreadNotifs = (notifications || []).filter(n => !readNotifIds.has(n.id));
+
+    for (const notif of unreadNotifs) {
+      await markNotificationAsRead(notif.id);
+    }
+
     return true;
   } catch (error) {
     console.error('Error marking all notifications as read:', error);
@@ -152,7 +173,7 @@ export async function markAllNotificationsAsRead(userId) {
 export async function deleteCreativeNotification(notificationId) {
   try {
     const { error } = await supabase
-      .from('creative_notifications')
+      .from('notifications')
       .delete()
       .eq('id', notificationId);
 
@@ -164,7 +185,7 @@ export async function deleteCreativeNotification(notificationId) {
   }
 }
 
-// Notify all creative admins
+// Notify all creative admins - simplified version without admin table
 export async function notifyAllCreativeAdmins({
   title,
   message,
@@ -174,103 +195,25 @@ export async function notifyAllCreativeAdmins({
   relatedEntityId = null,
   actionUrl = null
 }) {
-  console.log('🔔 [NOTIFICATION DEBUG] Starting notifyAllCreativeAdmins');
-  console.log('🔔 [NOTIFICATION DEBUG] Title:', title);
-  console.log('🔔 [NOTIFICATION DEBUG] Message:', message);
-  
   try {
-    // Get all active creative admins
-    console.log('🔔 [NOTIFICATION DEBUG] Fetching creative admins...');
-    const { data: admins, error: adminError } = await supabase
-      .from('creative_admins')
-      .select('email')
-      .eq('is_active', true);
-
-    if (adminError) {
-      console.error('🔔 [NOTIFICATION ERROR] Error fetching admins:', adminError);
-      throw adminError;
-    }
-    
-    console.log('🔔 [NOTIFICATION DEBUG] Found admins:', admins);
-    console.log('🔔 [NOTIFICATION DEBUG] Admin count:', admins?.length || 0);
-
-    if (!admins || admins.length === 0) {
-      console.warn('🔔 [NOTIFICATION WARNING] No active creative admins found');
-      return [];
-    }
-
-    // Get user IDs for these admins
-    console.log('🔔 [NOTIFICATION DEBUG] Fetching user IDs for admins...');
-    const { data: users, error: userError } = await supabase
-      .from('users')
-      .select('id, email')
-      .in('email', admins.map(a => a.email));
-
-    if (userError) {
-      console.error('🔔 [NOTIFICATION ERROR] Error fetching user IDs:', userError);
-      console.log('🔔 [NOTIFICATION DEBUG] Using email fallback method');
-      
-      // Fallback: create notifications using admin emails as user IDs
-      const fallbackNotifications = admins.map(admin => ({
-        user_id: admin.email, // Use email as fallback ID
-        title,
-        message,
-        type,
-        category,
-        related_entity_type: relatedEntityType,
-        related_entity_id: relatedEntityId,
-        action_url,
-        is_read: false
-      }));
-
-      console.log('🔔 [NOTIFICATION DEBUG] Inserting fallback notifications:', fallbackNotifications);
-      
-      const { data, error: fallbackError } = await supabase
-        .from('creative_notifications')
-        .insert(fallbackNotifications)
-        .select();
-
-      if (fallbackError) {
-        console.error('🔔 [NOTIFICATION ERROR] Fallback insert failed:', fallbackError);
-        throw fallbackError;
-      }
-      
-      console.log('🔔 [NOTIFICATION SUCCESS] Fallback notifications created:', data);
-      return data;
-    }
-
-    console.log('🔔 [NOTIFICATION DEBUG] Found users:', users);
-    console.log('🔔 [NOTIFICATION DEBUG] User count:', users?.length || 0);
-
-    // Create notifications for all admin users
-    const notifications = users.map(user => ({
-      user_id: user.id,
+    // Create a single notification visible to all
+    const notificationData = {
       title,
-      message,
-      type,
-      category,
-      related_entity_type: relatedEntityType,
-      related_entity_id: relatedEntityId,
-      action_url,
-      is_read: false
-    }));
-
-    console.log('🔔 [NOTIFICATION DEBUG] Inserting notifications:', notifications);
+      body: message,
+      icon: 'fa-bell',
+      color: '#3b82f6'
+    };
     
     const { data, error } = await supabase
-      .from('creative_notifications')
-      .insert(notifications)
-      .select();
+      .from('notifications')
+      .insert(notificationData)
+      .select()
+      .single();
 
-    if (error) {
-      console.error('🔔 [NOTIFICATION ERROR] Insert failed:', error);
-      throw error;
-    }
-    
-    console.log('🔔 [NOTIFICATION SUCCESS] Notifications created:', data);
-    return data;
+    if (error) throw error;
+    return [data];
   } catch (error) {
-    console.error('🔔 [NOTIFICATION CRITICAL ERROR] notifyAllCreativeAdmins failed:', error);
+    console.error('Error notifying admins:', error);
     throw error;
   }
 }
@@ -513,14 +456,13 @@ export async function notifyBudgetStatus(userId, budgetId, status) {
 // Subscribe to notifications for a user
 export function subscribeToCreativeNotifications(userId, callback) {
   return supabase
-    .channel(`creative_notifications:${userId}`)
+    .channel('notifications-channel')
     .on(
       'postgres_changes',
       {
-        event: '*',
+        event: 'INSERT',
         schema: 'public',
-        table: 'creative_notifications',
-        filter: `user_id=eq.${userId}`
+        table: 'notifications'
       },
       (payload) => callback(payload)
     )
