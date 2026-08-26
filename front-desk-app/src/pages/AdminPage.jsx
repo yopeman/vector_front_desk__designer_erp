@@ -406,7 +406,7 @@ export default function AdminPage() {
                 { name: 'Machine', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
                 { name: 'Finishing', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
                 { name: 'Marketing', url: 'https://vectoradvert.com/erp/marketing/#/marketing-public-report' },
-                { name: 'Creative', url: 'https://vectoradvert.com/erp/creative/#/marketing-public-report' },
+                { name: 'Creative', url: 'https://vectoradvert.com/erp/creative/#/creative-public-report' },
               ].map((report) => (
                 <a
                   key={report.name}
