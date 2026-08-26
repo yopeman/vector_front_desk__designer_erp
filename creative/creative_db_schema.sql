@@ -1,5 +1,5 @@
 -- Vector Master Creative ERP System - Supabase Database Schema
--- This schema supports the UI from basic.html
+-- Complete schema excluding messaging, notes, reports, and admin tables
 -- No ENUM types, No RLS policies - Simple text columns for flexibility
 
 -- ============================================================================
@@ -67,38 +67,27 @@ CREATE TABLE IF NOT EXISTS staff_leaves (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Messages Table
-CREATE TABLE IF NOT EXISTS messages (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  sender text NOT NULL,
-  recipient text NOT NULL,
-  message text NOT NULL,
-  read_status boolean DEFAULT false,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+-- ============================================================================
+-- DISABLE RLS AND GRANT PERMISSIONS
+-- ============================================================================
 
--- Notes Table
-CREATE TABLE IF NOT EXISTS notes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title text NOT NULL,
-  content text NOT NULL,
-  color text NOT NULL DEFAULT 'blue', -- 'blue', 'green', 'yellow', 'pink', 'purple'
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+-- Disable Row Level Security on all tables
+ALTER TABLE prototype_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE idea_hub DISABLE ROW LEVEL SECURITY;
+ALTER TABLE design_bom DISABLE ROW LEVEL SECURITY;
+ALTER TABLE staff_leaves DISABLE ROW LEVEL SECURITY;
 
--- Reports Table
-CREATE TABLE IF NOT EXISTS reports (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  type text NOT NULL, -- 'Prototype', 'Idea', 'Design', 'Leave'
-  description text NOT NULL,
-  status text NOT NULL DEFAULT 'Generating', -- 'Ready', 'Generating', 'Failed'
-  generated_at date,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
+-- Grant full permissions to authenticated users
+GRANT ALL ON prototype_requests TO authenticated;
+GRANT ALL ON idea_hub TO authenticated;
+GRANT ALL ON design_bom TO authenticated;
+GRANT ALL ON staff_leaves TO authenticated;
+
+-- Grant full permissions to service_role
+GRANT ALL ON prototype_requests TO service_role;
+GRANT ALL ON idea_hub TO service_role;
+GRANT ALL ON design_bom TO service_role;
+GRANT ALL ON staff_leaves TO service_role;
 
 -- ============================================================================
 -- FUNCTIONS FOR AUTO-UPDATE TIMESTAMPS
@@ -129,18 +118,6 @@ DROP TRIGGER IF EXISTS update_staff_leaves_updated_at ON staff_leaves;
 CREATE TRIGGER update_staff_leaves_updated_at BEFORE UPDATE ON staff_leaves
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_messages_updated_at ON messages;
-CREATE TRIGGER update_messages_updated_at BEFORE UPDATE ON messages
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-DROP TRIGGER IF EXISTS update_notes_updated_at ON notes;
-CREATE TRIGGER update_notes_updated_at BEFORE UPDATE ON notes
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-DROP TRIGGER IF EXISTS update_reports_updated_at ON reports;
-CREATE TRIGGER update_reports_updated_at BEFORE UPDATE ON reports
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 -- ============================================================================
 -- SAMPLE DATA (Optional - for testing)
 -- ============================================================================
@@ -160,20 +137,3 @@ ON CONFLICT (design_reference) DO NOTHING;
 INSERT INTO staff_leaves (application_date, leave_id, employee_name, leave_from, leave_to, leave_type, justification, status) VALUES
 ('2026-06-10', 'LEAVE-04', 'Girmawi Zekariyas', '2026-06-12', '2026-06-20', 'Annual Year Leave', 'Family personal matters administration', 'Under Review')
 ON CONFLICT (leave_id) DO NOTHING;
-
-INSERT INTO messages (sender, recipient, message, read_status) VALUES
-('John Doe', 'Me', 'Can you review the new prototype design?', false),
-('Jane Smith', 'Me', 'The BOM for DSGN-883 has been updated', true)
-ON CONFLICT DO NOTHING;
-
-INSERT INTO notes (title, content, color) VALUES
-('Prototype Design Guidelines', 'Remember to follow the new design standards for all prototype requests. Check the material specifications before approval.', 'blue'),
-('BOM Cost Review', 'Review the cost analysis for DSGN-883. Need to verify material pricing with suppliers.', 'yellow')
-ON CONFLICT DO NOTHING;
-
-INSERT INTO reports (name, type, description, status, generated_at) VALUES
-('Prototype Status Report', 'Prototype', 'Summary of all prototype requests and their current status', 'Ready', '2026-06-15'),
-('Idea Hub Analysis', 'Idea', 'Analysis of submitted ideas and their approval rates', 'Ready', '2026-06-14'),
-('Design Workflow Summary', 'Design', 'Overview of design projects and BOM costs', 'Ready', '2026-06-13'),
-('Staff Leave Overview', 'Leave', 'Summary of leave requests and approval statistics', 'Ready', '2026-06-12')
-ON CONFLICT DO NOTHING;
