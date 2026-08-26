@@ -590,7 +590,7 @@ function UserModal({ mode, data, onSave, onClose }) {
             <option value="finish">Finishing</option>
             <option value="marketer">Marketer</option>
             {/* <option value="admin_marketer">Admin Marketer</option> */}
-            <option value="finance">Finance</option>
+            {/* <option value="finance">Finance</option> */}
             <option value="creative">Creative</option>
           </select>
         </div>
