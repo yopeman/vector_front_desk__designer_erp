@@ -7,7 +7,7 @@
 -- ============================================================================
 
 -- Prototype Requests Table
-CREATE TABLE IF NOT EXISTS prototype_requests (
+CREATE TABLE IF NOT EXISTS crt_prototype_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   request_date date NOT NULL,
   request_number text UNIQUE NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS prototype_requests (
 );
 
 -- Idea Hub Table
-CREATE TABLE IF NOT EXISTS idea_hub (
+CREATE TABLE IF NOT EXISTS crt_idea_hub (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   idea_date date NOT NULL,
   idea_code text UNIQUE NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS idea_hub (
 );
 
 -- Design & BOM Table
-CREATE TABLE IF NOT EXISTS design_bom (
+CREATE TABLE IF NOT EXISTS crt_design_bom (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   design_date date NOT NULL,
   design_reference text UNIQUE NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS design_bom (
 );
 
 -- Staff Leaves Table
-CREATE TABLE IF NOT EXISTS staff_leaves (
+CREATE TABLE IF NOT EXISTS crt_staff_leaves (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   application_date date NOT NULL,
   leave_id text UNIQUE NOT NULL,
@@ -72,22 +72,22 @@ CREATE TABLE IF NOT EXISTS staff_leaves (
 -- ============================================================================
 
 -- Disable Row Level Security on all tables
-ALTER TABLE prototype_requests DISABLE ROW LEVEL SECURITY;
-ALTER TABLE idea_hub DISABLE ROW LEVEL SECURITY;
-ALTER TABLE design_bom DISABLE ROW LEVEL SECURITY;
-ALTER TABLE staff_leaves DISABLE ROW LEVEL SECURITY;
+ALTER TABLE crt_prototype_requests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE crt_idea_hub DISABLE ROW LEVEL SECURITY;
+ALTER TABLE crt_design_bom DISABLE ROW LEVEL SECURITY;
+ALTER TABLE crt_staff_leaves DISABLE ROW LEVEL SECURITY;
 
 -- Grant full permissions to authenticated users
-GRANT ALL ON prototype_requests TO authenticated;
-GRANT ALL ON idea_hub TO authenticated;
-GRANT ALL ON design_bom TO authenticated;
-GRANT ALL ON staff_leaves TO authenticated;
+GRANT ALL ON crt_prototype_requests TO authenticated;
+GRANT ALL ON crt_idea_hub TO authenticated;
+GRANT ALL ON crt_design_bom TO authenticated;
+GRANT ALL ON crt_staff_leaves TO authenticated;
 
 -- Grant full permissions to service_role
-GRANT ALL ON prototype_requests TO service_role;
-GRANT ALL ON idea_hub TO service_role;
-GRANT ALL ON design_bom TO service_role;
-GRANT ALL ON staff_leaves TO service_role;
+GRANT ALL ON crt_prototype_requests TO service_role;
+GRANT ALL ON crt_idea_hub TO service_role;
+GRANT ALL ON crt_design_bom TO service_role;
+GRANT ALL ON crt_staff_leaves TO service_role;
 
 -- ============================================================================
 -- FUNCTIONS FOR AUTO-UPDATE TIMESTAMPS
@@ -102,38 +102,38 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers for updated_at (if they don't exist)
-DROP TRIGGER IF EXISTS update_prototype_requests_updated_at ON prototype_requests;
-CREATE TRIGGER update_prototype_requests_updated_at BEFORE UPDATE ON prototype_requests
+DROP TRIGGER IF EXISTS update_crt_prototype_requests_updated_at ON crt_prototype_requests;
+CREATE TRIGGER update_crt_prototype_requests_updated_at BEFORE UPDATE ON crt_prototype_requests
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_idea_hub_updated_at ON idea_hub;
-CREATE TRIGGER update_idea_hub_updated_at BEFORE UPDATE ON idea_hub
+DROP TRIGGER IF EXISTS update_crt_idea_hub_updated_at ON crt_idea_hub;
+CREATE TRIGGER update_crt_idea_hub_updated_at BEFORE UPDATE ON crt_idea_hub
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_design_bom_updated_at ON design_bom;
-CREATE TRIGGER update_design_bom_updated_at BEFORE UPDATE ON design_bom
+DROP TRIGGER IF EXISTS update_crt_design_bom_updated_at ON crt_design_bom;
+CREATE TRIGGER update_crt_design_bom_updated_at BEFORE UPDATE ON crt_design_bom
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-DROP TRIGGER IF EXISTS update_staff_leaves_updated_at ON staff_leaves;
-CREATE TRIGGER update_staff_leaves_updated_at BEFORE UPDATE ON staff_leaves
+DROP TRIGGER IF EXISTS update_crt_staff_leaves_updated_at ON crt_staff_leaves;
+CREATE TRIGGER update_crt_staff_leaves_updated_at BEFORE UPDATE ON crt_staff_leaves
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================
 -- SAMPLE DATA (Optional - for testing)
 -- ============================================================================
 
-INSERT INTO prototype_requests (request_date, request_number, department, description, priority, deadline, assigned_technologist, status) VALUES
+INSERT INTO crt_prototype_requests (request_date, request_number, department, description, priority, deadline, assigned_technologist, status) VALUES
 ('2026-06-15', 'REQ-0941', 'Marketing Dept', 'Acrylic custom sign mockup fabrication', 'High', '2026-06-25', 'Engineer Alemu', 'On Progress')
 ON CONFLICT (request_number) DO NOTHING;
 
-INSERT INTO idea_hub (idea_date, idea_code, title, source, priority, target_date, estimated_cost, status) VALUES
+INSERT INTO crt_idea_hub (idea_date, idea_code, title, source, priority, target_date, estimated_cost, status) VALUES
 ('2026-06-14', 'IDEA-224', 'Modular LED Profile Box', 'Staff Generated', 'Normal', '2026-07-02', 12500, 'Approved')
 ON CONFLICT (idea_code) DO NOTHING;
 
-INSERT INTO design_bom (design_date, design_reference, project_title, priority, machine_routes, bom_item, bom_quantity, total_price, status) VALUES
+INSERT INTO crt_design_bom (design_date, design_reference, project_title, priority, machine_routes, bom_item, bom_quantity, total_price, status) VALUES
 ('2026-06-12', 'DSGN-883', 'Vector Acrylic Frame', 'High', ARRAY['CNC Router', 'CO2 Laser'], 'Acrylic Sheet 3mm', 2, 900.00, 'Ready')
 ON CONFLICT (design_reference) DO NOTHING;
 
-INSERT INTO staff_leaves (application_date, leave_id, employee_name, leave_from, leave_to, leave_type, justification, status) VALUES
+INSERT INTO crt_staff_leaves (application_date, leave_id, employee_name, leave_from, leave_to, leave_type, justification, status) VALUES
 ('2026-06-10', 'LEAVE-04', 'Girmawi Zekariyas', '2026-06-12', '2026-06-20', 'Annual Year Leave', 'Family personal matters administration', 'Under Review')
 ON CONFLICT (leave_id) DO NOTHING;

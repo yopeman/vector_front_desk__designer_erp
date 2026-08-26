@@ -24,10 +24,10 @@ const DashboardTab = ({ isActive, onTabSwitch, prototypeCount, ideaCount, design
     try {
       // Fetch status counts from all tables
       const [prototypes, ideas, designs, leaves] = await Promise.all([
-        supabase.from('prototype_requests').select('status'),
-        supabase.from('idea_hub').select('status'),
-        supabase.from('design_bom').select('status'),
-        supabase.from('staff_leaves').select('status')
+        supabase.from('crt_prototype_requests').select('status'),
+        supabase.from('crt_idea_hub').select('status'),
+        supabase.from('crt_design_bom').select('status'),
+        supabase.from('crt_staff_leaves').select('status')
       ])
 
       const countStatus = (data, status) => data?.filter(item => item.status === status)?.length || 0
@@ -50,10 +50,10 @@ const DashboardTab = ({ isActive, onTabSwitch, prototypeCount, ideaCount, design
     try {
       // Fetch recent items from all tables
       const [prototypes, ideas, designs, leaves] = await Promise.all([
-        supabase.from('prototype_requests').select('*').order('created_at', { ascending: false }).limit(3),
-        supabase.from('idea_hub').select('*').order('created_at', { ascending: false }).limit(3),
-        supabase.from('design_bom').select('*').order('created_at', { ascending: false }).limit(3),
-        supabase.from('staff_leaves').select('*').order('created_at', { ascending: false }).limit(3)
+        supabase.from('crt_prototype_requests').select('*').order('created_at', { ascending: false }).limit(3),
+        supabase.from('crt_idea_hub').select('*').order('created_at', { ascending: false }).limit(3),
+        supabase.from('crt_design_bom').select('*').order('created_at', { ascending: false }).limit(3),
+        supabase.from('crt_staff_leaves').select('*').order('created_at', { ascending: false }).limit(3)
       ])
 
       const allActivity = [

@@ -49,7 +49,7 @@ const LeaveTab = ({ isActive, searchQuery, onDataChange }) => {
   const fetchLeaves = async () => {
     try {
       const { data, error } = await supabase
-        .from('staff_leaves')
+        .from('crt_staff_leaves')
         .select('*')
         .order('created_at', { ascending: false })
       
@@ -103,7 +103,7 @@ const LeaveTab = ({ isActive, searchQuery, onDataChange }) => {
     }
     
     const { data, error } = await supabase
-      .from('staff_leaves')
+      .from('crt_staff_leaves')
       .insert([{
         application_date: formData.application_date,
         leave_id: `LEAVE-${Date.now()}`,
@@ -156,7 +156,7 @@ const LeaveTab = ({ isActive, searchQuery, onDataChange }) => {
     if (!confirm('Are you sure you want to delete this leave request?')) return
     
     const { error } = await supabase
-      .from('staff_leaves')
+      .from('crt_staff_leaves')
       .delete()
       .eq('id', id)
     
@@ -172,7 +172,7 @@ const LeaveTab = ({ isActive, searchQuery, onDataChange }) => {
 
   const handleStatusUpdate = async (id, newStatus) => {
     const { data, error } = await supabase
-      .from('staff_leaves')
+      .from('crt_staff_leaves')
       .update({ status: newStatus })
       .eq('id', id)
       .select()
@@ -326,7 +326,7 @@ const LeaveTab = ({ isActive, searchQuery, onDataChange }) => {
     e.preventDefault()
     
     const { error } = await supabase
-      .from('staff_leaves')
+      .from('crt_staff_leaves')
       .update({
         application_date: formData.application_date,
         leave_from: formData.leave_from,

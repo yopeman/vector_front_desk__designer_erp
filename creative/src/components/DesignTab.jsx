@@ -58,7 +58,7 @@ const DesignTab = ({ isActive, searchQuery, onDataChange }) => {
   const fetchDesigns = async () => {
     try {
       const { data, error } = await supabase
-        .from('design_bom')
+        .from('crt_design_bom')
         .select('*')
         .order('created_at', { ascending: false })
       
@@ -122,7 +122,7 @@ const DesignTab = ({ isActive, searchQuery, onDataChange }) => {
     const bomData = JSON.stringify(formData.bom_items)
     
     const { data, error } = await supabase
-      .from('design_bom')
+      .from('crt_design_bom')
       .insert([{
         design_date: formData.date,
         design_reference: formData.project_number,
@@ -183,7 +183,7 @@ const DesignTab = ({ isActive, searchQuery, onDataChange }) => {
     if (!confirm('Are you sure you want to delete this design?')) return
     
     const { error } = await supabase
-      .from('design_bom')
+      .from('crt_design_bom')
       .delete()
       .eq('id', id)
     
@@ -199,7 +199,7 @@ const DesignTab = ({ isActive, searchQuery, onDataChange }) => {
 
   const handleStatusUpdate = async (id, newStatus) => {
     const { data, error } = await supabase
-      .from('design_bom')
+      .from('crt_design_bom')
       .update({ status: newStatus })
       .eq('id', id)
       .select()
@@ -276,7 +276,7 @@ const DesignTab = ({ isActive, searchQuery, onDataChange }) => {
     const bomData = JSON.stringify(formData.bom_items)
     
     const { error } = await supabase
-      .from('design_bom')
+      .from('crt_design_bom')
       .update({
         design_date: formData.date,
         design_reference: formData.project_number,

@@ -48,7 +48,7 @@ const IdeaTab = ({ isActive, searchQuery, onDataChange }) => {
   const fetchIdeas = async () => {
     try {
       const { data, error } = await supabase
-        .from('idea_hub')
+        .from('crt_idea_hub')
         .select('*')
         .order('created_at', { ascending: false })
       
@@ -100,7 +100,7 @@ const IdeaTab = ({ isActive, searchQuery, onDataChange }) => {
     }
     
     const { data, error } = await supabase
-      .from('idea_hub')
+      .from('crt_idea_hub')
       .insert([{
         idea_date: formData.date,
         idea_code: formData.idea_number,
@@ -151,7 +151,7 @@ const IdeaTab = ({ isActive, searchQuery, onDataChange }) => {
     if (!confirm('Are you sure you want to delete this idea?')) return
     
     const { error } = await supabase
-      .from('idea_hub')
+      .from('crt_idea_hub')
       .delete()
       .eq('id', id)
     
@@ -167,7 +167,7 @@ const IdeaTab = ({ isActive, searchQuery, onDataChange }) => {
 
   const handleStatusUpdate = async (id, newStatus) => {
     const { data, error } = await supabase
-      .from('idea_hub')
+      .from('crt_idea_hub')
       .update({ status: newStatus })
       .eq('id', id)
       .select()
@@ -236,7 +236,7 @@ const IdeaTab = ({ isActive, searchQuery, onDataChange }) => {
     e.preventDefault()
     
     const { error } = await supabase
-      .from('idea_hub')
+      .from('crt_idea_hub')
       .update({
         idea_date: formData.date,
         idea_code: formData.idea_number,

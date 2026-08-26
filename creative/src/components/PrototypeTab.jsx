@@ -70,7 +70,7 @@ const PrototypeTab = ({ isActive, searchQuery, onDataChange }) => {
   const fetchPrototypes = async () => {
     try {
       const { data, error } = await supabase
-        .from('prototype_requests')
+        .from('crt_prototype_requests')
         .select('*')
         .order('created_at', { ascending: false })
       
@@ -126,7 +126,7 @@ const PrototypeTab = ({ isActive, searchQuery, onDataChange }) => {
     }
     
     const { data, error } = await supabase
-      .from('prototype_requests')
+      .from('crt_prototype_requests')
       .insert([{
         request_date: formData.date,
         request_number: formData.requiest_number,
@@ -186,7 +186,7 @@ const PrototypeTab = ({ isActive, searchQuery, onDataChange }) => {
     if (!confirm('Are you sure you want to delete this prototype request?')) return
     
     const { error } = await supabase
-      .from('prototype_requests')
+      .from('crt_prototype_requests')
       .delete()
       .eq('id', id)
     
@@ -202,7 +202,7 @@ const PrototypeTab = ({ isActive, searchQuery, onDataChange }) => {
 
   const handleStatusUpdate = async (id, newStatus) => {
     const { data, error } = await supabase
-      .from('prototype_requests')
+      .from('crt_prototype_requests')
       .update({ status: newStatus })
       .eq('id', id)
       .select()
@@ -273,7 +273,7 @@ const PrototypeTab = ({ isActive, searchQuery, onDataChange }) => {
     e.preventDefault()
     
     const { error } = await supabase
-      .from('prototype_requests')
+      .from('crt_prototype_requests')
       .update({
         request_date: formData.date,
         request_number: formData.requiest_number,
