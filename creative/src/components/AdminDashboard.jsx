@@ -26,7 +26,6 @@ const AdminDashboard = ({ isActive, onTabSwitch, prototypeCount, ideaCount, desi
     { type: 'Prototype', description: 'New request REQ-0950 submitted', time: '2 hours ago', status: 'Pending' },
     { type: 'Idea', description: 'Idea IDEA-225 approved', time: '4 hours ago', status: 'Approved' },
     { type: 'Design', description: 'DSGN-884 updated', time: '6 hours ago', status: 'Updated' },
-    { type: 'Leave', description: 'Leave request LEAVE-05 pending', time: '8 hours ago', status: 'Pending' },
   ]
 
   return (
