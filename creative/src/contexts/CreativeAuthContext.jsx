@@ -38,7 +38,7 @@ export function CreativeAuthProvider({ children }) {
             id: authUser.id,
             email: authUser.email,
             username: authUser.email?.split('@')[0] || authUser.user_metadata?.full_name || 'User',
-            role: 'designer'
+            role: 'creative'
           });
 
         if (insertError) {
@@ -58,8 +58,22 @@ export function CreativeAuthProvider({ children }) {
       if (session?.user) {
         // Ensure user exists in users table
         await ensureUserInUsersTable(session.user);
+
+        // Check user role
+        const { data: profileData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileData?.role !== 'creative') {
+          await supabase.auth.signOut();
+          setUser(null);
+          setIsCreativeAdmin(false);
+          return;
+        }
+
         setUser(session.user);
-        // All authenticated users have admin privileges
         setIsCreativeAdmin(true);
       }
     } catch (error) {
@@ -77,6 +91,19 @@ export function CreativeAuthProvider({ children }) {
     if (error) throw error;
     // Ensure user exists in users table
     await ensureUserInUsersTable(data.user);
+
+    // Check user role
+    const { data: profileData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileData?.role !== 'creative') {
+      await supabase.auth.signOut();
+      throw new Error('Access denied. You do not have the creative role.');
+    }
+
     setUser(data.user);
     setIsCreativeAdmin(true);
     return data;
