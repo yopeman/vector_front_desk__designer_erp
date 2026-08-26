@@ -5,6 +5,11 @@
 -- ============================================================
 
 -- ============================================================
+-- 0. ENABLE UUID EXTENSION
+-- ============================================================
+-- Note: Supabase uses pgcrypto which provides gen_random_uuid()
+
+-- ============================================================
 -- 1. ENUMS (with conditional creation)
 -- ============================================================
 
@@ -70,7 +75,7 @@ END$$;
 
 -- 2.1 PLANS (hierarchical)
 CREATE TABLE IF NOT EXISTS mrkt_plans (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
     type TEXT NOT NULL CHECK (type IN ('annual', 'monthly', 'weekly', 'quarterly')),
@@ -88,7 +93,7 @@ CREATE TABLE IF NOT EXISTS mrkt_plans (
 
 -- 2.2 CAMPAIGNS
 CREATE TABLE IF NOT EXISTS mrkt_campaigns (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
     status campaign_status DEFAULT 'planned',
@@ -104,7 +109,7 @@ CREATE TABLE IF NOT EXISTS mrkt_campaigns (
 
 -- 2.3 CAMPAIGN TARGETS (KPIs)
 CREATE TABLE IF NOT EXISTS mrkt_campaign_targets (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID NOT NULL REFERENCES mrkt_campaigns(id) ON DELETE CASCADE,
     metric TEXT NOT NULL,
     target_value NUMERIC(12, 2),
@@ -116,7 +121,7 @@ CREATE TABLE IF NOT EXISTS mrkt_campaign_targets (
 
 -- 2.4 ACTIVITIES
 CREATE TABLE IF NOT EXISTS mrkt_activities (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID REFERENCES mrkt_campaigns(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     type activity_type NOT NULL,
@@ -135,7 +140,7 @@ CREATE TABLE IF NOT EXISTS mrkt_activities (
 
 -- 2.5 PROPOSALS
 CREATE TABLE IF NOT EXISTS mrkt_proposals (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID REFERENCES mrkt_campaigns(id) ON DELETE SET NULL,
     client_name TEXT NOT NULL,
     client_email TEXT,
@@ -153,7 +158,7 @@ CREATE TABLE IF NOT EXISTS mrkt_proposals (
 
 -- 2.6 PROFORMAS
 CREATE TABLE IF NOT EXISTS mrkt_proformas (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID REFERENCES mrkt_campaigns(id) ON DELETE SET NULL,
     client_name TEXT NOT NULL,
     client_email TEXT,
@@ -171,7 +176,7 @@ CREATE TABLE IF NOT EXISTS mrkt_proformas (
 
 -- 2.7 TENDERS
 CREATE TABLE IF NOT EXISTS mrkt_tenders (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID REFERENCES mrkt_campaigns(id) ON DELETE SET NULL,
     title TEXT NOT NULL,
     client_name TEXT,
@@ -189,7 +194,7 @@ CREATE TABLE IF NOT EXISTS mrkt_tenders (
 
 -- 2.8 PRODUCTS / SERVICES
 CREATE TABLE IF NOT EXISTS mrkt_products_services (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
     type TEXT CHECK (type IN ('product', 'service')),
@@ -207,7 +212,7 @@ CREATE TABLE IF NOT EXISTS mrkt_products_services (
 
 -- 2.9 EXPENSES
 CREATE TABLE IF NOT EXISTS mrkt_expenses (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     campaign_id UUID REFERENCES mrkt_campaigns(id) ON DELETE CASCADE,
     category expense_category NOT NULL,
     description TEXT,
@@ -223,7 +228,7 @@ CREATE TABLE IF NOT EXISTS mrkt_expenses (
 
 -- 2.10 MARKET INSIGHTS
 CREATE TABLE IF NOT EXISTS mrkt_market_insights (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type insight_type NOT NULL,
     title TEXT NOT NULL,
     description TEXT,
@@ -237,7 +242,7 @@ CREATE TABLE IF NOT EXISTS mrkt_market_insights (
 
 -- 2.11 PROPOSAL ITEMS
 CREATE TABLE IF NOT EXISTS mrkt_proposal_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     proposal_id UUID REFERENCES mrkt_proposals(id) ON DELETE CASCADE,
     product_service_id UUID REFERENCES mrkt_products_services(id) ON DELETE SET NULL,
     description TEXT NOT NULL,
@@ -249,7 +254,7 @@ CREATE TABLE IF NOT EXISTS mrkt_proposal_items (
 
 -- 2.12 PROFORMA ITEMS
 CREATE TABLE IF NOT EXISTS mrkt_proforma_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     proforma_id UUID REFERENCES mrkt_proformas(id) ON DELETE CASCADE,
     product_service_id UUID REFERENCES mrkt_products_services(id) ON DELETE SET NULL,
     description TEXT NOT NULL,
