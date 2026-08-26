@@ -45,35 +45,11 @@ const LeaveTab = ({ isActive, searchQuery, onDataChange }) => {
       
       if (error) {
         console.error('Error fetching leaves:', error)
-        // Show sample data if table doesn't exist
-        setLeaves([
-          {
-            id: 1,
-            application_date: '2026-06-10',
-            leave_from: '2026-06-12',
-            leave_to: '2026-06-20',
-            leave_type: 'year leave',
-            justification: 'Family personal matters administration',
-            status: 'Under Review'
-          }
-        ])
       } else {
         setLeaves(data || [])
       }
     } catch (err) {
       console.error('Error:', err)
-      // Show sample data on any error
-      setLeaves([
-        {
-          id: 1,
-          application_date: '2026-06-10',
-          leave_from: '2026-06-12',
-          leave_to: '2026-06-20',
-          leave_type: 'year leave',
-          justification: 'Family personal matters administration',
-          status: 'Under Review'
-        }
-      ])
     }
   }
 

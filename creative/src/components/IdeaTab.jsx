@@ -42,39 +42,11 @@ const IdeaTab = ({ isActive, searchQuery, onDataChange }) => {
       
       if (error) {
         console.error('Error fetching ideas:', error)
-        // Show sample data if table doesn't exist
-        setIdeas([
-          {
-            id: 1,
-            idea_date: '2026-06-14',
-            idea_number: 'IDEA-224',
-            idea_title: 'Modular LED Profile Box',
-            idea_source: 'staff',
-            priority: 'normal',
-            target_date: '2026-07-02',
-            estimated_cost: 12500,
-            status: 'Approved'
-          }
-        ])
       } else {
         setIdeas(data || [])
       }
     } catch (err) {
       console.error('Error:', err)
-      // Show sample data on any error
-      setIdeas([
-        {
-          id: 1,
-          idea_date: '2026-06-14',
-          idea_number: 'IDEA-224',
-          idea_title: 'Modular LED Profile Box',
-          idea_source: 'staff',
-          priority: 'normal',
-          target_date: '2026-07-02',
-          estimated_cost: 12500,
-          status: 'Approved'
-        }
-      ])
     }
   }
 

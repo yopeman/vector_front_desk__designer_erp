@@ -55,33 +55,11 @@ const DesignTab = ({ isActive, searchQuery, onDataChange }) => {
       
       if (error) {
         console.error('Error fetching designs:', error)
-        // Show sample data if table doesn't exist
-        setDesigns([
-          {
-            id: 1,
-            design_date: '2026-06-12',
-            project_number: 'DSGN-883',
-            project_title: 'Vector Acrylic Frame',
-            priority: 'High',
-            status: 'Ready'
-          }
-        ])
       } else {
         setDesigns(data || [])
       }
     } catch (err) {
       console.error('Error:', err)
-      // Show sample data on any error
-      setDesigns([
-        {
-          id: 1,
-          design_date: '2026-06-12',
-          project_number: 'DSGN-883',
-          project_title: 'Vector Acrylic Frame',
-          priority: 'High',
-          status: 'Ready'
-        }
-      ])
     }
   }
 

@@ -65,37 +65,11 @@ const PrototypeTab = ({ isActive, searchQuery, onDataChange }) => {
       
       if (error) {
         console.error('Error fetching prototypes:', error)
-        // Show sample data if table doesn't exist
-        setPrototypes([
-          {
-            id: 1,
-            request_date: '2026-06-15',
-            request_number: 'REQ-0941',
-            requested_by: 'Marketing Dept',
-            description: 'Acrylic custom sign mockup fabrication',
-            priority: 'High',
-            deadline: '2026-06-25',
-            status: 'On Progress'
-          }
-        ])
       } else {
         setPrototypes(data || [])
       }
     } catch (err) {
       console.error('Error:', err)
-      // Show sample data on any error
-      setPrototypes([
-        {
-          id: 1,
-          request_date: '2026-06-15',
-          request_number: 'REQ-0941',
-          requested_by: 'Marketing Dept',
-          description: 'Acrylic custom sign mockup fabrication',
-          priority: 'High',
-          deadline: '2026-06-25',
-          status: 'On Progress'
-        }
-      ])
     }
   }
 
