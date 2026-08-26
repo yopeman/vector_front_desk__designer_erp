@@ -696,7 +696,7 @@ const PublicReport = () => {
       <main className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200">
         <PublicHeader />
         
-        <div className="p-6">
+        <div className="p-6 md:p-8 space-y-8 ">
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
             <h1 className="text-3xl font-bold text-slate-800 mb-2">Creative Public Report</h1>
             <p className="text-slate-600">Select and view data from different modules</p>

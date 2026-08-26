@@ -75,7 +75,7 @@ function CreativeApp() {
       <main className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200">
         <Header onTabSwitch={handleTabSwitch} />
         
-        <div className="p-6">
+        <div className="p-6 md:p-8 space-y-8 ">
           <DashboardTab 
             isActive={activeTab === 'dashboardTab'} 
             onTabSwitch={handleTabSwitch}
