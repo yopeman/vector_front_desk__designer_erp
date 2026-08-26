@@ -583,13 +583,15 @@ function UserModal({ mode, data, onSave, onClose }) {
             onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
             onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
           >
-            <option value="" disabled>— Pending —</option>
+            <option value="" disabled>— Select Role —</option>
             <option value="front_desk">Front Desk</option>
             <option value="designer">Designer</option>
             <option value="machine_operator">Machine Operator</option>
             <option value="finish">Finishing</option>
             <option value="marketer">Marketer</option>
+            {/* <option value="admin_marketer">Admin Marketer</option> */}
             <option value="finance">Finance</option>
+            <option value="creative">Creative</option>
           </select>
         </div>
         <div className="flex justify-end gap-2 pt-2">
