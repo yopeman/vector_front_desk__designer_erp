@@ -2,24 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabaseClient'
 
 const MessagesTab = ({ isActive, searchQuery }) => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      sender: 'John Doe',
-      recipient: 'Me',
-      message: 'Can you review the new prototype design?',
-      timestamp: '2026-06-15 10:30 AM',
-      read_status: false
-    },
-    {
-      id: 2,
-      sender: 'Jane Smith',
-      recipient: 'Me',
-      message: 'The BOM for DSGN-883 has been updated',
-      timestamp: '2026-06-14 3:45 PM',
-      read_status: true
-    }
-  ])
+  const [messages, setMessages] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState({
     recipient: '',

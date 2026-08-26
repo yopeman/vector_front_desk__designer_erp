@@ -5,18 +5,7 @@ import { notifyAdminNewPrototype, notifyPrototypeStatus } from '../lib/creativeN
 
 const PrototypeTab = ({ isActive, searchQuery, onDataChange }) => {
   const { isCreativeAdmin, user } = useCreativeAuth()
-  const [prototypes, setPrototypes] = useState([
-    {
-      id: 1,
-      request_date: '2026-06-15',
-      request_number: 'REQ-0941',
-      requested_by: 'Marketing Dept',
-      description: 'Acrylic custom sign mockup fabrication',
-      priority: 'High',
-      deadline: '2026-06-25',
-      status: 'On Progress'
-    }
-  ])
+  const [prototypes, setPrototypes] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false)

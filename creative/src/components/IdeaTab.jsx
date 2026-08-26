@@ -5,19 +5,7 @@ import { notifyAdminNewIdea, notifyIdeaStatus } from '../lib/creativeNotificatio
 
 const IdeaTab = ({ isActive, searchQuery, onDataChange }) => {
   const { isCreativeAdmin, user } = useCreativeAuth()
-  const [ideas, setIdeas] = useState([
-    {
-      id: 1,
-      idea_date: '2026-06-14',
-      idea_number: 'IDEA-224',
-      idea_title: 'Modular LED Profile Box',
-      idea_source: 'staff',
-      priority: 'normal',
-      target_date: '2026-07-02',
-      estimated_cost: 12500,
-      status: 'Approved'
-    }
-  ])
+  const [ideas, setIdeas] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false)

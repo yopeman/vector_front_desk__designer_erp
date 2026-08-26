@@ -5,16 +5,7 @@ import { notifyAdminNewDesign, notifyDesignStatus } from '../lib/creativeNotific
 
 const DesignTab = ({ isActive, searchQuery, onDataChange }) => {
   const { isCreativeAdmin, user } = useCreativeAuth()
-  const [designs, setDesigns] = useState([
-    {
-      id: 1,
-      design_date: '2026-06-12',
-      project_number: 'DSGN-883',
-      project_title: 'Vector Acrylic Frame',
-      priority: 'High',
-      status: 'Ready'
-    }
-  ])
+  const [designs, setDesigns] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false)

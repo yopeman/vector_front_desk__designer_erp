@@ -5,17 +5,7 @@ import { notifyAdminNewLeave, notifyLeaveStatus } from '../lib/creativeNotificat
 
 const LeaveTab = ({ isActive, searchQuery, onDataChange }) => {
   const { isCreativeAdmin, user } = useCreativeAuth()
-  const [leaves, setLeaves] = useState([
-    {
-      id: 1,
-      application_date: '2026-06-10',
-      leave_from: '2026-06-12',
-      leave_to: '2026-06-20',
-      leave_type: 'year leave',
-      justification: 'Family personal matters administration',
-      status: 'Under Review'
-    }
-  ])
+  const [leaves, setLeaves] = useState([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isFileViewerOpen, setIsFileViewerOpen] = useState(false)
