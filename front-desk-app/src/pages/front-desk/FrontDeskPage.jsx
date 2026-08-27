@@ -36,7 +36,7 @@ import NotesPage from './components/NotesPage';
 import SettingsPage from './components/SettingsPage';
 
 export default function FrontDeskPage() {
-  const { user } = useAuth();
+  const { user, isFrontDesk } = useAuth();
   const [currentPage, setCurrentPage] = useState(() => {
     // Check if accessing via public report URL
     if (window.location.hash === '#/frontdesk-public-report') {
@@ -54,7 +54,7 @@ export default function FrontDeskPage() {
     
     // Check if user is trying to navigate away from public reports without auth
     if (window.location.hash === '#/frontdesk-public-report' && page !== 'report') {
-      if (!user) {
+      if (!isFrontDesk) {
         window.location.hash = '#/login';
         return;
       }
@@ -68,7 +68,7 @@ export default function FrontDeskPage() {
   const handleUpgradeToOrder = (orderData) => {
     // Check if user is trying to navigate away from public reports without auth
     if (window.location.hash === '#/frontdesk-public-report') {
-      if (!user) {
+      if (!isFrontDesk) {
         window.location.hash = '#/login';
         return;
       }

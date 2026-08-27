@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabaseAdmin';
 
 // ── API Base URL for user management ──
 const API_URL = 'https://vecotr-advert-hr.vercel.app/api/frontdesk/users';
@@ -149,8 +149,8 @@ export default function AdminPage() {
 
     try {
       // Verify current password by attempting to sign in
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: { user } } = await supabaseAdmin.auth.getUser();
+      const { error: signInError } = await supabaseAdmin.auth.signInWithPassword({
         email: user.email,
         password: passwordForm.currentPassword,
       });
@@ -161,7 +161,7 @@ export default function AdminPage() {
       }
 
       // Current password is correct, now update to new password
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await supabaseAdmin.auth.updateUser({
         password: passwordForm.newPassword,
       });
 

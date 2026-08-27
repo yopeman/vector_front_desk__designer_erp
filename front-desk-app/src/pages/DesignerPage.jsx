@@ -12,7 +12,7 @@ import TopHeader from './front-desk/components/TopHeader';
 import './DesignerPage.css';
 
 export default function DesignerPage() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isDesigner } = useAuth();
   const [designs, setDesigns] = useState([]);
   const [myTasks, setMyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -617,7 +617,7 @@ export default function DesignerPage() {
     // Check if user is trying to navigate away from public reports without auth
     if (window.location.hash === '#/design-public-report' && section !== 'reports-section') {
       // Redirect to login if not authenticated
-      if (!user) {
+      if (!isDesigner) {
         window.location.hash = '#/login';
         return;
       }
