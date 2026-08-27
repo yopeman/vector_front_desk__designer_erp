@@ -65,7 +65,6 @@ async function loadProfile() {
 
 async function saveProfile() {
     const username = document.getElementById('settings-profile-name').value.trim();
-    const email = document.getElementById('settings-profile-email').value.trim();
     const phone = document.getElementById('settings-profile-phone').value.trim();
 
     if (!username) {
@@ -78,7 +77,6 @@ async function saveProfile() {
             .from('users')
             .update({
                 username: username,
-                email: email,
                 phone: phone,
                 updated_at: new Date().toISOString(),
             })

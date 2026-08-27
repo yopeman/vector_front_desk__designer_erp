@@ -51,7 +51,6 @@ export default function SettingsPage() {
         .from('users')
         .update({
           username: profileForm.username,
-          email: profileForm.email,
           phone: profileForm.phone,
           updated_at: new Date().toISOString(),
         })
@@ -225,8 +224,8 @@ export default function SettingsPage() {
                 <input
                   type="email"
                   value={profileForm.email}
-                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                  disabled
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none bg-slate-100 text-slate-600 cursor-not-allowed"
                   required
                 />
               </div>

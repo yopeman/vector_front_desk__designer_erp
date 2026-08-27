@@ -45,7 +45,7 @@ class SettingsSection {
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Email Address</label>
-                                <input type="email" id="settings-profile-email" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow" placeholder="email@example.com">
+                                <input type="email" id="settings-profile-email" disabled class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed" placeholder="email@example.com">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Phone Number</label>
