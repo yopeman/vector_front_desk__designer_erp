@@ -643,7 +643,7 @@ export default function ReportPage() {
               </tbody>
             </table>
             {totalPages > 1 && (
-              <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+              <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center text-black">
                 <div className="text-xs text-slate-600">
                   Page {currentPage} of {totalPages} ({filteredSubmenuData.length} total)
                 </div>

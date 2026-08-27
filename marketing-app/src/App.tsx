@@ -80,85 +80,91 @@ function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
+        {/* Public report route */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/marketing-public-report" element={<Reports />} />
+        </Route>
+        
+
         {/* Protected routes with DashboardLayout */}
         <Route
           element={
-            <DashboardLayout />
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
           }
         >
 
-          {/* Public report route */}
-          <Route path="/marketing-public-report" element={<Reports />} />
+          {/* Public routes */}
+          <Route path="/" element={<Home />} />
 
-          <Route element={<ProtectedRoute><></></ProtectedRoute>}>
-            {/* Marketing Plan */}
-            <Route path="/plan/dashboard" element={<PlanDashboard />} />
-            <Route path="/plan/calendar" element={<PlanCalendar />} />
-            <Route path="/plan/targets" element={<PlanTargets />} />
+          {/* Marketing Plan */}
+          <Route path="/plan/dashboard" element={<PlanDashboard />} />
+          <Route path="/plan/calendar" element={<PlanCalendar />} />
+          <Route path="/plan/targets" element={<PlanTargets />} />
 
-            {/* Campaigns */}
-            <Route path="/campaigns" element={<Campaigns />} />
-            <Route path="/campaigns/:filter" element={<Campaigns />} />
+          {/* Campaigns */}
+          <Route path="/campaigns" element={<Campaigns />} />
+          <Route path="/campaigns/:filter" element={<Campaigns />} />
 
-            {/* Plans */}
-            <Route path="/plans" element={<Plans />} />
-            <Route path="/plans/:filter" element={<Plans />} />
+          {/* Plans */}
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/plans/:filter" element={<Plans />} />
 
-            {/* Digital Marketing */}
-            <Route path="/digital" element={<Digital />} />
-            <Route path="/digital/performance" element={<DigitalPerformance />} />
-            <Route path="/digital/:filter" element={<Digital />} />
+          {/* Digital Marketing */}
+          <Route path="/digital" element={<Digital />} />
+          <Route path="/digital/performance" element={<DigitalPerformance />} />
+          <Route path="/digital/:filter" element={<Digital />} />
 
-            {/* Physical Marketing */}
-            <Route path="/physical" element={<Physical />} />
-            <Route path="/physical/:filter" element={<Physical />} />
+          {/* Physical Marketing */}
+          <Route path="/physical" element={<Physical />} />
+          <Route path="/physical/:filter" element={<Physical />} />
 
-            {/* Proposals / Proformas / Tenders */}
-            <Route path="/proposals" element={<Proposals />} />
-            <Route path="/proposals/:filter" element={<Proposals />} />
-            <Route path="/proformas" element={<Proformas />} />
-            <Route path="/proformas/:filter" element={<Proformas />} />
-            <Route path="/tenders" element={<Tenders />} />
-            <Route path="/tenders/:filter" element={<Tenders />} />
+          {/* Proposals / Proformas / Tenders */}
+          <Route path="/proposals" element={<Proposals />} />
+          <Route path="/proposals/:filter" element={<Proposals />} />
+          <Route path="/proformas" element={<Proformas />} />
+          <Route path="/proformas/:filter" element={<Proformas />} />
+          <Route path="/tenders" element={<Tenders />} />
+          <Route path="/tenders/:filter" element={<Tenders />} />
 
-            {/* Products */}
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/promotions" element={<ProductPromotions />} />
-            <Route path="/products/performance" element={<ProductPerformance />} />
-            <Route path="/products/:filter" element={<Products />} />
+          {/* Products */}
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/promotions" element={<ProductPromotions />} />
+          <Route path="/products/performance" element={<ProductPerformance />} />
+          <Route path="/products/:filter" element={<Products />} />
 
-            {/* Market Research */}
-            <Route path="/market-research" element={<MarketResearch />} />
-            <Route path="/market-research/:filter" element={<MarketResearch />} />
+          {/* Market Research */}
+          <Route path="/market-research" element={<MarketResearch />} />
+          <Route path="/market-research/:filter" element={<MarketResearch />} />
 
-            {/* Marketing Costs */}
-            <Route path="/costs" element={<BudgetOverview />} />
-            <Route path="/costs/expenses" element={<CostsExpenses />} />
-            <Route path="/costs/campaign-costs" element={<CampaignCosts />} />
-            <Route path="/costs/budget-vs-actual" element={<BudgetVsActual />} />
+          {/* Marketing Costs */}
+          <Route path="/costs" element={<BudgetOverview />} />
+          <Route path="/costs/expenses" element={<CostsExpenses />} />
+          <Route path="/costs/campaign-costs" element={<CampaignCosts />} />
+          <Route path="/costs/budget-vs-actual" element={<BudgetVsActual />} />
 
-            {/* Marketing Tasks */}
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/tasks/:filter" element={<Tasks />} />
+          {/* Marketing Tasks */}
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/tasks/:filter" element={<Tasks />} />
 
-            {/* Marketing Analysis */}
-            <Route path="/analysis/kpis" element={<Kpis />} />
-            <Route path="/analysis/lead-conversion" element={<LeadConversion />} />
-            <Route path="/analysis/digital-performance" element={<DigitalPerfAnalysis />} />
-            <Route path="/analysis/physical-performance" element={<PhysicalPerfAnalysis />} />
-            <Route path="/analysis/proposal-funnel" element={<ProposalFunnel />} />
-            <Route path="/analysis/costs-roi" element={<CostsRoi />} />
-            <Route path="/analysis/monthly" element={<Monthly />} />
+          {/* Marketing Analysis */}
+          <Route path="/analysis/kpis" element={<Kpis />} />
+          <Route path="/analysis/lead-conversion" element={<LeadConversion />} />
+          <Route path="/analysis/digital-performance" element={<DigitalPerfAnalysis />} />
+          <Route path="/analysis/physical-performance" element={<PhysicalPerfAnalysis />} />
+          <Route path="/analysis/proposal-funnel" element={<ProposalFunnel />} />
+          <Route path="/analysis/costs-roi" element={<CostsRoi />} />
+          <Route path="/analysis/monthly" element={<Monthly />} />
 
-            {/* Communication */}
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/notes" element={<Notes />} />
+          {/* Communication */}
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/notes" element={<Notes />} />
 
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/frontdesk" element={<Frontdesk />} />
-            <Route path="/reports" element={<Reports />} />
-          </Route>
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/frontdesk" element={<Frontdesk />} />
+          <Route path="/reports" element={<Reports />} />
         </Route>
 
         {/* 404 page */}
