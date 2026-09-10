@@ -1,607 +1,768 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>V<i class="fa-solid fa-bars"></i>CTOR Advert & Manufacturing ERP</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <style>
-        /* ── reset & base ── */
-        *,
-        *::before,
-        *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VECTOR Advert &amp; Manufacturing ERP Suite</title>
+<meta name="description" content="VECTOR ERP one integrated platform for production, design and business operations." />
 
-        :root {
-            --primary: #00CED1;
-            --primary-dark: #00b3b6;
-            --primary-light: #e6fafb;
-            --primary-gradient: linear-gradient(135deg, #00CED1 0%, #009ea1 100%);
-            --bg: #f4f8fb;
-            --surface: #ffffff;
-            --text: #1a2634;
-            --text-muted: #5b6f7e;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.07);
-            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.10);
-            --radius: 16px;
-            --radius-sm: 10px;
-            --transition: 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
+<!-- prevent theme flash -->
+<script>
+  (function () {
+    try {
+      var p = localStorage.getItem('vector-theme') || 'system';
+      var d = p === 'dark' || (p === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (d) document.documentElement.classList.add('dark');
+    } catch (e) {}
+  })();
+</script>
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            line-height: 1.5;
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-        /* ── main card ── */
-        .app {
-            max-width: 1200px;
-            width: 100%;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            transition: var(--transition);
-        }
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          display: ['"Space Grotesk"', 'Inter', 'sans-serif'],
+        },
+        colors: {
+          brand: {
+            50: '#e6fafb', 100: '#c7f3f5', 200: '#9ae9ed', 300: '#5fdbe1',
+            400: '#22cdd5', 500: '#00CED1', 600: '#00a8ad', 700: '#088387',
+            800: '#0e6669', 900: '#115355',
+          },
+          ink: {
+            900: '#050a12', 800: '#0a1220', 700: '#111c2e', 600: '#1b2942',
+          },
+        },
+        keyframes: {
+          float:      { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-14px)' } },
+          marquee:    { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
+          blob: {
+            '0%,100%': { borderRadius: '42% 58% 63% 37% / 43% 47% 53% 57%', transform: 'translate(0,0) scale(1)' },
+            '33%':     { borderRadius: '60% 40% 34% 66% / 56% 66% 34% 44%', transform: 'translate(30px,-24px) scale(1.08)' },
+            '66%':     { borderRadius: '35% 65% 57% 43% / 52% 38% 62% 48%', transform: 'translate(-24px,20px) scale(.94)' },
+          },
+          'gradient-x': { '0%,100%': { backgroundPosition: '0% 50%' }, '50%': { backgroundPosition: '100% 50%' } },
+          'pulse-ring': {
+            '0%':   { transform: 'scale(.85)', opacity: '.7' },
+            '70%':  { transform: 'scale(1.6)', opacity: '0' },
+            '100%': { transform: 'scale(1.6)', opacity: '0' },
+          },
+          shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+        },
+        animation: {
+          float: 'float 6s ease-in-out infinite',
+          marquee: 'marquee 34s linear infinite',
+          blob: 'blob 20s ease-in-out infinite',
+          'gradient-x': 'gradient-x 6s ease infinite',
+          'pulse-ring': 'pulse-ring 2.6s cubic-bezier(.4,0,.6,1) infinite',
+          shimmer: 'shimmer 2.6s linear infinite',
+        },
+      },
+    },
+  };
+</script>
 
-        /* ── header ── */
-        .header {
-            background: var(--primary-gradient);
-            padding: 40px 48px 36px;
-            color: #fff;
-            position: relative;
-            overflow: hidden;
-        }
+<style>
+  html { color-scheme: light; }
+  html.dark { color-scheme: dark; }
+  body { font-family: 'Inter', system-ui, sans-serif; }
 
-        .header::after {
-            content: '';
-            position: absolute;
-            top: -60%;
-            right: -10%;
-            width: 400px;
-            height: 400px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.06);
-            pointer-events: none;
-        }
+  /* ── theme swap transition ───────────────────────────── */
+  html.theme-transition,
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
+    transition: background-color .45s ease, border-color .45s ease,
+                color .3s ease, fill .3s ease !important;
+  }
 
-        .header::before {
-            content: '';
-            position: absolute;
-            bottom: -40%;
-            left: 20%;
-            width: 300px;
-            height: 300px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.04);
-            pointer-events: none;
-        }
+  /* ── decorative grid ─────────────────────────────────── */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(0,206,209,.09) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0,206,209,.09) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, #000 25%, transparent 100%);
+            mask-image: radial-gradient(ellipse 90% 55% at 50% 0%, #000 25%, transparent 100%);
+  }
 
-        .header-content {
-            position: relative;
-            z-index: 1;
-        }
+  /* ── scroll reveal ───────────────────────────────────── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(34px) scale(.97);
+    transition: opacity .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-visible { opacity: 1; transform: translateY(0) scale(1); }
 
-        .header-badge {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(4px);
-            padding: 4px 16px;
-            border-radius: 100px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            margin-bottom: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
+  /* ── 3D tilt card ────────────────────────────────────── */
+  .tilt-wrap { perspective: 1000px; }
+  .tilt {
+    transform-style: preserve-3d;
+    transition: transform .6s cubic-bezier(.22,1,.36,1),
+                box-shadow .45s ease, border-color .45s ease, background-color .45s ease;
+  }
+  .tilt.is-tilting { transition: transform .12s linear, box-shadow .45s ease, border-color .45s ease; }
 
-        .header h1 {
-            font-size: 2.4rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.15;
-            margin-bottom: 6px;
-        }
+  /* ── cursor spotlight on cards ───────────────────────── */
+  .card-spot::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .4s ease;
+    background: radial-gradient(340px circle at var(--mx, 50%) var(--my, 50%),
+                rgba(0,206,209,.18), transparent 65%);
+  }
+  .card-spot:hover::after { opacity: 1; }
 
-        .header h1 .logo-icon {
-            display: inline-block;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 0 6px;
-            border-radius: 6px;
-            font-weight: 700;
-        }
+  /* ── gradient text ───────────────────────────────────── */
+  .gradient-text {
+    background-image: linear-gradient(90deg, #22cdd5, #00CED1, #7ef7f9, #22cdd5);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    animation: gradient-x 6s ease infinite;
+  }
+  @keyframes gradient-x {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+  }
 
-        .header .subhead {
-            font-size: 1.05rem;
-            font-weight: 400;
-            opacity: 0.92;
-            max-width: 500px;
-            margin-top: 4px;
-        }
+  /* ── marquee edge mask ───────────────────────────────── */
+  .marquee-mask {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+            mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
 
-        .header .subhead strong {
-            font-weight: 600;
-            opacity: 1;
-        }
+  /* ── theme switch active state ───────────────────────── */
+  [data-theme-btn].is-active { color: #00a8ad; }
+  html.dark [data-theme-btn].is-active { color: #ffffff; }
 
-        /* ── stats bar ── */
-        .stats {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 28px 48px;
-            margin-top: 22px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-        }
+  /* ── button shine ────────────────────────────────────── */
+  .btn-shine { position: relative; overflow: hidden; }
+  .btn-shine::after {
+    content: '';
+    position: absolute; top: 0; left: -130%;
+    width: 60%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255,255,255,.45), transparent);
+    transform: skewX(-20deg);
+    transition: left .75s cubic-bezier(.22,1,.36,1);
+  }
+  .btn-shine:hover::after { left: 140%; }
 
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            opacity: 0.92;
-        }
+  /* ── cursor glow ─────────────────────────────────────── */
+  #cursorGlow {
+    position: fixed; left: 0; top: 0;
+    width: 560px; height: 560px;
+    margin: -280px 0 0 -280px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    background: radial-gradient(circle, rgba(0,206,209,.13), transparent 62%);
+    transition: opacity .6s ease;
+    will-change: transform;
+  }
 
-        .stat-item .stat-number {
-            font-weight: 700;
-            font-size: 1.3rem;
-            background: rgba(255, 255, 255, 0.12);
-            padding: 0 10px;
-            border-radius: 6px;
-            line-height: 1.8;
-        }
+  /* ── scrollbar ───────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(#22cdd5, #00a8ad);
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: linear-gradient(#00CED1, #088387); background-clip: content-box; }
 
-        .stat-item .stat-label {
-            opacity: 0.8;
-        }
-
-        /* ── body ── */
-        .body {
-            padding: 36px 48px 44px;
-        }
-
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .section-title h2 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            color: var(--text);
-        }
-
-        .section-title .title-accent {
-            display: inline-block;
-            width: 4px;
-            height: 28px;
-            background: var(--primary-gradient);
-            border-radius: 4px;
-        }
-
-        .section-title .module-count {
-            margin-left: auto;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            background: var(--bg);
-            padding: 4px 14px;
-            border-radius: 100px;
-        }
-
-        /* ── grid ── */
-        .module-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 18px;
-        }
-
-        .module-card {
-            display: block;
-            background: var(--bg);
-            border-radius: var(--radius-sm);
-            padding: 22px 18px 20px;
-            text-decoration: none;
-            color: var(--text);
-            transition: all var(--transition);
-            border: 1px solid transparent;
-            position: relative;
-            overflow: hidden;
-            min-height: 110px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .module-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: var(--radius-sm);
-            background: var(--primary-gradient);
-            opacity: 0;
-            transition: opacity var(--transition);
-            z-index: 0;
-        }
-
-        .module-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--primary);
-            background: #fff;
-        }
-
-        .module-card:hover::before {
-            opacity: 1;
-        }
-
-        .module-card>* {
-            position: relative;
-            z-index: 1;
-        }
-
-        .module-card .card-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-sm);
-            background: var(--primary-light);
-            color: var(--primary-dark);
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            transition: all var(--transition);
-        }
-
-        .module-card:hover .card-icon {
-            background: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-
-        .module-card .card-name {
-            font-weight: 600;
-            font-size: 1.05rem;
-            letter-spacing: -0.01em;
-            transition: color var(--transition);
-        }
-
-        .module-card .card-arrow {
-            display: inline-block;
-            margin-top: 8px;
-            font-size: 0.9rem;
-            opacity: 0;
-            transform: translateX(-6px);
-            transition: all var(--transition);
-            color: var(--primary);
-        }
-
-        .module-card:hover .card-arrow {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .module-card:hover .card-name {
-            color: #fff;
-        }
-
-        .module-card:hover .card-arrow {
-            color: #fff;
-        }
-
-        /* ── subtle hover for non-link cards (just in case) ── */
-        .module-card:focus-visible {
-            outline: 3px solid var(--primary);
-            outline-offset: 2px;
-        }
-
-        /* ── footer ── */
-        .footer {
-            padding: 16px 48px 20px;
-            border-top: 1px solid #edf2f6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-        }
-
-        .footer a {
-            color: var(--primary-dark);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color var(--transition);
-        }
-
-        .footer a:hover {
-            color: var(--primary);
-            text-decoration: underline;
-        }
-
-        .footer .footer-links {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        /* ── responsive ── */
-        @media (max-width: 768px) {
-            body {
-                padding: 12px;
-            }
-
-            .header {
-                padding: 28px 24px 24px;
-            }
-
-            .header h1 {
-                font-size: 1.7rem;
-            }
-
-            .header .subhead {
-                font-size: 0.95rem;
-            }
-
-            .stats {
-                gap: 16px 28px;
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .stat-item .stat-number {
-                font-size: 1.1rem;
-            }
-
-            .body {
-                padding: 24px 20px 28px;
-            }
-
-            .module-grid {
-                grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-                gap: 14px;
-            }
-
-            .module-card {
-                padding: 18px 14px 16px;
-                min-height: 90px;
-            }
-
-            .module-card .card-icon {
-                width: 34px;
-                height: 34px;
-                font-size: 1rem;
-            }
-
-            .module-card .card-name {
-                font-size: 0.95rem;
-            }
-
-            .footer {
-                padding: 14px 20px 18px;
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .footer .footer-links {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 1.4rem;
-            }
-
-            .header .subhead {
-                font-size: 0.85rem;
-            }
-
-            .module-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
-            }
-
-            .module-card {
-                min-height: 80px;
-                padding: 14px 12px 12px;
-            }
-
-            .module-card .card-name {
-                font-size: 0.85rem;
-            }
-
-            .module-card .card-icon {
-                width: 30px;
-                height: 30px;
-                font-size: 0.85rem;
-                margin-bottom: 6px;
-            }
-
-            .section-title h2 {
-                font-size: 1.1rem;
-            }
-        }
-
-        /* ── print-friendly ── */
-        @media print {
-            .app {
-                box-shadow: none;
-                border: 1px solid #ddd;
-            }
-            .module-card:hover {
-                transform: none;
-                box-shadow: none;
-                border-color: #ccc;
-                background: var(--bg);
-            }
-            .module-card:hover .card-name {
-                color: var(--text);
-            }
-            .module-card:hover .card-icon {
-                background: var(--primary-light);
-                color: var(--primary-dark);
-            }
-            .module-card:hover .card-arrow {
-                opacity: 0;
-            }
-            .module-card::before {
-                display: none;
-            }
-        }
-    </style>
+  /* ── reduced motion ──────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; }
+  }
+</style>
 </head>
-<body>
 
-    <div class="app" role="main">
+<body class="relative overflow-x-hidden bg-slate-50 text-slate-900 antialiased selection:bg-brand-500/30 dark:bg-ink-900 dark:text-slate-100">
 
-        <!-- ─── HEADER ─── -->
-        <header class="header">
-            <div class="header-content">
-                <div class="header-badge"><i class="fa-solid fa-star"></i> Enterprise Suite</div>
-                <h1>
-                    <span class="logo-icon">V<i class="fa-solid fa-bars"></i>CTOR</span>
-                    <span style="font-weight:400;opacity:0.85;">Advert &amp; Manufacturing</span>
-                </h1>
-                <p class="subhead">
-                    <strong>Enterprise Resource Planning</strong> · integrated modules for
-                    production, design, and business operations.
-                </p>
+  <!-- ══════════ SCROLL PROGRESS ══════════ -->
+  <div class="fixed inset-x-0 top-0 z-[70] h-[3px] bg-transparent">
+    <div id="scrollProgress" class="h-full w-0 bg-gradient-to-r from-brand-400 via-brand-500 to-cyan-300 shadow-[0_0_12px_rgba(0,206,209,.8)] transition-[width] duration-150 ease-out"></div>
+  </div>
 
-                <div class="stats">
-                    <div class="stat-item">
-                        <span class="stat-number">12</span>
-                        <span class="stat-label">Core Modules</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number"><i class="fa-solid fa-bolt"></i></span>
-                        <span class="stat-label">Real‑time sync</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number"><i class="fa-solid fa-lock"></i></span>
-                        <span class="stat-label">Role‑based access</span>
-                    </div>
-                </div>
-            </div>
-        </header>
+  <!-- ══════════ CURSOR GLOW ══════════ -->
+  <div id="cursorGlow"></div>
 
-        <!-- ─── BODY ─── -->
-        <div class="body">
+  <!-- ══════════ FIXED BACKDROP ══════════ -->
+  <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+    <div class="absolute -left-40 -top-40 h-[34rem] w-[34rem] animate-blob bg-brand-400/25 blur-[110px] dark:bg-brand-500/15"></div>
+    <div class="absolute -right-40 top-1/4 h-[30rem] w-[30rem] animate-blob bg-cyan-300/25 blur-[110px] dark:bg-cyan-500/10" style="animation-delay:-7s"></div>
+    <div class="absolute bottom-0 left-1/3 h-[26rem] w-[26rem] animate-blob bg-teal-300/20 blur-[110px] dark:bg-teal-500/10" style="animation-delay:-13s"></div>
+  </div>
 
-            <div class="section-title">
-                <span class="title-accent"></span>
-                <h2>ERP Modules</h2>
-                <span class="module-count">12 available</span>
-            </div>
+  <!-- ══════════ NAV ══════════ -->
+  <nav id="nav" class="fixed inset-x-0 top-0 z-50 transition-all duration-500">
+    <div class="mx-auto max-w-7xl px-5 sm:px-8">
+      <div id="navInner"
+           class="mt-4 flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-xl transition-all duration-500 dark:border-white/10 dark:bg-ink-800/60">
 
-            <div class="module-grid">
+        <!-- logo -->
+        <a href="#top" class="group flex items-center gap-2.5">
+          <span class="relative grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-lg shadow-brand-500/30 transition-transform duration-500 group-hover:rotate-[-8deg] group-hover:scale-105">
+            <i class="fa-solid fa-bars text-sm"></i>
+            <span class="absolute inset-0 rounded-xl border border-brand-400/60 animate-pulse-ring"></span>
+          </span>
+          <span class="font-display text-lg font-bold tracking-tight">
+            V<span class="text-brand-500">E</span>CTOR
+          </span>
+        </a>
 
-                <a href="https://vectoradvert.com/erp/hr" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-user"></i></span>
-                    <span class="card-name">HR</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/frontdesk" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-desktop"></i></span>
-                    <span class="card-name">Front Desk</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/frontdesk" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-pencil"></i></span>
-                    <span class="card-name">Design</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/machine" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-gear"></i></span>
-                    <span class="card-name">Machine</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/marketing" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-chart-line"></i></span>
-                    <span class="card-name">Marketing</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/store" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-store"></i></span>
-                    <span class="card-name">Store</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/store" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-box"></i></span>
-                    <span class="card-name">Purchaser</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/machine" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-sparkles"></i></span>
-                    <span class="card-name">Finishing</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/finance" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-sack-dollar"></i></span>
-                    <span class="card-name">Finance</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/creative" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-palette"></i></span>
-                    <span class="card-name">Creative</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/store" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-truck"></i></span>
-                    <span class="card-name">Logistics</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-                <a href="https://vectoradvert.com/erp/it" class="module-card">
-                    <span class="card-icon"><i class="fa-solid fa-laptop"></i></span>
-                    <span class="card-name">IT</span>
-                    <span class="card-arrow">→</span>
-                </a>
-
-            </div>
+        <!-- links -->
+        <div class="hidden items-center gap-1 md:flex">
+          <a href="#overview" class="nav-link relative rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-300">Overview</a>
+          <a href="#modules"  class="nav-link relative rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-300">Modules</a>
+          <a href="#summary"  class="nav-link relative rounded-lg px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-300">Get Started</a>
         </div>
 
-        <!-- ─── FOOTER ─── -->
-        <footer class="footer">
-            <span>© 2026 V<i class="fa-solid fa-bars"></i>CTOR Advert &amp; Manufacturing</span>
-            <div class="footer-links">
-                <a href="https://vectoradvert.com" target="_blank" rel="noopener">vectoradvert.com</a>
-            </div>
-        </footer>
+        <!-- theme switch -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex items-center gap-1 rounded-full border border-slate-300/60 bg-slate-200/60 p-1 dark:border-white/10 dark:bg-white/5">
+            <span id="themeIndicator"
+                  class="absolute left-1 top-1 h-8 w-8 rounded-full bg-white shadow-md transition-transform duration-500 dark:bg-brand-500 dark:shadow-brand-500/40"
+                  style="transform: translateX(0)"></span>
+            <button data-theme-btn="light"  aria-label="Light theme"  class="relative z-10 grid h-8 w-8 place-items-center rounded-full text-[13px] text-slate-400 transition-colors hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"><i class="fa-solid fa-sun"></i></button>
+            <button data-theme-btn="dark"   aria-label="Dark theme"   class="relative z-10 grid h-8 w-8 place-items-center rounded-full text-[13px] text-slate-400 transition-colors hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"><i class="fa-solid fa-moon"></i></button>
+            <button data-theme-btn="system" aria-label="System theme" class="relative z-10 grid h-8 w-8 place-items-center rounded-full text-[13px] text-slate-400 transition-colors hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200"><i class="fa-solid fa-desktop"></i></button>
+          </div>
+        </div>
 
+      </div>
+    </div>
+  </nav>
+
+  <main id="top" class="relative z-10">
+
+    <!-- ══════════════════ HERO ══════════════════ -->
+    <section id="overview" class="relative scroll-mt-28 overflow-hidden px-5 pb-24 pt-36 sm:px-8 sm:pt-44 sm:pb-32">
+      <div class="bg-grid pointer-events-none absolute inset-0"></div>
+
+      <div class="relative mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-[1.05fr_.95fr] lg:gap-10">
+
+        <!-- ─── copy ─── -->
+        <div>
+          <div class="reveal inline-flex items-center gap-2.5 rounded-full border border-brand-500/25 bg-brand-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-700 backdrop-blur dark:text-brand-300">
+            <span class="relative flex h-1.5 w-1.5">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-500 opacity-75"></span>
+              <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-500"></span>
+            </span>
+            Enterprise Suite · v2.0
+          </div>
+
+          <h1 class="reveal mt-7 font-display text-[2.6rem] font-bold leading-[1.05] tracking-[-0.03em] sm:text-6xl lg:text-[4.2rem]" style="transition-delay:80ms">
+            One platform for<br class="hidden sm:block" />
+            <span id="rotator" class="gradient-text inline-block transition-all duration-300">Manufacturing</span>
+          </h1>
+
+          <p class="reveal mt-7 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-400" style="transition-delay:160ms">
+            <strong class="font-semibold text-slate-800 dark:text-slate-200">VECTOR ERP</strong> unifies production, design,
+            finance and operations into a single real-time system built for print, advert and manufacturing teams.
+          </p>
+
+          <div class="reveal mt-10 flex flex-wrap items-center gap-4" style="transition-delay:240ms">
+            <a href="#modules"
+               class="btn-shine group inline-flex items-center gap-2.5 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 px-7 py-3.5 text-sm font-semibold text-white shadow-xl shadow-brand-500/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-brand-500/45">
+              Explore Modules
+              <i class="fa-solid fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1"></i>
+            </a>
+          </div>
+
+          <!-- stats -->
+          <div class="reveal mt-14 grid max-w-lg grid-cols-3 gap-6 border-t border-slate-200 pt-8 dark:border-white/10" style="transition-delay:320ms">
+            <div>
+              <div class="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                <span class="counter" data-count="12">0</span>
+              </div>
+              <div class="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Core Modules</div>
+            </div>
+            <div>
+              <div class="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                <span class="counter" data-count="100">0</span><span class="text-brand-500">%</span>
+              </div>
+              <div class="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Role Access</div>
+            </div>
+            <div>
+              <div class="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+                <span class="counter" data-count="24">0</span><span class="text-brand-500">/7</span>
+              </div>
+              <div class="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Live Sync</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ─── orbit visual ─── -->
+        <div class="reveal relative mx-auto aspect-square w-full max-w-[460px]" style="transition-delay:200ms">
+          <!-- rings -->
+          <div class="absolute inset-0 rounded-full border border-dashed border-brand-500/25 animate-[spin_26s_linear_infinite]"></div>
+          <div class="absolute inset-[11%] rounded-full border border-brand-500/15 animate-[spin_19s_linear_infinite_reverse]"></div>
+          <div class="absolute inset-[23%] rounded-full border border-dashed border-brand-500/20 animate-[spin_34s_linear_infinite]"></div>
+
+          <!-- glow -->
+          <div class="absolute inset-[28%] rounded-full bg-brand-500/20 blur-3xl"></div>
+
+          <!-- center panel -->
+          <div class="absolute inset-[31%] grid place-items-center rounded-[2rem] border border-white/70 bg-white/75 shadow-2xl shadow-brand-500/20 backdrop-blur-xl dark:border-white/10 dark:bg-ink-700/70">
+            <div class="w-full px-6">
+              <div class="flex items-center gap-2">
+                <span class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white">
+                  <i class="fa-solid fa-bars text-[11px]"></i>
+                </span>
+                <span class="font-display text-sm font-bold tracking-tight">VECTOR</span>
+              </div>
+              <div class="mt-4 space-y-2">
+                <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10">
+                  <div class="h-full w-[78%] rounded-full bg-gradient-to-r from-brand-400 to-brand-600"></div>
+                </div>
+                <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10">
+                  <div class="h-full w-[52%] rounded-full bg-gradient-to-r from-brand-300 to-brand-500"></div>
+                </div>
+                <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-white/10">
+                  <div class="h-full w-[91%] rounded-full bg-gradient-to-r from-brand-400 to-cyan-300"></div>
+                </div>
+              </div>
+              <div class="mt-4 flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                <span>Production</span><span class="text-brand-500">Live</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- orbiting icons -->
+          <div class="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2">
+            <div class="animate-float" style="animation-delay:-1s">
+              <div class="grid h-14 w-14 place-items-center rounded-2xl border border-white/70 bg-white/85 text-brand-600 shadow-xl shadow-brand-500/10 backdrop-blur dark:border-white/10 dark:bg-ink-700/80 dark:text-brand-300">
+                <i class="fa-solid fa-gear"></i>
+              </div>
+            </div>
+          </div>
+          <div class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2">
+            <div class="animate-float" style="animation-delay:-3s">
+              <div class="grid h-14 w-14 place-items-center rounded-2xl border border-white/70 bg-white/85 text-brand-600 shadow-xl shadow-brand-500/10 backdrop-blur dark:border-white/10 dark:bg-ink-700/80 dark:text-brand-300">
+                <i class="fa-solid fa-chart-line"></i>
+              </div>
+            </div>
+          </div>
+          <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
+            <div class="animate-float" style="animation-delay:-5s">
+              <div class="grid h-14 w-14 place-items-center rounded-2xl border border-white/70 bg-white/85 text-brand-600 shadow-xl shadow-brand-500/10 backdrop-blur dark:border-white/10 dark:bg-ink-700/80 dark:text-brand-300">
+                <i class="fa-solid fa-truck"></i>
+              </div>
+            </div>
+          </div>
+          <div class="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div class="animate-float" style="animation-delay:-7s">
+              <div class="grid h-14 w-14 place-items-center rounded-2xl border border-white/70 bg-white/85 text-brand-600 shadow-xl shadow-brand-500/10 backdrop-blur dark:border-white/10 dark:bg-ink-700/80 dark:text-brand-300">
+                <i class="fa-solid fa-palette"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════ MARQUEE ══════════════════ -->
+    <div class="marquee-mask relative overflow-hidden border-y border-slate-200/70 bg-white/40 py-5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.02]">
+      <div id="marqueeTrack" class="flex w-max animate-marquee items-center gap-10"></div>
     </div>
 
+    <!-- ══════════════════ MODULES ══════════════════ -->
+    <section id="modules" class="relative scroll-mt-28 px-5 py-24 sm:px-8 sm:py-32">
+      <div class="mx-auto max-w-7xl">
+
+        <div class="reveal mb-14 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div class="max-w-2xl">
+            <div class="mb-4 flex items-center gap-3">
+              <span class="h-7 w-1 rounded-full bg-gradient-to-b from-brand-400 to-brand-600"></span>
+              <span class="text-xs font-semibold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-400">ERP Modules</span>
+            </div>
+            <h2 class="font-display text-3xl font-bold tracking-[-0.02em] sm:text-5xl">
+              Everything your operation needs,
+              <span class="gradient-text">in one place.</span>
+            </h2>
+            <p class="mt-5 text-base leading-relaxed text-slate-600 dark:text-slate-400">
+              Twelve purpose-built modules that talk to each other in real time from the front desk to the finishing line.
+            </p>
+          </div>
+          <div class="shrink-0 rounded-full border border-slate-200 bg-white/70 px-5 py-2 text-sm font-medium text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+            <span class="font-semibold text-brand-600 dark:text-brand-400">12</span> available
+          </div>
+        </div>
+
+        <div id="moduleGrid" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════ SUMMARY ══════════════════ -->
+    <section id="summary" class="relative scroll-mt-28 px-5 pb-28 sm:px-8">
+      <div class="reveal relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-500 via-brand-600 to-teal-700 px-8 py-16 text-center shadow-2xl shadow-brand-500/30 sm:px-16 sm:py-24">
+        <!-- decorative -->
+        <div class="pointer-events-none absolute -right-20 -top-20 h-72 w-72 animate-blob rounded-full bg-white/10"></div>
+        <div class="pointer-events-none absolute -bottom-24 -left-16 h-80 w-80 animate-blob rounded-full bg-white/10" style="animation-delay:-8s"></div>
+        <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,.14)_50%,transparent_65%)] bg-[length:200%_100%] animate-shimmer"></div>
+
+        <div class="relative z-10">
+          <h2 class="font-display text-3xl font-bold text-white sm:text-5xl">
+            Ready to unify your workflow?
+          </h2>
+          <p class="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/80 sm:text-lg">
+            VECTOR ERP brings your entire production pipeline from job costing and scheduling to dispatch under one roof. Less overhead, more output.
+          </p>
+          <div class="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <a href="#modules"
+               class="btn-shine group inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-brand-700 shadow-xl transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl">
+              Explore Modules
+              <i class="fa-solid fa-arrow-right text-xs transition-transform duration-300 group-hover:translate-x-1"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ══════════════════ FOOTER ══════════════════ -->
+    <footer class="relative border-t border-slate-200/80 px-5 py-10 sm:px-8 dark:border-white/10">
+      <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 sm:flex-row">
+        <div class="flex items-center gap-2.5">
+          <span class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 text-white">
+            <i class="fa-solid fa-bars text-[11px]"></i>
+          </span>
+          <span class="text-sm text-slate-500 dark:text-slate-400">
+            © 2026 V<span class="text-brand-500">E</span>CTOR Advert &amp; Manufacturing
+          </span>
+        </div>
+        <div class="flex items-center gap-6 text-sm">
+          <!-- <a href="https://vectoradvert.com" target="_blank" rel="noopener"
+             class="group inline-flex items-center gap-2 font-medium text-slate-500 transition-colors hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400">
+            vectoradvert.com
+            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"></i>
+          </a> -->
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- ══════════ BACK TO TOP ══════════ -->
+  <button id="toTop" aria-label="Back to top"
+          class="group fixed bottom-6 right-6 z-50 grid h-12 w-12 translate-y-24 place-items-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 text-white opacity-0 shadow-xl shadow-brand-500/40 transition-all duration-500 hover:scale-110 hover:shadow-2xl">
+    <i class="fa-solid fa-arrow-up text-sm transition-transform duration-300 group-hover:-translate-y-0.5"></i>
+  </button>
+
+<script>
+(function () {
+  'use strict';
+
+  const root = document.documentElement;
+  const mql  = window.matchMedia('(prefers-color-scheme: dark)');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  /* ══════════════════════════════════════════════
+     1. THEME  (light / dark / system)
+     ══════════════════════════════════════════════ */
+  const THEME_KEY = 'vector-theme';
+  const ORDER = ['light', 'dark', 'system'];
+  const buttons = Array.from(document.querySelectorAll('[data-theme-btn]'));
+  const indicator = document.getElementById('themeIndicator');
+
+  function applyTheme(pref, animate) {
+    const isDark = pref === 'dark' || (pref === 'system' && mql.matches);
+
+    if (animate) {
+      root.classList.add('theme-transition');
+      clearTimeout(window.__themeTimer);
+      window.__themeTimer = setTimeout(() => root.classList.remove('theme-transition'), 620);
+    }
+
+    root.classList.toggle('dark', isDark);
+    try { localStorage.setItem(THEME_KEY, pref); } catch (e) {}
+
+    const idx = Math.max(0, ORDER.indexOf(pref));
+    indicator.style.transform = 'translateX(' + (idx * 2.25) + 'rem)';
+
+    buttons.forEach(b => b.classList.toggle('is-active', b.dataset.themeBtn === pref));
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.themeBtn, true));
+  });
+
+  applyTheme((() => { try { return localStorage.getItem(THEME_KEY) || 'system'; } catch (e) { return 'system'; } })(), false);
+
+  mql.addEventListener('change', () => {
+    let pref = 'system';
+    try { pref = localStorage.getItem(THEME_KEY) || 'system'; } catch (e) {}
+    if (pref === 'system') applyTheme('system', true);
+  });
+
+  /* ══════════════════════════════════════════════
+     2. MODULE DATA + RENDER
+     ══════════════════════════════════════════════ */
+  const MODULES = [
+    { name: 'HR',         icon: 'fa-user',               desc: 'People, payroll & attendance',       href: 'https://vectoradvert.com/erp/hr' },
+    { name: 'Front Desk', icon: 'fa-desktop',            desc: 'Client intake & job tracking',       href: 'https://vectoradvert.com/erp/frontdesk' },
+    { name: 'Design',     icon: 'fa-pen-nib',            desc: 'Briefs, proofs & approvals',         href: 'https://vectoradvert.com/erp/frontdesk' },
+    { name: 'Machine',    icon: 'fa-gear',               desc: 'Press scheduling & maintenance',     href: 'https://vectoradvert.com/erp/machine' },
+    { name: 'Marketing',  icon: 'fa-chart-line',         desc: 'Leads, campaigns & pipeline',        href: 'https://vectoradvert.com/erp/marketing' },
+    { name: 'Store',      icon: 'fa-store',              desc: 'Inventory & stock movements',        href: 'https://vectoradvert.com/erp/store' },
+    { name: 'Purchaser',  icon: 'fa-box',                desc: 'Suppliers, POs & procurement',       href: 'https://vectoradvert.com/erp/store' },
+    { name: 'Finishing',  icon: 'fa-wand-magic-sparkles',desc: 'Lamination, binding & QC',           href: 'https://vectoradvert.com/erp/machine' },
+    { name: 'Finance',    icon: 'fa-sack-dollar',        desc: 'Invoices, expenses & reporting',     href: 'https://vectoradvert.com/erp/finance' },
+    { name: 'Creative',   icon: 'fa-palette',            desc: 'Concepts, assets & brand library',   href: 'https://vectoradvert.com/erp/creative' },
+    { name: 'Logistics',  icon: 'fa-truck',              desc: 'Dispatch, delivery & fleet',         href: 'https://vectoradvert.com/erp/store' },
+    { name: 'IT',         icon: 'fa-laptop',             desc: 'Systems, users & access control',    href: 'https://vectoradvert.com/erp/it' },
+  ];
+
+  const grid = document.getElementById('moduleGrid');
+
+  grid.innerHTML = MODULES.map((m, i) => {
+    const num = String(i + 1).padStart(2, '0');
+    return `
+      <a href="${m.href}" class="tilt-wrap reveal group block" style="transition-delay:${i * 55}ms">
+        <div class="tilt card-spot relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm
+                    dark:border-white/10 dark:bg-ink-800/60">
+
+          <div class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-brand-500/15 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"></div>
+
+          <div class="relative flex items-start justify-between">
+            <span class="grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br from-brand-50 to-brand-100 text-lg text-brand-600
+                         transition-all duration-500
+                         group-hover:-translate-y-1 group-hover:-rotate-6 group-hover:from-brand-400 group-hover:to-brand-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-brand-500/40
+                         dark:from-white/5 dark:to-white/10 dark:text-brand-300">
+              <i class="fa-solid ${m.icon}"></i>
+            </span>
+            <span class="font-mono text-xs font-semibold text-slate-300 transition-colors duration-500 group-hover:text-brand-400 dark:text-slate-600">${num}</span>
+          </div>
+
+          <h3 class="relative mt-5 font-display text-lg font-semibold tracking-[-0.01em] text-slate-900 transition-colors duration-300 group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-300">
+            ${m.name}
+          </h3>
+          <p class="relative mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">${m.desc}</p>
+
+          <div class="relative mt-auto pt-6">
+            <span class="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-400">
+              <span class="transition-transform duration-500 group-hover:translate-x-0.5">Open module</span>
+              <i class="fa-solid fa-arrow-right text-[11px] transition-transform duration-500 group-hover:translate-x-1.5"></i>
+            </span>
+          </div>
+        </div>
+      </a>`;
+  }).join('');
+
+  /* ══════════════════════════════════════════════
+     3. MARQUEE
+     ══════════════════════════════════════════════ */
+  const track = document.getElementById('marqueeTrack');
+  const chips = MODULES.map(m =>
+    `<span class="flex shrink-0 items-center gap-2.5 whitespace-nowrap text-sm font-medium text-slate-500 dark:text-slate-400">
+       <i class="fa-solid ${m.icon} text-brand-500"></i>${m.name}
+       <span class="text-brand-500/60">•</span>
+     </span>`
+  ).join('');
+  track.innerHTML = chips + chips;
+
+  /* ══════════════════════════════════════════════
+     4. SCROLL REVEAL
+     ══════════════════════════════════════════════ */
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  /* ══════════════════════════════════════════════
+     5. COUNT-UP STATS
+     ══════════════════════════════════════════════ */
+  function runCounter(el) {
+    const target = parseFloat(el.dataset.count) || 0;
+    const duration = 1700;
+    const start = performance.now();
+
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 4);
+      el.textContent = Math.round(target * eased);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        runCounter(entry.target);
+        counterObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll('.counter').forEach(el => counterObserver.observe(el));
+
+  /* ══════════════════════════════════════════════
+     6. 3D TILT + SPOTLIGHT
+     ══════════════════════════════════════════════ */
+  if (canHover && !reduceMotion) {
+    document.querySelectorAll('.tilt-wrap').forEach(wrap => {
+      const card = wrap.querySelector('.tilt');
+      if (!card) return;
+
+      wrap.addEventListener('mousemove', (e) => {
+        const r = wrap.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+
+        card.classList.add('is-tilting');
+        card.style.transform =
+          `rotateX(${(0.5 - py) * 11}deg) rotateY(${(px - 0.5) * 13}deg) translateY(-6px) scale(1.02)`;
+        card.style.setProperty('--mx', (px * 100) + '%');
+        card.style.setProperty('--my', (py * 100) + '%');
+      });
+
+      wrap.addEventListener('mouseleave', () => {
+        card.classList.remove('is-tilting');
+        card.style.transform = '';
+      });
+    });
+  }
+
+  /* ══════════════════════════════════════════════
+     7. CURSOR GLOW
+     ══════════════════════════════════════════════ */
+  const glow = document.getElementById('cursorGlow');
+  if (canHover && !reduceMotion) {
+    let mx = window.innerWidth / 2, my = window.innerHeight / 2;
+    let gx = mx, gy = my;
+
+    window.addEventListener('mousemove', (e) => {
+      mx = e.clientX; my = e.clientY;
+      glow.style.opacity = '1';
+    });
+    window.addEventListener('mouseleave', () => { glow.style.opacity = '0'; });
+
+    (function loop() {
+      gx += (mx - gx) * 0.12;
+      gy += (my - gy) * 0.12;
+      glow.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
+      requestAnimationFrame(loop);
+    })();
+  } else {
+    glow.style.display = 'none';
+  }
+
+  /* ══════════════════════════════════════════════
+     8. SCROLL PROGRESS + NAV + BACK-TO-TOP
+     ══════════════════════════════════════════════ */
+  const progress = document.getElementById('scrollProgress');
+  const navInner = document.getElementById('navInner');
+  const toTop = document.getElementById('toTop');
+  let ticking = false;
+
+  function onScroll() {
+    const y = window.scrollY;
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = (h > 0 ? (y / h) * 100 : 0) + '%';
+
+    if (y > 24) {
+      navInner.classList.add('shadow-lg', 'shadow-slate-900/5', 'dark:shadow-black/30');
+      navInner.classList.remove('mt-4');
+      navInner.classList.add('mt-2');
+    } else {
+      navInner.classList.remove('shadow-lg', 'shadow-slate-900/5', 'dark:shadow-black/30');
+      navInner.classList.add('mt-4');
+      navInner.classList.remove('mt-2');
+    }
+
+    if (y > 500) {
+      toTop.classList.remove('opacity-0', 'translate-y-24');
+      toTop.classList.add('opacity-100', 'translate-y-0');
+    } else {
+      toTop.classList.add('opacity-0', 'translate-y-24');
+      toTop.classList.remove('opacity-100', 'translate-y-0');
+    }
+
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) { requestAnimationFrame(onScroll); ticking = true; }
+  }, { passive: true });
+  onScroll();
+
+  toTop.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+  });
+
+  /* ══════════════════════════════════════════════
+     9. ROTATING HERO WORD
+     ══════════════════════════════════════════════ */
+  const rotator = document.getElementById('rotator');
+  const WORDS = ['Manufacturing', 'Advertising', 'Production', 'Logistics', 'Creative', 'Finishing'];
+  let wi = 0;
+
+  if (rotator && !reduceMotion) {
+    setInterval(() => {
+      wi = (wi + 1) % WORDS.length;
+      rotator.style.opacity = '0';
+      rotator.style.transform = 'translateY(-14px)';
+      rotator.style.filter = 'blur(6px)';
+
+      setTimeout(() => {
+        rotator.textContent = WORDS[wi];
+        rotator.style.transition = 'none';
+        rotator.style.transform = 'translateY(14px)';
+        requestAnimationFrame(() => {
+          rotator.style.transition = '';
+          rotator.style.opacity = '1';
+          rotator.style.transform = 'translateY(0)';
+          rotator.style.filter = 'blur(0)';
+        });
+      }, 300);
+    }, 2800);
+  }
+
+  /* ══════════════════════════════════════════════
+     10. NAV LINK HOVER UNDERLINE
+     ══════════════════════════════════════════════ */
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('mouseenter', () => {
+      link.style.textShadow = '0 0 22px rgba(0,206,209,.55)';
+    });
+    link.addEventListener('mouseleave', () => {
+      link.style.textShadow = '';
+    });
+  });
+
+})();
+</script>
 </body>
 </html>
