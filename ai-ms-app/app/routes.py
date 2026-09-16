@@ -142,6 +142,25 @@ def list_chats(user_id: str, session_id: str):
         raise _db_error(exc)
 
 
+@router.delete(
+    "/sessions/{session_id}/chats/{chat_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_chat(user_id: str, session_id: str, chat_id: str):
+    require_session(session_id, user_id)
+    try:
+        (
+            db()
+            .table("ai_chats")
+            .delete()
+            .eq("id", chat_id)
+            .eq("session_id", session_id)
+            .execute()
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise _db_error(exc)
+    return None
+
+
 @router.post(
     "/sessions/{session_id}/chats", response_model=ChatExchange, status_code=status.HTTP_201_CREATED
 )
@@ -288,6 +307,26 @@ def upload_attachment(user_id: str, session_id: str, file: UploadFile = File(...
         raise
     except Exception as exc:  # noqa: BLE001
         raise _db_error(exc)
+
+
+@router.delete(
+    "/sessions/{session_id}/attachments/{attachment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_attachment(user_id: str, session_id: str, attachment_id: str):
+    require_session(session_id, user_id)
+    try:
+        (
+            db()
+            .table("ai_attachments")
+            .delete()
+            .eq("id", attachment_id)
+            .eq("session_id", session_id)
+            .execute()
+        )
+    except Exception as exc:  # noqa: BLE001
+        raise _db_error(exc)
+    return None
 
 
 # ---------------------------------------------------------------------------

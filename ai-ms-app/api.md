@@ -8,4 +8,7 @@
 - POST   /api/v1/users/{user_id}/sessions/{session_id}/attachments
 
 - PATCH  /api/v1/users/{user_id}/sessions/{session_id}
+
 - DELETE /api/v1/users/{user_id}/sessions/{session_id}
+- DELETE /api/v1/users/{user_id}/sessions/{session_id}/chats/{chats_id}
+- DELETE /api/v1/users/{user_id}/sessions/{session_id}/attachments/{attachment_id}
