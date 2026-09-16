@@ -152,6 +152,8 @@ export default function FloatingAssistant({ onNavigate }) {
   const [listening, setListening]     = useState(false);
   const [autoSpeak, setAutoSpeak]     = useState(true);
   const [speakingId, setSpeakingId]   = useState(null);
+  const [showAvatar, setShowAvatar]   = useState(true);
+  const [showMenu, setShowMenu]       = useState(false);
 
   // refs
   const messagesEndRef = useRef(null);
@@ -353,10 +355,10 @@ export default function FloatingAssistant({ onNavigate }) {
   const speakText = useCallback((text, id) => {
     if (!ttsSupported) return;
     const synth = window.speechSynthesis;
-    synth.cancel();
     if (speakingIdRef.current === id) {
       speakingIdRef.current = null;
       setSpeakingId(null);
+      synth.cancel();
       return;
     }
     // strip markdown noise for a clean read-out
@@ -379,9 +381,17 @@ export default function FloatingAssistant({ onNavigate }) {
     if (v) utter.voice = v;
     speakingIdRef.current = id;
     setSpeakingId(id);
-    utter.onend = () => { speakingIdRef.current = null; setSpeakingId(null); };
-    utter.onerror = () => { speakingIdRef.current = null; setSpeakingId(null); };
-    synth.speak(utter);
+    utter.onstart = () => { if (speakingIdRef.current === id) setSpeakingId(id); };
+    utter.onend = () => { if (speakingIdRef.current === id) { speakingIdRef.current = null; setSpeakingId(null); } };
+    utter.onerror = () => { if (speakingIdRef.current === id) { speakingIdRef.current = null; setSpeakingId(null); } };
+    // work around Chromium: speak() right after cancel() is silently dropped, so delay it
+    synth.cancel();
+    window.setTimeout(() => {
+      try {
+        synth.resume();
+        synth.speak(utter);
+      } catch { /* keep */ }
+    }, 60);
   }, [ttsSupported]);
 
   /* ── speech-to-text ── */
@@ -573,71 +583,75 @@ export default function FloatingAssistant({ onNavigate }) {
           style={{
             position: 'fixed', bottom: '24px', right: '24px',
             width: '380px', maxWidth: 'calc(100vw - 48px)',
-            height: '520px', maxHeight: 'calc(100vh - 100px)',
-            background: '#fff', borderRadius: '16px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0',
+            background: showAvatar ? 'transparent' : '#fff', 
             display: 'flex', flexDirection: 'column',
             zIndex: 1000, overflow: 'hidden',
             animation: 'assistantSlideUp 0.25s ease-out',
           }}
         >
-          {/* ── Header ── */}
-          <div style={{ background: 'linear-gradient(135deg, #00ced1, #0891b2)', color: '#fff', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            {/* new chat */}
-            <button onClick={handleNewSession} style={hdrBtn()} title="New chat">
-              <i className="fa-solid fa-plus" />
-            </button>
-            {/* sessions panel toggle */}
-            <button onClick={() => setShowSessions((v) => !v)} style={hdrBtn(showSessions)} title={showSessions ? 'Back to chat' : 'Chats'}>
-              <i className={`fa-solid ${showSessions ? 'fa-xmark' : 'fa-clock-rotate-left'}`} />
-            </button>
-            {/* auto-speak toggle */}
-            {ttsSupported && (
-              <button
-                onClick={() => {
-                  const next = !autoSpeak;
-                  setAutoSpeak(next);
-                  autoSpeakRef.current = next;
-                  if (!next) {
-                    window.speechSynthesis?.cancel();
-                    speakingIdRef.current = null;
-                    setSpeakingId(null);
-                  }
-                }}
-                style={hdrBtn(autoSpeak)}
-                title={autoSpeak ? 'Auto voice replies: ON' : 'Auto voice replies: OFF'}
-              >
-                <i className={`fa-solid ${autoSpeak ? 'fa-volume-high' : 'fa-volume-xmark'}`} />
-              </button>
-            )}
-            {/* title */}
-            <div style={{ flex: 1, minWidth: 0, marginLeft: '2px' }}>
-              <div style={{ fontWeight: 700, fontSize: '14px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {showSessions ? 'Chats' : (sessions.find((s) => s.id === sessionRef.current)?.title || 'Assistant')}
+          {/* ── Settings Dropdown (replaces top header) ── */}
+          {showMenu && (
+            <div style={{
+              position: 'absolute', bottom: '64px', left: '10px', right: '10px', zIndex: 6,
+              background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.18)', overflow: 'hidden', padding: '6px',
+            }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px',
+                borderBottom: '1px solid #f1f5f9', marginBottom: '6px', background: 'linear-gradient(135deg, #00ced1, #0891b2)',
+                borderRadius: '8px', color: '#fff',
+              }}>
+                <div style={{ fontWeight: 700, fontSize: '13px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {showSessions ? 'Chats' : (sessions.find((s) => s.id === sessionRef.current)?.title || 'Assistant')}
+                </div>
+                <div style={{ fontSize: '11px', opacity: 0.85 }}>{user ? 'ERP Assistant' : 'Front Desk Helper'}</div>
               </div>
-              <div style={{ fontSize: '11px', opacity: 0.8 }}>
-                {user ? 'ERP Assistant' : 'Front Desk Helper'}
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <button onClick={handleNewSession} style={{ ...hdrBtn(), background: '#f1f5f9', color: '#334155' }} title="New chat">
+                  <i className="fa-solid fa-plus" />
+                </button>
+                <button onClick={() => { setShowSessions((v) => !v); setShowMenu(false); }} style={{ ...hdrBtn(), background: showSessions ? '#e0f7fa' : '#f1f5f9', color: showSessions ? '#0891b2' : '#334155' }} title={showSessions ? 'Back to chat' : 'Chats'}>
+                  <i className={`fa-solid ${showSessions ? 'fa-xmark' : 'fa-clock-rotate-left'}`} />
+                </button>
+                <button onClick={() => setShowAvatar((v) => !v)} style={{ ...hdrBtn(), background: showAvatar ? '#e0f7fa' : '#f1f5f9', color: showAvatar ? '#0891b2' : '#334155' }} title={showAvatar ? 'Hide avatar' : 'Show avatar'}>
+                  <i className={`fa-solid ${showAvatar ? 'fa-user' : 'fa-user-slash'}`} />
+                </button>
+                {ttsSupported && (
+                  <button
+                    onClick={() => {
+                      const next = !autoSpeak;
+                      setAutoSpeak(next);
+                      autoSpeakRef.current = next;
+                      if (!next) {
+                        window.speechSynthesis?.cancel();
+                        speakingIdRef.current = null;
+                        setSpeakingId(null);
+                      }
+                    }}
+                    style={{ ...hdrBtn(), background: autoSpeak ? '#e0f7fa' : '#f1f5f9', color: autoSpeak ? '#0891b2' : '#334155' }}
+                    title={autoSpeak ? 'Auto voice replies: ON' : 'Auto voice replies: OFF'}
+                  >
+                    <i className={`fa-solid ${autoSpeak ? 'fa-volume-high' : 'fa-volume-xmark'}`} />
+                  </button>
+                )}
+                <div style={{ flex: 1 }} />
+                <button onClick={() => setIsOpen(false)} style={{ ...hdrBtn(), background: '#fee2e2', color: '#ef4444' }} title="Close">
+                  <i className="fa-solid fa-xmark" />
+                </button>
               </div>
             </div>
-            {/* close widget */}
-            <button
-              onClick={() => setIsOpen(false)}
-              style={{ ...hdrBtn(), background: 'rgba(255,255,255,0.15)' }}
-              title="Close"
-            >
-              <i className="fa-solid fa-xmark" />
-            </button>
-          </div>
+          )}
 
           {/* ════════════════ Sessions List Panel ════════════════ */}
           {showSessions && (
-            <div style={{ flex: 1, overflowY: 'auto', background: '#f8fafc' }}>
-              {sessions.length === 0 && (
-                <div style={{ padding: '32px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-                  No chats yet. Start a new one above.
-                </div>
-              )}
-              {sessions.map((s) => {
+            <>
+              <div style={{ flex: 1, overflowY: 'auto', background: '#f8fafc' }}>
+                {sessions.length === 0 && (
+                  <div style={{ padding: '32px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                    No chats yet. Start a new one above.
+                  </div>
+                )}
+                {sessions.map((s) => {
                 const isActive = s.id === sessionRef.current;
                 const isHovered = hoveredSid === s.id;
                 return (
@@ -695,15 +709,53 @@ export default function FloatingAssistant({ onNavigate }) {
                   </div>
                 );
               })}
-            </div>
+              </div>
+              <div style={{ padding: '10px 14px', borderTop: '1px solid #e2e8f0', background: '#fff', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                <button
+                  onClick={() => setShowSessions(false)}
+                  style={{
+                    width: '36px', height: '36px', borderRadius: '10px', border: 'none',
+                    background: '#f1f5f9', color: '#334155', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Back to chat"
+                >
+                  <i className="fa-solid fa-arrow-left" />
+                </button>
+                <div style={{ flex: 1 }} />
+                <button
+                  onClick={() => setShowMenu((v) => !v)}
+                  style={{
+                    width: '36px', height: '36px', borderRadius: '10px', border: 'none',
+                    background: showMenu ? '#e0f7fa' : '#f1f5f9', color: showMenu ? '#0891b2' : '#64748b',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title={showMenu ? 'Close options' : 'Options'}
+                >
+                  <i className={`fa-solid ${showMenu ? 'fa-xmark' : 'fa-gear'}`} />
+                </button>
+              </div>
+            </>
           )}
 
           {/* ════════════════ Chat View ════════════════ */}
           {!showSessions && (
             <>
               {/* ── Messages ── */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {messages.map((msg) => (
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column'}}>
+                {showAvatar && (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'baseline', justifyContent: 'center', gap: '12px' }}>
+                    <img
+                      src={speakingId ? '/talk-ai-1.gif' : '/talk-ai-2.gif'}
+                      alt="Assistant"
+                      style={{ width: '100%', background: 'transparent' }}
+                    />
+                  </div>
+                )}
+                {!showAvatar && messages.map((msg) => (
                   <div key={msg.id} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{
                       maxWidth: '80%', padding: '10px 14px',
@@ -834,6 +886,20 @@ export default function FloatingAssistant({ onNavigate }) {
                     <i className="fa-solid fa-microphone" />
                   </button>
                 )}
+
+                <button
+                  onClick={() => setShowMenu((v) => !v)}
+                  style={{
+                    width: '36px', height: '36px', borderRadius: '10px', border: 'none',
+                    background: showMenu ? '#e0f7fa' : '#f1f5f9', color: showMenu ? '#0891b2' : '#64748b',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0,
+                    transition: 'all 0.15s ease',
+                  }}
+                  title={showMenu ? 'Close options' : 'Options'}
+                >
+                  <i className={`fa-solid ${showMenu ? 'fa-xmark' : 'fa-gear'}`} />
+                </button>
 
                 <button
                   onClick={handleSend}
