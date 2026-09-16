@@ -13,4 +13,7 @@ dependencies = [
     "uvicorn",
     "fastapi",
     "supabase",
+    "pypdf",
+    "python-docx",
+    "python-multipart",
 ]

@@ -1,7 +1,7 @@
 -- Sessions
 create table sessions (
   id bigserial primary key,
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null,
   name text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
