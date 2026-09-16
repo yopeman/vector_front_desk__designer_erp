@@ -1,4 +1,4 @@
--- AI Assistant schema for Vector Front Desk ERP (Supabase / Postgres)
+-- AI Assistant schema for Vector ERP (Supabase / Postgres)
 -- Run this in the Supabase SQL editor (Database -> SQL Editor).
 
 create extension if not exists vector;
