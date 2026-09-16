@@ -33,10 +33,10 @@ export default function RoleRouter() {
         navigate('/designers', { replace: true });
         break;
       case 'front_desk':
-        // Already at "/" — no redirect needed
+        navigate('/frontdesk', { replace: true });
         break;
       case 'admin_marketer':
-        // Already at "/" — no redirect needed
+        navigate('/frontdesk', { replace: true });
         break;
       default:
         navigate('/pending', { replace: true });

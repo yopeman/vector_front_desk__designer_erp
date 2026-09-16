@@ -39,6 +39,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <RoleRouter />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Designers — only renders when role is designer */}
+          <Route
+            path="/frontdesk"
+            element={
+              <ProtectedRoute>
                 <FrontDeskPage />
               </ProtectedRoute>
             }
