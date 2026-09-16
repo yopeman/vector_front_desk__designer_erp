@@ -7,5 +7,10 @@ requires-python = ">=3.12"
 dependencies = [
     "langchain",
     "langchain-groq",
+    "langchain-core",
+    "langchain-community",
     "python-dotenv",
+    "uvicorn",
+    "fastapi",
+    "supabase",
 ]
