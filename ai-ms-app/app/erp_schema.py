@@ -8,6 +8,9 @@ The registry is derived from the SQL migrations in
 Column values are kept short: ``type — short meaning``.
 """
 
+import json
+import os
+
 TABLES: dict[str, dict] = {
     # ------------------------------------------------------------------ Org
     "users": {
@@ -1176,6 +1179,351 @@ TABLES: dict[str, dict] = {
             "created_at": "timestamptz default now()",
         },
     },
+    # ------------------------------------------------------ Org extras
+    "departments": {
+        "schema": "public",
+        "module": "Org",
+        "description": "Organisational departments.",
+        "columns": {
+            "id": "uuid PK",
+            "name": "text not null",
+            "description": "text",
+        },
+    },
+    # ----------------------------------------------- Marketing v1 (mrk_)
+    "mrk_market_requests": {
+        "schema": "public",
+        "module": "Marketing",
+        "description": "Marketing market requests (v1).",
+        "columns": {
+            "id": "uuid PK",
+            "request_no": "text not null unique",
+            "request_date": "date not null default current_date",
+            "request_type": "text not null",
+            "description": "text",
+            "priority": "text - priority_level enum",
+            "assigned_to": "uuid FK -> users",
+            "due_date": "date",
+            "status": "text - request_status enum: pending|approved|rejected",
+            "file_url": "text",
+            "voice_note_url": "text",
+            "created_by": "uuid FK -> users",
+            "approved_by": "uuid FK -> users",
+            "approved_at": "timestamptz",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+        },
+    },
+    "mrk_clients": {
+        "schema": "public",
+        "module": "Marketing",
+        "description": "Marketing client registry (v1).",
+        "columns": {
+            "id": "uuid PK",
+            "client_date": "date not null default current_date",
+            "client_name": "text not null",
+            "client_type": "text - client_type enum: organization|...",
+            "business_sector": "text",
+            "tin_number": "text",
+            "address": "text",
+            "discovery": "text",
+            "level": "text - client_level enum: standard|...",
+            "file_url": "text",
+            "created_by": "uuid FK -> users",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+        },
+    },
+    "mrk_invoices": {
+        "schema": "public",
+        "module": "Marketing",
+        "description": "Marketing invoices (v1).",
+        "columns": {
+            "id": "uuid PK",
+            "invoice_date": "date not null default current_date",
+            "invoice_no": "text not null unique",
+            "client_id": "uuid FK -> mrk_clients",
+            "client_name": "text not null",
+            "reference_no": "text",
+            "item_service": "text",
+            "subtotal": "numeric(14,2) default 0",
+            "vat_included": "bool default true",
+            "vat_amount": "numeric(14,2) generated",
+            "grand_total": "numeric(14,2) generated",
+            "company_tin": "text",
+            "payment_term": "text",
+            "file_url": "text",
+            "voice_note_url": "text",
+            "created_by": "uuid FK -> users",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+        },
+    },
+    "mrk_research_logins": {
+        "schema": "public",
+        "module": "Marketing",
+        "description": "Marketing research entries (v1).",
+        "columns": {
+            "id": "uuid PK",
+            "research_date": "date not null default current_date",
+            "research_no": "text not null unique",
+            "title": "text not null",
+            "reason": "text",
+            "objective": "text",
+            "methodology": "text",
+            "file_url": "text",
+            "created_by": "uuid FK -> users",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+        },
+    },
+    "mrk_digital_logs": {
+        "schema": "public",
+        "module": "Marketing",
+        "description": "Marketing digital content logs (v1).",
+        "columns": {
+            "id": "uuid PK",
+            "log_date": "date not null default current_date",
+            "content_no": "text not null unique",
+            "content_title": "text not null",
+            "content_script": "text",
+            "social_channel": "text",
+            "share_to": "text - share_target enum",
+            "file_url": "text",
+            "voice_url": "text",
+            "created_by": "uuid FK -> users",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+        },
+    },
+    "mrk_tenders": {
+        "schema": "public",
+        "module": "Marketing",
+        "description": "Marketing tenders (v1).",
+        "columns": {
+            "id": "uuid PK",
+            "tender_date": "date not null default current_date",
+            "company_name": "text not null",
+            "tender_no": "text not null unique",
+            "item_service": "text",
+            "cpo_amount": "numeric(14,2)",
+            "total_price": "numeric(14,2)",
+            "vat_status": "text - vat_status enum: with_vat|...",
+            "file_url": "text",
+            "created_by": "uuid FK -> users",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+        },
+    },
+    "mrk_feedbacks": {
+        "schema": "public",
+        "module": "Marketing",
+        "description": "Marketing feedback records (v1).",
+        "columns": {
+            "id": "uuid PK",
+            "feedback_date": "date not null default current_date",
+            "client_name": "text not null",
+            "project_name": "text",
+            "project_no": "text",
+            "overall_score": "int 0-100",
+            "service_score": "int 0-100",
+            "grade": "text generated A-D",
+            "file_url": "text",
+            "created_by": "uuid FK -> users",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+        },
+    },
+    # ------------------------------------------------- Finance (*.finance schema)
+    "finance.gl_accounts": {
+        "schema": "finance",
+        "name": "gl_accounts",
+        "module": "Finance",
+        "description": "Chart of accounts (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "account_code": "varchar(20) unique not null",
+            "account_name": "varchar(255) not null",
+            "account_type": "finance.account_type enum",
+            "parent_id": "uuid FK -> gl_accounts",
+            "description": "text",
+            "is_active": "bool default true",
+        },
+    },
+    "finance.purchases": {
+        "schema": "finance",
+        "name": "purchases",
+        "module": "Finance",
+        "description": "Purchase records (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "purchase_no": "varchar(50) unique not null",
+            "purchase_type": "finance.purchase_type enum",
+            "seller_tin": "varchar(50)",
+            "seller_name": "varchar(255) not null",
+            "seller_id": "uuid",
+            "purchase_date": "date not null",
+            "receipt_source": "finance.receipt_source enum",
+            "reference_no": "varchar(100)",
+            "gl_account_id": "uuid FK -> gl_accounts",
+            "vat_type": "finance.vat_type enum",
+            "subtotal": "numeric(15,2) default 0",
+            "vat_amount": "numeric(15,2) default 0",
+            "total_amount": "numeric(15,2) default 0",
+            "status": "varchar(50) default 'Draft'",
+            "notes": "text",
+        },
+    },
+    "finance.purchase_items": {
+        "schema": "finance",
+        "name": "purchase_items",
+        "module": "Finance",
+        "description": "Purchase line items (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "purchase_id": "uuid FK -> purchases",
+            "item_id": "uuid",
+            "item_name": "varchar(255) not null",
+            "description": "text",
+            "quantity": "numeric(15,2) not null",
+            "unit_price": "numeric(15,2) not null",
+            "total": "numeric(15,2) generated",
+            "gl_account_id": "uuid FK -> gl_accounts",
+        },
+    },
+    "finance.sales": {
+        "schema": "finance",
+        "name": "sales",
+        "module": "Finance",
+        "description": "Sales records (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "sales_no": "varchar(50) unique not null",
+            "sales_type": "finance.sales_type enum",
+            "sales_category": "varchar(50) not null",
+            "cash_received": "numeric(15,2) default 0",
+            "customer_tin": "varchar(50)",
+            "customer_name": "varchar(255) not null",
+            "customer_id": "uuid",
+            "sales_date": "date not null",
+            "receipt_source": "finance.receipt_source enum",
+            "vat_withholding": "finance.vat_withholding enum",
+            "subtotal": "numeric(15,2) default 0",
+            "vat_amount": "numeric(15,2) default 0",
+            "withholding_amount": "numeric(15,2) default 0",
+            "total_amount": "numeric(15,2) default 0",
+            "net_amount": "numeric(15,2) default 0",
+            "status": "varchar(50) default 'Draft'",
+            "notes": "text",
+            "created_at": "timestamptz default now()",
+            "updated_at": "timestamptz default now()",
+            "created_by": "uuid",
+            "updated_by": "uuid",
+        },
+    },
+    "finance.sales_items": {
+        "schema": "finance",
+        "name": "sales_items",
+        "module": "Finance",
+        "description": "Sales line items (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "sales_id": "uuid FK -> sales",
+            "item_id": "uuid",
+            "item_name": "varchar(255) not null",
+            "quantity": "numeric(15,2) not null",
+            "unit_price": "numeric(15,2) not null",
+            "tax_rate": "numeric(5,2) default 15.00",
+            "total": "numeric(15,2) generated",
+            "gl_account_id": "uuid FK -> gl_accounts",
+        },
+    },
+    "finance.journals": {
+        "schema": "finance",
+        "name": "journals",
+        "module": "Finance",
+        "description": "General journals (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "journal_no": "varchar(50) unique not null",
+            "journal_date": "date not null",
+            "reference": "varchar(100)",
+            "description": "text",
+            "status": "finance.journal_status enum: Draft|Posted",
+        },
+    },
+    "finance.journal_lines": {
+        "schema": "finance",
+        "name": "journal_lines",
+        "module": "Finance",
+        "description": "Double-entry journal lines (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "journal_id": "uuid FK -> journals",
+            "gl_account_id": "uuid FK -> gl_accounts",
+            "description": "text",
+            "debit": "numeric(15,2) default 0",
+            "credit": "numeric(15,2) default 0",
+        },
+    },
+    "finance.payroll": {
+        "schema": "finance",
+        "name": "payroll",
+        "module": "Finance",
+        "description": "Payroll records (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "employee_id": "uuid not null",
+            "period_start": "date not null",
+            "period_end": "date not null",
+            "basic_salary": "numeric(15,2) default 0",
+            "transport_allowance": "numeric(15,2) default 0",
+            "telephone_allowance": "numeric(15,2) default 0",
+            "overtime": "numeric(15,2) default 0",
+            "other_earnings": "numeric(15,2) default 0",
+            "gross_salary": "numeric(15,2) generated",
+            "taxable_salary": "numeric(15,2) default 0",
+            "income_tax": "numeric(15,2) default 0",
+            "pension_employee": "numeric(15,2) default 0",
+            "pension_employer": "numeric(15,2) default 0",
+            "total_deductions": "numeric(15,2) default 0",
+            "net_pay": "numeric(15,2) default 0",
+            "status": "finance.payroll_status enum: Draft|Approved|Paid",
+            "payment_date": "date",
+            "notes": "text",
+        },
+    },
+    "finance.tax_rates": {
+        "schema": "finance",
+        "name": "tax_rates",
+        "module": "Finance",
+        "description": "Tax rates configuration (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "tax_type": "varchar(50) not null",
+            "rate": "numeric(5,2) not null",
+            "effective_from": "date not null",
+            "effective_to": "date",
+            "is_active": "bool default true",
+        },
+    },
+    "finance.finance_sync_log": {
+        "schema": "finance",
+        "name": "finance_sync_log",
+        "module": "Finance",
+        "description": "Finance sync dedup log (finance schema).",
+        "columns": {
+            "id": "uuid PK",
+            "source_type": "varchar(50) not null",
+            "source_id": "uuid not null",
+            "sync_type": "varchar(50) not null",
+            "synced_at": "timestamptz default now()",
+            "period_start": "date",
+            "period_end": "date",
+            "status": "varchar(20) default 'success'",
+            "error_message": "text",
+        },
+    },
 }
 
 # Non-ERP tables reserved for the AI chat feature itself (not agent-managed).
@@ -1187,6 +1535,110 @@ RESERVED = {
 }
 
 ALLOWED_OPS = {"eq", "neq", "gt", "gte", "lt", "lte", "like", "ilike", "in", "is", "contains"}
+
+# The ERP roles defined in the `users` table. Access is granted per module.
+ROLES = (
+    "admin",
+    "designer",
+    "front_desk",
+    "machine_operator",
+    "finish",
+    "marketer",
+    "admin_marketer",
+    "finance",
+    "creative",
+)
+
+# role -> {module: "rw" | "read" | "none"}
+# Adjust this dict to change which tables each role can see / edit. An optional
+# ROLE_ACCESS_OVERRIDE env var (JSON, same shape) is layered on top so you can
+# toggle visibility without touching code.
+ROLE_DEFAULTS: dict[str, dict[str, str]] = {
+    "admin": {
+        "Org": "rw", "CRM": "rw", "Sales": "rw", "Design": "rw",
+        "Production": "rw", "Inventory": "rw", "Marketing": "rw",
+        "Finance": "rw", "Creative": "rw",
+    },
+    "front_desk": {
+        "Org": "read", "CRM": "rw", "Sales": "rw", "Design": "rw",
+        "Production": "read", "Inventory": "read", "Marketing": "read",
+        "Finance": "read", "Creative": "none",
+    },
+    "designer": {
+        "Org": "read", "CRM": "read", "Sales": "read", "Design": "rw",
+        "Production": "read", "Inventory": "none", "Marketing": "none",
+        "Finance": "none", "Creative": "none",
+    },
+    "machine_operator": {
+        "Org": "read", "CRM": "none", "Sales": "read", "Design": "none",
+        "Production": "rw", "Inventory": "rw", "Marketing": "none",
+        "Finance": "none", "Creative": "none",
+    },
+    "finish": {
+        "Org": "read", "CRM": "none", "Sales": "read", "Design": "none",
+        "Production": "rw", "Inventory": "read", "Marketing": "none",
+        "Finance": "none", "Creative": "none",
+    },
+    "marketer": {
+        "Org": "read", "CRM": "read", "Sales": "read", "Design": "none",
+        "Production": "none", "Inventory": "none", "Marketing": "rw",
+        "Finance": "read", "Creative": "none",
+    },
+    "admin_marketer": {
+        "Org": "read", "CRM": "rw", "Sales": "read", "Design": "none",
+        "Production": "none", "Inventory": "read", "Marketing": "rw",
+        "Finance": "read", "Creative": "none",
+    },
+    "finance": {
+        "Org": "read", "CRM": "read", "Sales": "read", "Design": "none",
+        "Production": "none", "Inventory": "read", "Marketing": "read",
+        "Finance": "rw", "Creative": "none",
+    },
+    "creative": {
+        "Org": "read", "CRM": "none", "Sales": "read", "Design": "rw",
+        "Production": "rw", "Inventory": "read", "Marketing": "none",
+        "Finance": "none", "Creative": "rw",
+    },
+}
+
+
+def _apply_role_override() -> None:
+    """Layer ROLE_ACCESS_OVERRIDE (JSON) onto ROLE_DEFAULTS at import time."""
+    raw = os.getenv("ROLE_ACCESS_OVERRIDE")
+    if not raw:
+        return
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        print("ROLE_ACCESS_OVERRIDE is not valid JSON; ignoring.")
+        return
+    for role, modules in parsed.items():
+        if role in ROLE_DEFAULTS and isinstance(modules, dict):
+            ROLE_DEFAULTS[role] = {**ROLE_DEFAULTS[role], **modules}
+
+
+_apply_role_override()
+
+
+def role_modules(role: str | None) -> dict[str, str]:
+    """Module access map for a role; unknown/None roles are denied everything."""
+    if role and role in ROLE_DEFAULTS:
+        return ROLE_DEFAULTS[role]
+    return {}
+
+
+def access_level(role: str | None, table: str) -> str:
+    """One of 'rw', 'read' or 'none' for a given role + module of a table."""
+    module = require_table(table)["module"]
+    return role_modules(role).get(module, "none")
+
+
+def accessible_table_names(role: str | None) -> list[str]:
+    """Tables the role can at least read, sorted by name."""
+    allowed = role_modules(role)
+    return sorted(
+        name for name, info in TABLES.items() if allowed.get(info["module"], "none") != "none"
+    )
 
 
 def require_table(name: str) -> dict:
@@ -1221,11 +1673,22 @@ def table_columns_description(name: str) -> str:
     return "\n".join(lines)
 
 
-def table_overview() -> str:
-    """Compact one-line-per-table listing for the agent system prompt."""
+def table_real_name(name: str) -> str:
+    """Actual SQL table name (used by PostgREST) for a registered table."""
+    return require_table(name).get("name", name)
+
+
+def table_overview(role: str | None = None) -> str:
+    """Compact one-line-per-table listing for the agent system prompt.
+
+    When *role* is given only tables the role can read are listed.
+    """
+    allowed = role_modules(role) if role else None
     lines: list[str] = []
     for name in sorted(TABLES):
         info = TABLES[name]
-        schema = "" if info["schema"] == "public" else f"{info['schema']}."
-        lines.append(f"- {schema}{name} [{info['module']}]: {info['description']}")
+        if allowed is not None and allowed.get(info["module"], "none") == "none":
+            continue
+        schema_prefix = "" if info["schema"] == "public" else f"{info['schema']}."
+        lines.append(f"- {schema_prefix}{name} [{info['module']}]: {info['description']}")
     return "\n".join(lines)

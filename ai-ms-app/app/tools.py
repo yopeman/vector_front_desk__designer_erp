@@ -18,10 +18,12 @@ from app.db import db
 from app.erp_schema import (
     ALLOWED_OPS,
     TABLES,
+    access_level,
+    accessible_table_names,
     column_names,
-    require_table,
     table_columns_description,
     table_overview,
+    table_real_name,
     table_schema,
     validate_columns,
 )
@@ -44,12 +46,44 @@ def _ctx() -> dict:
     return request_ctx.get() or {}
 
 
+def _role() -> str | None:
+    return (_ctx().get("role") or "").strip() or None
+
+
+def _access_denied(role: str | None, table: str, need_write: bool) -> str | None:
+    """Return an explanation string if the caller's role may not use `table`."""
+    if table not in TABLES:
+        return _unknown_table(table)
+    level = access_level(role, table)
+    if level == "none":
+        return (
+            f"Access denied: your role ({role or 'unknown'}) has no access to "
+            f"table '{table}'. Call get_schema() to see the tables you can use."
+        )
+    if need_write and level != "rw":
+        return (
+            f"Access denied: your role ({role or 'unknown'}) may only read "
+            f"'{table}', not modify it."
+        )
+    return None
+
+
+def _unknown_table(table: str) -> str:
+    return (
+        f"Unknown table '{table}'. Know tables: {', '.join(sorted(TABLES))}. "
+        "Finance-schema tables use the 'finance.<name>' form (e.g. "
+        "'finance.gl_accounts'); do not confuse them with the public "
+        "'finance_*' tables."
+    )
+
+
 def _child_builder(name: str):
     """Return the correct PostgREST builder for a (possibly schema-scoped) table."""
     schema = table_schema(name)
+    real = table_real_name(name)
     if schema == "public":
-        return db().table(name)
-    return db().schema(schema).table(name)
+        return db().table(real)
+    return db().schema(schema).table(real)
 
 
 def _filter_apply(builder, filters: list[dict]) -> object:
@@ -125,11 +159,19 @@ def get_schema(table: str = "") -> str:
     table, column or status value to use.
     """
     if not table:
+        role = _role()
+        readable = accessible_table_names(role)
         return (
-            "Yope ERP tables by module:\n"
-            + table_overview()
+            "Yope ERP tables by module (only the tables your role may use are "
+            f"listed, {len(readable)} readable):\n"
+            + table_overview(role)
             + "\n\nCall get_schema('<table>') for any table's columns."
         )
+    if table not in TABLES:
+        return _unknown_table(table)
+    denied = _access_denied(_role(), table, need_write=False)
+    if denied:
+        return denied
     try:
         return table_columns_description(table)
     except ValueError as exc:
@@ -180,7 +222,11 @@ def query_records(
         limit: max rows to return (1..100, default 20).
         offset: rows to skip (default 0).
     """
-    require_table(table)
+    if table not in TABLES:
+        return _unknown_table(table)
+    denied = _access_denied(_role(), table, need_write=False)
+    if denied:
+        return denied
     known = column_names(table)
     tokens = [t.strip() for t in columns.split(",") if t.strip()]
     for tok in tokens:
@@ -234,7 +280,11 @@ def insert_record(table: str, data: dict) -> str:
         data: the fields to create, e.g. {"name": "...", "status": "New"}.
             Omit id/generated/defaulted columns; leave them for the database.
     """
-    require_table(table)
+    if table not in TABLES:
+        return _unknown_table(table)
+    denied = _access_denied(_role(), table, need_write=True)
+    if denied:
+        return denied
     validate_columns(table, set(data))
     try:
         result = _child_builder(table).insert(data).execute()
@@ -253,7 +303,11 @@ def update_record(table: str, filters: list[dict], data: dict) -> str:
             filter is REQUIRED so you never touch the whole table by accident.
         data: fields to change.
     """
-    require_table(table)
+    if table not in TABLES:
+        return _unknown_table(table)
+    denied = _access_denied(_role(), table, need_write=True)
+    if denied:
+        return denied
     validate_columns(table, set(data))
     if not filters:
         return _NO_FILTERS_TIP
@@ -279,7 +333,11 @@ def delete_record(table: str, filters: list[dict], confirm: str = "no") -> str:
         confirm: set to 'yes' only after the user has explicitly confirmed the
             deletion. Anything else is refused.
     """
-    require_table(table)
+    if table not in TABLES:
+        return _unknown_table(table)
+    denied = _access_denied(_role(), table, need_write=True)
+    if denied:
+        return denied
     if not filters:
         return _NO_FILTERS_TIP
     if confirm != "yes":
@@ -318,6 +376,7 @@ def search_attachments(query: str) -> str:
     if not session_id:
         return "No active chat session."
     try:
+        from app import ai
         from app.db import db as _db
 
         embedding = ai.embedding_vector(query)
