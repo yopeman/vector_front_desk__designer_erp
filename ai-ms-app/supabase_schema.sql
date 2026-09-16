@@ -44,14 +44,14 @@ create table if not exists public.ai_attachments (
 create index if not exists idx_ai_attachments_session on public.ai_attachments (session_id, created_at);
 
 -- ---------------------------------------------------------------------------
--- ai_attachment_chunks : text chunks + embeddings (embedding model: nomic-embed-text-v1_5, 768 dims)
+-- ai_attachment_chunks : text chunks + embeddings (embedding model: all-minilm:22m, 384 dims)
 -- ---------------------------------------------------------------------------
 create table if not exists public.ai_attachment_chunks (
     id          uuid primary key default gen_random_uuid(),
     attachment_id uuid not null references public.ai_attachments(id) on delete cascade,
     chunk_index int not null,
     content     text not null,
-    embedding   vector(768) not null,
+    embedding   vector(384) not null,
     created_at  timestamptz not null default now()
 );
 
@@ -62,7 +62,7 @@ create index if not exists idx_ai_attachment_chunks_attachment on public.ai_atta
 -- ---------------------------------------------------------------------------
 create or replace function public.match_ai_attachments(
     session_uuid uuid,
-    query_embedding vector(768),
+    query_embedding vector(384),
     match_count int default 5
 )
 returns table (
@@ -92,14 +92,3 @@ begin
     limit match_count;
 end;
 $$;
-
--- Enable RLS policy for the service role usage (service role bypasses RLS by default).
-alter table public.ai_sessions enable row level security;
-alter table public.ai_chats enable row level security;
-alter table public.ai_attachments enable row level security;
-alter table public.ai_attachment_chunks enable row level security;
-
-create policy "service role access" on public.ai_sessions using (true);
-create policy "service role access" on public.ai_chats using (true);
-create policy "service role access" on public.ai_attachments using (true);
-create policy "service role access" on public.ai_attachment_chunks using (true);

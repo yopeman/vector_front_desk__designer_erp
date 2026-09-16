@@ -2,9 +2,9 @@ import io
 from functools import lru_cache
 
 from fastapi import HTTPException, status
-from groq import Groq
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
+from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.config import settings
@@ -25,13 +25,10 @@ SYSTEM_PROMPT = (
 
 
 @lru_cache
-def _groq() -> Groq:
-    if not settings.groq_api_key:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="GROQ_API_KEY is not configured in the .env file.",
-        )
-    return Groq(api_key=settings.groq_api_key)
+def _embedder() -> OllamaEmbeddings:
+    return OllamaEmbeddings(
+        model=settings.embedding_model, base_url=settings.ollama_base_url
+    )
 
 
 @lru_cache
@@ -45,16 +42,13 @@ def _chat_model() -> ChatGroq:
 
 
 def embedding_vector(text: str) -> str:
-    """Return the 768-dim embedding of `text` as a Postgres vector literal string."""
+    """Return the 384-dim embedding of `text` as a Postgres vector literal string."""
     embedding = embed_texts([text])[0]
     return "[" + ",".join(str(round(x, 6)) for x in embedding) + "]"
 
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
-    response = _groq().embeddings.create(
-        model=settings.embedding_model, input=texts
-    )
-    return [item.embedding for item in response.data]
+    return _embedder().embed_documents(texts)
 
 
 def extract_text(filename: str, data: bytes) -> str:

@@ -8,6 +8,7 @@ dependencies = [
     "langchain",
     "langchain-groq",
     "langchain-core",
+    "langchain-ollama",
     "langchain-community",
     "python-dotenv",
     "uvicorn",

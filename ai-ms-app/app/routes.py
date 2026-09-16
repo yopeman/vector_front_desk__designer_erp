@@ -134,7 +134,7 @@ def list_chats(user_id: str, session_id: str):
             .table("ai_chats")
             .select("*")
             .eq("session_id", session_id)
-            .order("created_at", asc=True)
+            .order("created_at")
             .execute()
         )
         return result.data
@@ -168,7 +168,7 @@ def create_chat(user_id: str, session_id: str, body: ChatCreate):
             .table("ai_chats")
             .select("role", "content")
             .eq("session_id", session_id)
-            .order("created_at", asc=True)
+            .order("created_at")
             .limit(settings.chat_history_limit)
             .execute()
             .data
@@ -213,7 +213,7 @@ def list_attachments(user_id: str, session_id: str):
             .table("ai_attachments")
             .select("*, chunk_count:ai_attachment_chunks(count)")
             .eq("session_id", session_id)
-            .order("created_at", asc=True)
+            .order("created_at")
             .execute()
             .data
         )
