@@ -34,6 +34,7 @@ import MessagesPage from './components/MessagesPage';
 import NotificationsPage from './components/NotificationsPage';
 import NotesPage from './components/NotesPage';
 import SettingsPage from './components/SettingsPage';
+import FloatingAssistant from './components/FloatingAssistant';
 
 export default function FrontDeskPage() {
   const { user, isFrontDesk } = useAuth();
@@ -257,6 +258,8 @@ export default function FrontDeskPage() {
           )}
         </div>
       </div>
+
+      <FloatingAssistant onNavigate={handleMenuClick} />
     </div>
   );
 }
