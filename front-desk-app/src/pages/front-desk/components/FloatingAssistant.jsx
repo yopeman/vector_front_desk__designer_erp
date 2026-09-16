@@ -148,6 +148,11 @@ export default function FloatingAssistant({ onNavigate }) {
   const [sessions, setSessions]       = useState([]);
   const [hoveredSid, setHoveredSid]   = useState(null);
 
+  // voice state
+  const [listening, setListening]     = useState(false);
+  const [autoSpeak, setAutoSpeak]     = useState(true);
+  const [speakingId, setSpeakingId]   = useState(null);
+
   // refs
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
@@ -156,6 +161,15 @@ export default function FloatingAssistant({ onNavigate }) {
   const sessionsFetched = useRef(false);
   const loadedSid      = useRef(null);   // which session's data we last loaded
   const freshSids      = useRef(new Set()); // sessions we created here, still titled "New Chat"
+  const sentMsgIds     = useRef(new Set()); // assistant replies created during this widget lifecycle
+  const autoSpeakRef   = useRef(true);
+  const recognitionRef = useRef(null);
+  const speakingIdRef  = useRef(null);
+
+  const speechSupported = Boolean(
+    typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)
+  );
+  const ttsSupported = typeof window !== 'undefined' && Boolean(window.speechSynthesis);
 
   // localStorage helpers
   const sessionKey = user ? `ai_session_${user.id}` : null;
@@ -335,6 +349,104 @@ export default function FloatingAssistant({ onNavigate }) {
     setAttachments((prev) => prev.filter((a) => a.id !== att.id));
   };
 
+  /* ── text-to-speech ── */
+  const speakText = useCallback((text, id) => {
+    if (!ttsSupported) return;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    if (speakingIdRef.current === id) {
+      speakingIdRef.current = null;
+      setSpeakingId(null);
+      return;
+    }
+    // strip markdown noise for a clean read-out
+    const clean = text
+      .replace(/```[\s\S]*?```/g, ' (code block) ')
+      .replace(/`([^`]*)`/g, '$1')
+      .replace(/[*_~#|>]/g, '')
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/\|/g, ', ')
+      .replace(/\n+/g, '. ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return;
+    const utter = new SpeechSynthesisUtterance(clean);
+    utter.rate = 1;
+    utter.pitch = 1;
+    const voices = synth.getVoices();
+    const v = voices.find((x) => x.lang.startsWith('en') && x.name.includes('Google'))
+      || voices.find((x) => x.lang.startsWith('en'));
+    if (v) utter.voice = v;
+    speakingIdRef.current = id;
+    setSpeakingId(id);
+    utter.onend = () => { speakingIdRef.current = null; setSpeakingId(null); };
+    utter.onerror = () => { speakingIdRef.current = null; setSpeakingId(null); };
+    synth.speak(utter);
+  }, [ttsSupported]);
+
+  /* ── speech-to-text ── */
+  useEffect(() => {
+    if (!speechSupported) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.continuous = false;
+    rec.interimResults = true;
+    rec.lang = (navigator.language || 'en-US').slice(0, 5);
+    rec.onresult = (e) => {
+      const transcript = Array.from(e.results).map((r) => r[0].transcript).join('');
+      setInput(transcript.trim());
+    };
+    rec.onend = () => setListening(false);
+    rec.onerror = () => setListening(false);
+    recognitionRef.current = rec;
+    return () => {
+      try { rec.abort(); } catch { /* noop */ }
+      recognitionRef.current = null;
+    };
+  }, [speechSupported]);
+
+  const toggleListening = useCallback(() => {
+    const rec = recognitionRef.current;
+    if (!rec) return;
+    if (listening) {
+      try { rec.stop(); } catch { /* noop */ }
+      setListening(false);
+      return;
+    }
+    window.speechSynthesis?.cancel();
+    speakingIdRef.current = null;
+    setSpeakingId(null);
+    try {
+      setInput('');
+      rec.start();
+      setListening(true);
+    } catch {
+      setListening(false);
+    }
+  }, [listening]);
+
+  /* ── stop sound when the widget closes ── */
+  useEffect(() => {
+    if (!isOpen) {
+      setListening(false);
+      try { recognitionRef.current?.abort(); } catch { /* noop */ }
+      window.speechSynthesis?.cancel();
+      speakingIdRef.current = null;
+      setSpeakingId(null);
+    }
+  }, [isOpen]);
+
+  /* ── auto-speak freshly created assistant replies only ── */
+  useEffect(() => {
+    if (sending) return;
+    if (!autoSpeakRef.current) return;
+    const last = messages[messages.length - 1];
+    if (last?.role === 'assistant' && sentMsgIds.current.has(last.id)) {
+      sentMsgIds.current.delete(last.id);
+      speakText(last.text, last.id);
+    }
+  }, [messages, sending, speakText]);
+
   /* ── send chat ── */
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -353,6 +465,10 @@ export default function FloatingAssistant({ onNavigate }) {
     setMessages((prev) => [...prev, { id: Date.now(), role: 'user', text: trimmed, time: nowTime() }]);
     setInput('');
     setSending(true);
+    if (listening) { try { recognitionRef.current?.stop(); } catch { /* noop */ } setListening(false); }
+    window.speechSynthesis?.cancel();
+    speakingIdRef.current = null;
+    setSpeakingId(null);
     inputRef.current?.focus();
 
     try {
@@ -371,7 +487,9 @@ export default function FloatingAssistant({ onNavigate }) {
       try {
         const exchange = await callAI(`/users/${user.id}/sessions/${sid}/chats`, { content: trimmed }, 'POST');
         maybeTitleSession(sid, trimmed);
-        setMessages((prev) => [...prev, { id: Date.now() + 1, role: 'assistant', text: exchange?.assistant_message?.content || "I couldn't form a reply.", time: nowTime() }]);
+        const replyId = Date.now() + 1;
+        sentMsgIds.current.add(replyId);
+        setMessages((prev) => [...prev, { id: replyId, role: 'assistant', text: exchange?.assistant_message?.content || "I couldn't form a reply.", time: nowTime() }]);
       } catch (err) {
         if (err.status === 404) {
           // session gone — start fresh
@@ -386,7 +504,9 @@ export default function FloatingAssistant({ onNavigate }) {
           setSessions((prev) => [fresh, ...prev]);
           const retry = await callAI(`/users/${user.id}/sessions/${fresh.id}/chats`, { content: trimmed }, 'POST');
           maybeTitleSession(fresh.id, trimmed);
-          setMessages((prev) => [...prev, { id: Date.now() + 1, role: 'assistant', text: retry?.assistant_message?.content || "I couldn't form a reply.", time: nowTime() }]);
+          const retryId = Date.now() + 1;
+          sentMsgIds.current.add(retryId);
+          setMessages((prev) => [...prev, { id: retryId, role: 'assistant', text: retry?.assistant_message?.content || "I couldn't form a reply.", time: nowTime() }]);
         } else {
           throw err;
         }
@@ -471,6 +591,25 @@ export default function FloatingAssistant({ onNavigate }) {
             <button onClick={() => setShowSessions((v) => !v)} style={hdrBtn(showSessions)} title={showSessions ? 'Back to chat' : 'Chats'}>
               <i className={`fa-solid ${showSessions ? 'fa-xmark' : 'fa-clock-rotate-left'}`} />
             </button>
+            {/* auto-speak toggle */}
+            {ttsSupported && (
+              <button
+                onClick={() => {
+                  const next = !autoSpeak;
+                  setAutoSpeak(next);
+                  autoSpeakRef.current = next;
+                  if (!next) {
+                    window.speechSynthesis?.cancel();
+                    speakingIdRef.current = null;
+                    setSpeakingId(null);
+                  }
+                }}
+                style={hdrBtn(autoSpeak)}
+                title={autoSpeak ? 'Auto voice replies: ON' : 'Auto voice replies: OFF'}
+              >
+                <i className={`fa-solid ${autoSpeak ? 'fa-volume-high' : 'fa-volume-xmark'}`} />
+              </button>
+            )}
             {/* title */}
             <div style={{ flex: 1, minWidth: 0, marginLeft: '2px' }}>
               <div style={{ fontWeight: 700, fontSize: '14px', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -580,7 +719,26 @@ export default function FloatingAssistant({ onNavigate }) {
                       ) : (
                         <div style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</div>
                       )}
-                      <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6, textAlign: msg.role === 'user' ? 'right' : 'left' }}>{msg.time}</div>
+                      {msg.role === 'assistant' && ttsSupported ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginTop: '4px' }}>
+                          <div style={{ fontSize: '10px', opacity: 0.6 }}>{msg.time}</div>
+                          <button
+                            onClick={() => speakText(msg.text, msg.id)}
+                            style={{
+                              background: speakingId === msg.id ? 'rgba(8,145,178,0.12)' : 'none',
+                              border: 'none', color: speakingId === msg.id ? '#0891b2' : '#94a3b8',
+                              cursor: 'pointer', fontSize: '12px', padding: '1px 3px', borderRadius: '4px',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+                              transition: 'all 0.12s ease',
+                            }}
+                            title={speakingId === msg.id ? 'Stop reading' : 'Read aloud'}
+                          >
+                            <i className={`fa-solid ${speakingId === msg.id ? 'fa-stop' : 'fa-volume-high'}`} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6, textAlign: msg.role === 'user' ? 'right' : 'left' }}>{msg.time}</div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -657,6 +815,26 @@ export default function FloatingAssistant({ onNavigate }) {
                   disabled={busy}
                   style={{ flex: 1, padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '13px', color: '#334155', background: '#f8fafc' }}
                 />
+
+                {user && (
+                  <button
+                    onClick={toggleListening}
+                    disabled={busy}
+                    style={{
+                      width: '36px', height: '36px', borderRadius: '10px', border: 'none',
+                      background: listening ? '#fee2e2' : '#f1f5f9',
+                      color: listening ? '#ef4444' : '#64748b',
+                      cursor: busy ? 'default' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', flexShrink: 0,
+                      transition: 'all 0.15s ease',
+                      animation: listening ? 'asstMicPulse 1.2s infinite ease-in-out' : 'none',
+                    }}
+                    title={listening ? 'Stop listening' : 'Speak your message'}
+                  >
+                    <i className="fa-solid fa-microphone" />
+                  </button>
+                )}
+
                 <button
                   onClick={handleSend}
                   disabled={busy || !input.trim()}
@@ -690,6 +868,10 @@ export default function FloatingAssistant({ onNavigate }) {
         @keyframes asstBlink {
           0%, 100% { opacity: 0.25; transform: translateY(0); }
           50% { opacity: 1; transform: translateY(-3px); }
+        }
+        @keyframes asstMicPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.45); }
+          50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); }
         }
         .asst-md p { margin: 2px 0; }
         .asst-md strong { font-weight: 700; }
