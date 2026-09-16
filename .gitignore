@@ -1,6 +1,9 @@
 # Build output
 machine-opp/build/
 
+# Python
+__pycache__/
+
 # Node modules
 node_modules/
 
