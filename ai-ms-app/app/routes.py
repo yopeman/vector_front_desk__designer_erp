@@ -26,12 +26,6 @@ def _first(data) -> dict:
     return {}
 
 
-def _norm(data) -> list[dict]:
-    if isinstance(data, list):
-        return data
-    return [data] if isinstance(data, dict) else []
-
-
 def _db_error(exc: Exception) -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -187,14 +181,15 @@ def create_chat(user_id: str, session_id: str, body: ChatCreate):
             .table("ai_chats")
             .select("role", "content")
             .eq("session_id", session_id)
-            .order("created_at")
+            .order("created_at", desc=True)
             .limit(settings.chat_history_limit)
             .execute()
             .data
         )
+        history.reverse()
 
-        context, reference = _retrieve_context(session_id, content)
-        reply = ai.generate_reply(history, context, reference)
+        result = ai.agent_turn(session_id, user_id, content, history)
+        reply: str = result["reply"]
 
         assistant_row = _first(
             db()
@@ -332,38 +327,6 @@ def delete_attachment(user_id: str, session_id: str, attachment_id: str):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _retrieve_context(session_id: str, query: str) -> tuple[str, str]:
-    """Find relevant attachment chunks for `query` via embedding search."""
-    try:
-        embedding = ai.embedding_vector(query)
-        result = (
-            db()
-            .rpc(
-                "match_ai_attachments",
-                {
-                    "session_uuid": session_id,
-                    "query_embedding": embedding,
-                    "match_count": settings.rag_match_count,
-                },
-            )
-            .execute()
-        )
-        rows = _norm(result.data)
-    except Exception:
-        return "", ""
-    if not rows:
-        return "", ""
-
-    context = "\n\n".join(
-        f"[{row.get('file_name', 'attachment')}]\n{row.get('content', '')}" for row in rows
-    )
-    reference = ", ".join(
-        f"{row.get('file_name', 'attachment')} ({row.get('similarity', 0):.0%} match)"
-        for row in rows
-    )
-    return context, reference
 
 
 def _decorate_chunks(files: list[dict]) -> list[Attachment]:
