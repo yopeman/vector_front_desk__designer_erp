@@ -59,13 +59,6 @@ function toPlainText(text) {
     .trim();
 }
 
-const SUGGESTIONS = [
-  { label: 'Create a lead', icon: 'fa-user-plus' },
-  { label: 'Open orders', icon: 'fa-box' },
-  { label: 'Check payments', icon: 'fa-credit-card' },
-  { label: 'View reports', icon: 'fa-chart-line' },
-];
-
 const THEME_OPTIONS = [
   { value: 'light',  icon: 'fa-sun',                label: 'Light'  },
   { value: 'dark',   icon: 'fa-moon',               label: 'Dark'   },
@@ -995,22 +988,6 @@ export default function FloatingAssistant({ onNavigate }) {
               )}
             </div>
 
-            {showWelcome && (
-              <div className="asst-human-chips">
-                {SUGGESTIONS.map((sg) => (
-                  <button
-                    key={sg.label}
-                    className="asst-chip"
-                    onClick={() => handleSend(sg.label)}
-                    disabled={busy}
-                  >
-                    <i className={`fa-solid ${sg.icon}`} />
-                    {sg.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
             {speakingId && subtitleText && (
               <div className="asst-subtitle" key={speakingId} role="status" aria-live="polite">
                 {subtitleText}
@@ -1033,19 +1010,6 @@ export default function FloatingAssistant({ onNavigate }) {
                   )}
                   <div className="asst-welcome-title">How can I help?</div>
                   <div className="asst-welcome-sub">{messages[0].text}</div>
-                  <div className="asst-chips">
-                    {SUGGESTIONS.map((sg) => (
-                      <button
-                        key={sg.label}
-                        className="asst-chip"
-                        onClick={() => handleSend(sg.label)}
-                        disabled={busy}
-                      >
-                        <i className={`fa-solid ${sg.icon}`} />
-                        {sg.label}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               ) : (
                 messages.map((msg) => {
