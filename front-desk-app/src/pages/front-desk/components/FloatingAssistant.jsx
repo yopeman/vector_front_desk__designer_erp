@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../../lib/auth';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -66,6 +66,12 @@ const SUGGESTIONS = [
   { label: 'View reports', icon: 'fa-chart-line' },
 ];
 
+const THEME_OPTIONS = [
+  { value: 'light',  icon: 'fa-sun',                label: 'Light'  },
+  { value: 'dark',   icon: 'fa-moon',               label: 'Dark'   },
+  { value: 'system', icon: 'fa-circle-half-stroke', label: 'System' },
+];
+
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
 async function callAI(path, body, method = 'GET') {
@@ -114,43 +120,55 @@ async function deleteAttachment(user, sid, aid) {
   }
 }
 
-/* ─── markdown components ──────────────────────────────────────────────── */
+/* ─── theme-aware markdown components ─────────────────────────────────── */
 
-const mdComponents = {
-  a: ({ children, ...props }) => (
-    <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
-  ),
-  table: ({ children, ...props }) => (
-    <div style={{ overflowX: 'auto', margin: '4px 0' }}>
-      <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '12px' }} {...props}>{children}</table>
-    </div>
-  ),
-  th: ({ children, ...props }) => (
-    <th style={{ border: '1px solid #e2e8f0', padding: '4px 8px', background: '#e2e8f0', textAlign: 'left', fontWeight: 600 }} {...props}>{children}</th>
-  ),
-  td: ({ children, ...props }) => (
-    <td style={{ border: '1px solid #e2e8f0', padding: '4px 8px', verticalAlign: 'top' }} {...props}>{children}</td>
-  ),
-  code: ({ inline, children, ...props }) =>
-    inline
-      ? <code style={{ background: 'rgba(148,163,184,0.22)', padding: '1px 4px', borderRadius: '3px', fontSize: '12px' }} {...props}>{children}</code>
-      : <code {...props}>{children}</code>,
-  pre: ({ children, ...props }) => (
-    <pre style={{ background: '#1e293b', color: '#f1f5f9', padding: '8px 10px', borderRadius: '8px', fontSize: '12px', lineHeight: 1.45, overflowX: 'auto', whiteSpace: 'pre' }} {...props}>{children}</pre>
-  ),
-  ul: ({ children, ...props }) => (
-    <ul style={{ margin: '2px 0', paddingLeft: '18px', lineHeight: 1.5 }} {...props}>{children}</ul>
-  ),
-  ol: ({ children, ...props }) => (
-    <ol style={{ margin: '2px 0', paddingLeft: '18px', lineHeight: 1.5 }} {...props}>{children}</ol>
-  ),
-  blockquote: ({ children, ...props }) => (
-    <blockquote style={{ borderLeft: '3px solid #0891b2', margin: '4px 0', padding: '2px 10px', color: '#475569', fontStyle: 'italic' }} {...props}>{children}</blockquote>
-  ),
-  h1: ({ children, ...props }) => <h1 style={{ fontSize: '15px', margin: '6px 0 2px', fontWeight: 700 }} {...props}>{children}</h1>,
-  h2: ({ children, ...props }) => <h2 style={{ fontSize: '14px', margin: '6px 0 2px', fontWeight: 700 }} {...props}>{children}</h2>,
-  h3: ({ children, ...props }) => <h3 style={{ fontSize: '13px', margin: '6px 0 2px', fontWeight: 700 }} {...props}>{children}</h3>,
-};
+function makeMdComponents(isDark) {
+  const border   = isDark ? '#334155' : '#e2e8f0';
+  const codeBg   = isDark ? 'rgba(148,163,184,0.18)' : 'rgba(148,163,184,0.22)';
+  const thBg     = isDark ? '#1e293b' : '#e2e8f0';
+  const thColor  = isDark ? '#e2e8f0' : 'inherit';
+  const tdColor  = isDark ? '#e2e8f0' : 'inherit';
+  const bqColor  = isDark ? '#94a3b8' : '#475569';
+  const bqBorder = isDark ? '#22d3ee' : '#0891b2';
+  const preBg    = isDark ? '#020617' : '#1e293b';
+  const preFg    = isDark ? '#e2e8f0' : '#f1f5f9';
+
+  return {
+    a: ({ children, ...props }) => (
+      <a {...props} target="_blank" rel="noopener noreferrer">{children}</a>
+    ),
+    table: ({ children, ...props }) => (
+      <div style={{ overflowX: 'auto', margin: '4px 0' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '12px' }} {...props}>{children}</table>
+      </div>
+    ),
+    th: ({ children, ...props }) => (
+      <th style={{ border: `1px solid ${border}`, padding: '4px 8px', background: thBg, color: thColor, textAlign: 'left', fontWeight: 600 }} {...props}>{children}</th>
+    ),
+    td: ({ children, ...props }) => (
+      <td style={{ border: `1px solid ${border}`, padding: '4px 8px', verticalAlign: 'top', color: tdColor }} {...props}>{children}</td>
+    ),
+    code: ({ inline, children, ...props }) =>
+      inline
+        ? <code style={{ background: codeBg, padding: '1px 4px', borderRadius: '3px', fontSize: '12px' }} {...props}>{children}</code>
+        : <code {...props}>{children}</code>,
+    pre: ({ children, ...props }) => (
+      <pre style={{ background: preBg, color: preFg, padding: '8px 10px', borderRadius: '8px', fontSize: '12px', lineHeight: 1.45, overflowX: 'auto', whiteSpace: 'pre' }} {...props}>{children}</pre>
+    ),
+    ul: ({ children, ...props }) => (
+      <ul style={{ margin: '2px 0', paddingLeft: '18px', lineHeight: 1.5 }} {...props}>{children}</ul>
+    ),
+    ol: ({ children, ...props }) => (
+      <ol style={{ margin: '2px 0', paddingLeft: '18px', lineHeight: 1.5 }} {...props}>{children}</ol>
+    ),
+    blockquote: ({ children, ...props }) => (
+      <blockquote style={{ borderLeft: `3px solid ${bqBorder}`, margin: '4px 0', padding: '2px 10px', color: bqColor, fontStyle: 'italic' }} {...props}>{children}</blockquote>
+    ),
+    h1: ({ children, ...props }) => <h1 style={{ fontSize: '15px', margin: '6px 0 2px', fontWeight: 700 }} {...props}>{children}</h1>,
+    h2: ({ children, ...props }) => <h2 style={{ fontSize: '14px', margin: '6px 0 2px', fontWeight: 700 }} {...props}>{children}</h2>,
+    h3: ({ children, ...props }) => <h3 style={{ fontSize: '13px', margin: '6px 0 2px', fontWeight: 700 }} {...props}>{children}</h3>,
+  };
+}
 
 /* ─── component ────────────────────────────────────────────────────────── */
 
@@ -176,6 +194,12 @@ export default function FloatingAssistant({ onNavigate }) {
   const [copiedId, setCopiedId]           = useState(null);
   const [atBottom, setAtBottom]           = useState(true);
 
+  // ── rename state ──
+  const [editingSid, setEditingSid]       = useState(null);
+  const [editTitle, setEditTitle]         = useState('');
+  const [savingEdit, setSavingEdit]       = useState(false);
+  const [editError, setEditError]         = useState(null);
+
   // ── voice state ──
   const [listening, setListening]         = useState(false);
   const [autoSpeak, setAutoSpeak]         = useState(true);
@@ -184,6 +208,47 @@ export default function FloatingAssistant({ onNavigate }) {
 
   // ── humanize mode ──
   const [humanize, setHumanize]           = useState(false);
+
+  // ── theme ──
+  const themeKey = user ? `ai_theme_${user.id}` : 'ai_theme_guest';
+  const [themeMode, setThemeMode] = useState(() => {
+    if (typeof window === 'undefined') return 'system';
+    try { return localStorage.getItem(themeKey) || 'system'; } catch { return 'system'; }
+  });
+  const [systemDark, setSystemDark] = useState(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  const isDark =
+    themeMode === 'dark' || (themeMode === 'system' && systemDark);
+
+  const mdComponents = useMemo(() => makeMdComponents(isDark), [isDark]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = localStorage.getItem(themeKey);
+      if (stored) setThemeMode(stored);
+    } catch { /* ignore */ }
+  }, [themeKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try { localStorage.setItem(themeKey, themeMode); } catch { /* ignore */ }
+  }, [themeMode, themeKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = (e) => setSystemDark(e.matches);
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else if (mq.addListener) mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange);
+      else if (mq.removeListener) mq.removeListener(onChange);
+    };
+  }, []);
 
   // ── refs ──
   const scrollBoxRef    = useRef(null);
@@ -200,6 +265,8 @@ export default function FloatingAssistant({ onNavigate }) {
   const recognitionRef  = useRef(null);
   const speakingIdRef   = useRef(null);
   const atBottomRef     = useRef(true);
+  const editInputRef    = useRef(null);
+  const cancelEditRef   = useRef(false);   // avoids double-fire of blur + Enter
 
   const speechSupported = Boolean(
     typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -226,14 +293,14 @@ export default function FloatingAssistant({ onNavigate }) {
     setSidebarOpen(false);
   }, []);
 
-  /* ── toggle fullscreen (opens the sidebar by default on entry) ── */
+  /* ── toggle fullscreen ── */
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((prev) => {
       const next = !prev;
       setShowMenu(false);
       if (next) {
         setShowSessions(false);
-        setSidebarOpen(true);   // show the sidebar when going fullscreen
+        setSidebarOpen(true);
       } else {
         setSidebarOpen(false);
       }
@@ -256,7 +323,7 @@ export default function FloatingAssistant({ onNavigate }) {
     }
   }, [messages, sending]);
 
-  /* ── keep the view pinned to the bottom after fullscreen/sidebar toggles ── */
+  /* ── keep the view pinned to the bottom after layout toggles ── */
   useEffect(() => {
     const t = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ block: 'end' });
@@ -287,11 +354,22 @@ export default function FloatingAssistant({ onNavigate }) {
     }
   }, [isOpen, showSessions, isFullscreen, sidebarOpen]);
 
-  /* ── close on Escape (menu → sessions → sidebar → fullscreen → widget) ── */
+  /* ── focus + select all when entering rename mode ── */
+  useEffect(() => {
+    if (!editingSid) return;
+    const t = setTimeout(() => {
+      editInputRef.current?.focus();
+      editInputRef.current?.select();
+    }, 30);
+    return () => clearTimeout(t);
+  }, [editingSid]);
+
+  /* ── close on Escape (edit → menu → sessions → sidebar → fullscreen → widget) ── */
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
+      if (editingSid) return;             // handled by the inline input
       if (showMenu) setShowMenu(false);
       else if (showSessions) setShowSessions(false);
       else if (isFullscreen && sidebarOpen) setSidebarOpen(false);
@@ -300,7 +378,7 @@ export default function FloatingAssistant({ onNavigate }) {
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [isOpen, showMenu, showSessions, isFullscreen, sidebarOpen]);
+  }, [isOpen, showMenu, showSessions, isFullscreen, sidebarOpen, editingSid]);
 
   /* ── click-outside for the settings menu ── */
   useEffect(() => {
@@ -422,6 +500,66 @@ export default function FloatingAssistant({ onNavigate }) {
     } catch { /* silent */ }
     finally { setConfirmDeleteSid(null); }
   }, [user, setActiveSession]);
+
+  /* ── rename: begin ── */
+  const startEditing = useCallback((s, e) => {
+    e?.stopPropagation?.();
+    cancelEditRef.current = false;
+    setConfirmDeleteSid(null);
+    setEditingSid(s.id);
+    setEditTitle(s.title || '');
+    setEditError(null);
+  }, []);
+
+  /* ── rename: cancel ── */
+  const cancelEditing = useCallback(() => {
+    cancelEditRef.current = true;
+    setEditingSid(null);
+    setEditTitle('');
+    setEditError(null);
+  }, []);
+
+  /* ── rename: save (PATCH /sessions/{id}) ── */
+  const saveEditing = useCallback(async () => {
+    if (!user || !editingSid || savingEdit) return;
+    if (cancelEditRef.current) { cancelEditRef.current = false; return; }
+
+    const sid = editingSid;
+    const trimmed = editTitle.trim();
+    const original = sessions.find((s) => s.id === sid)?.title || '';
+
+    // nothing to save — treat as cancel
+    if (!trimmed || trimmed === original) {
+      setEditingSid(null);
+      setEditTitle('');
+      setEditError(null);
+      return;
+    }
+
+    setSavingEdit(true);
+    setEditError(null);
+
+    // optimistic update
+    setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title: trimmed } : s)));
+
+    try {
+      const updated = await callAI(`/users/${user.id}/sessions/${sid}`, { title: trimmed }, 'PATCH');
+      // Merge server response, but keep our title if the payload lacks it
+      setSessions((prev) => prev.map((s) => (
+        s.id === sid ? { ...s, ...(updated || {}), title: updated?.title ?? trimmed } : s
+      )));
+      // A manually renamed session should never auto-title from the first prompt
+      freshSids.current.delete(sid);
+      setEditingSid(null);
+      setEditTitle('');
+    } catch (err) {
+      // rollback on failure, keep the input open so the user can retry
+      setSessions((prev) => prev.map((s) => (s.id === sid ? { ...s, title: original } : s)));
+      setEditError(err.message || 'Rename failed');
+    } finally {
+      setSavingEdit(false);
+    }
+  }, [user, editingSid, savingEdit, editTitle, sessions]);
 
   /* ── quick navigation ── */
   const navigateAfter = (action) => {
@@ -689,37 +827,96 @@ export default function FloatingAssistant({ onNavigate }) {
         const isActive = s.id === activeSid;
         const isHovered = hoveredSid === s.id;
         const isConfirming = confirmDeleteSid === s.id;
+        const isEditing = editingSid === s.id;
         return (
           <div
             key={s.id}
-            className={`asst-session-row ${isActive ? 'active' : ''}`}
+            className={`asst-session-row ${isActive ? 'active' : ''} ${isEditing ? 'editing' : ''}`}
             onMouseEnter={() => setHoveredSid(s.id)}
             onMouseLeave={() => setHoveredSid(null)}
-            onClick={() => !isConfirming && handleSwitchSession(s.id)}
+            onClick={() => {
+              if (isConfirming || isEditing) return;
+              handleSwitchSession(s.id);
+            }}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !isConfirming) handleSwitchSession(s.id); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !isConfirming && !isEditing) handleSwitchSession(s.id);
+            }}
           >
             <div className="asst-session-icon">
               <i className={`fa-solid ${isActive ? 'fa-comment-dots' : 'fa-comment'}`} />
             </div>
+
             <div className="asst-session-text">
-              <div className="asst-session-title">{s.title || 'Untitled'}</div>
-              <div className="asst-session-date">{sessionDate(s.updated_at)}</div>
+              {isEditing ? (
+                <>
+                  <input
+                    ref={editInputRef}
+                    className="asst-session-edit-input"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      e.stopPropagation();
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveEditing();
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cancelEditing();
+                      }
+                    }}
+                    onBlur={() => {
+                      // Skip the blur that follows an Escape
+                      if (!cancelEditRef.current) saveEditing();
+                    }}
+                    disabled={savingEdit}
+                    maxLength={120}
+                    aria-label="Rename chat"
+                    placeholder="Chat title"
+                  />
+                  <div className="asst-session-edit-hint">
+                    {editError
+                      ? <span className="asst-session-edit-error"><i className="fa-solid fa-triangle-exclamation" /> {editError}</span>
+                      : savingEdit
+                        ? <span><i className="fa-solid fa-spinner fa-spin" /> Saving…</span>
+                        : <span>Enter to save · Esc to cancel</span>}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="asst-session-title">{s.title || 'Untitled'}</div>
+                  <div className="asst-session-date">{sessionDate(s.updated_at)}</div>
+                </>
+              )}
             </div>
 
-            {!isConfirming && (isHovered || isActive) && (
-              <button
-                className="asst-session-del"
-                onClick={(e) => { e.stopPropagation(); setConfirmDeleteSid(s.id); }}
-                title="Delete chat"
-                aria-label="Delete chat"
-              >
-                <i className="fa-solid fa-trash" />
-              </button>
+            {!isEditing && !isConfirming && (isHovered || isActive) && (
+              <div className="asst-session-actions">
+                <button
+                  className="asst-session-btn asst-session-edit"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => startEditing(s, e)}
+                  title="Rename chat"
+                  aria-label={`Rename ${s.title || 'Untitled'}`}
+                >
+                  <i className="fa-solid fa-pen" />
+                </button>
+                <button
+                  className="asst-session-btn asst-session-del"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); setConfirmDeleteSid(s.id); }}
+                  title="Delete chat"
+                  aria-label={`Delete ${s.title || 'Untitled'}`}
+                >
+                  <i className="fa-solid fa-trash" />
+                </button>
+              </div>
             )}
 
-            {isConfirming && (
+            {isConfirming && !isEditing && (
               <div className="asst-session-confirm" onClick={(e) => e.stopPropagation()}>
                 <button className="asst-confirm-yes" onClick={() => handleDeleteSession(s.id)}>Delete</button>
                 <button className="asst-confirm-no" onClick={() => setConfirmDeleteSid(null)}>Cancel</button>
@@ -732,12 +929,11 @@ export default function FloatingAssistant({ onNavigate }) {
   );
 
   /* ══════════════════════════════════════════════════════════════════════ */
-  /* Shared: chat body (messages/humanize + attachments + composer)         */
+  /* Shared: chat body                                                      */
   /* ══════════════════════════════════════════════════════════════════════ */
   const renderChatBody = () => (
     <>
       {humanize ? (
-        /* ── Humanize mode ── */
         <div className="asst-body asst-human-body">
           <div className="asst-human-frame">
             <img
@@ -795,7 +991,6 @@ export default function FloatingAssistant({ onNavigate }) {
           </div>
         </div>
       ) : (
-        /* ── Standard text chat ── */
         <div className="asst-body">
           <div className="asst-msgs" ref={scrollBoxRef} onScroll={handleScroll}>
             <div className="asst-msgs-inner">
@@ -901,7 +1096,6 @@ export default function FloatingAssistant({ onNavigate }) {
         </div>
       )}
 
-      {/* Attachment chips */}
       {user && attachments.length > 0 && (
         <div className="asst-attach-bar">
           <div className="asst-attach-inner">
@@ -924,7 +1118,6 @@ export default function FloatingAssistant({ onNavigate }) {
         </div>
       )}
 
-      {/* Composer */}
       <div className="asst-composer">
         <div className="asst-composer-inner">
           {user && (
@@ -1002,7 +1195,7 @@ export default function FloatingAssistant({ onNavigate }) {
       {/* ── Chat window ── */}
       {isOpen && (
         <div
-          className={`asst-window ${isFullscreen ? 'asst-fullscreen' : ''}`}
+          className={`asst-window ${isDark ? 'asst-dark' : ''} ${isFullscreen ? 'asst-fullscreen' : ''}`}
           role="dialog"
           aria-label="Assistant"
         >
@@ -1030,7 +1223,6 @@ export default function FloatingAssistant({ onNavigate }) {
                 <i className="fa-solid fa-plus" />
               </button>
 
-              {/* History / sidebar toggle */}
               <button
                 className={`asst-hbtn ${
                   (isFullscreen ? sidebarOpen : showSessions) ? 'asst-hbtn-active' : ''
@@ -1071,7 +1263,6 @@ export default function FloatingAssistant({ onNavigate }) {
                 <i className={`fa-solid ${showMenu ? 'fa-xmark' : 'fa-gear'}`} />
               </button>
 
-              {/* Fullscreen toggle */}
               <button
                 className={`asst-hbtn asst-hbtn-fullscreen ${isFullscreen ? 'asst-hbtn-active' : ''}`}
                 onClick={toggleFullscreen}
@@ -1095,6 +1286,26 @@ export default function FloatingAssistant({ onNavigate }) {
             {/* ═══ Settings dropdown ═══ */}
             {showMenu && (
               <div className="asst-menu" ref={menuRef}>
+                <div className="asst-menu-heading">Appearance</div>
+
+                <div className="asst-theme-control" role="radiogroup" aria-label="Theme">
+                  {THEME_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      className={`asst-theme-btn ${themeMode === opt.value ? 'active' : ''}`}
+                      onClick={() => setThemeMode(opt.value)}
+                      title={`${opt.label} theme`}
+                      aria-label={`${opt.label} theme`}
+                      aria-pressed={themeMode === opt.value}
+                      role="radio"
+                    >
+                      <i className={`fa-solid ${opt.icon}`} />
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="asst-menu-divider" />
                 <div className="asst-menu-heading">Preferences</div>
 
                 <button
@@ -1152,7 +1363,6 @@ export default function FloatingAssistant({ onNavigate }) {
 
           {/* ═══ Body ═══ */}
           {isFullscreen ? (
-            /* ── Fullscreen layout: sidebar + main ── */
             <div className="asst-fs-body">
               {sidebarOpen && (
                 <aside className="asst-sidebar" aria-label="Chat history">
@@ -1183,12 +1393,10 @@ export default function FloatingAssistant({ onNavigate }) {
               </main>
             </div>
           ) : showSessions ? (
-            /* ── Floating sessions panel ── */
             <div className="asst-body asst-sessions">
               {renderSessionRows()}
             </div>
           ) : (
-            /* ── Floating chat view ── */
             renderChatBody()
           )}
         </div>
@@ -1232,8 +1440,6 @@ export default function FloatingAssistant({ onNavigate }) {
           z-index: 1000; overflow: hidden;
           animation: assistantSlideUp 0.22s cubic-bezier(0.16,1,0.3,1);
         }
-
-        /* ---------- fullscreen ---------- */
         .asst-window.asst-fullscreen {
           top: 0; left: 0; right: 0; bottom: 0;
           width: 100vw; height: 100vh;
@@ -1268,7 +1474,7 @@ export default function FloatingAssistant({ onNavigate }) {
           background: #fee2e2; color: #ef4444;
         }
 
-        /* ---------- fullscreen layout (sidebar + main) ---------- */
+        /* ---------- fullscreen layout ---------- */
         .asst-fs-body {
           flex: 1;
           min-height: 0;
@@ -1345,7 +1551,6 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-sidebar-list::-webkit-scrollbar { width: 6px; }
         .asst-sidebar-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
-        /* Session rows inside the sidebar (compact) */
         .asst-sidebar .asst-session-row {
           border-radius: 9px;
           border-bottom: none;
@@ -1386,7 +1591,6 @@ export default function FloatingAssistant({ onNavigate }) {
           display: flex; flex-direction: column;
           gap: 24px;
         }
-
         .asst-window.asst-fullscreen .asst-bubble-bot {
           background: transparent;
           padding: 4px 0;
@@ -1408,8 +1612,6 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-window.asst-fullscreen .asst-row {
           gap: 12px;
         }
-
-        /* Fullscreen welcome */
         .asst-window.asst-fullscreen .asst-welcome {
           gap: 16px; padding: 40px 20px;
         }
@@ -1429,7 +1631,6 @@ export default function FloatingAssistant({ onNavigate }) {
           padding: 9px 14px; font-size: 13px;
         }
 
-        /* Fullscreen composer pill */
         .asst-window.asst-fullscreen .asst-composer {
           padding: 16px 24px 24px;
           border-top: none;
@@ -1474,7 +1675,6 @@ export default function FloatingAssistant({ onNavigate }) {
           width: 36px; height: 36px;
         }
 
-        /* Fullscreen attachments bar centered */
         .asst-window.asst-fullscreen .asst-attach-bar {
           padding: 8px 24px;
           justify-content: center;
@@ -1489,12 +1689,13 @@ export default function FloatingAssistant({ onNavigate }) {
         }
         .asst-attach-inner { display: contents; }
 
-        /* ---------- fullscreen humanize (constrained to column) ---------- */
         .asst-window.asst-fullscreen .asst-human-body {
           padding: 24px;
           align-items: center;
           justify-content: center;
-          background: black
+          background:
+            radial-gradient(circle at 50% 40%, rgba(0,206,209,0.06), transparent 60%),
+            #0a1020;
         }
         .asst-window.asst-fullscreen .asst-human-frame {
           flex: none;
@@ -1508,19 +1709,10 @@ export default function FloatingAssistant({ onNavigate }) {
           border: 1px solid rgba(255,255,255,0.08);
           isolation: isolate;
         }
-        /* Give the fullscreen frame a bit of vertical breathing room on wide screens */
-        @media (min-height: 720px) {
-          .asst-window.asst-fullscreen .asst-human-frame {
-            max-height: calc(100% - 0px);
-          }
-        }
 
-        /* Hide fullscreen toggle on mobile (already full-bleed) */
         @media (max-width: 520px) {
           .asst-hbtn-fullscreen { display: none; }
         }
-
-        /* ---------- floating window on small screens ---------- */
         @media (max-width: 520px) {
           .asst-window {
             top: 0; left: 0; right: 0; bottom: 0;
@@ -1580,7 +1772,7 @@ export default function FloatingAssistant({ onNavigate }) {
         /* ---------- settings menu ---------- */
         .asst-menu {
           position: absolute; top: calc(100% + 8px); right: 12px;
-          width: 250px; z-index: 8;
+          width: 260px; z-index: 8;
           background: #fff; border-radius: 14px;
           border: 1px solid #e2e8f0;
           box-shadow: 0 16px 40px rgba(15,23,42,0.18);
@@ -1591,6 +1783,9 @@ export default function FloatingAssistant({ onNavigate }) {
           font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em;
           text-transform: uppercase; color: #94a3b8;
           padding: 8px 10px 6px;
+        }
+        .asst-menu-divider {
+          height: 1px; background: #f1f5f9; margin: 4px 6px 2px;
         }
         .asst-menu-row {
           width: 100%; display: flex; align-items: center; gap: 10px;
@@ -1623,6 +1818,28 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-switch.on { background: #0891b2; }
         .asst-switch.on span { transform: translateX(15px); }
 
+        /* ---------- theme segmented control ---------- */
+        .asst-theme-control {
+          display: flex; gap: 3px; padding: 3px;
+          background: #f1f5f9; border-radius: 11px;
+          margin: 2px 6px 6px;
+        }
+        .asst-theme-btn {
+          flex: 1; display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 4px;
+          padding: 8px 4px; border-radius: 8px; border: none;
+          background: transparent; color: #64748b;
+          font-size: 10.5px; font-weight: 600; cursor: pointer;
+          transition: all 0.14s ease;
+          font-family: inherit;
+        }
+        .asst-theme-btn i { font-size: 12px; }
+        .asst-theme-btn:hover { color: #334155; }
+        .asst-theme-btn.active {
+          background: #fff; color: #0891b2;
+          box-shadow: 0 1px 3px rgba(15,23,42,0.12);
+        }
+
         /* ---------- body ---------- */
         .asst-body { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; background: #fff; }
         .asst-msgs {
@@ -1637,7 +1854,7 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-msgs::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .asst-msgs::-webkit-scrollbar-track { background: transparent; }
 
-        /* ---------- humanize mode (floating: full-bleed frame) ---------- */
+        /* ---------- humanize mode ---------- */
         .asst-human-body {
           display: flex;
           flex-direction: column;
@@ -1691,7 +1908,6 @@ export default function FloatingAssistant({ onNavigate }) {
           box-shadow: 0 4px 14px rgba(2,6,23,0.28);
           backdrop-filter: blur(6px);
         }
-        .asst-human-status-speaking { background: rgba(224,247,250,0.95); color: #0891b2; }
         .asst-human-status-error { background: rgba(254,242,242,0.96); color: #b91c1c; }
         .asst-human-status-hint {
           background: rgba(254,243,199,0.96); color: #b45309;
@@ -1751,7 +1967,7 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-subtitle::-webkit-scrollbar { width: 5px; }
         .asst-subtitle::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.28); border-radius: 3px; }
 
-        /* ---------- welcome (text mode) ---------- */
+        /* ---------- welcome ---------- */
         .asst-welcome {
           flex: 1; display: flex; flex-direction: column;
           align-items: center; justify-content: center;
@@ -1843,7 +2059,6 @@ export default function FloatingAssistant({ onNavigate }) {
           animation: asstBlink 1s infinite ease-in-out;
         }
 
-        /* ---------- scroll to bottom ---------- */
         .asst-scroll-btn {
           position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
           width: 32px; height: 32px; border-radius: 50%;
@@ -1856,7 +2071,7 @@ export default function FloatingAssistant({ onNavigate }) {
         }
         .asst-scroll-btn:hover { background: #f0feff; }
 
-        /* ---------- sessions (floating panel) ---------- */
+        /* ---------- sessions ---------- */
         .asst-sessions { overflow-y: auto; background: #f8fafc; }
         .asst-sessions::-webkit-scrollbar { width: 6px; }
         .asst-sessions::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
@@ -1869,6 +2084,7 @@ export default function FloatingAssistant({ onNavigate }) {
         }
         .asst-session-row:hover { background: #f1f5f9; }
         .asst-session-row.active { background: #e6fffd; }
+        .asst-session-row.editing { cursor: default; background: #f8fafc; }
         .asst-session-icon {
           width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
           background: #e2e8f0; color: #64748b;
@@ -1887,13 +2103,45 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-session-row.active .asst-session-title { font-weight: 600; }
         .asst-session-date { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
-        .asst-session-del {
+        /* inline rename */
+        .asst-session-edit-input {
+          width: 100%;
+          padding: 5px 8px;
+          border-radius: 7px;
+          border: 1px solid #0891b2;
+          background: #fff;
+          color: #1e293b;
+          font-size: 12.5px;
+          font-family: inherit;
+          font-weight: 500;
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(8,145,178,0.14);
+          transition: border-color 0.14s ease, box-shadow 0.14s ease;
+        }
+        .asst-session-edit-input:disabled { opacity: 0.7; }
+        .asst-session-edit-hint {
+          display: flex; align-items: center; gap: 4px;
+          font-size: 10.5px; color: #94a3b8; margin-top: 3px;
+          line-height: 1.2;
+        }
+        .asst-session-edit-error { color: #ef4444; display: inline-flex; align-items: center; gap: 4px; }
+
+        /* row action buttons */
+        .asst-session-actions {
+          display: flex; gap: 3px; flex-shrink: 0;
+          animation: asstPop 0.14s ease-out;
+        }
+        .asst-session-btn {
           width: 26px; height: 26px; border-radius: 7px; border: none;
-          background: #fee2e2; color: #ef4444; cursor: pointer;
+          cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           font-size: 11px; flex-shrink: 0;
-          transition: background 0.12s ease;
+          transition: background 0.12s ease, transform 0.12s ease;
         }
+        .asst-session-btn:active { transform: scale(0.92); }
+        .asst-session-edit { background: #e0f7fa; color: #0891b2; }
+        .asst-session-edit:hover { background: #b2ebf2; }
+        .asst-session-del { background: #fee2e2; color: #ef4444; }
         .asst-session-del:hover { background: #fecaca; }
 
         .asst-session-confirm { display: flex; gap: 4px; flex-shrink: 0; animation: asstPop 0.14s ease-out; }
@@ -2040,6 +2288,198 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-md a { color: #0891b2; text-decoration: underline; }
         .asst-window.asst-fullscreen .asst-md { font-size: 14px; line-height: 1.7; }
         .asst-window.asst-fullscreen .asst-md p { margin: 8px 0; }
+
+        /* ═══════════════ DARK THEME OVERRIDES ═══════════════ */
+        .asst-window.asst-dark {
+          background: #0f172a;
+          border-color: #1e293b;
+          color-scheme: dark;
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-header {
+          background: rgba(15,23,42,0.94);
+          border-bottom-color: #1e293b;
+          color: #f1f5f9;
+        }
+        .asst-window.asst-dark .asst-brand-title { color: inherit; }
+        .asst-window.asst-dark.asst-fullscreen .asst-brand-title { color: #f1f5f9; }
+        .asst-window.asst-dark.asst-fullscreen .asst-brand-sub { color: #94a3b8; opacity: 1; }
+        .asst-window.asst-dark.asst-fullscreen .asst-hbtn {
+          background: #1e293b; color: #cbd5e1;
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-hbtn:hover { background: #334155; }
+        .asst-window.asst-dark.asst-fullscreen .asst-hbtn-active {
+          background: #0c2731; color: #22d3ee;
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-hbtn-danger:hover {
+          background: #7f1d1d; color: #fecaca;
+        }
+        .asst-window.asst-dark .asst-fs-body { background: #0f172a; }
+
+        .asst-window.asst-dark .asst-menu {
+          background: #1e293b;
+          border-color: #334155;
+          box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+          color: #e2e8f0;
+        }
+        .asst-window.asst-dark .asst-menu-heading { color: #64748b; }
+        .asst-window.asst-dark .asst-menu-divider { background: #334155; }
+        .asst-window.asst-dark .asst-menu-row { color: #cbd5e1; }
+        .asst-window.asst-dark .asst-menu-row:hover { background: #334155; }
+        .asst-window.asst-dark .asst-menu-row-icon { background: #0c2731; color: #22d3ee; }
+        .asst-window.asst-dark .asst-menu-row-sub { color: #64748b; }
+        .asst-window.asst-dark .asst-switch { background: #475569; }
+        .asst-window.asst-dark .asst-switch.on { background: #06b6d4; }
+
+        .asst-window.asst-dark .asst-theme-control { background: #0f172a; }
+        .asst-window.asst-dark .asst-theme-btn { color: #64748b; }
+        .asst-window.asst-dark .asst-theme-btn:hover { color: #cbd5e1; }
+        .asst-window.asst-dark .asst-theme-btn.active {
+          background: #334155; color: #22d3ee;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.45);
+        }
+
+        .asst-window.asst-dark .asst-body { background: #0f172a; }
+        .asst-window.asst-dark .asst-msgs::-webkit-scrollbar-thumb { background: #334155; }
+        .asst-window.asst-dark .asst-bubble-bot {
+          background: #1e293b; color: #e2e8f0;
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-bubble-bot {
+          background: transparent;
+        }
+        .asst-window.asst-dark .asst-bubble-error {
+          background: #450a0a; color: #fecaca; border-color: #7f1d1d;
+        }
+        .asst-window.asst-dark .asst-time { opacity: 0.55; }
+        .asst-window.asst-dark .asst-meta-btn { color: #64748b; }
+        .asst-window.asst-dark .asst-meta-btn:hover { background: rgba(148,163,184,0.18); color: #cbd5e1; }
+        .asst-window.asst-dark .asst-meta-btn.active { color: #22d3ee; background: rgba(34,211,238,0.14); }
+        .asst-window.asst-dark .asst-typing { background: #1e293b; }
+        .asst-window.asst-dark .asst-dot { background: #64748b; }
+        .asst-window.asst-dark .asst-avatar-sm {
+          background: #0c2731; border-color: #1e293b;
+        }
+
+        .asst-window.asst-dark .asst-composer {
+          background: #0f172a; border-top-color: #1e293b;
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-composer {
+          background: linear-gradient(to top, #0f172a 55%, rgba(15,23,42,0));
+        }
+        .asst-window.asst-dark .asst-composer-inner {
+          background: #1e293b; border-color: #334155;
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-composer-inner {
+          background: #1e293b; border-color: #334155;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-composer-inner:focus-within {
+          border-color: #22d3ee;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.4), 0 0 0 3px rgba(34,211,238,0.18);
+        }
+        .asst-window.asst-dark .asst-textarea {
+          background: #1e293b; border-color: #334155; color: #e2e8f0;
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-textarea { background: transparent; border: none; }
+        .asst-window.asst-dark .asst-textarea:focus {
+          border-color: #22d3ee; background: #0f172a;
+          box-shadow: 0 0 0 3px rgba(34,211,238,0.18);
+        }
+        .asst-window.asst-dark.asst-fullscreen .asst-textarea:focus { background: transparent; box-shadow: none; }
+        .asst-window.asst-dark .asst-textarea::placeholder { color: #64748b; }
+        .asst-window.asst-dark .asst-icon-btn { background: #1e293b; color: #94a3b8; }
+        .asst-window.asst-dark .asst-icon-btn:hover:not(:disabled) { background: #334155; color: #e2e8f0; }
+        .asst-window.asst-dark.asst-fullscreen .asst-icon-btn { background: transparent; }
+        .asst-window.asst-dark.asst-fullscreen .asst-icon-btn:hover:not(:disabled) { background: #334155; }
+        .asst-window.asst-dark .asst-icon-btn-rec { background: #450a0a; color: #f87171; }
+        .asst-window.asst-dark .asst-send-btn {
+          background: #334155; color: #64748b;
+        }
+        .asst-window.asst-dark .asst-send-btn:not(:disabled) {
+          background: linear-gradient(135deg, #06b6d4, #0e7490);
+          box-shadow: 0 3px 10px rgba(6,182,212,0.3);
+        }
+
+        .asst-window.asst-dark .asst-sessions { background: #0f172a; }
+        .asst-window.asst-dark .asst-sessions::-webkit-scrollbar-thumb { background: #334155; }
+        .asst-window.asst-dark .asst-session-row {
+          background: #0f172a; border-bottom-color: #1e293b;
+        }
+        .asst-window.asst-dark .asst-session-row:hover { background: #1e293b; }
+        .asst-window.asst-dark .asst-session-row.active { background: #0c2731; }
+        .asst-window.asst-dark .asst-session-row.editing { background: #0b1220; }
+        .asst-window.asst-dark .asst-session-icon { background: #1e293b; color: #94a3b8; }
+        .asst-window.asst-dark .asst-session-title { color: #e2e8f0; }
+        .asst-window.asst-dark .asst-session-date { color: #64748b; }
+        .asst-window.asst-dark .asst-session-edit { background: #0c2731; color: #22d3ee; }
+        .asst-window.asst-dark .asst-session-edit:hover { background: #164e63; }
+        .asst-window.asst-dark .asst-session-del { background: #450a0a; color: #f87171; }
+        .asst-window.asst-dark .asst-session-del:hover { background: #7f1d1d; }
+        .asst-window.asst-dark .asst-session-edit-input {
+          background: #0f172a; border-color: #22d3ee; color: #e2e8f0;
+          box-shadow: 0 0 0 3px rgba(34,211,238,0.18);
+        }
+        .asst-window.asst-dark .asst-session-edit-hint { color: #64748b; }
+        .asst-window.asst-dark .asst-session-edit-error { color: #f87171; }
+        .asst-window.asst-dark .asst-confirm-yes { background: #dc2626; }
+        .asst-window.asst-dark .asst-confirm-yes:hover { background: #b91c1c; }
+        .asst-window.asst-dark .asst-confirm-no { background: #1e293b; color: #cbd5e1; }
+        .asst-window.asst-dark .asst-confirm-no:hover { background: #334155; }
+
+        .asst-window.asst-dark .asst-sidebar {
+          background: #0b1220; border-right-color: #1e293b;
+        }
+        .asst-window.asst-dark .asst-sidebar-title { color: #64748b; }
+        .asst-window.asst-dark .asst-sidebar-collapse { color: #64748b; }
+        .asst-window.asst-dark .asst-sidebar-collapse:hover { background: #1e293b; color: #cbd5e1; }
+        .asst-window.asst-dark .asst-sidebar-new {
+          background: #1e293b; border-color: #334155; color: #22d3ee;
+        }
+        .asst-window.asst-dark .asst-sidebar-new:hover {
+          background: #0c2731; border-color: #22d3ee;
+        }
+        .asst-window.asst-dark .asst-sidebar .asst-session-row { background: transparent; }
+        .asst-window.asst-dark .asst-sidebar .asst-session-row:hover { background: #1e293b; }
+        .asst-window.asst-dark .asst-sidebar .asst-session-row.active {
+          background: #0c2731;
+          box-shadow: inset 0 0 0 1px rgba(34,211,238,0.24);
+        }
+        .asst-window.asst-dark .asst-sidebar .asst-session-icon { background: #1e293b; color: #94a3b8; }
+        .asst-window.asst-dark .asst-sidebar-list::-webkit-scrollbar-thumb { background: #334155; }
+
+        .asst-window.asst-dark .asst-welcome-title { color: #f1f5f9; }
+        .asst-window.asst-dark .asst-welcome-sub { color: #94a3b8; }
+        .asst-window.asst-dark .asst-chip {
+          background: #1e293b; border-color: #334155; color: #cbd5e1;
+        }
+        .asst-window.asst-dark .asst-chip:hover:not(:disabled) {
+          background: #0c2731; border-color: #22d3ee; color: #22d3ee;
+        }
+
+        .asst-window.asst-dark .asst-empty-icon { background: #0c2731; color: #22d3ee; }
+        .asst-window.asst-dark .asst-empty-title { color: #e2e8f0; }
+        .asst-window.asst-dark .asst-empty-sub { color: #64748b; }
+        .asst-window.asst-dark .asst-skeleton-row {
+          background: #0f172a; border-bottom-color: #1e293b;
+        }
+        .asst-window.asst-dark .asst-skeleton-avatar,
+        .asst-window.asst-dark .asst-skeleton-line {
+          background: linear-gradient(90deg, #1e293b 25%, #334155 37%, #1e293b 63%);
+          background-size: 400% 100%;
+        }
+
+        .asst-window.asst-dark .asst-attach-bar {
+          background: #0f172a; border-top-color: #1e293b;
+        }
+        .asst-window.asst-dark .asst-attach-chip { background: #0c2731; color: #22d3ee; }
+        .asst-window.asst-dark .asst-attach-x { color: #22d3ee; }
+
+        .asst-window.asst-dark .asst-scroll-btn {
+          background: #1e293b; border-color: #334155; color: #22d3ee;
+        }
+        .asst-window.asst-dark .asst-scroll-btn:hover { background: #334155; }
+
+        .asst-window.asst-dark .asst-md hr { border-top-color: #334155; }
+        .asst-window.asst-dark .asst-md a { color: #22d3ee; }
 
         /* ---------- animations ---------- */
         @keyframes assistantSlideUp {
