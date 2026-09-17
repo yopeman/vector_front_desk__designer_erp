@@ -938,7 +938,7 @@ export default function FloatingAssistant({ onNavigate }) {
           <div className="asst-human-frame">
             <img
               className={`asst-human-gif ${humanTalking ? 'talking' : ''}`}
-              src={humanTalking ? '/talk-ai-1.gif' : '/talk-ai-2.gif'}
+              src={sending ? '/talk-ai-3.gif' : speakingId ? '/talk-ai-1.gif' : '/talk-ai-2.gif'}
               alt=""
               draggable={false}
             />
