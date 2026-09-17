@@ -342,7 +342,7 @@ export default function FloatingAssistant({ onNavigate }) {
 
   /* ── load sessions list ── */
   const loadSessions = useCallback(async () => {
-    if (!user || sessionsFetched.current) return;
+    if (!user) return;
     setLoadingSessions(true);
     try {
       const list = await callAI(`/users/${user.id}/sessions`);
@@ -355,7 +355,7 @@ export default function FloatingAssistant({ onNavigate }) {
     } finally {
       setLoadingSessions(false);
     }
-  }, [user]);
+  }, [user, sending]);
 
   /* ── first open ── */
   useEffect(() => {
