@@ -420,6 +420,42 @@ def ask_user(question: str) -> str:
     return interrupt({"type": "ask_user", "question": question})
 
 
+@tool
+def generate_file(
+    file_type: str,
+    content: str,
+    filename: str = "",
+) -> str:
+    """Generate a downloadable file and return its download URL.
+
+    Args:
+        file_type: the output format. Supported: csv, json, txt, markdown, md,
+            html, xlsx, pdf, docx.
+        content: the file content. For csv/xlsx use a JSON string of a list of
+            objects (each object is a row). For json use a JSON string. For
+            txt/markdown/html/pdf/docx use plain text or markup.
+        filename: optional base name for the file (without extension). A unique
+            ID is appended automatically.
+
+    Returns a download URL the user can click to save the file.
+    """
+    from app.file_generator import generate_file as _generate
+    from app.config import settings
+
+    try:
+        result = _generate(file_type, content, filename)
+    except ValueError as exc:
+        return str(exc)
+    except Exception as exc:  # noqa: BLE001
+        return f"File generation failed: {exc}"
+    url = f"{settings.backend_url}/api/v1/download/{result['filename']}"
+    return (
+        f"File generated successfully ({result['mime_type']}, "
+        f"{result['size']:,} bytes).\n"
+        f"Download URL: {url}"
+    )
+
+
 def all_tools() -> list:
     return [
         get_schema,
@@ -430,4 +466,5 @@ def all_tools() -> list:
         delete_record,
         search_attachments,
         ask_user,
+        generate_file,
     ]

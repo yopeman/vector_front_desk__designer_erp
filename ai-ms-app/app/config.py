@@ -13,6 +13,8 @@ class Settings:
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "all-minilm:22m")
     chat_history_limit: int = int(os.getenv("CHAT_HISTORY_LIMIT", "20"))
     rag_match_count: int = int(os.getenv("RAG_MATCH_COUNT", "3"))
+    backend_url: str = os.getenv("BACKEND_URL", "http://localhost:8000")
+    generated_files_dir: str = os.getenv("GENERATED_FILES_DIR", "/tmp/yope_generated")
 
 
 settings = Settings()
