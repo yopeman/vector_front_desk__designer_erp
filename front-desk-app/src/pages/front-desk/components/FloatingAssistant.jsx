@@ -205,6 +205,7 @@ export default function FloatingAssistant({ onNavigate }) {
   const [autoSpeak, setAutoSpeak]         = useState(true);
   const [speakingId, setSpeakingId]       = useState(null);
   const [showAvatar, setShowAvatar]       = useState(true);
+  const [speechError, setSpeechError]     = useState(null);
 
   // ── humanize mode ──
   const [humanize, setHumanize]           = useState(false);
@@ -646,15 +647,38 @@ export default function FloatingAssistant({ onNavigate }) {
     if (!speechSupported) return;
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const rec = new SR();
-    rec.continuous = false;
+    rec.continuous = true;
     rec.interimResults = true;
     rec.lang = (navigator.language || 'en-US').slice(0, 5);
+
+    let finalTranscript = '';
+
     rec.onresult = (e) => {
-      const transcript = Array.from(e.results).map((r) => r[0].transcript).join('');
-      setInput(transcript.trim());
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalTranscript += t;
+        else interim += t;
+      }
+      setInput((finalTranscript + interim).trim());
     };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+
+    rec.onend = () => {
+      setListening(false);
+      finalTranscript = '';
+    };
+
+    rec.onerror = (e) => {
+      if (e.error === 'no-speech' || e.error === 'aborted') return;
+      console.warn('SpeechRecognition error:', e.error);
+      setListening(false);
+      setSpeechError(e.error === 'network'
+        ? 'Voice recognition needs internet access — type your message instead.'
+        : e.error === 'not-allowed'
+          ? 'Microphone permission was blocked — allow it in your browser settings.'
+          : 'Voice recognition failed — type your message instead.');
+    };
+
     recognitionRef.current = rec;
     return () => {
       try { rec.abort(); } catch { /* noop */ }
@@ -673,11 +697,13 @@ export default function FloatingAssistant({ onNavigate }) {
     window.speechSynthesis?.cancel();
     speakingIdRef.current = null;
     setSpeakingId(null);
+    setSpeechError(null);
     try {
       setInput('');
       rec.start();
       setListening(true);
-    } catch {
+    } catch (err) {
+      console.warn('SpeechRecognition start failed:', err);
       setListening(false);
     }
   }, [listening]);
@@ -686,6 +712,8 @@ export default function FloatingAssistant({ onNavigate }) {
   useEffect(() => {
     if (!isOpen) {
       setListening(false);
+      console.log(2);
+      
       try { recognitionRef.current?.abort(); } catch { /* noop */ }
       window.speechSynthesis?.cancel();
       speakingIdRef.current = null;
@@ -733,7 +761,7 @@ export default function FloatingAssistant({ onNavigate }) {
     setMessages((prev) => [...prev, { id: Date.now(), role: 'user', text: trimmed, time: nowTime() }]);
     setInput('');
     setSending(true);
-    if (listening) { try { recognitionRef.current?.stop(); } catch { /* noop */ } setListening(false); }
+    if (listening) { try { recognitionRef.current?.stop(); } catch { /* noop */ } setListening(false); console.log(4); }
     window.speechSynthesis?.cancel();
     speakingIdRef.current = null;
     setSpeakingId(null);
@@ -1119,6 +1147,12 @@ export default function FloatingAssistant({ onNavigate }) {
       )}
 
       <div className="asst-composer">
+        {speechError && (
+          <div className="asst-speech-error" role="alert">
+            <i className="fa-solid fa-triangle-exclamation" />
+            {speechError}
+          </div>
+        )}
         <div className="asst-composer-inner">
           {user && (
             <>
@@ -2223,14 +2257,23 @@ export default function FloatingAssistant({ onNavigate }) {
 
         /* ---------- composer ---------- */
         .asst-composer {
-          display: flex;
-          padding: 10px 12px 12px;
+          display: flex; flex-direction: column;
+          padding: 0 12px 12px;
           border-top: 1px solid #f1f5f9;
           background: #fff; flex-shrink: 0;
         }
+        .asst-speech-error {
+          display: flex; align-items: center; gap: 7px;
+          margin: 8px 0 0; padding: 7px 10px;
+          border-radius: 9px; background: #fef3c7;
+          border: 1px solid #fde68a;
+          color: #92400e; font-size: 12px; line-height: 1.4;
+        }
+        .asst-speech-error i { color: #d97706; flex-shrink: 0; }
         .asst-composer-inner {
           display: flex; align-items: flex-end; gap: 6px;
           flex: 1; min-width: 0;
+          padding-top: 10px;
         }
         .asst-textarea {
           flex: 1; min-width: 0;
@@ -2362,6 +2405,11 @@ export default function FloatingAssistant({ onNavigate }) {
         .asst-window.asst-dark .asst-composer {
           background: #0f172a; border-top-color: #1e293b;
         }
+        .asst-window.asst-dark .asst-speech-error {
+          background: #3b2f0f; border-color: #57534e;
+          color: #fbbf24;
+        }
+        .asst-window.asst-dark .asst-speech-error i { color: #f59e0b; }
         .asst-window.asst-dark.asst-fullscreen .asst-composer {
           background: linear-gradient(to top, #0f172a 55%, rgba(15,23,42,0));
         }
