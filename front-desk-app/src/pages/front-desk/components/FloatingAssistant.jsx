@@ -753,6 +753,7 @@ export default function FloatingAssistant({ onNavigate }) {
 
     setMessages((prev) => [...prev, { id: Date.now(), role: 'user', text: trimmed, time: nowTime() }]);
     setInput('');
+    setSpeechError('');
     setSending(true);
     if (listening) { try { recognitionRef.current?.stop(); } catch { /* noop */ } setListening(false); console.log(4); }
     window.speechSynthesis?.cancel();
