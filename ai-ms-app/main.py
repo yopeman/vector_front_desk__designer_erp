@@ -21,6 +21,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/health", tags=["health"])
+def health() -> dict:
+    return {"status": "ok"}
+
+
 app.include_router(public_router, prefix="/api/v1")
 app.include_router(router, prefix="/api/v1")
 
