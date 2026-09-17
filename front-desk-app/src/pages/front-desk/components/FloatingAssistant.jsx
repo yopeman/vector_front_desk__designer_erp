@@ -915,7 +915,7 @@ export default function FloatingAssistant({ onNavigate }) {
               )}
             </div>
 
-            {!isEditing && !isConfirming && (isHovered || isActive) && (
+            {!isEditing && !isConfirming && isHovered && (
               <div className="asst-session-actions">
                 <button
                   className="asst-session-btn asst-session-edit"
