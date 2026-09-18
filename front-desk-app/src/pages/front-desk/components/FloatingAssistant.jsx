@@ -3,6 +3,10 @@ import { useAuth } from '../../../lib/auth';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import talkAI1 from '../imgs/talk-ai-1.gif';
+import talkAI2 from '../imgs/talk-ai-2.gif';
+import talkAI3 from '../imgs/talk-ai-3.gif';
+
 const AI_API = (import.meta.env.VITE_AI_API_URL || 'http://localhost:8000/api/v1').replace(/\/+$/, '');
 
 const ACCEPTED = [
@@ -960,7 +964,7 @@ export default function FloatingAssistant({ onNavigate }) {
           <div className="asst-human-frame">
             <img
               className={`asst-human-gif ${humanTalking ? 'talking' : ''}`}
-              src={sending ? '/talk-ai-3.gif' : speakingId ? '/talk-ai-1.gif' : '/talk-ai-2.gif'}
+              src={sending ? talkAI3 : speakingId ? talkAI1 : talkAI2}
               alt=""
               draggable={false}
             />
@@ -1005,7 +1009,7 @@ export default function FloatingAssistant({ onNavigate }) {
                   {showAvatar && (
                     <img
                       className="asst-welcome-mascot"
-                      src={speakingId ? '/talk-ai-1.gif' : '/talk-ai-2.gif'}
+                      src={speakingId ? talkAI1 : talkAI2}
                       alt=""
                     />
                   )}
@@ -1019,7 +1023,7 @@ export default function FloatingAssistant({ onNavigate }) {
                     <div key={msg.id} className={`asst-row ${isUser ? 'asst-row-user' : ''}`}>
                       {!isUser && showAvatar && (
                         <div className="asst-avatar-sm">
-                          <img src={speakingId === msg.id ? '/talk-ai-1.gif' : '/talk-ai-2.gif'} alt="" />
+                          <img src={speakingId === msg.id ? talkAI1 : talkAI2} alt="" />
                         </div>
                       )}
                       <div className={`asst-bubble ${isUser ? 'asst-bubble-user' : 'asst-bubble-bot'} ${msg.error ? 'asst-bubble-error' : ''}`}>
@@ -1066,7 +1070,7 @@ export default function FloatingAssistant({ onNavigate }) {
                 <div className="asst-row">
                   {showAvatar && (
                     <div className="asst-avatar-sm">
-                      <img src="/talk-ai-1.gif" alt="" />
+                      <img src={talkAI1} alt="" />
                     </div>
                   )}
                   <div className="asst-bubble asst-bubble-bot asst-typing">
