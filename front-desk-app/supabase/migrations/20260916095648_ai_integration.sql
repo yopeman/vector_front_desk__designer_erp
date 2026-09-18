@@ -44,7 +44,7 @@ create table if not exists public.ai_attachments (
 create index if not exists idx_ai_attachments_session on public.ai_attachments (session_id, created_at);
 
 -- ---------------------------------------------------------------------------
--- ai_attachment_chunks : text chunks + embeddings (embedding model: text-embedding-004, 768 dims)
+-- ai_attachment_chunks : text chunks + embeddings (embedding model: gemini-embedding-001, 768 dims)
 -- ---------------------------------------------------------------------------
 create table if not exists public.ai_attachment_chunks (
     id          uuid primary key default gen_random_uuid(),
