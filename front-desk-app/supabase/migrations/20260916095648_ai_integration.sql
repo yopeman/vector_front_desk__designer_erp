@@ -44,14 +44,14 @@ create table if not exists public.ai_attachments (
 create index if not exists idx_ai_attachments_session on public.ai_attachments (session_id, created_at);
 
 -- ---------------------------------------------------------------------------
--- ai_attachment_chunks : text chunks + embeddings (embedding model: all-minilm:22m, 384 dims)
+-- ai_attachment_chunks : text chunks + embeddings (embedding model: text-embedding-004, 768 dims)
 -- ---------------------------------------------------------------------------
 create table if not exists public.ai_attachment_chunks (
     id          uuid primary key default gen_random_uuid(),
     attachment_id uuid not null references public.ai_attachments(id) on delete cascade,
     chunk_index int not null,
     content     text not null,
-    embedding   vector(384) not null,
+    embedding   vector(768) not null,
     created_at  timestamptz not null default now()
 );
 
@@ -62,7 +62,7 @@ create index if not exists idx_ai_attachment_chunks_attachment on public.ai_atta
 -- ---------------------------------------------------------------------------
 create or replace function public.match_ai_attachments(
     session_uuid uuid,
-    query_embedding vector(384),
+    query_embedding vector(768),
     match_count int default 5
 )
 returns table (

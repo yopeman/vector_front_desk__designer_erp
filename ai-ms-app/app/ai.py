@@ -7,8 +7,7 @@ from functools import lru_cache
 from fastapi import HTTPException, status
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_groq import ChatGroq
-from langchain_ollama import OllamaEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
@@ -31,24 +30,26 @@ SYSTEM_PROMPT = (
 
 
 @lru_cache
-def _embedder() -> OllamaEmbeddings:
-    return OllamaEmbeddings(
-        model=settings.embedding_model, base_url=settings.ollama_base_url
+def _embedder() -> GoogleGenerativeAIEmbeddings:
+    return GoogleGenerativeAIEmbeddings(
+        model=settings.google_embedding_model,
+        google_api_key=settings.google_api_key,
+        output_dimensionality=768,
     )
 
 
 @lru_cache
-def _chat_model() -> ChatGroq:
-    return ChatGroq(
-        model=settings.groq_model,
-        api_key=settings.groq_api_key,
+def _chat_model() -> ChatGoogleGenerativeAI:
+    return ChatGoogleGenerativeAI(
+        model=settings.google_chat_model,
+        google_api_key=settings.google_api_key,
         temperature=0.2,
-        max_tokens=1024,
+        max_output_tokens=1024,
     )
 
 
 def embedding_vector(text: str) -> str:
-    """Return the 384-dim embedding of `text` as a Postgres vector literal string."""
+    """Return the 768-dim embedding of `text` as a Postgres vector literal string."""
     embedding = embed_texts([text])[0]
     return "[" + ",".join(str(round(x, 6)) for x in embedding) + "]"
 
@@ -105,10 +106,26 @@ def build_messages(
     return messages
 
 
+def content_text(content) -> str:
+    """Extract plain text from a chat message's content (str or content blocks)."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and block.get("type") in ("text", None):
+                parts.append(block.get("text", "") or "")
+        if parts:
+            return "".join(parts).strip()
+    return str(content)
+
+
 def generate_reply(history: list[dict], context: str, reference: str = "") -> str:
     messages = build_messages(history, context, reference)
     response = _chat_model().invoke(messages)
-    return response.content if isinstance(response.content, str) else str(response.content)
+    return content_text(response.content)
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +258,7 @@ def _agent_result(session_id: str, thread: str, result: dict) -> dict:
     last = result["messages"][-1] if result.get("messages") else None
     if last is None:
         return {"reply": "I could not produce a reply.", "interrupted": False}
-    reply = last.content if isinstance(last.content, str) else str(last.content)
+    reply = content_text(last.content)
     return {"reply": reply, "interrupted": False}
 
 

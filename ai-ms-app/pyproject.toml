@@ -6,10 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "langchain",
-    "langchain-groq",
     "langchain-core",
-    "langchain-ollama",
     "langchain-community",
+    "langchain-google-genai",
     "langgraph",
     "python-dotenv",
     "uvicorn",
