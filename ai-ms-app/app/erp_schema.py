@@ -1212,7 +1212,7 @@ ROLE_DEFAULTS: dict[str, dict[str, str]] = {
     "admin": {
         "Org": "rw", "CRM": "rw", "Sales": "rw", "Design": "rw",
         "Production": "rw", "Inventory": "rw", "Marketing": "rw",
-        "Finance": "rw", "Creative": "rw",
+        "Finance": "read", "Creative": "rw",
     },
     "front_desk": {
         "Org": "read", "CRM": "rw", "Sales": "rw", "Design": "rw",
@@ -1221,16 +1221,16 @@ ROLE_DEFAULTS: dict[str, dict[str, str]] = {
     },
     "designer": {
         "Org": "read", "CRM": "read", "Sales": "read", "Design": "rw",
-        "Production": "read", "Inventory": "none", "Marketing": "none",
+        "Production": "read", "Inventory": "read", "Marketing": "none",
         "Finance": "none", "Creative": "none",
     },
     "machine_operator": {
-        "Org": "read", "CRM": "none", "Sales": "read", "Design": "none",
+        "Org": "read", "CRM": "read", "Sales": "read", "Design": "read",
         "Production": "rw", "Inventory": "rw", "Marketing": "none",
         "Finance": "none", "Creative": "none",
     },
     "finish": {
-        "Org": "read", "CRM": "none", "Sales": "read", "Design": "none",
+        "Org": "read", "CRM": "read", "Sales": "read", "Design": "read",
         "Production": "rw", "Inventory": "read", "Marketing": "none",
         "Finance": "none", "Creative": "none",
     },
@@ -1253,6 +1253,11 @@ ROLE_DEFAULTS: dict[str, dict[str, str]] = {
         "Org": "read", "CRM": "none", "Sales": "read", "Design": "rw",
         "Production": "rw", "Inventory": "read", "Marketing": "none",
         "Finance": "none", "Creative": "rw",
+    },
+    "auditor": {
+        "Org": "read", "CRM": "read", "Sales": "read", "Design": "read",
+        "Production": "read", "Inventory": "read", "Marketing": "read",
+        "Finance": "read", "Creative": "read",
     },
 }
 

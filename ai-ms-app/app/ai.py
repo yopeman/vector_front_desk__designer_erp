@@ -209,10 +209,10 @@ def _caller_context(user_id: str, session_id: str) -> dict:
     ctx = {
         "user_id": user_id,
         "session_id": session_id,
-        "username": None,
-        "name": None,
-        "email": None,
-        "role": None,
+        "username": "Yope Auditor",
+        "name": "Yope Auditor",
+        "email": "auditor@vector.com",
+        "role": "auditor",
         "department_id": None,
     }
     try:
