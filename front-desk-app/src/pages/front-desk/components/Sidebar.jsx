@@ -82,6 +82,12 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
         { name: 'Weekly Finance Report', icon: 'fa-chart-line' }
       ] 
     },
+    {
+      name: 'AI Agent',
+      icon: 'fa-robot',
+      active: false,
+      submenu: null
+    },
     { 
       name: 'Communication', 
       icon: 'fa-comment', 

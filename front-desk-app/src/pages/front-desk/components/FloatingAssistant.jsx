@@ -169,14 +169,14 @@ function makeMdComponents(isDark) {
 
 /* ─── component ────────────────────────────────────────────────────────── */
 
-export default function FloatingAssistant({ onNavigate }) {
+export default function FloatingAssistant({ onNavigate, embedded = false, onClose }) {
   const { user } = useAuth();
 
   // ── UI state ──
-  const [isOpen, setIsOpen]               = useState(false);
-  const [isFullscreen, setIsFullscreen]   = useState(false);
-  const [sidebarOpen, setSidebarOpen]     = useState(false);
-  const [showSessions, setShowSessions]   = useState(false);
+  const [isOpen, setIsOpen]               = useState(embedded);
+  const [isFullscreen, setIsFullscreen]   = useState(embedded);
+  const [sidebarOpen, setSidebarOpen]     = useState(true);
+  const [showSessions, setShowSessions]   = useState(true);
   const [showMenu, setShowMenu]           = useState(false);
   const [input, setInput]                 = useState('');
   const [sending, setSending]             = useState(false);
@@ -286,10 +286,14 @@ export default function FloatingAssistant({ onNavigate }) {
 
   /* ── close widget and reset fullscreen ── */
   const handleCloseWidget = useCallback(() => {
+    if (onClose) {
+      onClose();
+      return;
+    }
     setIsOpen(false);
     setIsFullscreen(false);
     setSidebarOpen(false);
-  }, []);
+  }, [onClose]);
 
   /* ── toggle fullscreen ── */
   const toggleFullscreen = useCallback(() => {
@@ -371,12 +375,12 @@ export default function FloatingAssistant({ onNavigate }) {
       if (showMenu) setShowMenu(false);
       else if (showSessions) setShowSessions(false);
       else if (isFullscreen && sidebarOpen) setSidebarOpen(false);
-      else if (isFullscreen) setIsFullscreen(false);
-      else setIsOpen(false);
+      else if (isFullscreen) { if (!embedded) setIsFullscreen(false); }
+      else if (!embedded) setIsOpen(false);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [isOpen, showMenu, showSessions, isFullscreen, sidebarOpen, editingSid]);
+  }, [isOpen, showMenu, showSessions, isFullscreen, sidebarOpen, editingSid, embedded]);
 
   /* ── click-outside for the settings menu ── */
   useEffect(() => {
@@ -1183,7 +1187,7 @@ export default function FloatingAssistant({ onNavigate }) {
   return (
     <>
       {/* ── Floating launcher ── */}
-      {!isOpen && (
+      {!isOpen && !embedded && (
         <button
           className="asst-launcher"
           onClick={() => setIsOpen(true)}
@@ -1198,7 +1202,7 @@ export default function FloatingAssistant({ onNavigate }) {
       {/* ── Chat window ── */}
       {isOpen && (
         <div
-          className={`asst-window ${isDark ? 'asst-dark' : ''} ${isFullscreen ? 'asst-fullscreen' : ''}`}
+          className={`asst-window ${isDark ? 'asst-dark' : ''} ${embedded ? 'asst-embedded' : ''} ${isFullscreen ? 'asst-fullscreen' : ''}`}
           role="dialog"
           aria-label="Assistant"
         >
@@ -1266,20 +1270,22 @@ export default function FloatingAssistant({ onNavigate }) {
                 <i className={`fa-solid ${showMenu ? 'fa-xmark' : 'fa-gear'}`} />
               </button>
 
-              <button
-                className={`asst-hbtn asst-hbtn-fullscreen ${isFullscreen ? 'asst-hbtn-active' : ''}`}
-                onClick={toggleFullscreen}
-                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                aria-pressed={isFullscreen}
-              >
-                <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'}`} />
-              </button>
+              {!embedded && (
+                <button
+                  className={`asst-hbtn asst-hbtn-fullscreen ${isFullscreen ? 'asst-hbtn-active' : ''}`}
+                  onClick={toggleFullscreen}
+                  title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                  aria-pressed={isFullscreen}
+                >
+                  <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'}`} />
+                </button>
+              )}
 
               <button
                 className="asst-hbtn asst-hbtn-danger"
                 onClick={handleCloseWidget}
-                title="Close"
+                title={embedded ? 'Close' : 'Close'}
                 aria-label="Close assistant"
               >
                 <i className="fa-solid fa-xmark" />
@@ -1475,6 +1481,60 @@ export default function FloatingAssistant({ onNavigate }) {
         }
         .asst-window.asst-fullscreen .asst-hbtn-danger:hover {
           background: #fee2e2; color: #ef4444;
+        }
+
+        /* ---------- embedded (sidebar page) mode ---------- */
+        .asst-window.asst-embedded,
+        .asst-window.asst-embedded.asst-fullscreen {
+          position: relative;
+          top: auto; left: auto; right: auto; bottom: auto;
+          width: 100%;
+          height: 100%;
+          max-width: 100%;
+          max-height: 100%;
+          margin: 0;
+          border-radius: 0;
+          border: none;
+          box-shadow: none;
+          animation: none;
+        }
+        .asst-window.asst-embedded .asst-header {
+          padding: 12px 20px;
+          background: linear-gradient(135deg, #00ced1, #0891b2);
+          color: #fff;
+          border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .asst-window.asst-embedded .asst-brand-avatar {
+          background: rgba(255,255,255,0.18);
+          color: #fff;
+        }
+        .asst-window.asst-embedded .asst-brand-title { color: #fff; }
+        .asst-window.asst-embedded .asst-brand-sub { color: rgba(255,255,255,0.86); opacity: 1; }
+        .asst-window.asst-embedded .asst-hbtn {
+          background: rgba(255,255,255,0.14); color: #fff;
+        }
+        .asst-window.asst-embedded .asst-hbtn:hover { background: rgba(255,255,255,0.28); }
+        .asst-window.asst-embedded .asst-hbtn-active { background: rgba(255,255,255,0.32); }
+        .asst-window.asst-dark.asst-embedded .asst-header {
+          background: linear-gradient(135deg, #155e75, #083344);
+          border-bottom-color: #1e293b;
+          color: #fff;
+        }
+        .asst-window.asst-dark.asst-embedded .asst-brand-title { color: #fff; }
+        .asst-window.asst-dark.asst-embedded .asst-brand-sub { color: rgba(255,255,255,0.86); opacity: 1; }
+        .asst-window.asst-dark.asst-embedded .asst-hbtn {
+          background: rgba(255,255,255,0.12); color: #fff;
+        }
+        .asst-window.asst-dark.asst-embedded .asst-hbtn:hover { background: rgba(255,255,255,0.24); }
+        .asst-window.asst-dark.asst-embedded .asst-hbtn-active { background: rgba(255,255,255,0.3); }
+        .asst-window.asst-embedded .asst-msgs {
+          padding: 20px 24px 24px;
+        }
+        .asst-window.asst-embedded.asst-fullscreen .asst-composer {
+          background: linear-gradient(to top, #fff 55%, rgba(255,255,255,0));
+        }
+        .asst-window.asst-dark.asst-embedded.asst-fullscreen .asst-composer {
+          background: linear-gradient(to top, #0f172a 55%, rgba(15,23,42,0));
         }
 
         /* ---------- fullscreen layout ---------- */

@@ -246,6 +246,10 @@ export default function FrontDeskPage() {
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Notes</h2>
               <NotesPage />
             </div>
+          ) : currentPage === 'ai agent' ? (
+            <div style={{ height: 'calc(100vh - 110px)', display: 'flex' }}>
+              <FloatingAssistant onNavigate={handleMenuClick} embedded />
+            </div>
           ) : currentPage === 'settings' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Settings</h2>
@@ -258,8 +262,6 @@ export default function FrontDeskPage() {
           )}
         </div>
       </div>
-
-      <FloatingAssistant onNavigate={handleMenuClick} />
     </div>
   );
 }
