@@ -24,7 +24,7 @@ class SidebarSection {
                 <div>
                     <div class="flex items-center justify-between px-3 mb-3">
                         <span class="text-[10px] font-bold text-white/80 uppercase tracking-[0.15em]">Navigation</span>
-                        <span class="text-[10px] text-white/60 font-mono">14 modules</span>
+                        <span class="text-[10px] text-white/60 font-mono">17 modules</span>
                     </div>
                     <nav class="space-y-0.5" id="main-nav">
                         <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all active-tab">
@@ -82,6 +82,11 @@ class SidebarSection {
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-chart-simple w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Report</span>
+                        </button>
+                        <button onclick="switchTab('ai-agent')" id="tab-ai-agent" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                            <span class="active-indicator"></span>
+                            <i class="fa-solid fa-robot w-5 text-left text-base shrink-0"></i>
+                            <span class="truncate font-medium">AI Agent</span>
                         </button>
                         <button onclick="switchTab('messages')" id="tab-messages" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>

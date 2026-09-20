@@ -80,6 +80,11 @@ function switchTab(targetId) {
         'reports': () => {
             if (typeof filterReports === 'function') filterReports();
         },
+        'ai-agent': () => {
+            if (typeof AIAgent !== 'undefined' && typeof AIAgent.loadSessions === 'function') {
+                AIAgent.loadSessions();
+            }
+        },
         'settings': async () => {
             if (typeof loadProfile === 'function') await loadProfile();
             if (typeof loadNotificationSettings === 'function') loadNotificationSettings();
