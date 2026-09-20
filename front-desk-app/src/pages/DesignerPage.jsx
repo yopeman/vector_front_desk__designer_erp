@@ -9,6 +9,7 @@ import NotificationsPage from './front-desk/components/NotificationsPage';
 import NotesPage from './front-desk/components/NotesPage';
 import SettingsPage from './front-desk/components/SettingsPage';
 import TopHeader from './front-desk/components/TopHeader';
+import FloatingAssistant from './front-desk/components/FloatingAssistant';
 import './DesignerPage.css';
 
 export default function DesignerPage() {
@@ -636,6 +637,7 @@ export default function DesignerPage() {
     { name: 'Send to Production', icon: 'fa-print', path: 'send-production' },
     { name: 'Design Library', icon: 'fa-book-open', path: 'design-library' },
     { name: 'Reports', icon: 'fa-chart-simple', path: 'reports' },
+    { name: 'AI Agent', icon: 'fa-robot', path: 'ai-agent' },
     { name: 'Messages', icon: 'fa-envelope', path: 'messages' },
     { name: 'Notifications', icon: 'fa-bell', path: 'notifications' },
     { name: 'Notes', icon: 'fa-sticky-note', path: 'notes' },
@@ -654,6 +656,7 @@ export default function DesignerPage() {
       'send-production': 'send-production-section',
       'design-library': 'design-library-section',
       'reports': 'reports-section',
+      'ai-agent': 'ai-agent-section',
       'messages': 'private-messages-section',
       'notifications': 'notifications-section',
       'notes': 'notes-section',
@@ -790,6 +793,12 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'reports-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-chart-simple w-4"></i> Reports</div>
+            </button>
+            <button
+              onClick={() => handleSectionChange('ai-agent-section')}
+              className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'ai-agent-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <div className="flex items-center gap-3"><i className="fa-solid fa-robot w-4"></i> AI Agent</div>
             </button>
 
             <div className="pt-4 pb-1 border-t border-slate-700/40 my-2"></div>
@@ -2579,7 +2588,23 @@ export default function DesignerPage() {
             </div>
           )}
 
-          {activeSection !== 'overview-section' && activeSection !== 'new-requests-section' && activeSection !== 'active-status-section' && activeSection !== 'my-tasks-section' && activeSection !== 'customer-approval-section' && activeSection !== 'profile-settings-section' && activeSection !== 'notifications-section' && activeSection !== 'private-messages-section' && activeSection !== 'production-files-section' && activeSection !== 'send-production-section' && activeSection !== 'design-library-section' && activeSection !== 'reports-section' && activeSection !== 'notes-section' && activeSection !== 'hr-requests-section' && (
+          {activeSection === 'ai-agent-section' && (
+            <div className="h-[calc(100vh-160px)] flex">
+              <FloatingAssistant onNavigate={(action) => {
+                const map = {
+                  'report': 'reports-section',
+                  'reports': 'reports-section',
+                  'designs': 'design-library-section',
+                  'messages': 'private-messages-section',
+                  'settings': 'profile-settings-section',
+                };
+                const section = map[action];
+                if (section) handleSectionChange(section);
+              }} embedded />
+            </div>
+          )}
+
+          {activeSection !== 'overview-section' && activeSection !== 'new-requests-section' && activeSection !== 'active-status-section' && activeSection !== 'my-tasks-section' && activeSection !== 'customer-approval-section' && activeSection !== 'profile-settings-section' && activeSection !== 'notifications-section' && activeSection !== 'private-messages-section' && activeSection !== 'production-files-section' && activeSection !== 'send-production-section' && activeSection !== 'design-library-section' && activeSection !== 'reports-section' && activeSection !== 'notes-section' && activeSection !== 'hr-requests-section' && activeSection !== 'ai-agent-section' && (
             <div className="flex items-center justify-center h-64 text-slate-400">
               <div className="text-center">
                 <i className="fa-solid fa-tools text-4xl mb-4"></i>

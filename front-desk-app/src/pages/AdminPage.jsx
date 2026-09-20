@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabaseAdmin } from '../lib/supabaseAdmin';
+import FloatingAssistant from './front-desk/components/FloatingAssistant';
 
 // ── API Base URL for user management ──
 const API_URL = 'https://vecotr-advert-hr.vercel.app/api/frontdesk/users';
@@ -262,6 +263,16 @@ export default function AdminPage() {
           >
             Profile
           </button>
+          <button
+            onClick={() => setActiveTab('ai-agent')}
+            className={`px-4 py-3 text-sm font-semibold transition ${
+              activeTab === 'ai-agent'
+                ? 'text-gray-800 border-b-2 border-[#00ced1]'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            AI Agent
+          </button>
         </div>
       </div>
 
@@ -505,6 +516,14 @@ export default function AdminPage() {
                 </form>
               </div>
             </div>
+          </div>
+        )}
+        {activeTab === 'ai-agent' && (
+          <div style={{ height: 'calc(100vh - 220px)', display: 'flex' }}>
+            <FloatingAssistant onNavigate={(action) => {
+              const map = { 'report': 'reports', 'reports': 'reports', 'settings': 'profile' };
+              setActiveTab(map[action] || 'users');
+            }} embedded />
           </div>
         )}
       </div>
