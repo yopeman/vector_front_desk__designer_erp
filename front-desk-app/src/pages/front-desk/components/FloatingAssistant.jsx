@@ -63,12 +63,6 @@ function toPlainText(text) {
     .trim();
 }
 
-const THEME_OPTIONS = [
-  { value: 'light',  icon: 'fa-sun',                label: 'Light'  },
-  { value: 'dark',   icon: 'fa-moon',               label: 'Dark'   },
-  { value: 'system', icon: 'fa-circle-half-stroke', label: 'System' },
-];
-
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
 async function callAI(path, body, method = 'GET') {
@@ -207,46 +201,10 @@ export default function FloatingAssistant({ onNavigate, embedded = false, onClos
   // ── humanize mode ──
   const [humanize, setHumanize]           = useState(false);
 
-  // ── theme ──
-  const themeKey = user ? `ai_theme_${user.id}` : 'ai_theme_guest';
-  const [themeMode, setThemeMode] = useState(() => {
-    if (typeof window === 'undefined') return 'system';
-    try { return localStorage.getItem(themeKey) || 'system'; } catch { return 'system'; }
-  });
-  const [systemDark, setSystemDark] = useState(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  const isDark =
-    themeMode === 'dark' || (themeMode === 'system' && systemDark);
+  // ── theme (system only, no manual toggle) ──
+  const isDark = false;
 
   const mdComponents = useMemo(() => makeMdComponents(isDark), [isDark]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem(themeKey);
-      if (stored) setThemeMode(stored);
-    } catch { /* ignore */ }
-  }, [themeKey]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try { localStorage.setItem(themeKey, themeMode); } catch { /* ignore */ }
-  }, [themeMode, themeKey]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = (e) => setSystemDark(e.matches);
-    if (mq.addEventListener) mq.addEventListener('change', onChange);
-    else if (mq.addListener) mq.addListener(onChange);
-    return () => {
-      if (mq.removeEventListener) mq.removeEventListener('change', onChange);
-      else if (mq.removeListener) mq.removeListener(onChange);
-    };
-  }, []);
 
   // ── refs ──
   const scrollBoxRef    = useRef(null);
@@ -1295,26 +1253,6 @@ export default function FloatingAssistant({ onNavigate, embedded = false, onClos
             {/* ═══ Settings dropdown ═══ */}
             {showMenu && (
               <div className="asst-menu" ref={menuRef}>
-                <div className="asst-menu-heading">Appearance</div>
-
-                <div className="asst-theme-control" role="radiogroup" aria-label="Theme">
-                  {THEME_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      className={`asst-theme-btn ${themeMode === opt.value ? 'active' : ''}`}
-                      onClick={() => setThemeMode(opt.value)}
-                      title={`${opt.label} theme`}
-                      aria-label={`${opt.label} theme`}
-                      aria-pressed={themeMode === opt.value}
-                      role="radio"
-                    >
-                      <i className={`fa-solid ${opt.icon}`} />
-                      <span>{opt.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="asst-menu-divider" />
                 <div className="asst-menu-heading">Preferences</div>
 
                 <button
@@ -1498,35 +1436,46 @@ export default function FloatingAssistant({ onNavigate, embedded = false, onClos
           box-shadow: none;
           animation: none;
         }
-        .asst-window.asst-embedded .asst-header {
+        .asst-window.asst-embedded .asst-header,
+        .asst-window.asst-embedded.asst-fullscreen .asst-header {
           padding: 12px 20px;
-          background: linear-gradient(135deg, #00ced1, #0891b2);
-          color: #fff;
-          border-bottom: 1px solid rgba(0,0,0,0.06);
+          background: #ffffff;
+          color: #0f172a;
+          border-bottom: 1px solid #eef2f7;
+          box-shadow: none;
+        }
+        .asst-window.asst-dark.asst-embedded .asst-header,
+        .asst-window.asst-dark.asst-embedded.asst-fullscreen .asst-header {
+          background: #ffffff;
+          color: #0f172a;
+          border-bottom-color: #eef2f7;
         }
         .asst-window.asst-embedded .asst-brand-avatar {
-          background: rgba(255,255,255,0.18);
+          background: linear-gradient(135deg, #00ced1, #0891b2);
           color: #fff;
         }
-        .asst-window.asst-embedded .asst-brand-title { color: #fff; }
-        .asst-window.asst-embedded .asst-brand-sub { color: rgba(255,255,255,0.86); opacity: 1; }
-        .asst-window.asst-embedded .asst-hbtn {
-          background: rgba(255,255,255,0.14); color: #fff;
-        }
-        .asst-window.asst-embedded .asst-hbtn:hover { background: rgba(255,255,255,0.28); }
-        .asst-window.asst-embedded .asst-hbtn-active { background: rgba(255,255,255,0.32); }
-        .asst-window.asst-dark.asst-embedded .asst-header {
-          background: linear-gradient(135deg, #155e75, #083344);
-          border-bottom-color: #1e293b;
+        .asst-window.asst-dark.asst-embedded .asst-brand-avatar {
+          background: linear-gradient(135deg, #00ced1, #0891b2);
           color: #fff;
         }
-        .asst-window.asst-dark.asst-embedded .asst-brand-title { color: #fff; }
-        .asst-window.asst-dark.asst-embedded .asst-brand-sub { color: rgba(255,255,255,0.86); opacity: 1; }
+        .asst-window.asst-embedded .asst-brand-title,
+        .asst-window.asst-dark.asst-embedded .asst-brand-title { color: #0f172a; }
+        .asst-window.asst-embedded .asst-brand-sub,
+        .asst-window.asst-dark.asst-embedded .asst-brand-sub { color: #64748b; opacity: 1; }
+        .asst-window.asst-embedded .asst-hbtn,
         .asst-window.asst-dark.asst-embedded .asst-hbtn {
-          background: rgba(255,255,255,0.12); color: #fff;
+          background: #f1f5f9; color: #475569;
         }
-        .asst-window.asst-dark.asst-embedded .asst-hbtn:hover { background: rgba(255,255,255,0.24); }
-        .asst-window.asst-dark.asst-embedded .asst-hbtn-active { background: rgba(255,255,255,0.3); }
+        .asst-window.asst-embedded .asst-hbtn:hover,
+        .asst-window.asst-dark.asst-embedded .asst-hbtn:hover { background: #e2e8f0; }
+        .asst-window.asst-embedded .asst-hbtn-active,
+        .asst-window.asst-dark.asst-embedded .asst-hbtn-active {
+          background: #e0f7fa; color: #0891b2;
+        }
+        .asst-window.asst-embedded .asst-hbtn-danger:hover,
+        .asst-window.asst-dark.asst-embedded .asst-hbtn-danger:hover {
+          background: #fee2e2; color: #ef4444;
+        }
         .asst-window.asst-embedded .asst-msgs {
           padding: 20px 24px 24px;
         }
