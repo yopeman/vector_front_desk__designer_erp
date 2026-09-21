@@ -127,6 +127,39 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     return () => clearInterval(interval);
   }, [design?.id]);
 
+  // Auto-mark incoming messages as read
+  useEffect(() => {
+    if (!profile?.id || communications.length === 0) return;
+
+    const unreadIds = communications
+      .filter((comm) => comm.sender_id !== profile.id && !comm.is_read)
+      .map((comm) => comm.id);
+
+    if (unreadIds.length === 0) return;
+
+    const markAllAsRead = async () => {
+      try {
+        const readAt = new Date().toISOString();
+        await supabase
+          .from('design_communications')
+          .update({ is_read: true, read_at: readAt })
+          .in('id', unreadIds);
+
+        setCommunications((prev) =>
+          prev.map((comm) =>
+            unreadIds.includes(comm.id)
+              ? { ...comm, is_read: true, read_at: readAt }
+              : comm
+          )
+        );
+      } catch (error) {
+        console.error('Error auto-marking messages as read:', error);
+      }
+    };
+
+    markAllAsRead();
+  }, [communications, profile?.id]);
+
   const fetchSingleCommunication = async (commId) => {
     try {
       const { data, error } = await supabase
@@ -390,17 +423,6 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     const file = e.target.files[0];
     if (file) {
       setNewVersion(prev => ({ ...prev, file }));
-    }
-  };
-
-  const markAsRead = async (communicationId) => {
-    try {
-      await supabase
-        .from('design_communications')
-        .update({ is_read: true, read_at: new Date().toISOString() })
-        .eq('id', communicationId);
-    } catch (error) {
-      console.error('Error marking as read:', error);
     }
   };
 
@@ -787,13 +809,21 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                             })}
                           </div>
                         )}
-                        {!comm.is_read && comm.sender_id !== profile?.id && (
-                          <button
-                            onClick={() => markAsRead(comm.id)}
-                            className="mt-1 text-xs text-blue-600 hover:text-blue-800 bg-transparent border-none cursor-pointer"
-                          >
-                            Mark as read
-                          </button>
+                        {comm.sender_id === profile?.id && (
+                          <div className="flex justify-end mt-1">
+                            <span
+                              className={`text-[10px] ${
+                                comm.is_read ? 'text-blue-600' : 'text-slate-400'
+                              }`}
+                              title={comm.is_read ? 'Read' : 'Sent'}
+                            >
+                              <i
+                                className={`fa-solid ${
+                                  comm.is_read ? 'fa-check-double' : 'fa-check'
+                                }`}
+                              ></i>
+                            </span>
+                          </div>
                         )}
                       </div>
                     ))
