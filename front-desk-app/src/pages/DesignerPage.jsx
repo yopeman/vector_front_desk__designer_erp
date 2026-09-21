@@ -2454,6 +2454,7 @@ export default function DesignerPage() {
                         <th className="px-4 py-3 font-semibold text-slate-600">Design Type</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Client</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Date</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Priority</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Assigned Designer</th>
@@ -2480,6 +2481,9 @@ export default function DesignerPage() {
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {d.orders?.clients?.name || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}
                           </td>
                           <td className="px-4 py-3">
                             <span
@@ -2576,7 +2580,7 @@ export default function DesignerPage() {
                           return matchesSearch;
                         }).length === 0 && (
                         <tr>
-                          <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                          <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                             No designs found matching your criteria.
                           </td>
                         </tr>
