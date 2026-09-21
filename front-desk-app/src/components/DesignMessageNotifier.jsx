@@ -21,15 +21,16 @@ export default function DesignMessageNotifier() {
 
   useEffect(() => {
     if (!profile?.id) return;
+    if (profile.role !== 'designer' && profile.role !== 'front_desk') return;
 
     const isRelevant = (design, row, me) => {
-      const isDesignerForDesign = design?.assigned_designer_id === me.id;
-      const isReceiver = row.receiver_id === me.id;
-      const isOverseer =
-        me.role === 'front_desk' ||
-        me.role === 'admin' ||
-        me.role === 'admin_marketer';
-      return isDesignerForDesign || isReceiver || isOverseer;
+      if (me.role === 'designer') {
+        return design?.assigned_designer_id === me.id || row.receiver_id === me.id;
+      }
+      if (me.role === 'front_desk') {
+        return true;
+      }
+      return false;
     };
 
     const buildNotice = async (row, me) => {
@@ -118,7 +119,7 @@ export default function DesignMessageNotifier() {
     const interval = setInterval(checkForNewMessages, POLL_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [profile?.id]);
+  }, [profile?.id, profile?.role]);
 
   if (!notice) return null;
 
@@ -133,37 +134,37 @@ export default function DesignMessageNotifier() {
       onClick={() => setNotice(null)}
     >
       <div
-        className="w-full max-w-sm bg-white border border-slate-200 rounded-xl shadow-xl p-5"
+        className="w-full max-w-sm bg-red-600 border border-red-700 rounded-xl shadow-xl p-5 text-white"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <i className="fa-solid fa-comment-dots text-blue-600 text-sm"></i>
+          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <i className="fa-solid fa-comment-dots text-white text-sm"></i>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-800">New message in active design</p>
+            <p className="text-xs font-bold text-white">New message in active design</p>
             {(notice.orderNo || notice.designType) && (
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="text-[11px] text-red-100 mt-0.5">
                 {notice.orderNo ? `Order ${notice.orderNo}` : ''}
                 {notice.orderNo && notice.designType ? ' • ' : ''}
                 {notice.designType || ''}
               </p>
             )}
-            <p className="text-xs text-slate-500 mt-1 break-words">
+            <p className="text-xs text-red-50 mt-1 break-words">
               {notice.senderName}: {notice.message}
             </p>
             <div className="flex gap-2 mt-3">
               {/* <button
                 type="button"
                 onClick={handleView}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer"
+                className="bg-white hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer"
               >
                 View
               </button> */}
               <button
                 type="button"
                 onClick={() => setNotice(null)}
-                className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+                className="bg-transparent border border-white/60 hover:bg-white/10 text-white px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
               >
                 Dismiss
               </button>

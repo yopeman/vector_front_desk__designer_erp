@@ -933,16 +933,16 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
           onClick={() => setNewMessageNotice(null)}
         >
           <div
-            className="w-full max-w-sm bg-white border border-slate-200 rounded-xl shadow-xl p-5"
+            className="w-full max-w-sm bg-red-600 border border-red-700 rounded-xl shadow-xl p-5 text-white"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <i className="fa-solid fa-comment-dots text-blue-600 text-sm"></i>
+              <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-comment-dots text-white text-sm"></i>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-slate-800">New message in active design</p>
-                <p className="text-xs text-slate-500 mt-1 break-words">
+                <p className="text-xs font-bold text-white">New message in active design</p>
+                <p className="text-xs text-red-50 mt-1 break-words">
                   {newMessageNotice.sender?.username || 'Unknown'}: {newMessageNotice.message}
                 </p>
                 <div className="flex gap-2 mt-3">
@@ -952,14 +952,14 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                       setActiveTab('chat');
                       setNewMessageNotice(null);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer"
+                    className="bg-white hover:bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                   >
                     View
                   </button> */}
                   <button
                     type="button"
                     onClick={() => setNewMessageNotice(null)}
-                    className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+                    className="bg-transparent border border-white/60 hover:bg-white/10 text-white px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
                   >
                     Dismiss
                   </button>
