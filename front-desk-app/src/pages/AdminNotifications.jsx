@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import { getCurrentUserId } from '../lib/currentUser';
 
 const AdminNotifications = () => {
   const { user } = useAuth();
@@ -60,8 +61,7 @@ const AdminNotifications = () => {
   }, []);
 
   const getReadNotificationIds = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    const currentUserId = authUser?.id;
+    const currentUserId = await getCurrentUserId();
 
     const { data } = await supabase
       .from('read_notifications')
@@ -108,8 +108,7 @@ const AdminNotifications = () => {
 
   const handleMarkAsRead = async (notificationId) => {
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      const currentUserId = authUser?.id;
+      const currentUserId = await getCurrentUserId();
 
       const { data: existing } = await supabase
         .from('read_notifications')

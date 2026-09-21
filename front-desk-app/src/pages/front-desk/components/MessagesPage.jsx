@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
+import { getCurrentUserId } from '../../../lib/currentUser';
 
 export default function MessagesPage() {
   const { profile } = useAuth();
@@ -34,8 +35,7 @@ export default function MessagesPage() {
     let channel;
 
     const setupSubscription = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       channel = supabase
         .channel('messages-channel')
@@ -96,8 +96,7 @@ export default function MessagesPage() {
 
   const fetchMessages = async (otherUserId) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       const { data, error } = await supabase
         .from('messages')
@@ -142,8 +141,7 @@ export default function MessagesPage() {
 
     setSending(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       let fileIds = [];
       if (attachments.length > 0) {

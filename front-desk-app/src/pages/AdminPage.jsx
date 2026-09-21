@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabaseAdmin } from '../lib/supabaseAdmin';
 import FloatingAssistant from './front-desk/components/FloatingAssistant';
+import MessagesPage from './front-desk/components/MessagesPage';
+import NotificationsPage from './front-desk/components/NotificationsPage';
+import NotesPage from './front-desk/components/NotesPage';
 import AdminNotifications from './AdminNotifications';
 
 // ── API Base URL for user management ──
@@ -13,6 +16,9 @@ function AdminSidebar({ activeTab, onTabSwitch }) {
     { id: 'users', label: 'Users', icon: 'fa-users', color: 'text-primary-400' },
     { id: 'reports', label: 'Reports', icon: 'fa-chart-bar', color: 'text-primary-400' },
     { id: 'ai-agent', label: 'AI Agent', icon: 'fa-robot', color: 'text-primary-400' },
+    { id: 'messages', label: 'Message', icon: 'fa-envelope', color: 'text-primary-400' },
+    { id: 'notifications', label: 'Notifications', icon: 'fa-bell', color: 'text-primary-400' },
+    { id: 'notes', label: 'Notes', icon: 'fa-sticky-note', color: 'text-primary-400' },
     { id: 'profile', label: 'Settings', icon: 'fa-gear', color: 'text-primary-400' },
   ];
 
@@ -440,15 +446,15 @@ export default function AdminPage() {
           {activeTab === 'reports' && (
             <div>
               <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">Public Reports</h2>
+                <h2 className="text-lg font-semibold text-slate-800 mb-4">COO Reports</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
-                    { name: 'Front Desk', url: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk-public-report' },
-                    { name: 'Design', url: 'https://vectoradvert.com/erp/frontdesk/#/design-public-report' },
-                    { name: 'Machine', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
-                    { name: 'Finishing', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
-                    { name: 'Marketing', url: 'https://vectoradvert.com/erp/marketing/#/marketing-public-report' },
-                    { name: 'Creative', url: 'https://vectoradvert.com/erp/creative/#/creative-public-report' },
+                    { name: 'Front Desk Report', url: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk-public-report' },
+                    { name: 'Design Report', url: 'https://vectoradvert.com/erp/frontdesk/#/design-public-report' },
+                    { name: 'Machine Report', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
+                    { name: 'Finishing Report', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
+                    { name: 'Marketing Report', url: 'https://vectoradvert.com/erp/marketing/#/marketing-public-report' },
+                    { name: 'Creative Report', url: 'https://vectoradvert.com/erp/creative/#/creative-public-report' },
                   ].map((report) => (
                     <a
                       key={report.name}
@@ -465,6 +471,12 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+
+          {activeTab === 'messages' && <MessagesPage />}
+
+          {activeTab === 'notifications' && <NotificationsPage />}
+
+          {activeTab === 'notes' && <NotesPage />}
 
           {activeTab === 'profile' && (
             <div>
@@ -538,7 +550,14 @@ export default function AdminPage() {
           {activeTab === 'ai-agent' && (
             <div className="h-[calc(100vh-160px)] flex">
               <FloatingAssistant onNavigate={(action) => {
-                const map = { 'report': 'reports', 'reports': 'reports', 'settings': 'profile' };
+                const map = {
+                  'report': 'reports',
+                  'reports': 'reports',
+                  'messages': 'messages',
+                  'notifications': 'notifications',
+                  'notes': 'notes',
+                  'settings': 'profile',
+                };
                 setActiveTab(map[action] || 'users');
               }} embedded />
             </div>

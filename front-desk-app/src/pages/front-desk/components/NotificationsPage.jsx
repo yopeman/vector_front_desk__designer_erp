@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { getCurrentUserId } from '../../../lib/currentUser';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [readNotifications, setReadNotifications] = useState([]);
@@ -58,8 +59,7 @@ export default function NotificationsPage() {
 
   const fetchReadNotifications = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       const { data, error } = await supabase
         .from('read_notifications')
@@ -85,8 +85,7 @@ export default function NotificationsPage() {
 
   const markAsRead = async (notifId) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       const existing = readNotifications.find(
         (rn) => rn.notification_id === notifId && rn.user_id === currentUserId
@@ -121,8 +120,7 @@ export default function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       const unreadNotifs = notifications.filter((n) => !isRead(n.id));
 

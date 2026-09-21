@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { getCurrentUserId } from '../../../lib/currentUser';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState([]);
@@ -24,8 +25,7 @@ export default function NotesPage() {
 
   const fetchNotes = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       const { data, error } = await supabase
         .from('notes')
@@ -46,8 +46,7 @@ export default function NotesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const currentUserId = user?.id;
+      const currentUserId = await getCurrentUserId();
 
       const submitData = {
         user_id: currentUserId,
