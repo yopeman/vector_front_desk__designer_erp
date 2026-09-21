@@ -121,7 +121,7 @@ const reportColumnConfigs = {
     'received-orders': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
         { key: 'order_date', label: 'Order Date', cls: '' },
-        { key: 'order_no', label: 'Order #', cls: 'font-mono' },
+        { key: 'job_no', label: 'Job Order #', cls: 'font-mono' },
         { key: 'required_date', label: 'Required Date', cls: '' },
         { key: 'priority', label: 'Priority', cls: 'text-xs' },
         { key: 'total_amount', label: 'Total Amount', cls: 'text-xs' },

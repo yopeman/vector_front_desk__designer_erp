@@ -45,7 +45,7 @@ async function getReportData() {
             module: 'received-orders',
             moduleLabel: 'Received Order',
             order_date: formattedDate,
-            order_no: order.order_no || '-',
+            job_no: order.jobNum || order.orderNum || '-',
             required_date: order.required_date || '-',
             priority: order.priority || 'Medium',
             total_amount: order.total_amount || '-',

@@ -1222,6 +1222,24 @@ export default function DesignerPage() {
                                     .eq('design_id', d.id)
                                     .order('created_at', { ascending: false });
 
+                                  // Fetch job order (if any) linked via order -> sales invoice
+                                  let attachedJobOrder = null;
+                                  if (d.order_id) {
+                                    const { data: invoiceRows } = await supabase
+                                      .from('invoices')
+                                      .select('id')
+                                      .eq('order_id', d.order_id)
+                                      .eq('invoice_type', 'Sales Invoice');
+                                    const invoiceIds = (invoiceRows || []).map(i => i.id);
+                                    if (invoiceIds.length > 0) {
+                                      const { data: jobOrderRows } = await supabase
+                                        .from('job_orders')
+                                        .select('*, invoice:invoices(invoice_no)')
+                                        .in('invoice_id', invoiceIds);
+                                      if (jobOrderRows && jobOrderRows.length > 0) attachedJobOrder = jobOrderRows[0];
+                                    }
+                                  }
+
                                   // Generate signed URLs
                                   const urls = {};
                                   if (files) {
@@ -1247,7 +1265,8 @@ export default function DesignerPage() {
                                     assigned_designer: designers,
                                     attached_files: files || [],
                                     design_versions: designVersions || [],
-                                    communications: communications || []
+                                    communications: communications || [],
+                                    job_order: attachedJobOrder
                                   });
                                   setShowTaskModal(true);
                                 };
@@ -2530,35 +2549,54 @@ export default function DesignerPage() {
                                   const { data: communications } = await supabase
                                     .from('design_communications')
                                     .select('*, sender:sender_id(id, username), receiver:receiver_id(id, username)')
-                                    .eq('design_id', d.id)
+.eq('design_id', d.id)
                                     .order('created_at', { ascending: false });
 
-                                  const urls = {};
-                                  if (files) {
-                                    for (const file of files) {
-                                      if (file.path) {
-                                        const url = await getFileUrl(file.path);
-                                        if (url) urls[file.id] = url;
+                                    // Fetch job order (if any) linked via order -> sales invoice
+                                    let attachedJobOrder = null;
+                                    if (d.order_id) {
+                                      const { data: invoiceRows } = await supabase
+                                        .from('invoices')
+                                        .select('id')
+                                        .eq('order_id', d.order_id)
+                                        .eq('invoice_type', 'Sales Invoice');
+                                      const invoiceIds = (invoiceRows || []).map(i => i.id);
+                                      if (invoiceIds.length > 0) {
+                                        const { data: jobOrderRows } = await supabase
+                                          .from('job_orders')
+                                          .select('*, invoice:invoices(invoice_no)')
+                                          .in('invoice_id', invoiceIds);
+                                        if (jobOrderRows && jobOrderRows.length > 0) attachedJobOrder = jobOrderRows[0];
                                       }
                                     }
-                                  }
-                                  if (designVersions) {
-                                    for (const version of designVersions) {
-                                      if (version.files?.path) {
-                                        const url = await getFileUrl(version.files.path);
-                                        if (url) urls[version.files.id] = url;
-                                      }
-                                    }
-                                  }
-                                  setFileUrls(urls);
 
-                                  setSelectedTask({
-                                    ...d,
-                                    assigned_designer: designers,
-                                    attached_files: files || [],
-                                    design_versions: designVersions || [],
-                                    communications: communications || []
-                                  });
+                                    const urls = {};
+                                    if (files) {
+                                      for (const file of files) {
+                                        if (file.path) {
+                                          const url = await getFileUrl(file.path);
+                                          if (url) urls[file.id] = url;
+                                        }
+                                      }
+                                    }
+                                    if (designVersions) {
+                                      for (const version of designVersions) {
+                                        if (version.files?.path) {
+                                          const url = await getFileUrl(version.files.path);
+                                          if (url) urls[version.files.id] = url;
+                                        }
+                                      }
+                                    }
+                                    setFileUrls(urls);
+
+                                    setSelectedTask({
+                                      ...d,
+                                      assigned_designer: designers,
+                                      attached_files: files || [],
+                                      design_versions: designVersions || [],
+                                      communications: communications || [],
+                                      job_order: attachedJobOrder
+                                    });
                                   setShowTaskModal(true);
                                 };
                                 fetchDesignDetails();
@@ -2679,6 +2717,42 @@ export default function DesignerPage() {
                     <p className="text-slate-700">{selectedTask.assigned_designer?.username || '-'}</p>
                   </div>
                 </div>
+
+                {selectedTask.job_order && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Job Order</h3>
+                    <div className="grid grid-cols-2 gap-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Job Order No</span>
+                        <p className="font-semibold text-slate-900">{selectedTask.job_order.job_no || '-'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Invoice No</span>
+                        <p className="text-slate-700">{selectedTask.job_order.invoice?.invoice_no || '-'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Status</span>
+                        <p className="text-slate-700">{selectedTask.job_order.order_status || '-'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Delivery Status</span>
+                        <p className="text-slate-700">{selectedTask.job_order.delivery_status || '-'}</p>
+                      </div>
+                      {selectedTask.job_order.expected_date && (
+                        <div className="space-y-2">
+                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Expected Date</span>
+                          <p className="text-slate-700">{new Date(selectedTask.job_order.expected_date).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {selectedTask.job_order.collaboration && (
+                        <div className="space-y-2">
+                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Collaboration</span>
+                          <p className="text-slate-700">{selectedTask.job_order.collaboration}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-6">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Brief Dimensions</h3>

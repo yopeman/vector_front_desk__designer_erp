@@ -52,7 +52,8 @@ async function fetchReceivedOrders() {
             created_at,
             users!designer_id(username),
             machines(name, machine_type),
-            orders(id, order_no, order_date)
+            orders(id, order_no, order_date),
+            job_orders(job_no)
         `)
         .eq('job_type', 'received')
         .in('status', ['New', 'In Progress'])
@@ -69,9 +70,10 @@ async function fetchReceivedOrders() {
         no: String(index + 1).padStart(2, '0'),
         date: po.orders?.order_date || formatDate(po.created_at),
         taskType: po.task_type || 'task',
-        orderNum: po.orders?.order_no || 'N/A',
+        jobNum: po.job_orders?.job_no || null,
+        orderNum: po.job_orders?.job_no || po.orders?.order_no || 'N/A',
         designer: po.users?.username || 'Unknown',
-        title: po.orders?.order_no || 'Untitled Order',
+        title: po.job_orders?.job_no || po.orders?.order_no || 'Untitled Order',
         priority: po.priority === 'High' ? 'urgent' : (po.priority === 'Medium' ? 'normal' : 'normal'),
         machine: po.machines?.machine_type || po.machines?.name || 'N/A',
         material: po.material || '',

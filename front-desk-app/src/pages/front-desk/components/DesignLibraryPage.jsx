@@ -91,6 +91,23 @@ export default function DesignLibraryPage() {
         .eq('design_id', design.id)
         .order('created_at', { ascending: false });
 
+      let attachedJobOrder = null;
+      if (design.order_id) {
+        const { data: invoiceRows } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('order_id', design.order_id)
+          .eq('invoice_type', 'Sales Invoice');
+        const invoiceIds = (invoiceRows || []).map(i => i.id);
+        if (invoiceIds.length > 0) {
+          const { data: jobOrderRows } = await supabase
+            .from('job_orders')
+            .select('*, invoice:invoices(invoice_no)')
+            .in('invoice_id', invoiceIds);
+          if (jobOrderRows && jobOrderRows.length > 0) attachedJobOrder = jobOrderRows[0];
+        }
+      }
+
       const urls = {};
       if (files) {
         for (const file of files) {
@@ -114,7 +131,8 @@ export default function DesignLibraryPage() {
         assigned_designer: designers,
         attached_files: files || [],
         design_versions: designVersions || [],
-        communications: communications || []
+        communications: communications || [],
+        job_order: attachedJobOrder
       });
       setFileUrls(urls);
       setShowTaskModal(true);
@@ -298,6 +316,42 @@ export default function DesignLibraryPage() {
                     <p className="text-slate-700">{selectedTask.assigned_designer?.username || '-'}</p>
                   </div>
                 </div>
+
+                {selectedTask.job_order && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Job Order</h3>
+                    <div className="grid grid-cols-2 gap-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Job Order No</span>
+                        <p className="font-semibold text-slate-900">{selectedTask.job_order.job_no || '-'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Invoice No</span>
+                        <p className="text-slate-700">{selectedTask.job_order.invoice?.invoice_no || '-'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Status</span>
+                        <p className="text-slate-700">{selectedTask.job_order.order_status || '-'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Delivery Status</span>
+                        <p className="text-slate-700">{selectedTask.job_order.delivery_status || '-'}</p>
+                      </div>
+                      {selectedTask.job_order.expected_date && (
+                        <div className="space-y-2">
+                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Expected Date</span>
+                          <p className="text-slate-700">{new Date(selectedTask.job_order.expected_date).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {selectedTask.job_order.collaboration && (
+                        <div className="space-y-2">
+                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Collaboration</span>
+                          <p className="text-slate-700">{selectedTask.job_order.collaboration}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="mb-6">
                   <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Brief Dimensions</h3>

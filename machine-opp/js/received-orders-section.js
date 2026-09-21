@@ -105,7 +105,7 @@ class ReceivedordersSection {
                                         </span>
                                     </th>
                                     <th class="p-4">Task/Project</th>
-                                    <th class="p-4">Order Number</th>
+                                    <th class="p-4">Job Order Number</th>
                                     <th class="p-4">Designer</th>
                                     <th class="p-4">Project/Task Name/Title</th>
                                     <th class="p-4">Priority</th>
@@ -203,7 +203,7 @@ class ReceivedordersSection {
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-barcode text-slate-500 text-[10px]"></i> Order Number
+                                    <i class="fa-solid fa-barcode text-slate-500 text-[10px]"></i> Job Order Number
                                 </label>
                                 <input id="det-order-num" type="text" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none">
                             </div>

@@ -6,6 +6,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [orders, setOrders] = useState([]);
+  const [jobOrders, setJobOrders] = useState([]);
   const [machines, setMachines] = useState([]);
   const [designVersions, setDesignVersions] = useState([]);
   const [existingFileIds, setExistingFileIds] = useState([]);
@@ -16,6 +17,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
     color: '',
     machine_id: '',
     order_id: '',
+    job_order_id: '',
     length: '',
     width: '',
     height: '',
@@ -33,6 +35,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
 
   useEffect(() => {
     fetchOrders();
+    fetchJobOrders();
     fetchMachines();
     fetchDesignVersions();
 
@@ -44,6 +47,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
         color: editOrder.color || '',
         machine_id: editOrder.machine_id || '',
         order_id: editOrder.order_id || '',
+        job_order_id: editOrder.job_order_id || '',
         length: editOrder.length || '',
         width: editOrder.width || '',
         height: editOrder.height || '',
@@ -90,6 +94,20 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
       setOrders(data || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
+    }
+  };
+
+  const fetchJobOrders = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('job_orders')
+        .select('*, invoice:invoices(invoice_no, order:orders(order_no, clients(name)))')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setJobOrders(data || []);
+    } catch (error) {
+      console.error('Error fetching job orders:', error);
     }
   };
 
@@ -190,6 +208,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
           .from('production_orders')
           .update({
             order_id: formData.order_id || null,
+            job_order_id: formData.job_order_id || null,
             machine_id: formData.machine_id || null,
             material: formData.material,
             thickness: formData.thickness,
@@ -213,6 +232,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
           .from('production_orders')
           .insert({
             order_id: formData.order_id || null,
+            job_order_id: formData.job_order_id || null,
             designer_id: user.id,
             machine_id: formData.machine_id || null,
             material: formData.material,
@@ -289,7 +309,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
           </div> */}
 
           {/* Order Selection */}
-          <div>
+          {/* <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               Order
             </label>
@@ -303,6 +323,26 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
               {orders.map(order => (
                 <option key={order.id} value={order.id}>
                   {order.order_no} - {order.clients?.name || 'Unknown Client'}
+                </option>
+              ))}
+            </select>
+          </div> */}
+
+          {/* Job Order Selection */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+              Job Order
+            </label>
+            <select
+              name="job_order_id"
+              value={formData.job_order_id}
+              onChange={handleChange}
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">Select Job Order (Optional)</option>
+              {jobOrders.map(jobOrder => (
+                <option key={jobOrder.id} value={jobOrder.id}>
+                  {jobOrder.job_no} - {jobOrder.invoice?.order?.clients?.name || 'Unknown Client'}
                 </option>
               ))}
             </select>
