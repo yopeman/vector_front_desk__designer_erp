@@ -609,6 +609,25 @@ export default function DesignerPage() {
     }
   }
 
+  async function downloadFile(fileUrl, fileName) {
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+        link.remove();
+      }, 100);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  }
+
   async function updateDesignStatus(id, status) {
     await supabase.from('designs').update({ status }).eq('id', id);
     fetchDesigns();
@@ -2696,14 +2715,23 @@ export default function DesignerPage() {
                             <i className="fa-solid fa-paperclip text-blue-600"></i>
                             <span className="text-slate-600">{file.name}</span>
                             {fileUrl ? (
-                              <a 
-                                href={fileUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="ml-auto text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                              >
-                                <i className="fa-solid fa-external-link-alt"></i> Open
-                              </a>
+                              <div className="ml-auto flex items-center gap-3">
+                                <a 
+                                  href={fileUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                >
+                                  <i className="fa-solid fa-external-link-alt"></i> Open
+                                </a>
+                                <a 
+                                  href={fileUrl} 
+                                  onClick={(e) => { e.preventDefault(); downloadFile(fileUrl, file.name); }}
+                                  className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                >
+                                  <i className="fa-solid fa-download"></i> Download
+                                </a>
+                              </div>
                             ) : (
                               <span className="ml-auto text-slate-400 text-xs">No URL available</span>
                             )}

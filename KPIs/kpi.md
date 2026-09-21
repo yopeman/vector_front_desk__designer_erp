@@ -1,0 +1,9 @@
+- Marketing: Campaigns, leads, conversion and marketing performance
+- Front Desk: Inquiries, quotations, orders, approvals and customer follow-ups
+- Production: Active jobs, progress, output and delays
+- Machine: Utilization, machine output, downtime and material waste
+- Design: Design requests, revisions, approvals and delayed designs
+- Creative Product Development: Ideas, prototypes, testing and product launches
+- Maintenance: Preventive maintenance, breakdowns, downtime and repair costs
+- Finishing Team: Finishing progress, quality control, rework and completed jobs
+- Finance: Revenue, expenses, receivables, payables and cash flow
