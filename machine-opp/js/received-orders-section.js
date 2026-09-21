@@ -67,7 +67,7 @@ class ReceivedordersSection {
                             </button>
                         </div>
                         <!-- Priority Dropdown -->
-                        <div class="relative w-full md:w-48">
+                        <div class="relative w-full md:w-44">
                             <select id="priority-filter" onchange="filterOrders()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
                                 <option value="all" class="text-slate-300">All Priorities</option>
                                 <option value="urgent" class="text-rose-400 font-bold">Urgent Only</option>
@@ -75,9 +75,26 @@ class ReceivedordersSection {
                             </select>
                             <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-slate-500 pointer-events-none text-[10px]"></i>
                         </div>
+                        <!-- Machine Dropdown -->
+                        <div class="relative w-full md:w-44">
+                            <select id="machine-filter" onchange="filterOrders()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                                <option value="all" class="text-slate-300">All Machines</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-slate-500 pointer-events-none text-[10px]"></i>
+                        </div>
+                        <!-- Status Dropdown -->
+                        <div class="relative w-full md:w-44">
+                            <select id="status-filter" onchange="filterOrders()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer">
+                                <option value="all" class="text-slate-300">All Status</option>
+                                <option value="new">New</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-slate-500 pointer-events-none text-[10px]"></i>
+                        </div>
                         <!-- Filter results count -->
                         <div class="flex items-center gap-2 text-xs text-slate-500 bg-slate-900/60 px-3.5 py-2 rounded-xl border border-slate-700/50">
-                            <i class="fa-regular fa-filter"></i>
+                            <i class="fa-solid fa-filter"></i>
                             <span>Showing: <strong id="filter-count" class="text-slate-300 font-semibold">0</strong></span>
                         </div>
                     </div>

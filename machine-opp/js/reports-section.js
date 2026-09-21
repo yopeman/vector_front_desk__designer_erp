@@ -159,7 +159,7 @@ class ReportsSection {
                     <!-- Filter action buttons row -->
                     <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-700/50">
                         <div class="flex items-center gap-2 text-xs text-slate-500">
-                            <i class="fa-regular fa-filter"></i>
+                            <i class="fa-solid fa-filter"></i>
                             <span>Showing: <strong id="report-filter-count" class="text-slate-300 font-semibold">0</strong> records</span>
                             <span class="text-slate-600 mx-1">|</span>
                             <span>Module: <strong id="report-active-module" class="text-violet-400 font-semibold">All</strong></span>

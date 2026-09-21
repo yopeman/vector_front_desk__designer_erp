@@ -89,7 +89,7 @@ class NotificationsSection {
                             <i class="fa-solid fa-chevron-down absolute right-3 top-3.5 text-slate-500 pointer-events-none text-[10px]"></i>
                         </div>
                         <div class="flex items-center gap-2 text-xs text-slate-500 bg-slate-900/60 px-3.5 py-2 rounded-xl border border-slate-700/50">
-                            <i class="fa-regular fa-filter"></i>
+                            <i class="fa-solid fa-filter"></i>
                             <span>Showing: <strong id="notif-filter-count" class="text-slate-300 font-semibold">0</strong></span>
                         </div>
                     </div>

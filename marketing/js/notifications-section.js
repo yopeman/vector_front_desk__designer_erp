@@ -85,7 +85,7 @@ class NotificationsSection {
                             </select>
                         </div>
                         <div class="filter-count">
-                            <i class="fa-regular fa-filter"></i>
+                            <i class="fa-solid fa-filter"></i>
                             <span>Showing: <strong id="notif-filter-count">0</strong></span>
                         </div>
                     </div>

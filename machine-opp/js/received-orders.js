@@ -83,6 +83,7 @@ async function fetchReceivedOrders() {
         width: po.width || '',
         height: po.height || '',
         gram: po.gram || '',
+        status: (po.status || 'New').toLowerCase().replace(/\s+/g, '-'),
         startedAt: po.started_at || null,
         completedAt: po.completed_at || null
     }));
@@ -175,6 +176,8 @@ async function renderOrdersTable() {
         const row = document.createElement('tr');
         row.className = `order-row hover:bg-blue-600/10 transition-colors relative ${isUrgent ? 'bg-rose-500/5' : ''}`;
         row.setAttribute('data-priority', order.priority);
+        row.setAttribute('data-machine', order.machine || '');
+        row.setAttribute('data-status', order.status || '');
         row.setAttribute('data-index', index);
         row.innerHTML = `
             <td class="p-4 text-center font-mono font-medium ${isUrgent ? 'text-rose-400' : 'text-slate-400'} border-l-4 ${isUrgent ? 'border-rose-500' : 'border-slate-600'}">
@@ -222,9 +225,35 @@ async function renderOrdersTable() {
 
     updateStats();
     updateFilterCount();
+    populateMachineFilter();
 
     if (typeof updateDashboardStats === 'function') {
         updateDashboardStats();
+    }
+}
+
+// =============================================
+// POPULATE MACHINE FILTER OPTIONS
+// =============================================
+function populateMachineFilter() {
+    const machineFilter = document.getElementById('machine-filter');
+    if (!machineFilter) return;
+
+    const current = machineFilter.value;
+    const machines = [...new Set(ordersData.map(o => o.machine).filter(m => m && m !== 'N/A'))].sort((a, b) => a.localeCompare(b));
+
+    machineFilter.innerHTML = '<option value="all" class="text-slate-300">All Machines</option>';
+    machines.forEach(machine => {
+        const opt = document.createElement('option');
+        opt.value = machine.toLowerCase();
+        opt.textContent = machine;
+        machineFilter.appendChild(opt);
+    });
+
+    if (current && [...machineFilter.options].some(o => o.value === current)) {
+        machineFilter.value = current;
+    } else {
+        machineFilter.value = 'all';
     }
 }
 
@@ -264,6 +293,8 @@ function updateFilterCount() {
 // =============================================
 function filterOrders() {
     const filterValue = document.getElementById('priority-filter');
+    const machineFilter = document.getElementById('machine-filter');
+    const statusFilter = document.getElementById('status-filter');
     const searchVal = document.getElementById('order-search');
     const noResults = document.getElementById('no-results-state');
     const clearBtn = document.getElementById('search-clear-btn');
@@ -272,6 +303,8 @@ function filterOrders() {
     if (!filterValue || !searchVal) return;
 
     const priority = filterValue.value;
+    const machine = machineFilter ? machineFilter.value : 'all';
+    const status = statusFilter ? statusFilter.value : 'all';
     const search = searchVal.value.toLowerCase();
     const rows = document.querySelectorAll('.order-row');
     
@@ -286,12 +319,16 @@ function filterOrders() {
 
     rows.forEach(row => {
         const rowPriority = row.getAttribute('data-priority');
+        const rowMachine = (row.getAttribute('data-machine') || '').toLowerCase();
+        const rowStatus = row.getAttribute('data-status');
         const text = row.innerText.toLowerCase();
         
         const matchesPriority = (priority === 'all' || rowPriority === priority);
+        const matchesMachine = (machine === 'all' || rowMachine === machine);
+        const matchesStatus = (status === 'all' || rowStatus === status);
         const matchesSearch = text.includes(search);
         
-        if (matchesPriority && matchesSearch) {
+        if (matchesPriority && matchesMachine && matchesStatus && matchesSearch) {
             row.classList.remove('hidden');
             visibleCount++;
         } else {
@@ -327,10 +364,14 @@ function clearSearch() {
 function resetFilters() {
     const searchInput = document.getElementById('order-search');
     const priorityFilter = document.getElementById('priority-filter');
+    const machineFilter = document.getElementById('machine-filter');
+    const statusFilter = document.getElementById('status-filter');
     const clearBtn = document.getElementById('search-clear-btn');
     
     if (searchInput) searchInput.value = '';
     if (priorityFilter) priorityFilter.value = 'all';
+    if (machineFilter) machineFilter.value = 'all';
+    if (statusFilter) statusFilter.value = 'all';
     if (clearBtn) clearBtn.classList.remove('visible');
     filterOrders();
 }

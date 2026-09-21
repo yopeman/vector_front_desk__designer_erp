@@ -52,6 +52,7 @@ async function fetchReworkRecords() {
         height: row.height || 'N/A',
         gram: row.gram || 'N/A',
         reason: row.rework_reason || '',
+        priority: row.priority === 'High' ? 'urgent' : (row.priority === 'Medium' ? 'normal' : 'normal'),
         status: row.status || 'in-progress',
         startTime: row.started_at,
         endTime: row.completed_at
@@ -176,6 +177,7 @@ async function renderReworkRecords() {
 }
 
 function renderRows(tbody) {
+    const machineNames = new Set();
     reworkData.forEach((entry, index) => {
         const row = document.createElement('tr');
         row.className = 'order-row hover:bg-blue-600/10 transition-colors';
@@ -206,6 +208,12 @@ function renderRows(tbody) {
             machineName = entry.machine;
         }
 
+        if (machineName && machineName !== 'N/A') machineNames.add(machineName);
+
+        row.setAttribute('data-priority', entry.priority || 'normal');
+        row.setAttribute('data-machine', machineName || '');
+        row.setAttribute('data-status', status);
+
         row.innerHTML = `
             <td class="p-4 text-center font-mono font-medium text-slate-400">${String(index + 1).padStart(2, '00')}</td>
             <td class="p-4 font-mono text-xs">${entry.date || entry.created_at || ''}</td>
@@ -228,8 +236,35 @@ function renderRows(tbody) {
         tbody.appendChild(row);
     });
 
+    populateReworkMachineFilter([...machineNames]);
+
     const filterCountEl = document.getElementById('rework-filter-count');
     if (filterCountEl) filterCountEl.textContent = reworkData.length;
+}
+
+// =============================================
+// POPULATE REWORK MACHINE FILTER OPTIONS
+// =============================================
+function populateReworkMachineFilter(machineNames) {
+    const machineFilter = document.getElementById('rework-machine-filter');
+    if (!machineFilter) return;
+
+    const current = machineFilter.value;
+    const machines = [...new Set(machineNames || [])].sort((a, b) => a.localeCompare(b));
+
+    machineFilter.innerHTML = '<option value="all" class="text-slate-300">All Machines</option>';
+    machines.forEach(machine => {
+        const opt = document.createElement('option');
+        opt.value = machine.toLowerCase();
+        opt.textContent = machine;
+        machineFilter.appendChild(opt);
+    });
+
+    if (current && [...machineFilter.options].some(o => o.value === current)) {
+        machineFilter.value = current;
+    } else {
+        machineFilter.value = 'all';
+    }
 }
 
 // =============================================
@@ -551,6 +586,9 @@ function updateReworkStats() {
 // =============================================
 function filterReworkRecords() {
     const searchVal = document.getElementById('rework-search');
+    const priorityFilter = document.getElementById('rework-priority-filter');
+    const machineFilter = document.getElementById('rework-machine-filter');
+    const statusFilter = document.getElementById('rework-status-filter');
     const rows = document.querySelectorAll('#rework-records-body .order-row');
     const noResults = document.getElementById('rework-no-results');
     const clearBtn = document.getElementById('rework-search-clear');
@@ -559,6 +597,9 @@ function filterReworkRecords() {
     if (!searchVal) return;
 
     const search = searchVal.value.toLowerCase();
+    const priority = priorityFilter ? priorityFilter.value : 'all';
+    const machine = machineFilter ? machineFilter.value : 'all';
+    const status = statusFilter ? statusFilter.value : 'all';
     let visibleCount = 0;
 
     if (search.length > 0) {
@@ -568,8 +609,17 @@ function filterReworkRecords() {
     }
 
     rows.forEach(row => {
+        const rowPriority = row.getAttribute('data-priority');
+        const rowMachine = (row.getAttribute('data-machine') || '').toLowerCase();
+        const rowStatus = row.getAttribute('data-status');
         const text = row.innerText.toLowerCase();
-        if (text.includes(search)) {
+
+        const matchesPriority = (priority === 'all' || rowPriority === priority);
+        const matchesMachine = (machine === 'all' || rowMachine === machine);
+        const matchesStatus = (status === 'all' || rowStatus === status);
+        const matchesSearch = text.includes(search);
+
+        if (matchesPriority && matchesMachine && matchesStatus && matchesSearch) {
             row.classList.remove('hidden');
             visibleCount++;
         } else {
@@ -596,6 +646,14 @@ function clearReworkSearch() {
 }
 
 function resetReworkFilters() {
+    const priorityFilter = document.getElementById('rework-priority-filter');
+    const machineFilter = document.getElementById('rework-machine-filter');
+    const statusFilter = document.getElementById('rework-status-filter');
+
+    if (priorityFilter) priorityFilter.value = 'all';
+    if (machineFilter) machineFilter.value = 'all';
+    if (statusFilter) statusFilter.value = 'all';
+
     clearReworkSearch();
 }
 

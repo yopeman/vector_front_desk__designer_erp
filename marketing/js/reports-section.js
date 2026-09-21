@@ -143,7 +143,7 @@ class ReportsSection {
                     <!-- Filter action buttons row -->
                     <div class="filter-actions">
                         <div class="filter-count">
-                            <i class="fa-regular fa-filter"></i>
+                            <i class="fa-solid fa-filter"></i>
                             <span>Showing: <strong id="report-filter-count">0</strong> records</span>
                             <span class="separator">|</span>
                             <span>Module: <strong id="report-active-module" class="active-module">All</strong></span>
