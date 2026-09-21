@@ -69,7 +69,7 @@ export default function AdminPage() {
         console.error('Error fetching users:', result.error);
         return;
       }
-      setUsers(result.data?.filter(u=>u.role!=='admin') || []);
+      setUsers(result.data?.filter(u=>u.role!=='admin' && u.role!=='finance') || []);
     } catch (error) {
       console.error('Error fetching users:', error);
     }

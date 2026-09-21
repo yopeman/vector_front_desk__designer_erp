@@ -70,6 +70,9 @@ import Frontdesk from './pages/Frontdesk/index'
 // Reports
 import Reports from './pages/Reports/index'
 
+// AI Assistant
+import Assistant from './pages/Assistant/index'
+
 function App() {
   return (
     <Router>
@@ -165,6 +168,7 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/frontdesk" element={<Frontdesk />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/assistant" element={<Assistant />} />
         </Route>
 
         {/* 404 page */}

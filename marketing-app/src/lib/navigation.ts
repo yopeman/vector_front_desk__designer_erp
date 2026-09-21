@@ -16,6 +16,7 @@ import {
   House,
   MessageSquare,
   FileBarChart,
+  Bot,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -197,6 +198,13 @@ export const navigation: NavSection[] = [
     icon: FileBarChart,
     children: [
       { label: 'Reports', path: '/reports' },
+    ],
+  },
+  {
+    label: 'AI Agent',
+    icon: Bot,
+    children: [
+      { label: 'Assistant', path: '/assistant' },
     ],
   },
 ]
