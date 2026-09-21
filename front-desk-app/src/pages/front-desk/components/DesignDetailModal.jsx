@@ -946,7 +946,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                   {newMessageNotice.sender?.username || 'Unknown'}: {newMessageNotice.message}
                 </p>
                 <div className="flex gap-2 mt-3">
-                  <button
+                  {/* <button
                     type="button"
                     onClick={() => {
                       setActiveTab('chat');
@@ -955,7 +955,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                     className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer"
                   >
                     View
-                  </button>
+                  </button> */}
                   <button
                     type="button"
                     onClick={() => setNewMessageNotice(null)}

@@ -38,6 +38,7 @@ export default function DesignerPage() {
   const [showProductionOrderModal, setShowProductionOrderModal] = useState(false);
   const [productionOrders, setProductionOrders] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [unreadDesignChatIds, setUnreadDesignChatIds] = useState(() => new Set());
   const [selectedProductionOrder, setSelectedProductionOrder] = useState(null);
   const [showProductionDetailModal, setShowProductionDetailModal] = useState(false);
   const [productionAttachedFiles, setProductionAttachedFiles] = useState([]);
@@ -133,6 +134,41 @@ export default function DesignerPage() {
     return () => {
       supabase.removeChannel(channel);
     };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const checkUnreadDesignChat = async () => {
+      const { data: activeDesigns, error: designError } = await supabase
+        .from('designs')
+        .select('id')
+        .eq('status', 'In Progress')
+        .eq('assigned_designer_id', user.id);
+
+      if (designError) return;
+
+      const activeIds = (activeDesigns || []).map((d) => d.id);
+      if (activeIds.length === 0) {
+        setUnreadDesignChatIds(new Set());
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('design_communications')
+        .select('design_id')
+        .eq('is_read', false)
+        .neq('sender_id', user.id)
+        .in('design_id', activeIds);
+
+      if (!error) {
+        setUnreadDesignChatIds(new Set((data || []).map((row) => row.design_id)));
+      }
+    };
+
+    checkUnreadDesignChat();
+    const interval = setInterval(checkUnreadDesignChat, 5000);
+    return () => clearInterval(interval);
   }, [user?.id]);
 
   useEffect(() => {
@@ -767,9 +803,14 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'active-status-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-file-pen w-4"></i> Active Design Status</div>
-              {designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length}</span>
-              )}
+              <div className="flex items-center gap-2">
+                {designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length > 0 && (
+                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length}</span>
+                )}
+                {unreadDesignChatIds.size > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-red-500" title="Unread design chat"></span>
+                )}
+              </div>
             </button>
             <button 
               onClick={() => handleSectionChange('customer-approval-section')}
@@ -1390,7 +1431,14 @@ export default function DesignerPage() {
                             .map((d, index) => (
                             <tr key={d.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => { setSelectedDesign(d); setShowDesignDetailModal(true); }}>
                               <td className="p-3">{index + 1}</td>
-                              <td className="p-3 font-semibold text-blue-600">{d.orders?.order_no || '-'}</td>
+                              <td className="p-3 font-semibold text-blue-600">
+                                <span className="flex items-center gap-2">
+                                  {unreadDesignChatIds.has(d.id) && (
+                                    <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
+                                  )}
+                                  {d.orders?.order_no || '-'}
+                                </span>
+                              </td>
                               <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
                               <td className="p-3">{d.design_type || '-'}</td>
                               <td className="p-3">{profile?.username || 'Designer'}</td>

@@ -1,7 +1,44 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../lib/auth';
 
 export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollapsed }) {
+  const { profile } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [hasUnreadDesignChat, setHasUnreadDesignChat] = useState(false);
+
+  // Poll for unread design communications to show a red dot
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const checkUnreadDesignChat = async () => {
+      const { data: activeDesigns, error: designError } = await supabase
+        .from('designs')
+        .select('id')
+        .eq('status', 'In Progress');
+
+      if (designError) return;
+
+      const activeIds = (activeDesigns || []).map((d) => d.id);
+      if (activeIds.length === 0) {
+        setHasUnreadDesignChat(false);
+        return;
+      }
+
+      const { count, error } = await supabase
+        .from('design_communications')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_read', false)
+        .neq('sender_id', profile.id)
+        .in('design_id', activeIds);
+
+      if (!error) setHasUnreadDesignChat((count || 0) > 0);
+    };
+
+    checkUnreadDesignChat();
+    const interval = setInterval(checkUnreadDesignChat, 5000);
+    return () => clearInterval(interval);
+  }, [profile?.id]);
 
   // Determine which menu contains the current page
   const menuItems = [
@@ -313,6 +350,18 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                         opacity: 0.7 
                       }}></i>
                       <span>{subItem.name}</span>
+                      {subItem.name === 'Design Status' && hasUnreadDesignChat && (
+                        <span
+                          title="Unread design chat"
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#ef4444',
+                            flexShrink: 0
+                          }}
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>

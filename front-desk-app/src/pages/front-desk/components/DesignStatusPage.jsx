@@ -1,17 +1,40 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { useAuth } from '../../../lib/auth';
 import DesignDetailModal from './DesignDetailModal';
 
 export default function DesignStatusPage() {
+  const { profile } = useAuth();
   const [designs, setDesigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDesign, setSelectedDesign] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [unreadDesignChatIds, setUnreadDesignChatIds] = useState(() => new Set());
 
   useEffect(() => {
     fetchInProgressDesigns();
   }, []);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const checkUnreadDesignChat = async () => {
+      const { data, error } = await supabase
+        .from('design_communications')
+        .select('design_id')
+        .eq('is_read', false)
+        .neq('sender_id', profile.id);
+
+      if (!error) {
+        setUnreadDesignChatIds(new Set((data || []).map((row) => row.design_id)));
+      }
+    };
+
+    checkUnreadDesignChat();
+    const interval = setInterval(checkUnreadDesignChat, 5000);
+    return () => clearInterval(interval);
+  }, [profile?.id]);
 
   const fetchInProgressDesigns = async () => {
     try {
@@ -116,7 +139,14 @@ export default function DesignStatusPage() {
                   onClick={() => handleDesignClick(design)}
                 >
                   <td className="p-4 text-center">{index + 1}</td>
-                  <td className="p-4 font-medium">{design.order?.order_no || '-'}</td>
+                  <td className="p-4 font-medium">
+                    <span className="flex items-center gap-2">
+                      {unreadDesignChatIds.has(design.id) && (
+                        <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
+                      )}
+                      {design.order?.order_no || '-'}
+                    </span>
+                  </td>
                   <td className="p-4">{design.design_type || '-'}</td>
                   <td className="p-4">{design.purpose || '-'}</td>
                   <td className="p-4">{design.requested_date || '-'}</td>

@@ -1,3 +1,4 @@
+# System KPIs
 - Marketing: Campaigns, leads, conversion and marketing performance
 - Front Desk: Inquiries, quotations, orders, approvals and customer follow-ups
 - Production: Active jobs, progress, output and delays
