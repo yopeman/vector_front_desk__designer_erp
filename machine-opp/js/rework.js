@@ -216,6 +216,9 @@ function renderRows(tbody) {
             <td class="p-4 text-xs font-mono">${machineName}</td>
             <td class="p-4">${statusBadge}</td>
             <td class="p-4 text-center">
+                <button onclick="event.stopPropagation(); openProductionOrderInventoryModal('${entry.id}', 'rework')" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all mr-2" title="Assign inventory items">
+                    <i class="fa-solid fa-boxes-stacked mr-1"></i>Assign Items
+                </button>
                 <button onclick="editReworkEntry('${entry.id}')" class="text-blue-400 hover:text-blue-300 transition-colors text-xs" title="Edit">
                     <i class="fa-solid fa-pen-to-square"></i>
                 </button>

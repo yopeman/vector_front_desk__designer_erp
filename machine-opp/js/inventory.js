@@ -160,7 +160,7 @@ function openInventoryModal(itemId = null) {
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Current Qty</label>
-                        <input type="number" id="inv-current-qty" value="${item?.current_quantity || 0}" class="w-full bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all" placeholder="0">
+                        <input type="number" id="inv-current-qty" value="${item?.current_quantity || 0}" class="w-full bg-slate-700/50 border border-slate-600/50 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-all" placeholder="0" disabled>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Min Stock</label>
@@ -461,6 +461,204 @@ async function saveMovement(type) {
     } catch (error) {
         console.error('Error saving movement:', error);
         alert('Failed to record stock movement');
+    }
+}
+
+// =============================================
+// PRODUCTION ORDER INVENTORY ASSIGN MODAL (Received / Rework)
+// =============================================
+function htmlEscape(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+}
+
+async function openProductionOrderInventoryModal(productionOrderId, referenceType) {
+    if (!productionOrderId) {
+        alert('No order selected.');
+        return;
+    }
+
+    // Load active inventory items with stock details
+    let items = [];
+    let movements = [];
+    try {
+        const { data, error } = await supabase
+            .from('inventory')
+            .select('id, name, item_code, unit_of_measure, current_quantity, minimum_stock')
+            .eq('status', 'active')
+            .order('name');
+        if (!error) items = data || [];
+    } catch (e) {
+        console.error('Error loading inventory items:', e);
+    }
+
+    // Load stock movements related to this production order
+    try {
+        const { data, error } = await supabase
+            .from('inventory_movements')
+            .select('*, inventory:inventory_id(name, item_code, unit_of_measure), users:performed_by(username)')
+            .eq('production_order_id', productionOrderId)
+            .order('movement_date', { ascending: false });
+        if (!error) movements = data || [];
+    } catch (e) {
+        console.error('Error loading movements:', e);
+    }
+
+    const referenceLabel = referenceType === 'rework' ? 'Rework Order' : 'Received Order';
+
+    const itemsRows = items.length === 0
+        ? '<div class="text-xs text-slate-500">No active inventory items available.</div>'
+        : items.map(item => {
+            const low = (parseFloat(item.current_quantity) || 0) <= (parseFloat(item.minimum_stock) || 0);
+            return `
+                <div class="flex items-center justify-between gap-3 p-3 bg-slate-800/60 border border-slate-700/50 rounded-xl">
+                    <div class="min-w-0 flex-1">
+                        <p class="text-sm text-slate-100 font-medium truncate">${htmlEscape(item.name)}</p>
+                        <p class="text-xs text-slate-500 font-mono truncate">${htmlEscape(item.item_code || '')} ${item.unit_of_measure ? '· ' + htmlEscape(item.unit_of_measure) : ''}</p>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="text-xs text-slate-400">Stock:</span>
+                        <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold ${low ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'}">${item.current_quantity || 0}</span>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <input type="number" id="po-inv-qty-${item.id}" class="w-20 bg-slate-900 border border-slate-600/50 rounded-lg px-2 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-red-500" placeholder="Qty" min="0">
+                        <button onclick="saveProductionOrderStockOut('${item.id}', '${productionOrderId}', '${referenceType}')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all">
+                            <i class="fa-solid fa-arrow-up mr-1"></i>Out
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    const movementsRows = movements.length === 0
+        ? '<div class="text-xs text-slate-500">No stock movements for this production order yet.</div>'
+        : movements.map(m => {
+            const isIn = m.movement_type === 'in';
+            const color = isIn ? 'text-emerald-400' : 'text-red-400';
+            const icon = isIn ? 'fa-arrow-down' : 'fa-arrow-up';
+            const date = new Date(m.movement_date).toLocaleDateString();
+            return `
+                <div class="flex items-center justify-between text-xs p-2.5 bg-slate-800/60 border border-slate-700/50 rounded-lg">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i class="fa-solid ${icon} ${color}"></i>
+                        <span class="text-slate-200 truncate">${htmlEscape(m.inventory?.name || 'Unknown')}</span>
+                        <span class="text-slate-500 font-mono">${htmlEscape(m.inventory?.item_code || '')}</span>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span class="font-bold ${color}">${isIn ? '+' : '-'}${m.quantity}</span>
+                        <span class="text-slate-500 font-mono">${date}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+    modal.id = 'production-inventory-modal';
+
+    modal.innerHTML = `
+        <div class="bg-slate-800 rounded-2xl border border-slate-700/50 w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b border-slate-700/50 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center gap-3">
+                    <i class="fa-solid fa-boxes-stacked text-red-400"></i>
+                    Assign Inventory Items
+                    <span class="text-xs font-medium text-slate-400 bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5">${referenceLabel}</span>
+                </h3>
+                <button onclick="closeProductionOrderInventoryModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Inventory Items (Stock Out)</label>
+                    <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                        ${itemsRows}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Stock Movements (${movements.length})</label>
+                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        ${movementsRows}
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-slate-700/50 flex justify-end">
+                <button onclick="closeProductionOrderInventoryModal()" class="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all">Close</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeProductionOrderInventoryModal();
+    });
+}
+
+function closeProductionOrderInventoryModal() {
+    const modal = document.getElementById('production-inventory-modal');
+    if (modal) modal.remove();
+}
+
+async function saveProductionOrderStockOut(inventoryId, productionOrderId, referenceType) {
+    const qtyInput = document.getElementById('po-inv-qty-' + inventoryId);
+    const quantity = qtyInput ? parseFloat(qtyInput.value) : NaN;
+
+    if (!quantity || quantity <= 0) {
+        alert('Please enter a valid quantity to assign.');
+        return;
+    }
+
+    let item = null;
+    try {
+        const { data } = await supabase
+            .from('inventory')
+            .select('*')
+            .eq('id', inventoryId)
+            .maybeSingle();
+        item = data;
+    } catch (e) {
+        console.error('Error fetching inventory item:', e);
+    }
+
+    if (item && (parseFloat(item.current_quantity) || 0) < quantity) {
+        alert(`Insufficient stock. Available: ${item.current_quantity}`);
+        return;
+    }
+
+    try {
+        const currentUser = Auth.getCurrentUser();
+        const { error } = await supabase
+            .from('inventory_movements')
+            .insert([{
+                inventory_id: inventoryId,
+                movement_type: 'out',
+                quantity: quantity,
+                reference_type: referenceType,
+                production_order_id: productionOrderId,
+                performed_by: currentUser?.id || null,
+                notes: referenceType === 'rework' ? 'Assigned for rework' : 'Assigned for production',
+                movement_date: new Date().toISOString(),
+                created_at: new Date().toISOString()
+            }]);
+        if (error) throw error;
+
+        const newQty = (parseFloat(item.current_quantity) || 0) - quantity;
+        const { error: updateError } = await supabase
+            .from('inventory')
+            .update({ current_quantity: newQty, updated_at: new Date().toISOString() })
+            .eq('id', inventoryId);
+        if (updateError) throw updateError;
+
+        // Refresh modal to reflect updated stock and movements
+        closeProductionOrderInventoryModal();
+        await openProductionOrderInventoryModal(productionOrderId, referenceType);
+
+        if (typeof loadInventoryItems === 'function') loadInventoryItems();
+        if (typeof loadInventoryMovements === 'function') loadInventoryMovements();
+    } catch (error) {
+        console.error('Error assigning inventory:', error);
+        alert('Failed to assign inventory. Please try again.');
     }
 }
 

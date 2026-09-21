@@ -110,6 +110,7 @@ class ReceivedordersSection {
                                     <th class="p-4">Project/Task Name/Title</th>
                                     <th class="p-4">Priority</th>
                                     <th class="p-4">Machine Type</th>
+                                    <th class="p-4 text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-800 text-sm text-slate-300 cursor-pointer" id="received-orders-body">

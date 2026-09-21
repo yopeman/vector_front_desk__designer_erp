@@ -158,7 +158,7 @@ async function renderOrdersTable() {
     if (!ordersData.length) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="8" class="p-8 text-center text-slate-400">
+                <td colspan="9" class="p-8 text-center text-slate-400">
                     No received orders found
                 </td>
             </tr>
@@ -206,6 +206,11 @@ async function renderOrdersTable() {
                     <i class="fa-solid fa-microchip text-[8px] text-slate-500"></i>
                     ${order.machine}
                 </span>
+            </td>
+            <td class="p-4 text-center">
+                <button onclick="event.stopPropagation(); openProductionOrderInventoryModal('${order.id}', 'received')" class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all" title="Assign inventory items">
+                    <i class="fa-solid fa-boxes-stacked mr-1"></i>Assign Items
+                </button>
             </td>
         `;
         row.addEventListener('click', function() {
