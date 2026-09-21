@@ -2,9 +2,99 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { supabaseAdmin } from '../lib/supabaseAdmin';
 import FloatingAssistant from './front-desk/components/FloatingAssistant';
+import AdminNotifications from './AdminNotifications';
 
 // ── API Base URL for user management ──
 const API_URL = 'https://vecotr-advert-hr.vercel.app/api/frontdesk/users';
+
+// ── Sidebar ──
+function AdminSidebar({ activeTab, onTabSwitch }) {
+  const tabs = [
+    { id: 'users', label: 'Users', icon: 'fa-users', color: 'text-primary-400' },
+    { id: 'reports', label: 'Reports', icon: 'fa-chart-bar', color: 'text-primary-400' },
+    { id: 'ai-agent', label: 'AI Agent', icon: 'fa-robot', color: 'text-primary-400' },
+    { id: 'profile', label: 'Settings', icon: 'fa-gear', color: 'text-primary-400' },
+  ];
+
+  return (
+    <aside className="w-68 bg-primary-900 text-slate-200 flex flex-col justify-between hidden md:flex z-10 shadow-2xl shrink-0">
+      <div>
+        <div className="p-6 flex items-center gap-3 border-b border-primary-800 bg-primary-950/40">
+          <div className="bg-gradient-to-tr from-primary-500 to-primary-600 p-2.5 rounded-xl text-white shadow-md shadow-primary-500/20">
+            <i className="fa-solid fa-cubes text-xl"></i>
+          </div>
+          <div>
+            <h1 className="font-bold text-lg leading-tight text-white tracking-wide">V☰CTOR A&M</h1>
+            <span className="text-xs text-primary-400 font-semibold tracking-wider uppercase">ERP Premium v2.0</span>
+          </div>
+        </div>
+
+        <div className="p-4 pt-6 text-xs font-bold text-slate-500 uppercase tracking-widest px-6">Admin Modules</div>
+        <nav className="p-4 space-y-1.5 px-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onTabSwitch(tab.id)}
+              className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium transition text-left ${
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-primary-600 to-primary-600 text-white shadow-md shadow-primary-600/10'
+                  : 'text-slate-400 hover:bg-primary-800 hover:text-slate-100'
+              }`}
+            >
+              <i className={`fa-solid ${tab.icon} text-base ${tab.color || ''}`}></i>
+              {tab.label}
+            </button>
+          ))}
+
+          <button
+            onClick={() => window.open('https://vectoradvert.com/erp/hr', '_self')}
+            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium transition text-left text-slate-400 hover:bg-primary-800 hover:text-slate-100"
+          >
+            <i className="fa-solid fa-file-lines text-base text-primary-400"></i>
+            HR Request
+          </button>
+        </nav>
+      </div>
+    </aside>
+  );
+}
+
+// ── Topbar ──
+function AdminHeader({ profile, signOut }) {
+  return (
+    <header className="bg-white border-b border-primary-100 h-16 flex items-center justify-between px-6 md:px-8 shrink-0 sticky top-0 z-30 shadow-sm">
+      <h1 className="text-lg font-bold text-slate-800">V☰CTOR Advert & Manufacturing</h1>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold border border-slate-700">
+              {(profile?.email || 'A').charAt(0).toUpperCase()}
+            </div>
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-primary-500 border-2 border-slate-900 rounded-full"></span>
+          </div>
+          <div className="flex-1 min-w-0 hidden sm:block">
+            <p className="font-semibold text-slate-800 text-sm truncate">{profile?.email || 'admin@company.com'}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] text-slate-500">Active Session</p>
+              <span className="px-2 py-0.5 bg-primary-500/20 text-primary-600 rounded-full text-[10px] font-bold uppercase">
+                Admin
+              </span>
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={signOut}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-primary-800 hover:bg-primary-700 text-slate-300 rounded-lg transition text-xs font-semibold"
+        >
+          <i className="fa-solid fa-right-from-bracket"></i>
+          <span className="hidden sm:inline">Sign Out</span>
+        </button>
+        <AdminNotifications />
+      </div>
+    </header>
+  );
+}
 
 // ── Modal Component ──
 function Modal({ title, children, onClose }) {
@@ -14,15 +104,18 @@ function Modal({ title, children, onClose }) {
         className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-base font-bold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <h2 className="text-base font-bold text-slate-800">{title}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
         </div>
         <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   );
 }
+
+const inputClass =
+  'w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 transition';
 
 export default function AdminPage() {
   const { profile, signOut } = useAuth();
@@ -211,304 +304,228 @@ export default function AdminPage() {
   // ── Render ──
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-gray-800" style={{ color: '#00ced1' }}>V☰CTOR Advert & Manufacturing</h1>
-            <p className="text-xs text-gray-500 mt-0.5">Welcome, {profile?.username || 'Admin'}</p>
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 text-slate-800 antialiased">
+      <AdminSidebar activeTab={activeTab} onTabSwitch={setActiveTab} />
+
+      <main className="flex-1 flex flex-col overflow-y-auto bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200">
+        <AdminHeader profile={profile} signOut={signOut} />
+
+        {/* Toast */}
+        {toast && (
+          <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold text-white ${toast.type === 'error' ? 'bg-error-500' : 'bg-primary-500'}`}>
+            {toast.msg}
           </div>
-        </div>
-        <button onClick={signOut} className="text-sm text-red-600 hover:text-red-800 font-medium">Sign Out</button>
-      </header>
+        )}
 
-      {/* Toast */}
-      {toast && (
-        <div className={`fixed top-4 right-4 z-50 px-5 py-3 rounded-lg shadow-lg text-sm font-semibold text-white ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-600'}`}>
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Tab Navigation */}
-      <div className="max-w-7xl mx-auto px-6 pt-6">
-        <div className="flex gap-2 border-b border-gray-200">
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`px-4 py-3 text-sm font-semibold transition ${
-              activeTab === 'users'
-                ? 'text-gray-800 border-b-2 border-[#00ced1]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Users
-          </button>
-          <button
-            onClick={() => setActiveTab('reports')}
-            className={`px-4 py-3 text-sm font-semibold transition ${
-              activeTab === 'reports'
-                ? 'text-gray-800 border-b-2 border-[#00ced1]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Reports
-          </button>
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`px-4 py-3 text-sm font-semibold transition ${
-              activeTab === 'profile'
-                ? 'text-gray-800 border-b-2 border-[#00ced1]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Profile
-          </button>
-          <button
-            onClick={() => setActiveTab('ai-agent')}
-            className={`px-4 py-3 text-sm font-semibold transition ${
-              activeTab === 'ai-agent'
-                ? 'text-gray-800 border-b-2 border-[#00ced1]'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            AI Agent
-          </button>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="max-w-7xl mx-auto p-6">
-        {activeTab === 'users' && (
-          <div>
-            <center className='font-bold'><h1 style={{fontSize: '48px'}}><u>Users</u></h1></center>
+        <div className="p-6 md:p-8 space-y-8">
+          {activeTab === 'users' && (
             <div>
-              {/* Toolbar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                <input
-                  type="text"
-                  placeholder="Search users by name or email..."
-                  value={userSearch}
-                  onChange={(e) => setUserSearch(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none w-full max-w-[calc(100%-12%)]"
-                  style={{ transition: 'border-color 0.2s' }}
-                  onFocus={(e) => e.target.style.borderColor = '#00ced1'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-                />
-                <button
-                  onClick={() => setUserModal({ mode: 'create' })}
-                  className="text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5"
-                  style={{ backgroundColor: '#00ced1' }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#00b8bb'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#00ced1'}
-                >
-                  <span className="text-base leading-none">+</span> Add User
-                </button>
-              </div>
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
+                {/* Toolbar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <input
+                    type="text"
+                    placeholder="Search users by name or email..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className={`${inputClass} w-full max-w-[calc(100%-12%)]`}
+                  />
+                  <button
+                    onClick={() => setUserModal({ mode: 'create' })}
+                    className="bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5"
+                  >
+                    <span className="text-base leading-none">+</span> Add User
+                  </button>
+                </div>
 
-              {/* Table */}
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 text-left">
-                    <tr>
-                      <th className="px-5 py-3 font-semibold text-gray-600">Name</th>
-                      <th className="px-5 py-3 font-semibold text-gray-600">Email</th>
-                      <th className="px-5 py-3 font-semibold text-gray-600">Role</th>
-                      <th className="px-5 py-3 font-semibold text-gray-600 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageUsers.map((u) => (
-                      <tr key={u.id} className="border-t border-gray-100 hover:bg-gray-50">
-                        <td className="px-5 py-3.5 font-medium text-gray-800">{u.username || 'Unknown'}</td>
-                        <td className="px-5 py-3.5 text-gray-500">{u.email}</td>
-                        <td className="px-5 py-3.5">
-                          <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${!u.role ? 'bg-yellow-50 text-yellow-700' : 'bg-blue-50 text-blue-700'}`}>
-                            {u.role || 'pending'}
-                          </span>
-                        </td>
-                        <td className="px-5 py-3.5 text-right space-x-1">
-                          <button onClick={() => setUserModal({ mode: 'edit', data: u })}
-                            className="text-xs font-semibold px-2.5 py-1 rounded transition"
-                            style={{ color: '#00ced1' }}
-                            onMouseEnter={(e) => { e.target.style.color = '#00b8bb'; e.target.style.backgroundColor = '#e6fffd'; }}
-                            onMouseLeave={(e) => { e.target.style.color = '#00ced1'; e.target.style.backgroundColor = 'transparent'; }}>
-                            Edit
-                          </button>
-                          <button onClick={() => deleteUser(u.id)}
-                            className="text-red-600 hover:text-red-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-red-50 transition">
-                            Delete
-                          </button>
-                        </td>
+                {/* Table */}
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-left">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold text-slate-600">Name</th>
+                        <th className="px-5 py-3 font-semibold text-slate-600">Email</th>
+                        <th className="px-5 py-3 font-semibold text-slate-600">Role</th>
+                        <th className="px-5 py-3 font-semibold text-slate-600 text-right">Actions</th>
                       </tr>
-                    ))}
-                    {pageUsers.length === 0 && (
-                      <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400">No users found.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
-                <div className="text-sm text-gray-600">
-                  {totalFiltered === 0
-                    ? 'Showing 0 users'
-                    : `Showing ${startIndex + 1}-${endIndex} of ${totalFiltered} users`}
+                    </thead>
+                    <tbody>
+                      {pageUsers.map((u) => (
+                        <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <td className="px-5 py-3.5 font-medium text-slate-800">{u.username || 'Unknown'}</td>
+                          <td className="px-5 py-3.5 text-slate-500">{u.email}</td>
+                          <td className="px-5 py-3.5">
+                            <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${!u.role ? 'bg-warning-50 text-warning-700' : 'bg-primary-50 text-primary-700'}`}>
+                              {u.role || 'pending'}
+                            </span>
+                          </td>
+                          <td className="px-5 py-3.5 text-right space-x-1">
+                            <button onClick={() => setUserModal({ mode: 'edit', data: u })}
+                              className="text-primary-600 hover:text-primary-800 hover:bg-primary-50 text-xs font-semibold px-2.5 py-1 rounded transition">
+                              Edit
+                            </button>
+                            <button onClick={() => deleteUser(u.id)}
+                              className="text-error-600 hover:text-error-800 text-xs font-semibold px-2.5 py-1 rounded hover:bg-error-50 transition">
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {pageUsers.length === 0 && (
+                        <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-400">No users found.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={userItemsPerPage}
-                    onChange={(e) => {
-                      setUserItemsPerPage(Number(e.target.value));
-                      setUserCurrentPage(1);
-                    }}
-                    className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={20}>20</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                  <button
-                    onClick={() => setUserCurrentPage(1)}
-                    disabled={userCurrentPage === 1}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    First
-                  </button>
-                  <button
-                    onClick={() => setUserCurrentPage(userCurrentPage - 1)}
-                    disabled={userCurrentPage === 1}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-                  <span className="px-3 py-2 text-sm text-gray-600">
-                    Page {userCurrentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setUserCurrentPage(userCurrentPage + 1)}
-                    disabled={userCurrentPage >= totalPages}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-                  <button
-                    onClick={() => setUserCurrentPage(totalPages)}
-                    disabled={userCurrentPage >= totalPages}
-                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Last
-                  </button>
+
+                {/* Pagination */}
+                <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+                  <div className="text-sm text-slate-600">
+                    {totalFiltered === 0
+                      ? 'Showing 0 users'
+                      : `Showing ${startIndex + 1}-${endIndex} of ${totalFiltered} users`}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={userItemsPerPage}
+                      onChange={(e) => {
+                        setUserItemsPerPage(Number(e.target.value));
+                        setUserCurrentPage(1);
+                      }}
+                      className="border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <button
+                      onClick={() => setUserCurrentPage(1)}
+                      disabled={userCurrentPage === 1}
+                      className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                    >
+                      First
+                    </button>
+                    <button
+                      onClick={() => setUserCurrentPage(userCurrentPage - 1)}
+                      disabled={userCurrentPage === 1}
+                      className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                    >
+                      Previous
+                    </button>
+                    <span className="px-3 py-2 text-sm text-slate-600">
+                      Page {userCurrentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setUserCurrentPage(userCurrentPage + 1)}
+                      disabled={userCurrentPage >= totalPages}
+                      className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                    >
+                      Next
+                    </button>
+                    <button
+                      onClick={() => setUserCurrentPage(totalPages)}
+                      disabled={userCurrentPage >= totalPages}
+                      className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+                    >
+                      Last
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'reports' && (
-          <div>
-            <center className='font-bold'><h1 style={{fontSize: '48px'}}><u>Report</u></h1></center>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { name: 'Front Desk', url: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk-public-report' },
-                { name: 'Design', url: 'https://vectoradvert.com/erp/frontdesk/#/design-public-report' },
-                { name: 'Machine', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
-                { name: 'Finishing', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
-                { name: 'Marketing', url: 'https://vectoradvert.com/erp/marketing/#/marketing-public-report' },
-                { name: 'Creative', url: 'https://vectoradvert.com/erp/creative/#/creative-public-report' },
-              ].map((report) => (
-                <a
-                  key={report.name}
-                  href={report.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition hover:border-[#00ced1]"
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">{report.name}</h3>
-                  <p className="text-sm text-gray-500 truncate">{report.url}</p>
-                </a>
-              ))}
+          {activeTab === 'reports' && (
+            <div>
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-4">Public Reports</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { name: 'Front Desk', url: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk-public-report' },
+                    { name: 'Design', url: 'https://vectoradvert.com/erp/frontdesk/#/design-public-report' },
+                    { name: 'Machine', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
+                    { name: 'Finishing', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
+                    { name: 'Marketing', url: 'https://vectoradvert.com/erp/marketing/#/marketing-public-report' },
+                    { name: 'Creative', url: 'https://vectoradvert.com/erp/creative/#/creative-public-report' },
+                  ].map((report) => (
+                    <a
+                      key={report.name}
+                      href={report.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition hover:border-primary-500"
+                    >
+                      <h3 className="text-lg font-semibold text-slate-800 mb-2">{report.name}</h3>
+                      <p className="text-sm text-slate-500 truncate">{report.url}</p>
+                    </a>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'profile' && (
-          <div>
-            <center className='font-bold'><h1 style={{fontSize: '48px'}}><u>Profile</u></h1></center>
-            <div className="mt-8 max-w-2xl mx-auto">
-              {/* Admin Info */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Admin Information</h2>
+          {activeTab === 'profile' && (
+            <div>
+              <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-4">Admin Information</h2>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Username</label>
-                    <p className="text-sm text-gray-600 px-3 py-2 bg-gray-50 rounded-lg">{profile?.username || 'N/A'}</p>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Username</label>
+                    <p className="text-sm text-slate-600 px-3 py-2 bg-slate-50 rounded-lg">{profile?.username || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Email</label>
-                    <p className="text-sm text-gray-600 px-3 py-2 bg-gray-50 rounded-lg">{profile?.email || 'N/A'}</p>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                    <p className="text-sm text-slate-600 px-3 py-2 bg-slate-50 rounded-lg">{profile?.email || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Role</label>
-                    <p className="text-sm text-gray-600 px-3 py-2 bg-gray-50 rounded-lg">COO</p>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Role</label>
+                    <p className="text-sm text-slate-600 px-3 py-2 bg-slate-50 rounded-lg">COO</p>
                   </div>
                 </div>
               </div>
 
               {/* Password Change Form */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">Change Password</h2>
+              <div className="bg-white rounded-xl border border-slate-200 p-6">
+                <h2 className="text-lg font-semibold text-slate-800 mb-4">Change Password</h2>
                 <form onSubmit={changePassword} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Current Password</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Current Password</label>
                     <input
                       type="password"
                       value={passwordForm.currentPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                       required
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-                      style={{ transition: 'all 0.2s' }}
-                      onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
-                      onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                      className={inputClass}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">New Password</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">New Password</label>
                     <input
                       type="password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                       required
                       minLength={6}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-                      style={{ transition: 'all 0.2s' }}
-                      onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
-                      onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                      className={inputClass}
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">Confirm New Password</label>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Confirm New Password</label>
                     <input
                       type="password"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                       required
                       minLength={6}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-                      style={{ transition: 'all 0.2s' }}
-                      onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
-                      onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+                      className={inputClass}
                     />
                   </div>
                   <div className="flex justify-end pt-2">
                     <button
                       type="submit"
-                      className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition"
-                      style={{ backgroundColor: '#00ced1' }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = '#00b8bb'}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = '#00ced1'}
+                      className="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition"
                     >
                       Change Password
                     </button>
@@ -516,17 +533,18 @@ export default function AdminPage() {
                 </form>
               </div>
             </div>
-          </div>
-        )}
-        {activeTab === 'ai-agent' && (
-          <div style={{ height: 'calc(100vh - 220px)', display: 'flex' }}>
-            <FloatingAssistant onNavigate={(action) => {
-              const map = { 'report': 'reports', 'reports': 'reports', 'settings': 'profile' };
-              setActiveTab(map[action] || 'users');
-            }} embedded />
-          </div>
-        )}
-      </div>
+          )}
+
+          {activeTab === 'ai-agent' && (
+            <div className="h-[calc(100vh-160px)] flex">
+              <FloatingAssistant onNavigate={(action) => {
+                const map = { 'report': 'reports', 'reports': 'reports', 'settings': 'profile' };
+                setActiveTab(map[action] || 'users');
+              }} embedded />
+            </div>
+          )}
+        </div>
+      </main>
 
       {/* ─── USER MODAL ─── */}
       {userModal && (
@@ -560,26 +578,20 @@ function UserModal({ mode, data, onSave, onClose }) {
     <Modal title={mode === 'edit' ? 'Edit User' : 'New User'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
           <input type="text" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })}
-            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ transition: 'all 0.2s' }}
-            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+            required className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Email</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
           <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ transition: 'all 0.2s' }}
-            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+            required className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">
-            Password {mode === 'edit' && <span className="font-normal text-gray-400">(optional)</span>}
+          <label className="block text-xs font-semibold text-slate-700 mb-1">
+            Password {mode === 'edit' && <span className="font-normal text-slate-400">(optional)</span>}
           </label>
           <input
             type="password"
@@ -588,19 +600,13 @@ function UserModal({ mode, data, onSave, onClose }) {
             required={mode === 'create'}
             minLength={6}
             placeholder={mode === 'edit' ? 'Keep blank to leave unchanged' : ''}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ transition: 'all 0.2s' }}
-            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+            className={inputClass}
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Role</label>
+          <label className="block text-xs font-semibold text-slate-700 mb-1">Role</label>
           <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
-            style={{ transition: 'all 0.2s' }}
-            onFocus={(e) => { e.target.style.borderColor = '#00ced1'; e.target.style.boxShadow = '0 0 0 2px #e6fffd'; }}
-            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
+            className={inputClass}
           >
             <option value="" disabled>— Select Role —</option>
             <option value="front_desk">Front Desk</option>
@@ -614,12 +620,10 @@ function UserModal({ mode, data, onSave, onClose }) {
           </select>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition">Cancel</button>
-          <button type="submit" className="px-4 py-2 text-sm font-semibold text-white rounded-lg transition"
-            style={{ backgroundColor: '#00ced1' }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#00b8bb'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#00ced1'}
-          >{mode === 'edit' ? 'Update' : 'Create'}</button>
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition">Cancel</button>
+          <button type="submit" className="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition">
+            {mode === 'edit' ? 'Update' : 'Create'}
+          </button>
         </div>
       </form>
     </Modal>
