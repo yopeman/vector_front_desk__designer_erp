@@ -5,6 +5,10 @@
 
 const AI_API_URL = (window.AI_API_BASE_URL || 'http://localhost:8000/api/v1').replace(/\/+$/, '');
 const AI_IMG_ROOT = 'imgs/';
+const AI_IMG = (name) =>
+  typeof AI_IMG_DATA !== 'undefined' && AI_IMG_DATA[name]
+    ? AI_IMG_DATA[name]
+    : AI_IMG_ROOT + name;
 
 const nowTime = () =>
   new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -730,7 +734,7 @@ const AIAgent = (function() {
       return `
       <div class="asst-body asst-human-body">
         <div class="asst-human-frame">
-          <img class="asst-human-gif ${talking ? 'talking' : ''}" src="${AI_IMG_ROOT}${gif}" alt="" draggable="false" />
+          <img class="asst-human-gif ${talking ? 'talking' : ''}" src="${AI_IMG(gif)}" alt="" draggable="false" />
           <div class="asst-human-scrim"></div>
           ${S.listening ? `
             <div class="asst-human-top" style="top:auto;bottom:18px;">
@@ -754,7 +758,7 @@ const AIAgent = (function() {
     if (showWelcome) {
       msgsInner = `
         <div class="asst-welcome">
-          ${S.showAvatar ? `<img class="asst-welcome-mascot" src="${AI_IMG_ROOT}talk-ai-2.gif" alt="" />` : ''}
+          ${S.showAvatar ? `<img class="asst-welcome-mascot" src="${AI_IMG('talk-ai-2.gif')}" alt="" />` : ''}
           <div class="asst-welcome-title">How can I help?</div>
           <div class="asst-welcome-sub">${escapeHtml(S.messages[0].text)}</div>
         </div>`;
@@ -764,7 +768,7 @@ const AIAgent = (function() {
         return `
         <div class="asst-row ${isUser ? 'asst-row-user' : ''}">
           ${!isUser && S.showAvatar ? `
-            <div class="asst-avatar-sm"><img src="${AI_IMG_ROOT}${S.speakingId === msg.id ? 'talk-ai-1.gif' : 'talk-ai-2.gif'}" alt="" /></div>` : ''}
+            <div class="asst-avatar-sm"><img src="${AI_IMG(S.speakingId === msg.id ? 'talk-ai-1.gif' : 'talk-ai-2.gif')}" alt="" /></div>` : ''}
           <div class="asst-bubble ${isUser ? 'asst-bubble-user' : 'asst-bubble-bot'} ${msg.error ? 'asst-bubble-error' : ''}">
             ${isUser ? `<div style="white-space:pre-wrap">${escapeHtml(msg.text)}</div>` : `<div class="asst-md">${mdToHtml(msg.text)}</div>`}
             <div class="asst-meta">
@@ -784,7 +788,7 @@ const AIAgent = (function() {
     if (S.sending) {
       msgsInner += `
         <div class="asst-row">
-          ${S.showAvatar ? `<div class="asst-avatar-sm"><img src="${AI_IMG_ROOT}talk-ai-1.gif" alt="" /></div>` : ''}
+          ${S.showAvatar ? `<div class="asst-avatar-sm"><img src="${AI_IMG('talk-ai-1.gif')}" alt="" /></div>` : ''}
           <div class="asst-bubble asst-bubble-bot asst-typing"><span class="asst-dot"></span><span class="asst-dot"></span><span class="asst-dot"></span></div>
         </div>`;
     }

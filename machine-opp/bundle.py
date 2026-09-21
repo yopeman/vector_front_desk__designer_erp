@@ -4,6 +4,7 @@ Bundle script for machine-opp ERP system.
 Reads all JS files and CSS from the machine-opp directory and bundles them into a single index.html.
 """
 
+import base64
 import os
 import re
 from pathlib import Path
@@ -45,13 +46,52 @@ def bundle_css(css_file):
     return content
 
 
-def create_bundled_html(original_html, js_dir, css_dir, output_path):
+MIME_TYPES = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon',
+    '.webp': 'image/webp',
+}
+
+
+def embed_images_as_base64(imgs_dir):
+    """Encode all images in the directory as base64 data URIs keyed by filename."""
+    data = {}
+    if not os.path.isdir(imgs_dir):
+        return data
+    for img_file in sorted(os.listdir(imgs_dir)):
+        filepath = os.path.join(imgs_dir, img_file)
+        if not os.path.isfile(filepath):
+            continue
+        ext = os.path.splitext(img_file)[1].lower()
+        mime = MIME_TYPES.get(ext, 'application/octet-stream')
+        try:
+            with open(filepath, 'rb') as f:
+                b64 = base64.b64encode(f.read()).decode('ascii')
+        except Exception as e:
+            print(f"Error reading {filepath}: {e}")
+            continue
+        data[img_file] = f"data:{mime};base64,{b64}"
+    return data
+
+
+def create_bundled_html(original_html, js_dir, css_dir, imgs_dir, output_path):
     """Create the bundled HTML file."""
     # Extract JS file order from original HTML
     js_files = extract_js_files(original_html)
     
     # Bundle JS files
     bundled_js = bundle_js_files(js_files, js_dir)
+
+    # Embed images as base64 data URIs
+    imgs = embed_images_as_base64(imgs_dir)
+    if imgs:
+        img_map = ",\n".join(f'  "{name}": "{uri}"' for name, uri in imgs.items())
+        imgs_js = f'const AI_IMG_DATA = {{\n{img_map}\n}};\n\n'
+        bundled_js = imgs_js + bundled_js
     
     # Bundle CSS
     css_file = os.path.join(css_dir, 'styles.css')
@@ -89,6 +129,7 @@ def create_bundled_html(original_html, js_dir, css_dir, output_path):
     
     print(f"Bundled HTML created at: {output_path}")
     print(f"Bundled {len(js_files)} JS files and 1 CSS file")
+    print(f"Embedded {len(imgs)} images as base64")
 
 
 def main():
@@ -106,7 +147,7 @@ def main():
         return
     
     # Create bundled HTML
-    create_bundled_html(original_html, js_dir, css_dir, output_path)
+    create_bundled_html(original_html, js_dir, css_dir, base_dir / 'imgs', output_path)
 
 
 if __name__ == '__main__':
