@@ -13,6 +13,7 @@ import MessagesPage from './pages/MessagesPage';
 import NotificationsPage from './pages/NotificationsPage';
 import NotesPage from './pages/NotesPage';
 import SettingsPage from './pages/SettingsPage';
+import { Assistant } from './pages/Assistant';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './hooks/useAuth';
@@ -54,6 +55,7 @@ function App() {
                       <Route path="/notifications" element={<NotificationsPage />} />
                       <Route path="/notes" element={<NotesPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/assistant" element={<Assistant />} />
                     </Routes>
                   </MainLayout>
                 </ProtectedRoute>

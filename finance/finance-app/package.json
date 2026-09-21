@@ -21,8 +21,10 @@
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.84.0",
     "react-hot-toast": "^2.6.0",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
+    "remark-gfm": "^4.0.1",
     "vite-plugin-singlefile": "^2.3.3",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76"

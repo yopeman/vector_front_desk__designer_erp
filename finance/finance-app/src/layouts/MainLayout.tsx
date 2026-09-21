@@ -13,7 +13,8 @@ import {
   MessageSquare,
   Bell,
   StickyNote,
-  Settings
+  Settings,
+  Bot
 } from 'lucide-react';
 import { useState } from 'react';
 import TopHeader from '../components/TopHeader';
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/inventory', label: 'Inventory', icon: Package },
   { path: '/payroll', label: 'Payroll', icon: Users },
   { path: '/reports', label: 'Report', icon: BarChart3 },
+  { path: '/assistant', label: 'AI Agent', icon: Bot },
   { path: '/messages', label: 'Messages', icon: MessageSquare },
   { path: '/notifications', label: 'Notifications', icon: Bell },
   { path: '/notes', label: 'Notes', icon: StickyNote },
