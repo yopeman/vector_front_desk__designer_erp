@@ -88,6 +88,7 @@ async function fetchReceivedOrders() {
     }));
 
     receivedOrdersLoaded = true;
+    if (typeof updateSidebarCounts === 'function') updateSidebarCounts();
 }
 
 async function fetchApprovedDesignVersions(orderId) {

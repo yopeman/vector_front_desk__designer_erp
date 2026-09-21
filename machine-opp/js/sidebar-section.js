@@ -36,11 +36,13 @@ class SidebarSection {
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-list-check w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Received Order</span>
+                            <span id="sidebar-count-received" class="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full min-w-6 text-center">0</span>
                         </button>
                         <button onclick="switchTab('rework-login')" id="tab-rework-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-arrows-rotate w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Rework Recording</span>
+                            <span id="sidebar-count-rework" class="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full min-w-6 text-center">0</span>
                         </button>
                         <button onclick="switchTab('completed-orders')" id="tab-completed-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>

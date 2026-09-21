@@ -1,6 +1,21 @@
 // Sidebar Navigation Component
 // Handles sidebar navigation and HR submenu
 
+// =============================================
+// UPDATE SIDEBAR ROW COUNTS
+// =============================================
+function updateSidebarCounts() {
+    const receivedCountEl = document.getElementById('sidebar-count-received');
+    const reworkCountEl = document.getElementById('sidebar-count-rework');
+
+    if (receivedCountEl) {
+        receivedCountEl.textContent = (typeof ordersData !== 'undefined' && Array.isArray(ordersData)) ? ordersData.length : 0;
+    }
+    if (reworkCountEl) {
+        reworkCountEl.textContent = (typeof reworkData !== 'undefined' && Array.isArray(reworkData)) ? reworkData.length : 0;
+    }
+}
+
 class SidebarNavigation {
     constructor() {
         this.init();

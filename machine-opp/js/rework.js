@@ -59,6 +59,7 @@ async function fetchReworkRecords() {
 
     reworkIdCounter = Math.max(...reworkData.map(r => parseInt(r.id) || 0), 0) + 1;
     reworkLoaded = true;
+    if (typeof updateSidebarCounts === 'function') updateSidebarCounts();
 }
 
 // =============================================
@@ -541,6 +542,8 @@ function updateReworkStats() {
     if (progressEl) progressEl.textContent = inProgress;
     if (completedEl) completedEl.textContent = completed;
     if (avgTimeEl) avgTimeEl.textContent = avgTime + 'm';
+
+    if (typeof updateSidebarCounts === 'function') updateSidebarCounts();
 }
 
 // =============================================
