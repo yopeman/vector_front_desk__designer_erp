@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
+import { setOpenDesignChat } from '../../../lib/designChatState';
 
 export default function DesignDetailModal({ design, onClose, selectedVersion }) {
   const { profile } = useAuth();
@@ -14,6 +15,8 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
   const [uploading, setUploading] = useState(false);
   const [versionFileUrls, setVersionFileUrls] = useState({});
   const [commFileUrls, setCommFileUrls] = useState({});
+  const [newMessageNotice, setNewMessageNotice] = useState(null);
+  const knownCommIdsRef = useRef(null);
   
   // New version form state
   const [showNewVersionForm, setShowNewVersionForm] = useState(false);
@@ -74,6 +77,12 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     }
   }, [design?.id]);
 
+  // Mark this design as open so the global notifier defers to the in-modal one
+  useEffect(() => {
+    setOpenDesignChat(design?.id || null);
+    return () => setOpenDesignChat(null);
+  }, [design?.id]);
+
   // Realtime subscription for new messages
   useEffect(() => {
     if (!design?.id) return;
@@ -127,9 +136,9 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     return () => clearInterval(interval);
   }, [design?.id]);
 
-  // Auto-mark incoming messages as read
+  // Auto-mark incoming messages as read while the chat tab is open
   useEffect(() => {
-    if (!profile?.id || communications.length === 0) return;
+    if (activeTab !== 'chat' || !profile?.id || communications.length === 0) return;
 
     const unreadIds = communications
       .filter((comm) => comm.sender_id !== profile.id && !comm.is_read)
@@ -158,7 +167,29 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     };
 
     markAllAsRead();
-  }, [communications, profile?.id]);
+  }, [communications, profile?.id, activeTab]);
+
+  // Notify about new incoming messages when not viewing the chat tab
+  useEffect(() => {
+    if (!profile?.id || loading) return;
+
+    if (knownCommIdsRef.current === null) {
+      knownCommIdsRef.current = new Set(communications.map((comm) => comm.id));
+      return;
+    }
+
+    const incoming = communications.filter(
+      (comm) =>
+        comm.sender_id !== profile.id &&
+        !knownCommIdsRef.current.has(comm.id)
+    );
+
+    incoming.forEach((comm) => knownCommIdsRef.current.add(comm.id));
+
+    if (incoming.length > 0 && activeTab !== 'chat') {
+      setNewMessageNotice(incoming[incoming.length - 1]);
+    }
+  }, [communications, profile?.id, activeTab, loading]);
 
   const fetchSingleCommunication = async (commId) => {
     try {
@@ -426,6 +457,10 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     }
   };
 
+  const unreadCount = communications.filter(
+    (comm) => comm.sender_id !== profile?.id && !comm.is_read
+  ).length;
+
   return (
     <div className="fixed inset-0 bg-black/30 flex items-start justify-center z-50 p-4 pt-20">
       <div className="bg-white rounded-xl border border-slate-200 w-full max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -459,6 +494,11 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
               >
                 <i className={`fa-solid ${tab.icon}`}></i>
                 {tab.label}
+                {tab.id === 'chat' && unreadCount > 0 && (
+                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -885,6 +925,50 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
           </div>
         </div>
       </div>
+
+      {/* New message notification */}
+      {newMessageNotice && activeTab !== 'chat' && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/30 flex items-center justify-center p-4"
+          onClick={() => setNewMessageNotice(null)}
+        >
+          <div
+            className="w-full max-w-sm bg-white border border-slate-200 rounded-xl shadow-xl p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <i className="fa-solid fa-comment-dots text-blue-600 text-sm"></i>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-slate-800">New message in active design</p>
+                <p className="text-xs text-slate-500 mt-1 break-words">
+                  {newMessageNotice.sender?.username || 'Unknown'}: {newMessageNotice.message}
+                </p>
+                <div className="flex gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('chat');
+                      setNewMessageNotice(null);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium border-none cursor-pointer"
+                  >
+                    View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewMessageNotice(null)}
+                    className="bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,11 +11,13 @@ import PendingPage from './pages/PendingPage';
 import ReportPage from './pages/front-desk/components/ReportPage';
 import Sidebar from './pages/front-desk/components/Sidebar';
 import TopHeader from './pages/front-desk/components/TopHeader';
+import DesignMessageNotifier from './components/DesignMessageNotifier';
 
 export default function App() {
   return (
     <HashRouter>
       <AuthProvider>
+        <DesignMessageNotifier />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
