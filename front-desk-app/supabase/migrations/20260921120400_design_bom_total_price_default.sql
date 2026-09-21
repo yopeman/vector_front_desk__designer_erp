@@ -1,0 +1,1 @@
+ALTER TABLE crt_design_bom ALTER COLUMN total_price SET DEFAULT 0;
