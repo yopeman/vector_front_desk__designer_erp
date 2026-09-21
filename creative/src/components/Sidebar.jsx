@@ -11,6 +11,7 @@ const Sidebar = ({ activeTab, onTabSwitch }) => {
     { id: 'ideaTab', label: 'Idea', icon: 'fa-lightbulb', color: 'text-primary-400' },
     { id: 'designTab', label: 'Design Log', icon: 'fa-compass-drafting', color: 'text-primary-400' },
     { id: 'reportsTab', label: 'Reports', icon: 'fa-chart-bar', color: 'text-primary-400' },
+    { id: 'aiAgentTab', label: 'AI Agent', icon: 'fa-robot', color: 'text-primary-400' },
     { id: 'messagesTab', label: 'Message', icon: 'fa-envelope', color: 'text-primary-400' },
     { id: 'notificationsTab', label: 'Notifications', icon: 'fa-bell', color: 'text-primary-400' },
     { id: 'notesTab', label: 'Notes', icon: 'fa-sticky-note', color: 'text-primary-400' },

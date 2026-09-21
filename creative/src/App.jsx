@@ -22,6 +22,7 @@ import NotesTab from './components/NotesTab'
 import ReportsTab from './components/ReportsTab'
 import NotificationsTab from './components/NotificationsTab'
 import SettingsTab from './components/SettingsTab'
+import FloatingAssistant from './components/FloatingAssistant'
 import PublicReport from './components/PublicReport'
 import './index.css'
 
@@ -100,6 +101,26 @@ function CreativeApp() {
           <NotesTab isActive={activeTab === 'notesTab'} searchQuery={searchQuery} />
           <NotificationsTab isActive={activeTab === 'notificationsTab'} />
           <SettingsTab isActive={activeTab === 'settingsTab'} />
+          {activeTab === 'aiAgentTab' && (
+            <div className="h-[calc(100vh-160px)] flex">
+              <FloatingAssistant onNavigate={(action) => {
+                const map = {
+                  'report': 'reportsTab',
+                  'reports': 'reportsTab',
+                  'designs': 'designTab',
+                  'prototypes': 'prototypeTab',
+                  'ideas': 'ideaTab',
+                  'leaves': 'leaveTab',
+                  'messages': 'messagesTab',
+                  'notifications': 'notificationsTab',
+                  'notes': 'notesTab',
+                  'settings': 'settingsTab',
+                };
+                const tab = map[action];
+                if (tab) handleTabSwitch(tab);
+              }} embedded />
+            </div>
+          )}
         </div>
         
       </main>
