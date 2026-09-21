@@ -26,7 +26,7 @@ async function fetchReworkRecords() {
     // Fetch only active statuses (exclude cancelled if needed)
     const { data, error } = await supabase
         .from('production_orders')
-        .select('*')
+        .select('*, job_orders(job_no)')
         .eq('job_type', 'rework')
         .in('status', ['New', 'In Progress'])
         .order('updated_at', { ascending: false });
@@ -40,6 +40,8 @@ async function fetchReworkRecords() {
         id: row.id,
         taskType: row.task_type || 'task',
         date: formatDate(row.created_at || row.date),
+        jobNum: row.job_orders?.job_no || '',
+        job_order_id: row.job_order_id || '',
         material: row.material || 'N/A',
         thickness: row.thickness || 'N/A',
         color: row.color || 'N/A',
@@ -94,10 +96,14 @@ async function addReworkEntry() {
         return;
     }
 
+    const jobOrderSelect = document.getElementById('rework-job-order');
+    const jobOrderId = jobOrderSelect ? jobOrderSelect.value : '';
+
     const { data, error } = await supabase
         .from('production_orders')
         .insert({
             task_type: taskType,
+            job_order_id: jobOrderId || null,
             material: material || 'N/A',
             thickness: thickness || 'N/A',
             color: color || 'N/A',
@@ -156,7 +162,7 @@ async function renderReworkRecords() {
     tbody.innerHTML = '';
 
     if (!reworkData.length) {
-        tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-500 italic">No rework records yet. Add your first entry above.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-500 italic">No rework records yet. Add your first entry above.</td></tr>';
         return;
     }
 
@@ -203,6 +209,7 @@ function renderRows(tbody) {
             <td class="p-4 text-center font-mono font-medium text-slate-400">${String(index + 1).padStart(2, '00')}</td>
             <td class="p-4 font-mono text-xs">${entry.date || entry.created_at || ''}</td>
             <td class="p-4 font-medium text-slate-200 capitalize">${entry.taskType}</td>
+            <td class="p-4 font-mono text-xs text-slate-400">${entry.jobNum || '-'}</td>
             <td class="p-4 text-xs text-slate-400">${entry.material}</td>
             <td class="p-4 font-mono text-xs">${entry.thickness}</td>
             <td class="p-4 text-xs">${entry.color}</td>
@@ -290,6 +297,16 @@ async function editReworkEntry(entryId) {
         };
         
         await loadAndSelectMachine();
+    }
+
+    // Set job order select
+    const jobOrderSelect = document.getElementById('rework-job-order');
+    if (jobOrderSelect) {
+        if (!jobOrderSelect.options || jobOrderSelect.options.length <= 1 ||
+            jobOrderSelect.options[0].textContent === 'Loading job orders...') {
+            await loadJobOrdersForRework();
+        }
+        jobOrderSelect.value = entry.job_order_id || '';
     }
 
     // Store the entry ID being edited
@@ -426,10 +443,14 @@ async function updateReworkEntry() {
         return;
     }
 
+    const jobOrderSelect = document.getElementById('rework-job-order');
+    const jobOrderId = jobOrderSelect ? jobOrderSelect.value : '';
+
     const { error } = await supabase
         .from('production_orders')
         .update({
             task_type: taskType,
+            job_order_id: jobOrderId || null,
             material: material || 'N/A',
             thickness: thickness || 'N/A',
             color: color || 'N/A',
@@ -629,6 +650,10 @@ function openNewReworkModal() {
         document.getElementById('rework-reason').value = '';
         document.getElementById('rework-note').value = '';
         
+        // Clear job order select
+        const jobOrderSelect = document.getElementById('rework-job-order');
+        if (jobOrderSelect) jobOrderSelect.value = '';
+        
         // Clear file upload
         const fileInput = document.getElementById('rework-file-input');
         if (fileInput) {
@@ -695,6 +720,8 @@ function closeNewReworkModal(event) {
         document.getElementById('rework-reason').value = '';
         const machineSelect = document.getElementById('rework-machine');
         if (machineSelect) machineSelect.value = '';
+        const jobOrderSelect = document.getElementById('rework-job-order');
+        if (jobOrderSelect) jobOrderSelect.value = '';
 
         // Reset and hide Status Timeline section
         const statusTimeline = document.getElementById('rework-status-timeline');

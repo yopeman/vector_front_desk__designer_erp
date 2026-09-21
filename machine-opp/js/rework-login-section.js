@@ -108,6 +108,7 @@ class ReworkloginSection {
                                         </span>
                                     </th>
                                     <th class="p-4">Task Type</th>
+                                    <th class="p-4">Job Order</th>
                                     <th class="p-4">Material</th>
                                     <th class="p-4">Thickness</th>
                                     <th class="p-4">Color</th>
@@ -192,6 +193,14 @@ class ReworkloginSection {
                                     </label>
                                     <select id="rework-machine" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow cursor-pointer">
                                         <option value="">Loading machines...</option>
+                                    </select>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-barcode text-slate-500 text-[10px]"></i> Job Order
+                                    </label>
+                                    <select id="rework-job-order" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 input-glow cursor-pointer">
+                                        <option value="">Loading job orders...</option>
                                     </select>
                                 </div>
                             </div>
@@ -458,7 +467,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Load machines for the dropdown
     loadMachinesForRework();
+    loadJobOrdersForRework();
 });
+
+// Load job orders for rework dropdown
+async function loadJobOrdersForRework() {
+    const jobOrderSelect = document.getElementById('rework-job-order');
+    if (!jobOrderSelect) return;
+
+    try {
+        const { data: jobOrders, error } = await window.supabase
+            .from('job_orders')
+            .select('*, invoice:invoices(invoice_no, order:orders(order_no, clients(name)))')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (jobOrders && jobOrders.length > 0) {
+            jobOrderSelect.innerHTML = '<option value="">Select Job Order (Optional)</option>' +
+                jobOrders.map(jo => `<option value="${jo.id}">${jo.job_no} - ${jo.invoice?.order?.clients?.name || 'Unknown Client'}</option>`).join('');
+        } else {
+            jobOrderSelect.innerHTML = '<option value="">No job orders available</option>';
+        }
+    } catch (error) {
+        console.error('Error loading job orders:', error);
+        jobOrderSelect.innerHTML = '<option value="">Error loading job orders</option>';
+    }
+}
 
 // Load machines for rework dropdown
 async function loadMachinesForRework() {
