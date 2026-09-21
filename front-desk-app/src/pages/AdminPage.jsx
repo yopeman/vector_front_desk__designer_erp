@@ -446,25 +446,40 @@ export default function AdminPage() {
           {activeTab === 'reports' && (
             <div>
               <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold text-slate-800 mb-4">COO Reports</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="mb-5">
+                  <h2 className="text-xl font-bold text-slate-800">COO Reports</h2>
+                  <p className="text-xs text-slate-500 mt-1">Open a live public report from any department in a new tab</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {[
-                    { name: 'Front Desk Report', url: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk-public-report' },
-                    { name: 'Design Report', url: 'https://vectoradvert.com/erp/frontdesk/#/design-public-report' },
-                    { name: 'Machine Report', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
-                    { name: 'Finishing Report', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
-                    { name: 'Marketing Report', url: 'https://vectoradvert.com/erp/marketing/#/marketing-public-report' },
-                    { name: 'Creative Report', url: 'https://vectoradvert.com/erp/creative/#/creative-public-report' },
+                    { name: 'Front Desk Report', icon: 'fa-headset', gradient: 'from-primary-500 to-primary-600', desc: 'Orders, payments & daily front desk activity', url: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk-public-report' },
+                    { name: 'Design Report', icon: 'fa-compass-drafting', gradient: 'from-accent-500 to-accent-700', desc: 'Design outputs, BOMs and creative work', url: 'https://vectoradvert.com/erp/frontdesk/#/design-public-report' },
+                    { name: 'Machine Report', icon: 'fa-gears', gradient: 'from-warning-500 to-warning-700', desc: 'Machine operations and production lines', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
+                    { name: 'Finishing Report', icon: 'fa-spray-can-sparkles', gradient: 'from-secondary-600 to-secondary-800', desc: 'Finishing stage progress and output', url: 'https://vectoradvert.com/erp/machine/#machine-public-report' },
+                    { name: 'Marketing Report', icon: 'fa-bullhorn', gradient: 'from-error-500 to-error-700', desc: 'Campaigns, leads and marketing performance', url: 'https://vectoradvert.com/erp/marketing/#/marketing-public-report' },
+                    { name: 'Creative Report', icon: 'fa-palette', gradient: 'from-success-500 to-success-700', desc: 'Creative department activities and ideas', url: 'https://vectoradvert.com/erp/creative/#/creative-public-report' },
                   ].map((report) => (
                     <a
                       key={report.name}
                       href={report.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition hover:border-primary-500"
+                      className="group block bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg hover:-translate-y-0.5 hover:border-primary-500 transition-all"
                     >
-                      <h3 className="text-lg font-semibold text-slate-800 mb-2">{report.name}</h3>
-                      <p className="text-sm text-slate-500 truncate">{report.url}</p>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`bg-gradient-to-br ${report.gradient} p-3 rounded-xl text-white shadow-md`}>
+                          <i className={`fa-solid ${report.icon} text-xl`}></i>
+                        </div>
+                        <span className="text-slate-300 group-hover:text-primary-500 transition-colors">
+                          <i className="fa-solid fa-arrow-up-right-from-square text-sm"></i>
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-slate-800 mb-1.5">{report.name}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed">{report.desc}</p>
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-primary-600 group-hover:text-primary-500">
+                        <span>Open Report</span>
+                        <i className="fa-solid fa-chevron-right text-[10px] transition-transform group-hover:translate-x-1"></i>
+                      </div>
                     </a>
                   ))}
                 </div>
