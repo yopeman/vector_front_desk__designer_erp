@@ -136,6 +136,7 @@ export default function AdminPage() {
   // ── Search ──
   const [deptSearch, setDeptSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
 
   // ── Pagination ──
   const [userCurrentPage, setUserCurrentPage] = useState(1);
@@ -283,15 +284,20 @@ export default function AdminPage() {
   // ── Reset page on search change ──
   useEffect(() => {
     setUserCurrentPage(1);
-  }, [userSearch]);
+  }, [userSearch, userRoleFilter]);
 
   // ── Client-side filtering (server does not support search) ──
-  const filteredUsers = userSearch
-    ? users.filter((u) =>
-        (u.username || '').toLowerCase().includes(userSearch.toLowerCase()) ||
-        (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
-      )
-    : users;
+  const filteredUsers = users.filter((u) => {
+    const matchesRole =
+      userRoleFilter === 'all' ||
+      (userRoleFilter === 'pending' ? !u.role : u.role === userRoleFilter);
+    if (!matchesRole) return false;
+    if (!userSearch) return true;
+    return (
+      (u.username || '').toLowerCase().includes(userSearch.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
+    );
+  });
 
   // ── Client-side pagination (server does not support pagination) ──
   const totalFiltered = filteredUsers.length;
@@ -328,14 +334,32 @@ export default function AdminPage() {
             <div>
               <div className="bg-white rounded-xl border border-slate-200 p-6">
                 {/* Toolbar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                  <input
-                    type="text"
-                    placeholder="Search users by name or email..."
-                    value={userSearch}
-                    onChange={(e) => setUserSearch(e.target.value)}
-                    className={`${inputClass} w-full max-w-[calc(100%-12%)]`}
-                  />
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-3 flex-1">
+                    <input
+                      type="text"
+                      placeholder="Search users by name or email..."
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      className={`${inputClass} flex-1 min-w-[10rem]`}
+                    />
+                    <select
+                      value={userRoleFilter}
+                      onChange={(e) => setUserRoleFilter(e.target.value)}
+                      className={`${inputClass} w-auto min-w-[160px] shrink-0`}
+                    >
+                      <option value="all">All Roles</option>
+                      {/* <option value="pending">Pending</option> */}
+                      <option value="front_desk">Front Desk</option>
+                      <option value="designer">Designer</option>
+                      <option value="machine_operator">Machine Operator</option>
+                      <option value="admin_machine_operator">Super Machine Operator</option>
+                      <option value="finish">Finishing</option>
+                      <option value="marketer">Marketer</option>
+                      <option value="admin_marketer">Super Marketer</option>
+                      <option value="creative">Creative</option>
+                    </select>
+                  </div>
                   <button
                     onClick={() => setUserModal({ mode: 'create' })}
                     className="bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-1.5"
@@ -646,11 +670,12 @@ function UserModal({ mode, data, onSave, onClose }) {
             <option value="front_desk">Front Desk</option>
             <option value="designer">Designer</option>
             <option value="machine_operator">Machine Operator</option>
+            <option value="admin_machine_operator">Super Machine Operator</option>
             <option value="finish">Finishing</option>
             <option value="marketer">Marketer</option>
             <option value="admin_marketer">Super Marketer</option>
-            {/* <option value="finance">Finance</option> */}
             <option value="creative">Creative</option>
+            {/* <option value="finance">Finance</option> */}
           </select>
         </div>
         <div className="flex justify-end gap-2 pt-2">
