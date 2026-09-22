@@ -316,7 +316,24 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
               >
                 <div className="menu-link" style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
                   <i className={`fa-solid ${item.icon}`} style={{ width: '16px', textAlign: 'center', fontSize: '13px' }}></i>
-                  <span>{item.name}</span>
+                  <span style={{ position: 'relative' }}>
+                    {item.name}
+                    {((item.name === 'Design' && hasUnreadDesignChat) || (item.name === 'Production' && hasUnreadProdChat)) && (
+                      <span
+                        title="Unread chat"
+                        style={{
+                          position: 'absolute',
+                          top: '-6px',
+                          right: '-10px',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          backgroundColor: '#ef4444',
+                          flexShrink: 0
+                        }}
+                      />
+                    )}
+                  </span>
                 </div>
                 {item.submenu && (
                   <i className={`fa-solid fa-chevron-${expandedMenus[item.name] ? 'down' : 'right'}`} style={{ fontSize: '10px' }}></i>
@@ -373,7 +390,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                       <span>{subItem.name}</span>
                       {(subItem.name === 'Design Status' && hasUnreadDesignChat) || (subItem.name === 'Active Work' && hasUnreadProdChat) ? (
                         <span
-                          title="Unread production chat"
+                          title={subItem.name === 'Design Status' ? 'Unread design chat' : 'Unread production chat'}
                           style={{
                             width: '8px',
                             height: '8px',
