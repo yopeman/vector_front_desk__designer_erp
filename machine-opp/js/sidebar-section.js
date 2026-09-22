@@ -12,7 +12,16 @@ class SidebarSection {
         await Auth.initPromise;
         const container = document.getElementById('sidebar-container');
         const currentUser = Auth.getCurrentUser();
-        const isFinishRole = false; //currentUser && currentUser.role === 'finish';
+        const isFinishRole = currentUser && currentUser.role === 'finish';
+        const isMachineOperator = currentUser && (currentUser.role === 'machine_operator' || currentUser.role === 'admin_machine_operator');
+        const isAdminMachineOperator = currentUser && currentUser.role === 'admin_machine_operator';
+        const isAnyRole = isFinishRole || isMachineOperator;
+        const moduleCount = 1 // Dashboard
+            + (isMachineOperator ? 4 : 0) // Received, Rework, Active Work, Completed
+            + (isFinishRole ? 1 : 0) // Completed Order
+            + (isFinishRole ? 2 : 0) // Delivery, Installation
+            + (isAdminMachineOperator ? 1 : 0) // Machine Maintenance
+            + 10; // Common modules
 
         if (container) {
             container.innerHTML = `<aside class="w-[18rem] bg-[#00CED1] border-r border-white/20 p-5 flex flex-col justify-between overflow-y-auto relative">
@@ -24,7 +33,7 @@ class SidebarSection {
                 <div>
                     <div class="flex items-center justify-between px-3 mb-3">
                         <span class="text-[10px] font-bold text-white/80 uppercase tracking-[0.15em]">Navigation</span>
-                        <span class="text-[10px] text-white/60 font-mono">17 modules</span>
+                        <span class="text-[10px] text-white/60 font-mono">${moduleCount} modules</span>
                     </div>
                     <nav class="space-y-0.5" id="main-nav">
                         <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all active-tab">
@@ -32,42 +41,42 @@ class SidebarSection {
                             <i class="fa-solid fa-chart-pie w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Dashboard</span>
                         </button>
-                        <button onclick="switchTab('received-orders')" id="tab-received-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        ${isMachineOperator ? `<button onclick="switchTab('received-orders')" id="tab-received-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-list-check w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Received Order</span>
                             <span id="sidebar-count-received" class="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full min-w-6 text-center">0</span>
-                        </button>
-                        <button onclick="switchTab('rework-login')" id="tab-rework-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        </button>` : ''}
+                        ${isMachineOperator ? `<button onclick="switchTab('rework-login')" id="tab-rework-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-arrows-rotate w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Rework Recording</span>
                             <span id="sidebar-count-rework" class="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full min-w-6 text-center">0</span>
-                        </button>
-                        <button onclick="switchTab('active-work')" id="tab-active-work" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        </button>` : ''}
+                        ${isMachineOperator ? `<button onclick="switchTab('active-work')" id="tab-active-work" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-industry w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Active Work</span>
                             <span id="sidebar-prod-unread-dot-aw" title="Unread production chat" style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;display:none;"></span>
                             <span id="sidebar-count-active-work" class="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full min-w-6 text-center">0</span>
-                        </button>
-                        <button onclick="switchTab('completed-orders')" id="tab-completed-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        </button>` : ''}
+                        ${isAnyRole ? `<button onclick="switchTab('completed-orders')" id="tab-completed-orders" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-circle-check w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Completed Order</span>
                             <span id="sidebar-count-completed" class="ml-auto text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-full min-w-6 text-center">0</span>
-                        </button>
-                        <button onclick="switchTab('delivery')" id="tab-delivery" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        </button>` : ''}
+                        ${isFinishRole ? `<button onclick="switchTab('delivery')" id="tab-delivery" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-truck w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Delivery</span>
-                        </button>
-                        <button onclick="switchTab('installation')" id="tab-installation" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        </button>` : ''}
+                        ${isFinishRole ? `<button onclick="switchTab('installation')" id="tab-installation" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-screwdriver-wrench w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Installation</span>
-                        </button>
-                        ${!isFinishRole ? `<button onclick="switchTab('machine-login')" id="tab-machine-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        </button>` : ''}
+                        ${isAdminMachineOperator ? `<button onclick="switchTab('machine-login')" id="tab-machine-login" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-desktop w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Machine Maintenance</span>
