@@ -10,16 +10,28 @@ let inventoryItemsList = [];
 // =============================================
 async function loadInventoryMovements() {
     try {
-        const { data, error } = await supabase
+        if (Auth?.initPromise) await Auth.initPromise;
+        const currentUser = Auth.getCurrentUser();
+        let query = supabase
             .from('inventory_movements')
             .select(`
                 *,
-                inventory:inventory_id(name, item_code),
+                inventory:inventory_id!inner(name, item_code, user_id),
                 machines:machine_id(name),
                 production_orders:production_order_id(id),
                 users:performed_by(username)
-            `)
-            .order('movement_date', { ascending: false });
+            `);
+
+        if (!currentUser?.id) {
+            inventoryMovements = [];
+            renderMovementsTable();
+            updateMovementsStats();
+            return;
+        }
+
+        query = query.eq('inventory.user_id', currentUser.id);
+
+        const { data, error } = await query.order('movement_date', { ascending: false });
 
         if (error) throw error;
         
@@ -37,11 +49,16 @@ async function loadInventoryMovements() {
 // =============================================
 async function loadInventoryItemsForSelect() {
     try {
-        const { data, error } = await supabase
+        if (Auth?.initPromise) await Auth.initPromise;
+        const currentUser = Auth.getCurrentUser();
+        let query = supabase
             .from('inventory')
             .select('id, name, item_code, current_quantity')
-            .eq('status', 'active')
-            .order('name');
+            .eq('status', 'active');
+
+        if (currentUser?.id) query = query.eq('user_id', currentUser.id);
+
+        const { data, error } = await query.order('name');
 
         if (error) throw error;
         
@@ -312,6 +329,21 @@ window.initInventoryMovements = function() {
     if (filterSelect) {
         filterSelect.addEventListener('change', renderMovementsTable);
     }
+
+    // Reload user-scoped data when auth state changes (login/logout/switch user)
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!session?.user) {
+            inventoryMovements = [];
+            renderMovementsTable();
+            updateMovementsStats();
+            return;
+        }
+        for (let i = 0; i < 20; i++) {
+            if (Auth.getCurrentUser()?.id) break;
+            await new Promise(r => setTimeout(r, 100));
+        }
+        loadInventoryMovements();
+    });
     
     // Load movements
     loadInventoryMovements();

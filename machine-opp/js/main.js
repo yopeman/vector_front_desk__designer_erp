@@ -74,6 +74,12 @@ function switchTab(targetId) {
         'store-request': () => {
             if (typeof renderStoreItemsTable === 'function') renderStoreItemsTable();
         },
+        'inventory': () => {
+            if (typeof loadInventoryItems === 'function') loadInventoryItems();
+        },
+        'inventory-movements': () => {
+            if (typeof loadInventoryMovements === 'function') loadInventoryMovements();
+        },
         'notes': async () => {
             if (typeof fetchNotes === 'function') await fetchNotes();
         },

@@ -9,10 +9,23 @@ let inventoryItems = [];
 // =============================================
 async function loadInventoryItems() {
     try {
-        const { data, error } = await supabase
+        if (Auth?.initPromise) await Auth.initPromise;
+        const currentUser = Auth.getCurrentUser();
+
+        let query = supabase
             .from('inventory')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('*');
+
+        if (!currentUser?.id) {
+            inventoryItems = [];
+            renderInventoryTable();
+            updateInventoryStats();
+            return;
+        }
+
+        query = query.eq('user_id', currentUser.id);
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (error) throw error;
         
@@ -249,9 +262,14 @@ async function saveInventoryItem(itemId) {
             if (error) throw error;
         } else {
             // Insert new
+            const currentUser = Auth.getCurrentUser();
             const { error } = await supabase
                 .from('inventory')
-                .insert([{ ...itemData, created_at: new Date().toISOString() }]);
+                .insert([{
+                    ...itemData,
+                    user_id: currentUser?.id || null,
+                    created_at: new Date().toISOString()
+                }]);
             
             if (error) throw error;
         }
@@ -377,11 +395,16 @@ async function openMovementModal(type, preselectedItemId = null) {
 // =============================================
 async function loadInventoryItemsForSelect() {
     try {
-        const { data, error } = await supabase
+        if (Auth?.initPromise) await Auth.initPromise;
+        const currentUser = Auth.getCurrentUser();
+        let query = supabase
             .from('inventory')
             .select('id, name, item_code, current_quantity')
-            .eq('status', 'active')
-            .order('name');
+            .eq('status', 'active');
+
+        if (currentUser?.id) query = query.eq('user_id', currentUser.id);
+
+        const { data, error } = await query.order('name');
 
         if (error) throw error;
         
@@ -483,11 +506,15 @@ async function openProductionOrderInventoryModal(productionOrderId, referenceTyp
     let items = [];
     let movements = [];
     try {
-        const { data, error } = await supabase
+        const currentUser = Auth.getCurrentUser();
+        let query = supabase
             .from('inventory')
             .select('id, name, item_code, unit_of_measure, current_quantity, minimum_stock')
-            .eq('status', 'active')
-            .order('name');
+            .eq('status', 'active');
+
+        if (currentUser?.id) query = query.eq('user_id', currentUser.id);
+
+        const { data, error } = await query.order('name');
         if (!error) items = data || [];
     } catch (e) {
         console.error('Error loading inventory items:', e);
@@ -671,6 +698,21 @@ window.initInventory = function() {
     if (searchInput) {
         searchInput.addEventListener('input', renderInventoryTable);
     }
+
+    // Reload user-scoped data when auth state changes (login/logout/switch user)
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!session?.user) {
+            inventoryItems = [];
+            renderInventoryTable();
+            updateInventoryStats();
+            return;
+        }
+        for (let i = 0; i < 20; i++) {
+            if (Auth.getCurrentUser()?.id) break;
+            await new Promise(r => setTimeout(r, 100));
+        }
+        loadInventoryItems();
+    });
     
     // Load inventory
     loadInventoryItems();
