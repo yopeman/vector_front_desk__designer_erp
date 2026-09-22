@@ -73,7 +73,7 @@ const Auth = (function() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
             const role = await getUserRole(session.user.id);
-            if (role === 'machine_operator' || role === 'finish') {
+            if (role === 'machine_operator' || role === 'admin_machine_operator' || role === 'finish') {
                 isAuthed = true;
                 await fetchCurrentUser(session.user.id);
             } else {
@@ -84,7 +84,7 @@ const Auth = (function() {
         supabase.auth.onAuthStateChange(async (event, session) => {
             if (session?.user) {
                 const role = await getUserRole(session.user.id);
-                if (role === 'machine_operator' || role === 'finish') {
+                if (role === 'machine_operator' || role === 'admin_machine_operator' || role === 'finish') {
                     isAuthed = true;
                     await fetchCurrentUser(session.user.id);
                 } else {
@@ -104,7 +104,7 @@ const Auth = (function() {
             const { data: { session: postSession } } = await supabase.auth.getSession();
             if (postSession?.user) {
                 const role = await getUserRole(postSession.user.id);
-                if (role === 'machine_operator' || role === 'finish') {
+                if (role === 'machine_operator' || role === 'admin_machine_operator' || role === 'finish') {
                     isAuthed = true;
                     await fetchCurrentUser(postSession.user.id);
                 } else {
@@ -136,7 +136,7 @@ const Auth = (function() {
         }
 
         const role = await getUserRole(user.id);
-        if (role !== 'machine_operator' && role !== 'finish') {
+        if (role !== 'machine_operator' && role !== 'admin_machine_operator' && role !== 'finish') {
             await supabase.auth.signOut();
             return { success: false, error: 'Access denied. Machine operator role required.' };
         }
