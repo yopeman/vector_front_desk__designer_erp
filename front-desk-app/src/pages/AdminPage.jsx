@@ -9,10 +9,12 @@ import AdminNotifications from './AdminNotifications';
 
 // ── API Base URL for user management ──
 const API_URL = 'https://vecotr-advert-hr.vercel.app/api/frontdesk/users';
+const KPI_URL = 'https://vecotr-advert-hr.vercel.app/api/frontdesk/kpis';
 
 // ── Sidebar ──
 function AdminSidebar({ activeTab, onTabSwitch }) {
   const tabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'fa-chart-pie', color: 'text-primary-400' },
     { id: 'users', label: 'Users', icon: 'fa-users', color: 'text-primary-400' },
     { id: 'reports', label: 'Reports', icon: 'fa-chart-bar', color: 'text-primary-400' },
     { id: 'ai-agent', label: 'AI Agent', icon: 'fa-robot', color: 'text-primary-400' },
@@ -126,8 +128,13 @@ const inputClass =
 export default function AdminPage() {
   const { profile, signOut } = useAuth();
   const [users, setUsers] = useState([]);
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [toast, setToast] = useState(null);
+
+  // ── KPIs ──
+  const [kpis, setKpis] = useState(null);
+  const [kpisLoading, setKpisLoading] = useState(true);
+  const [kpiError, setKpiError] = useState(null);
 
   // Modal state
   const [deptModal, setDeptModal] = useState(null); // null | { mode: 'create' } | { mode: 'edit', data: dept }
@@ -151,12 +158,34 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchUsers();
+    fetchKpis();
     // The API returns all users (no server-side pagination), so fetch once on mount only.
   }, []);
 
   function showToast(msg, type = 'success') {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
+  }
+
+  // ── KPIs ──
+
+  async function fetchKpis() {
+    setKpisLoading(true);
+    setKpiError(null);
+    try {
+      const res = await fetch(KPI_URL);
+      const result = await res.json();
+      if (!result.success) {
+        setKpiError(result.error || 'Failed to load KPIs');
+        return;
+      }
+      setKpis(result.data);
+    } catch (error) {
+      console.error('Error fetching KPIs:', error);
+      setKpiError(error.message);
+    } finally {
+      setKpisLoading(false);
+    }
   }
 
   // ── Users ──
@@ -330,6 +359,10 @@ export default function AdminPage() {
         )}
 
         <div className="p-6 md:p-8 space-y-8">
+          {activeTab === 'dashboard' && (
+            <KpiDashboard data={kpis} loading={kpisLoading} error={kpiError} onRetry={fetchKpis} />
+          )}
+
           {activeTab === 'users' && (
             <div>
               <div className="bg-white rounded-xl border border-slate-200 p-6">
@@ -613,6 +646,233 @@ export default function AdminPage() {
           onClose={() => setUserModal(null)}
         />
       )}
+    </div>
+  );
+}
+
+// ── KPI Dashboard ──
+function StatCard({ label, value, sub, icon, gradient }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+      <div className="flex items-start justify-between mb-3">
+        <div className={`bg-gradient-to-br ${gradient || 'from-primary-500 to-primary-600'} p-2.5 rounded-lg text-white shadow-md`}>
+          <i className={`fa-solid ${icon} text-base`}></i>
+        </div>
+        {sub && <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{sub}</span>}
+      </div>
+      <p className="text-2xl font-bold text-slate-800">{value}</p>
+      <p className="text-xs text-slate-500 mt-1">{label}</p>
+    </div>
+  );
+}
+
+function KpiSection({ title, icon, gradient, children }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className={`px-5 py-3.5 bg-gradient-to-r ${gradient} flex items-center gap-3`}>
+        <i className={`fa-solid ${icon} text-white text-sm`}></i>
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">{title}</h3>
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+function KpiDashboard({ data, loading, error, onRetry }) {
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
+        <div className="inline-block w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="text-sm text-slate-500">Loading KPIs...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
+        <i className="fa-solid fa-triangle-exclamation text-3xl text-error-500 mb-3"></i>
+        <p className="text-sm font-semibold text-slate-700 mb-1">Failed to load KPIs</p>
+        <p className="text-xs text-slate-500 mb-4">{error}</p>
+        <button
+          onClick={onRetry}
+          className="px-4 py-2 text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  const d = data.departments;
+  const frontDesk = d.frontDesk;
+  const production = d.production;
+  const machine = d.machine;
+  const design = d.design;
+  const marketing = d.marketing;
+  const creative = d.creative;
+  const finishing = d.finishing;
+  const maintenance = d.maintenance;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Live overview across all departments — last updated{' '}
+            {new Date(data.generated_at).toLocaleString()}
+          </p>
+        </div>
+        <button
+          onClick={onRetry}
+          className="px-3 py-2 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg transition flex items-center gap-1.5"
+        >
+          <i className="fa-solid fa-rotate text-xs"></i> Refresh
+        </button>
+      </div>
+
+      {/* Top-level stat row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <StatCard label="Total Clients" value={frontDesk.inquiries.totalClients} icon="fa-user-group" gradient="from-primary-500 to-primary-600" />
+        <StatCard label="Total Leads" value={frontDesk.inquiries.leads} icon="fa-filter" gradient="from-accent-500 to-accent-700" />
+        <StatCard label="Total Orders" value={frontDesk.orders.total} sub={`${frontDesk.orders.thisMonth} this month`} icon="fa-box" gradient="from-warning-500 to-warning-700" />
+        <StatCard label="Total Quotations" value={frontDesk.quotations.total} sub={`${frontDesk.quotations.thisMonth} this month`} icon="fa-file-invoice" gradient="from-secondary-600 to-secondary-800" />
+        <StatCard label="Active Jobs" value={production.activeJobs} sub={`${production.activeJobOrders} job orders`} icon="fa-industry" gradient="from-error-500 to-error-700" />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Front Desk */}
+        <KpiSection title="Front Desk" icon="fa-headset" gradient="from-primary-500 to-primary-600">
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard label="Site Visits" value={frontDesk.inquiries.siteVisits} icon="fa-location-dot" gradient="from-primary-400 to-primary-600" />
+            <StatCard label="Pending Designs Approval" value={frontDesk.approvals.pendingDesigns} icon="fa-circle-check" gradient="from-warning-400 to-warning-600" />
+            <StatCard label="Pending Proforma Invoices" value={frontDesk.approvals.pendingProformaInvoices} icon="fa-file-invoice-dollar" gradient="from-accent-400 to-accent-700" />
+            <StatCard label="Orders (New)" value={frontDesk.orders.byStatus.New || 0} icon="fa-box-open" gradient="from-secondary-500 to-secondary-700" />
+            <StatCard label="Follow-ups Due" value={frontDesk.followUps.due} icon="fa-clock" gradient="from-warning-500 to-warning-700" />
+            <StatCard label="Pending Site Visits" value={frontDesk.followUps.pendingSiteVisits} icon="fa-calendar-days" gradient="from-success-500 to-success-700" />
+          </div>
+        </KpiSection>
+
+        {/* Production */}
+        <KpiSection title="Production" icon="fa-industry" gradient="from-error-500 to-error-700">
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard label="Active Production Orders" value={production.activeProductionOrders} icon="fa-layer-group" gradient="from-error-400 to-error-600" />
+            <StatCard label="In Progress" value={production.progress.inProgress} icon="fa-spinner" gradient="from-warning-500 to-warning-700" />
+            <StatCard label="In Production" value={production.progress.inProduction} icon="fa-bolt" gradient="from-accent-500 to-accent-700" />
+            <StatCard label="Completed (This Month)" value={production.output.completedThisMonth} icon="fa-circle-check" gradient="from-success-500 to-success-700" />
+            <StatCard label="Completed Jobs" value={production.output.completedJobs} icon="fa-box-check" gradient="from-primary-400 to-primary-600" />
+            <StatCard label="Active Delays" value={production.delays} icon="fa-triangle-exclamation" gradient="from-warning-500 to-warning-700" />
+          </div>
+        </KpiSection>
+
+        {/* Machine */}
+        <KpiSection title="Machine" icon="fa-gears" gradient="from-slate-600 to-slate-800">
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-slate-600 mb-2">Utilization</p>
+            <div className="flex items-end justify-between gap-2">
+              {machine.utilization.byStatus && Object.entries(machine.utilization.byStatus).map(([k, v]) => (
+                <div key={k} className="text-center">
+                  <p className="text-lg font-bold text-slate-800">{v}</p>
+                  <p className="text-[10px] text-slate-400 uppercase">{k.replace(/_/g, ' ')}</p>
+                </div>
+              ))}
+              <div className="text-center">
+                <p className="text-lg font-bold text-slate-800">{machine.utilization.active}</p>
+                <p className="text-[10px] text-slate-400 uppercase">Active</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {(machine.output || []).map((m) => (
+              <div key={m.machine} className="flex items-center justify-between px-3 py-2 bg-slate-50 rounded-lg text-sm">
+                <span className="font-semibold text-slate-700">{m.machine}</span>
+                <span className="text-xs text-slate-500">
+                  {m.jobs} jobs · {m.completed} completed
+                </span>
+              </div>
+            ))}
+            {(!machine.output || machine.output.length === 0) && (
+              <p className="text-xs text-slate-400">No machine output recorded.</p>
+            )}
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-4 text-center">
+            <div className="px-2 py-3 bg-slate-50 rounded-lg">
+              <p className="text-lg font-bold text-slate-800">{machine.downtime.machinesInMaintenance || 0}</p>
+              <p className="text-[10px] text-slate-500 uppercase">In Maintenance</p>
+            </div>
+            <div className="px-2 py-3 bg-slate-50 rounded-lg">
+              <p className="text-lg font-bold text-slate-800">{machine.downtime.maintenanceLogs || 0}</p>
+              <p className="text-[10px] text-slate-500 uppercase">Maintenance Logs</p>
+            </div>
+            <div className="px-2 py-3 bg-slate-50 rounded-lg">
+              <p className="text-lg font-bold text-slate-800">{machine.waste.reworkJobs || 0}</p>
+              <p className="text-[10px] text-slate-500 uppercase">Rework Jobs</p>
+            </div>
+          </div>
+        </KpiSection>
+
+        {/* Design */}
+        <KpiSection title="Design" icon="fa-compass-drafting" gradient="from-accent-500 to-accent-700">
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard label="Total Requests" value={design.requests.total} sub={`${design.requests.thisMonth} this month`} icon="fa-pen-ruler" gradient="from-accent-400 to-accent-600" />
+            <StatCard label="Completed" value={design.requests.byStatus.Completed || 0} icon="fa-circle-check" gradient="from-success-500 to-success-700" />
+            <StatCard label="In Progress" value={design.requests.byStatus['In Progress'] || 0} icon="fa-spinner" gradient="from-warning-500 to-warning-700" />
+            <StatCard label="Pending" value={design.requests.byStatus.Pending || 0} icon="fa-hourglass-half" gradient="from-warning-400 to-warning-600" />
+            <StatCard label="Pending Approvals" value={design.approvals.pendingDesigns} icon="fa-stamp" gradient="from-primary-500 to-primary-600" />
+            <StatCard label="Delays" value={design.delays} icon="fa-triangle-exclamation" gradient="from-error-500 to-error-700" />
+            <StatCard label="Revisions Sent" value={design.revisions.total} icon="fa-wand-magic-sparkles" gradient="from-accent-500 to-accent-700" />
+            <StatCard label="Avg Revisions / Design" value={design.revisions.averagePerDesign} icon="fa-list-check" gradient="from-secondary-500 to-secondary-700" />
+          </div>
+        </KpiSection>
+
+        {/* Marketing */}
+        <KpiSection title="Marketing" icon="fa-bullhorn" gradient="from-error-500 to-error-700">
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard label="Total Campaigns" value={marketing.campaigns.total} icon="fa-bullhorn" gradient="from-error-400 to-error-600" />
+            <StatCard label="Active Campaigns" value={marketing.performance.activeCampaigns} icon="fa-tower-broadcast" gradient="from-warning-500 to-warning-700" />
+            <StatCard label="Marketing Leads" value={marketing.leads.marketingLeads} icon="fa-user-plus" gradient="from-accent-500 to-accent-700" />
+            <StatCard label="Campaign Target Achieved" value={marketing.performance.campaignTargetAchieved} icon="fa-bullseye" gradient="from-success-500 to-success-700" />
+            <StatCard label="Proposals Submitted" value={marketing.conversion.proposalsSubmitted} icon="fa-file-lines" gradient="from-primary-500 to-primary-600" />
+            <StatCard label="Proposal Conversion" value={`${marketing.conversion.proposalConversionRate}%`} icon="fa-percent" gradient="from-secondary-500 to-secondary-700" />
+            <StatCard label="Tenders Awarded" value={marketing.conversion.tendersAwarded} icon="fa-award" gradient="from-success-500 to-success-700" />
+            <StatCard label="Activities (Planned)" value={marketing.performance.activities.byStatus.planned || 0} icon="fa-calendar-check" gradient="from-warning-500 to-warning-700" />
+          </div>
+        </KpiSection>
+
+        {/* Creative */}
+        <KpiSection title="Creative" icon="fa-palette" gradient="from-success-500 to-success-700">
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard label="Ideas (Pending)" value={creative.ideas.total} icon="fa-lightbulb" gradient="from-success-400 to-success-600" />
+            <StatCard label="Prototypes (Pending)" value={creative.prototypes.total} icon="fa-flask" gradient="from-accent-500 to-accent-700" />
+            <StatCard label="Testing (Pending)" value={creative.testing.total} icon="fa-vial" gradient="from-warning-500 to-warning-700" />
+            <StatCard label="Launches" value={creative.launches.launched} icon="fa-rocket" gradient="from-primary-500 to-primary-600" />
+          </div>
+        </KpiSection>
+
+        {/* Finishing */}
+        <KpiSection title="Finishing" icon="fa-spray-can-sparkles" gradient="from-secondary-500 to-secondary-700">
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard label="In Progress" value={finishing.progress.inProgress} icon="fa-spinner" gradient="from-warning-500 to-warning-700" />
+            <StatCard label="Pending" value={finishing.progress.pending} icon="fa-hourglass-half" gradient="from-secondary-400 to-secondary-600" />
+            <StatCard label="Completed" value={finishing.completed} icon="fa-circle-check" gradient="from-success-500 to-success-700" />
+            <StatCard label="Rework" value={finishing.rework.total} icon="fa-rotate-left" gradient="from-error-500 to-error-700" />
+            <StatCard label="Quality Pass Rate" value={`${finishing.qualityControl.passRate}%`} icon="fa-check-double" gradient="from-primary-500 to-primary-600" />
+          </div>
+        </KpiSection>
+
+        {/* Maintenance */}
+        <KpiSection title="Maintenance" icon="fa-wrench" gradient="from-warning-500 to-warning-700">
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard label="Preventive Logs (This Month)" value={maintenance.preventive.thisMonth} icon="fa-clipboard-check" gradient="from-success-500 to-success-700" />
+            <StatCard label="Breakdowns" value={maintenance.breakdowns} icon="fa-ban" gradient="from-error-500 to-error-700" />
+            <StatCard label="Machines In Maintenance" value={maintenance.downtime.machinesInMaintenance} icon="fa-gear" gradient="from-warning-500 to-warning-700" />
+            <StatCard label="Skipped Maintenance" value={maintenance.downtime.skippedMaintenance} icon="fa-calendar-xmark" gradient="from-error-500 to-error-700" />
+          </div>
+        </KpiSection>
+      </div>
     </div>
   );
 }
