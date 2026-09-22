@@ -62,12 +62,7 @@ const menuItems: MenuCategory[] = [
 
 export default function ReportPage() {
   const [selectedSubmenus, setSelectedSubmenus] = useState<string[]>([])
-  const [fromDate, setFromDate] = useState(() => {
-    const now = new Date()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
-    const day = String(now.getDate()).padStart(2, '0')
-    return `${now.getFullYear()}-${month}-${day}`
-  })
+  const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState(() => {
     const now = new Date()
     const month = String(now.getMonth() + 1).padStart(2, '0')

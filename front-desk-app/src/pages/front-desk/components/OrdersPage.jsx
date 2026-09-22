@@ -25,7 +25,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
   const [formData, setFormData] = useState({
     client_id: '',
     order_no: '',
-    order_date: '',
+    order_date: new Date().toISOString().split('T')[0],
     required_date: '',
     status: 'New',
     priority: 'Medium',
@@ -393,7 +393,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
     setFormData({
       client_id: '',
       order_no: nextOrderNo,
-      order_date: '',
+      order_date: new Date().toISOString().split('T')[0],
       required_date: '',
       status: 'New',
       priority: 'Medium',
@@ -554,7 +554,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
             setFormData({
               client_id: '',
               order_no: nextOrderNo,
-              order_date: '',
+              order_date: new Date().toISOString().split('T')[0],
               required_date: '',
               status: 'New',
               priority: 'Medium',
@@ -822,6 +822,8 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                         value={formData.order_date}
                         onChange={(e) => setFormData({ ...formData, order_date: e.target.value })}
                         className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
+                        readOnly
+                        disabled
                       />
                     </div>
                     <div>
