@@ -193,7 +193,6 @@ async function renderOrdersTable() {
             </td>
             <td class="p-4 font-mono text-slate-400">
                 <span class="inline-flex items-center gap-2">
-                    <span class="prod-unread-dot" title="Unread production chat" style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;display:${productionUnreadIds.has(order.id) ? 'inline-block' : 'none'};"></span>
                     ${order.orderNum}
                 </span>
             </td>
