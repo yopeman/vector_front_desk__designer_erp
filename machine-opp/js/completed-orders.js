@@ -37,7 +37,32 @@ async function fetchCompletedOrders() {
 
     const { data, error } = await supabase
         .from('production_orders')
-        .select('*')
+        .select(`
+            id,
+            task_type,
+            priority,
+            status,
+            job_type,
+            material,
+            thickness,
+            color,
+            length,
+            width,
+            height,
+            area,
+            gram,
+            started_at,
+            completed_at,
+            created_at,
+            note,
+            attached_file_ids,
+            quality_status,
+            machine_id,
+            users!designer_id(username),
+            machines(name, machine_type),
+            orders(id, order_no, order_date),
+            job_orders(job_no)
+        `)
         .eq('status', 'Completed')
         .order('completed_at', { ascending: false });
 
@@ -78,9 +103,9 @@ async function fetchCompletedOrders() {
             no: row.id.slice(0, 8),
             date: formattedDate,
             taskType: row.task_type || 'task',
-            orderNum: row.order_number || 'N/A',
+            orderNum: row.job_orders?.job_no || row.orders?.order_no || row.id.slice(0, 8),
             title: row.job_type || 'Untitled',
-            machine: machinesMap[row.machine_id] || row.machine || 'N/A',
+            machine: machinesMap[row.machine_id] || row.machines?.machine_type || row.machines?.name || row.machine || 'N/A',
             material: row.material || 'N/A',
             thickness: row.thickness || 'N/A',
             color: row.color || 'N/A',
@@ -300,7 +325,7 @@ function exportPDF() {
                             <span style="color: #e2e8f0; font-weight: 500;">${cells[2].textContent.trim()}</span>
                         </div>
                         <div style="background: #0f172a; padding: 8px; border-radius: 4px;">
-                            <label style="color: #94a3b8; font-size: 10px; font-weight: 600; text-transform: uppercase; display: block; margin-bottom: 3px;">Order Number</label>
+                            <label style="color: #94a3b8; font-size: 10px; font-weight: 600; text-transform: uppercase; display: block; margin-bottom: 3px;">Job Order Number</label>
                             <span style="color: #e2e8f0; font-weight: 500; font-family: monospace;">${cells[3].textContent.trim()}</span>
                         </div>
                         <div style="background: #0f172a; padding: 8px; border-radius: 4px;">

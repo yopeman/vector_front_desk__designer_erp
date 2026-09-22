@@ -36,7 +36,7 @@ class CompletedordersSection {
                                     <th class="p-4 text-center w-16">No</th>
                                     <th class="p-4">Date</th>
                                     <th class="p-4">Task/Project</th>
-                                    <th class="p-4">Order Number</th>
+                                    <th class="p-4">Job Order Number</th>
                                     <th class="p-4">Work Type</th>
                                     <th class="p-4">Machine Used</th>
                                     <th class="p-4">Material Used</th>
@@ -91,7 +91,7 @@ class CompletedordersSection {
                                 <input type="text" id="comp-date" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Order Number</label>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Job Order Number</label>
                                 <input type="text" id="comp-order-num" readonly class="w-full bg-slate-900/90 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none">
                             </div>
                             <div class="col-span-2">
