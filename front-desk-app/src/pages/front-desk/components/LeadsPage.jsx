@@ -453,7 +453,7 @@ export default function LeadsPage({ onUpgradeToClient }) {
                   {leads.map((lead, index) => (
                     <tr key={lead.id} className="hover:bg-slate-50">
                       <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                      <td className="p-4">LD-{String((currentPage - 1) * itemsPerPage + index + 1).padStart(6, '0')}</td>
+                      <td className="p-4">LD-{String(totalCount - (currentPage - 1) * itemsPerPage - index).padStart(6, '0')}</td>
                       <td className="p-4 font-medium">{lead.name}</td>
                       <td className="p-4">{lead.address}</td>
                       <td className="p-4">{lead.phone}</td>
