@@ -1274,6 +1274,7 @@ async function downloadFile(filePath, fileName) {
 // =============================================
 let currentProductionOrderId = null;
 let productionChatMessages = [];
+let productionPendingFiles = [];
 
 async function fetchSingleProductionCommunication(commId) {
     if (!commId || typeof supabase === 'undefined') return null;
@@ -1491,6 +1492,8 @@ async function openProductionChat() {
     modal.classList.add('open');
     document.body.classList.add('modal-open');
     productionChatMessages = [];
+    productionPendingFiles = [];
+    productionRenderPendingFiles();
 
     const subtitle = document.getElementById('production-chat-subtitle');
     if (subtitle) subtitle.textContent = 'Loading conversation...';
@@ -1597,6 +1600,8 @@ function closeProductionChatModal(event) {
     if (modal) modal.classList.remove('open');
     document.body.classList.remove('modal-open');
     currentProductionOrderId = null;
+    productionPendingFiles = [];
+    productionRenderPendingFiles();
 
     if (productionChatChannel && typeof supabase !== 'undefined') {
         supabase.removeChannel(productionChatChannel);
@@ -1608,14 +1613,70 @@ function closeProductionChatModal(event) {
     }
 }
 
+function productionOnFileSelect(input) {
+    if (!input || !input.files) return;
+    for (const file of input.files) {
+        productionPendingFiles.push(file);
+    }
+    input.value = '';
+    productionRenderPendingFiles();
+}
+
+function productionRemovePendingFile(index) {
+    if (index < 0 || index >= productionPendingFiles.length) return;
+    productionPendingFiles.splice(index, 1);
+    productionRenderPendingFiles();
+}
+
+function productionRenderPendingFiles() {
+    const container = document.getElementById('production-chat-pending-files');
+    if (!container) return;
+    if (productionPendingFiles.length === 0) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+    }
+    container.classList.remove('hidden');
+    container.innerHTML = productionPendingFiles.map((file, index) => `
+        <span class="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+            <i class="fa-solid ${productionFileTypeIcon(file.type || '')} text-emerald-400 text-[10px]"></i>
+            <span class="max-w-[140px] truncate">${escapeHtml(file.name)}</span>
+            <button onclick="productionRemovePendingFile(${index})" class="text-slate-400 hover:text-rose-400 transition-colors" title="Remove">
+                <i class="fa-solid fa-xmark text-[10px]"></i>
+            </button>
+        </span>
+    `).join('');
+}
+
 async function sendProductionMessage() {
     const input = document.getElementById('production-chat-input');
-    if (!input || !input.value.trim() || !currentProductionOrderId) return;
+    if (!input || !currentProductionOrderId) return;
 
     const messageText = input.value.trim();
+    if (!messageText && productionPendingFiles.length === 0) return;
+
     input.value = '';
 
-    await sendProductionCommunication(currentProductionOrderId, messageText);
+    let attachedFileIds = [];
+    if (typeof uploadFile === 'function' && productionPendingFiles.length > 0) {
+        for (const file of productionPendingFiles) {
+            const fileData = await uploadFile(file);
+            if (fileData && fileData.id) {
+                attachedFileIds.push(fileData.id);
+            }
+        }
+        productionPendingFiles = [];
+        productionRenderPendingFiles();
+    }
+
+    const sent = await sendProductionCommunication(currentProductionOrderId, messageText, attachedFileIds);
+    if (sent) {
+        const refreshed = await fetchProductionCommunications(currentProductionOrderId);
+        if (refreshed && typeof renderProductionChat === 'function') {
+            productionChatMessages = refreshed;
+            renderProductionChat(productionChatMessages);
+        }
+    }
 }
 
 // =============================================
