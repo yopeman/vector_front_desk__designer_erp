@@ -95,6 +95,9 @@ class MachineloginSection {
                     <button onclick="showMaintenanceLogs()" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-purple-500/10">
                         <i class="fa-solid fa-history text-[10px]"></i> View Maintenance Logs
                     </button>
+                    <button onclick="openAssignUserModal()" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-teal-500/10">
+                        <i class="fa-solid fa-user-gear text-[10px]"></i> Assign User
+                    </button>
                 </div>
 
                 <!-- Dynamic Checklist Cards Container -->
@@ -194,6 +197,45 @@ class MachineloginSection {
                         </div>
                         <div id="machine-logs-list" class="space-y-3 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
                             <div class="text-xs text-slate-500 text-center py-8">Loading logs...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================================ -->
+                <!-- ASSIGN USER MODAL                                             -->
+                <!-- ============================================================ -->
+                <div id="assign-user-modal" class="modal-overlay" onclick="closeAssignUserModal(event)">
+                    <div class="modal-container max-w-lg" onclick="event.stopPropagation()">
+                        <button onclick="closeAssignUserModal()" class="modal-close-btn">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                        <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-6">
+                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
+                                <i class="fa-solid fa-user-gear text-white text-base"></i>
+                            </div>
+                            <div>
+                                <h3 id="assign-user-title" class="text-lg font-bold text-white tracking-wide">Assign Operators</h3>
+                                <p class="text-xs text-slate-400">Assign machine operators to this machine</p>
+                            </div>
+                        </div>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assign User</label>
+                                <div class="flex gap-2">
+                                    <select id="assign-user-select" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-teal-500 input-glow cursor-pointer">
+                                        <option value="">Loading users...</option>
+                                    </select>
+                                    <button onclick="assignUserToMachine()" class="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-teal-500/15 flex items-center gap-2 shrink-0">
+                                        <i class="fa-solid fa-user-plus text-xs"></i> Assign
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Assigned Users</label>
+                                <div id="assigned-users-list" class="space-y-2 max-h-[40vh] overflow-y-auto pr-1 custom-scrollbar">
+                                    <div class="text-xs text-slate-500 text-center py-6">Loading assigned users...</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>`;

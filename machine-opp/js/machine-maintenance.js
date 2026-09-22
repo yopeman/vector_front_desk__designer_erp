@@ -1021,3 +1021,187 @@ function formatLogDate(dateStr) {
         hour12: false 
     });
 }
+
+// =============================================
+// CRUD: MACHINE OPERATOR ASSIGNMENTS
+// =============================================
+
+// Open assign user modal
+async function openAssignUserModal() {
+    const machine = machineData[currentMachine];
+    if (!machine) {
+        alert('Please select a machine first.');
+        return;
+    }
+
+    const modal = document.getElementById('assign-user-modal');
+    if (!modal) return;
+
+    const titleEl = document.getElementById('assign-user-title');
+    if (titleEl) titleEl.textContent = `Assign Operators - ${machine.name}`;
+
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+
+    await Promise.all([loadAssignableUsers(), loadAssignedUsers()]);
+}
+
+function closeAssignUserModal() {
+    const modal = document.getElementById('assign-user-modal');
+    if (modal) modal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+}
+
+// Fetch already-assigned user ids for the current machine
+async function fetchAssignedUserIds() {
+    const machine = machineData[currentMachine];
+    if (!machine || typeof supabase === 'undefined') return new Set();
+
+    const { data, error } = await supabase
+        .from('machine_operator_users')
+        .select('user_id')
+        .eq('machine_id', machine.id);
+
+    if (error || !data) return new Set();
+    return new Set(data.map(a => a.user_id));
+}
+
+// Load users eligible for assignment (machine_operator / admin_machine_operator)
+async function loadAssignableUsers() {
+    const select = document.getElementById('assign-user-select');
+    if (!select) return;
+
+    if (typeof supabase === 'undefined') {
+        select.innerHTML = '<option value="">Supabase not available</option>';
+        return;
+    }
+
+    const assigned = await fetchAssignedUserIds();
+
+    const { data, error } = await supabase
+        .from('users')
+        .select('id, username, email, role')
+        .in('role', ['machine_operator', 'admin_machine_operator'])
+        .order('username', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching assignable users:', error);
+        select.innerHTML = '<option value="">Failed to load users</option>';
+        return;
+    }
+
+    const available = (data || []).filter(u => !assigned.has(u.id));
+
+    if (available.length === 0) {
+        select.innerHTML = '<option value="">No unassigned operators available</option>';
+        return;
+    }
+
+    select.innerHTML = '<option value="">Select an operator...</option>' + available.map(u =>
+        `<option value="${u.id}">${(u.username || u.email || 'Unknown')}${u.role === 'admin_machine_operator' ? ' (Admin)' : ''}</option>`
+    ).join('');
+}
+
+// Load and render assigned users for the current machine
+async function loadAssignedUsers() {
+    const container = document.getElementById('assigned-users-list');
+    if (!container) return;
+
+    const machine = machineData[currentMachine];
+    if (!machine) return;
+
+    if (typeof supabase === 'undefined') {
+        container.innerHTML = '<div class="text-xs text-slate-500 text-center py-6">Supabase not available</div>';
+        return;
+    }
+
+    const { data, error } = await supabase
+        .from('machine_operator_users')
+        .select('id, user_id, users(id, username, email, role)')
+        .eq('machine_id', machine.id);
+
+    if (error) {
+        console.error('Error fetching assigned users:', error);
+        container.innerHTML = '<div class="text-xs text-rose-400 text-center py-6">Failed to load assigned users</div>';
+        return;
+    }
+
+    const assignments = data || [];
+
+    if (assignments.length === 0) {
+        container.innerHTML = '<div class="text-xs text-slate-500 text-center py-6">No users assigned to this machine yet.</div>';
+        return;
+    }
+
+    container.innerHTML = assignments.map(a => {
+        const user = a.users || {};
+        const name = user.username || user.email || 'Unknown user';
+        const roleLabel = user.role === 'admin_machine_operator' ? 'Admin' : 'Operator';
+        const roleColor = user.role === 'admin_machine_operator' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-teal-500/10 text-teal-400 border-teal-500/20';
+        return `
+            <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-700/50 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-user text-slate-300 text-sm"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-slate-200 truncate">${name}</p>
+                        <p class="text-[10px] text-slate-500 truncate">${user.email || ''}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-[10px] uppercase px-2.5 py-1 rounded-lg font-bold border ${roleColor}">${roleLabel}</span>
+                    <button onclick="unassignUserFromMachine('${a.id}')" class="text-rose-400 hover:text-rose-300 transition-colors text-sm p-1" title="Remove user">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Assign selected user to current machine
+async function assignUserToMachine() {
+    const machine = machineData[currentMachine];
+    if (!machine) {
+        alert('Please select a machine first.');
+        return;
+    }
+
+    const select = document.getElementById('assign-user-select');
+    const userId = select ? select.value : '';
+    if (!userId) {
+        alert('Please select a user to assign.');
+        return;
+    }
+
+    const { error } = await supabase
+        .from('machine_operator_users')
+        .insert({ machine_id: machine.id, user_id: userId });
+
+    if (error) {
+        console.error('Error assigning user:', error);
+        alert('Failed to assign user. They may already be assigned.');
+        return;
+    }
+
+    await Promise.all([loadAssignableUsers(), loadAssignedUsers()]);
+}
+
+// Remove user assignment
+async function unassignUserFromMachine(assignmentId) {
+    if (!confirm('Are you sure you want to remove this user from the machine?')) return;
+
+    const { error } = await supabase
+        .from('machine_operator_users')
+        .delete()
+        .eq('id', assignmentId);
+
+    if (error) {
+        console.error('Error removing user assignment:', error);
+        alert('Failed to remove user.');
+        return;
+    }
+
+    await Promise.all([loadAssignableUsers(), loadAssignedUsers()]);
+}
