@@ -211,7 +211,7 @@ export const navigation: NavSection[] = [
 
 export const homeNav = { label: 'Home', path: '/', icon: House }
 export const settingsNav = { label: 'Settings', path: '/settings', icon: Settings }
-export const frontDeskNav = { label: 'Front Desk', path: 'https://vectoradvert.com/erp/frontdesk/', icon: House }
+export const frontDeskNav = { label: 'Front Desk', path: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk', icon: House }
 
 /** Finds the section that owns a given path (used to auto-expand the active section). */
 export function findSectionForPath(pathname: string): NavSection | undefined {

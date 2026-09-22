@@ -661,8 +661,8 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-500 mb-1">Status</label>
-                          <select
+                          {/* <label className="block text-xs font-medium text-slate-500 mb-1">Status</label> */}
+                          {/* <select
                             value={newVersion.status}
                             onChange={(e) => setNewVersion(prev => ({ ...prev, status: e.target.value }))}
                             className="w-full border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
@@ -671,7 +671,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                             <option value="Reviewed">Reviewed</option>
                             <option value="Approved">Approved</option>
                             <option value="Rejected">Rejected</option>
-                          </select>
+                          </select> */}
                         </div>
                       </div>
                       <div>
