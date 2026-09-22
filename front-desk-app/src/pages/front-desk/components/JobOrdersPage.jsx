@@ -69,7 +69,7 @@ export default function JobOrdersPage() {
       const { data, error } = await supabase
         .from('invoices')
         .select('*, order:orders(*, client:clients(name))')
-        .eq('invoice_type', 'Sales Invoice')
+        .eq('invoice_type', 'Proforma') // Sales Invoice
         .order('created_at', { ascending: false });
 
       if (error) throw error;
