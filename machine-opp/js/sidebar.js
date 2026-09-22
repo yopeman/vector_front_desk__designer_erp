@@ -7,12 +7,16 @@
 function updateSidebarCounts() {
     const receivedCountEl = document.getElementById('sidebar-count-received');
     const reworkCountEl = document.getElementById('sidebar-count-rework');
+    const completedCountEl = document.getElementById('sidebar-count-completed');
 
     if (receivedCountEl) {
         receivedCountEl.textContent = (typeof ordersData !== 'undefined' && Array.isArray(ordersData)) ? ordersData.length : 0;
     }
     if (reworkCountEl) {
         reworkCountEl.textContent = (typeof reworkData !== 'undefined' && Array.isArray(reworkData)) ? reworkData.length : 0;
+    }
+    if (completedCountEl) {
+        completedCountEl.textContent = (typeof completedOrdersData !== 'undefined' && Array.isArray(completedOrdersData)) ? completedOrdersData.length : 0;
     }
 }
 

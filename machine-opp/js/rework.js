@@ -964,11 +964,14 @@ async function populateReworkAttachments(entryId) {
                     
                     return `
                         <div class="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-file text-purple-400 text-xs"></i>
-                                <a href="${fileUrl}" target="_blank" class="text-xs text-slate-300 hover:text-blue-400 truncate max-w-[200px] transition-colors">${file.name}</a>
-                                <span class="text-[10px] text-slate-500">(${formatFileSize(file.file_size)})</span>
+                            <div class="flex items-center gap-2 min-w-0">
+                                <i class="fa-solid fa-file text-purple-400 text-xs shrink-0"></i>
+                                <a href="${fileUrl}" target="_blank" class="text-xs text-slate-300 hover:text-blue-400 truncate max-w-[180px] transition-colors" title="Open in new tab">${file.name}</a>
+                                <span class="text-[10px] text-slate-500 shrink-0">(${formatFileSize(file.file_size)})</span>
                             </div>
+                            <button onclick="downloadFileById('${file.id}')" class="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg transition-all flex items-center gap-1" title="Download without opening">
+                                <i class="fa-solid fa-download text-[9px]"></i> Download
+                            </button>
                         </div>
                     `;
                 });
@@ -1021,5 +1024,49 @@ async function getFileUrl(filePath) {
     } catch (error) {
         console.error('Error getting file URL:', error);
         return null;
+    }
+}
+
+// Download a file by its record id (looks up path and name from files table)
+async function downloadFileById(fileId) {
+    try {
+        const { data, error } = await window.supabase
+            .from('files')
+            .select('name, path')
+            .eq('id', fileId)
+            .single();
+        if (error || !data) {
+            throw error || new Error('File not found');
+        }
+        await downloadFile(data.path, data.name);
+    } catch (err) {
+        console.error('Download failed:', err);
+        alert('Failed to download file. Please try again.');
+    }
+}
+
+// Download a file directly without opening it
+async function downloadFile(filePath, fileName) {
+    try {
+        const { data, error } = await window.supabase.storage
+            .from('documents')
+            .createSignedUrl(filePath, 60);
+        if (error || !data?.signedUrl) {
+            throw error || new Error('Failed to create download link');
+        }
+        const response = await fetch(data.signedUrl);
+        if (!response.ok) throw new Error('Download failed');
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName || 'download';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Download failed:', err);
+        alert('Failed to download file. Please try again.');
     }
 }

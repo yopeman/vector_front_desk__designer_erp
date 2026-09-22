@@ -126,6 +126,12 @@ class ReceivedordersSection {
                                     <th class="p-4">Designer</th>
                                     <th class="p-4">Project/Task Name/Title</th>
                                     <th class="p-4">Priority</th>
+                                    <th class="p-4 text-center">
+                                        <span class="flex items-center justify-center gap-1.5">
+                                            <i class="fa-solid fa-circle-info text-[10px] text-slate-500"></i>
+                                            Status
+                                        </span>
+                                    </th>
                                     <th class="p-4">Machine Type</th>
                                     <th class="p-4 text-center">Action</th>
                                 </tr>
