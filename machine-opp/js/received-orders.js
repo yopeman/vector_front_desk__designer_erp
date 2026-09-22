@@ -7,6 +7,10 @@ let currentSharedFile = null;
 let approvedDesignVersions = [];
 let designerChatChannel = null;
 let designerChatPollInterval = null;
+let productionChatChannel = null;
+let productionChatPollInterval = null;
+let productionChatUnreadPollInterval = null;
+let productionUnreadIds = new Set();
 
 function formatDate(dateStr) {
     if (!dateStr) return '';
@@ -187,7 +191,12 @@ async function renderOrdersTable() {
             <td class="p-4">
                 <span class="px-2 py-1 bg-blue-500/10 text-blue-400 rounded-md text-xs font-medium border border-blue-500/20 capitalize">${order.taskType}</span>
             </td>
-            <td class="p-4 font-mono text-slate-400">${order.orderNum}</td>
+            <td class="p-4 font-mono text-slate-400">
+                <span class="inline-flex items-center gap-2">
+                    <span class="prod-unread-dot" title="Unread production chat" style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;display:${productionUnreadIds.has(order.id) ? 'inline-block' : 'none'};"></span>
+                    ${order.orderNum}
+                </span>
+            </td>
             <td class="p-4 ${isUrgent ? 'text-rose-300' : 'text-emerald-400'} font-medium">
                 <span class="inline-flex items-center gap-1.5">
                     <span class="w-5 h-5 rounded-full ${isUrgent ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'} inline-flex items-center justify-center text-[9px] font-bold shrink-0">${order.designer.charAt(0)}</span>
@@ -536,6 +545,11 @@ function closeOrderModal(event) {
         chatModal.classList.remove('open');
     }
 
+    const prodChatModal = document.getElementById('production-chat-modal');
+    if (prodChatModal) {
+        prodChatModal.classList.remove('open');
+    }
+
     if (designerChatChannel && typeof supabase !== 'undefined') {
         supabase.removeChannel(designerChatChannel);
         designerChatChannel = null;
@@ -543,6 +557,14 @@ function closeOrderModal(event) {
     if (designerChatPollInterval) {
         clearInterval(designerChatPollInterval);
         designerChatPollInterval = null;
+    }
+    if (productionChatChannel && typeof supabase !== 'undefined') {
+        supabase.removeChannel(productionChatChannel);
+        productionChatChannel = null;
+    }
+    if (productionChatPollInterval) {
+        clearInterval(productionChatPollInterval);
+        productionChatPollInterval = null;
     }
 }
 
@@ -839,7 +861,7 @@ async function fetchDesignCommunications(designId) {
             if (comm.attached_file_ids && comm.attached_file_ids.length > 0) {
                 const { data: files } = await supabase
                     .from('files')
-                    .select('id, name, path')
+                    .select('id, name, path, mime_type')
                     .in('id', comm.attached_file_ids);
                 attachedFiles = files || [];
             }
@@ -853,7 +875,7 @@ async function fetchDesignCommunications(designId) {
                 receiverId: comm.receiver_id,
                 senderName: comm.sender?.username || 'Unknown',
                 receiverName: comm.receiver?.username || 'Unknown',
-                attachedFiles: attachedFiles
+                attachedFiles: attachedFiles.map(f => ({ id: f.id, name: f.name, path: f.path, mimeType: f.mime_type }))
             };
         })
     );
@@ -1239,4 +1261,411 @@ async function downloadFile(filePath, fileName) {
         console.error('Download failed:', err);
         alert('Failed to download file. Please try again.');
     }
+}
+
+// =============================================
+// PRODUCTION CHAT (production_communications)
+// =============================================
+let currentProductionOrderId = null;
+let productionChatMessages = [];
+
+async function fetchSingleProductionCommunication(commId) {
+    if (!commId || typeof supabase === 'undefined') return null;
+
+    const { data, error } = await supabase
+        .from('production_communications')
+        .select(`
+            *,
+            sender:users!sender_id(username),
+            receiver:users!receiver_id(username)
+        `)
+        .eq('id', commId)
+        .single();
+
+    if (error || !data) return null;
+
+    let attachedFiles = [];
+    if (data.attached_file_ids && data.attached_file_ids.length > 0) {
+        const { data: files } = await supabase
+            .from('files')
+            .select('id, name, path, mime_type')
+            .in('id', data.attached_file_ids);
+        attachedFiles = files || [];
+    }
+
+    return {
+        id: data.id,
+        message: data.message,
+        isRead: data.is_read,
+        readAt: data.read_at,
+        createdAt: data.created_at,
+        senderId: data.sender_id,
+        receiverId: data.receiver_id,
+        senderName: data.sender?.username || 'Unknown',
+        receiverName: data.receiver?.username || 'Unknown',
+        attachedFiles: attachedFiles.map(f => ({ id: f.id, name: f.name, path: f.path, mimeType: f.mime_type }))
+    };
+}
+
+async function fetchProductionCommunications(productionOrderId) {
+    if (!productionOrderId || typeof supabase === 'undefined') return [];
+
+    const { data, error } = await supabase
+        .from('production_communications')
+        .select(`
+            *,
+            sender:users!sender_id(username),
+            receiver:users!receiver_id(username)
+        `)
+        .eq('production_order_id', productionOrderId)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        console.error('Error fetching production communications:', error);
+        return [];
+    }
+
+    const communicationsWithFiles = await Promise.all(
+        (data || []).map(async (comm) => {
+            let attachedFiles = [];
+            if (comm.attached_file_ids && comm.attached_file_ids.length > 0) {
+                const { data: files } = await supabase
+                    .from('files')
+                    .select('id, name, path, mime_type')
+                    .in('id', comm.attached_file_ids);
+                attachedFiles = files || [];
+            }
+            return {
+                id: comm.id,
+                message: comm.message,
+                isRead: comm.is_read,
+                readAt: comm.read_at,
+                createdAt: comm.created_at,
+                senderId: comm.sender_id,
+                receiverId: comm.receiver_id,
+                senderName: comm.sender?.username || 'Unknown',
+                receiverName: comm.receiver?.username || 'Unknown',
+                attachedFiles: attachedFiles.map(f => ({ id: f.id, name: f.name, path: f.path, mimeType: f.mime_type }))
+            };
+        })
+    );
+
+    return communicationsWithFiles;
+}
+
+async function markProductionAsRead(communicationId) {
+    if (!communicationId || typeof supabase === 'undefined') return;
+
+    const { error } = await supabase
+        .from('production_communications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', communicationId);
+
+    if (error) {
+        console.error('Error marking as read:', error);
+        return;
+    }
+
+    const msg = productionChatMessages.find(m => m.id === communicationId);
+    if (msg) {
+        msg.isRead = true;
+        msg.readAt = new Date().toISOString();
+        renderProductionChat(productionChatMessages);
+    }
+}
+
+async function sendProductionCommunication(productionOrderId, messageText, attachedFileIds) {
+    if (!productionOrderId || typeof supabase === 'undefined') return null;
+    if (!messageText.trim() && (!attachedFileIds || attachedFileIds.length === 0)) return null;
+
+    const currentUser = Auth.getCurrentUser();
+    if (!currentUser) {
+        alert('You must be logged in to send messages.');
+        return null;
+    }
+
+    const insertData = {
+        production_order_id: productionOrderId,
+        sender_id: currentUser.id,
+        message: messageText.trim(),
+        is_read: false
+    };
+    if (attachedFileIds && attachedFileIds.length > 0) {
+        insertData.attached_file_ids = attachedFileIds;
+    }
+
+    const { error } = await supabase
+        .from('production_communications')
+        .insert(insertData);
+
+    if (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+        return null;
+    }
+
+    return { success: true };
+}
+
+function productionFileTypeIcon(mimeType) {
+    if (!mimeType) return 'fa-file';
+    if (mimeType.startsWith('image/')) return 'fa-file-image';
+    if (mimeType.startsWith('video/')) return 'fa-file-video';
+    if (mimeType.startsWith('audio/')) return 'fa-file-audio';
+    if (mimeType.includes('pdf')) return 'fa-file-pdf';
+    if (mimeType.includes('word') || mimeType.includes('document')) return 'fa-file-word';
+    if (mimeType.includes('sheet') || mimeType.includes('excel') || mimeType.includes('csv')) return 'fa-file-excel';
+    if (mimeType.startsWith('text/')) return 'fa-file-lines';
+    if (mimeType.includes('zip') || mimeType.includes('compress')) return 'fa-file-zipper';
+    return 'fa-file';
+}
+
+function renderProductionChat(messages, container, markReadFnName) {
+    container = container || document.getElementById('production-chat-messages');
+    markReadFnName = markReadFnName || 'markProductionAsRead';
+    if (!container) return;
+
+    const currentUser = Auth.getCurrentUser();
+    const myId = currentUser ? currentUser.id : null;
+
+    if (!messages.length) {
+        container.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">No messages yet. Start the conversation!</div>';
+        return;
+    }
+
+    container.innerHTML = messages.map(msg => {
+        const isMe = myId && msg.senderId === myId;
+        const attachedHtml = (msg.attachedFiles && msg.attachedFiles.length > 0) ? `
+            <div class="mt-2 space-y-1">
+                ${msg.attachedFiles.map(file => `
+                    <button onclick="event.stopPropagation(); downloadFileById('${file.id}')" title="Download ${escapeHtml(file.name)}" class="w-full flex items-center gap-2 bg-white/10 hover:bg-white/20 p-2 rounded transition-colors text-left">
+                        <i class="fa-solid ${productionFileTypeIcon(file.mimeType)} text-emerald-400 text-xs"></i>
+                        <span class="text-xs text-slate-200 truncate flex-1">${escapeHtml(file.name)}</span>
+                        <i class="fa-solid fa-download text-slate-400 text-[10px]"></i>
+                    </button>
+                `).join('')}
+            </div>
+        ` : '';
+
+        const unreadButton = (!msg.isRead && msg.senderId !== myId) ? `
+            <button onclick="${markReadFnName}('${msg.id}')" class="mt-1 text-xs text-emerald-400 hover:text-emerald-200 bg-transparent border-none cursor-pointer p-0">
+                Mark as read
+            </button>
+        ` : '';
+
+        return `
+            <div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
+                <div class="max-w-[80%] ${isMe ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-200'} rounded-xl px-4 py-2.5 text-sm shadow-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[10px] font-semibold ${isMe ? 'text-emerald-100' : 'text-slate-400'}">${msg.senderName}</span>
+                        <span class="text-[10px] ${isMe ? 'text-emerald-100' : 'text-slate-500'}">${formatChatTime(msg.createdAt)}</span>
+                    </div>
+                    <div class="text-xs leading-relaxed whitespace-pre-wrap">${escapeHtml(msg.message)}</div>
+                    ${attachedHtml}
+                    ${unreadButton}
+                    ${isMe ? `<div class="text-right mt-1"><i class="fa-solid ${msg.isRead ? 'fa-check-double' : 'fa-check'} text-[9px] ${msg.isRead ? 'text-white' : 'text-emerald-100'}"></i></div>` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    container.scrollTop = container.scrollHeight;
+}
+
+async function openProductionChat() {
+    if (currentOrderIndex < 0 || !ordersData[currentOrderIndex]) {
+        alert('Please select an order first.');
+        return;
+    }
+
+    const order = ordersData[currentOrderIndex];
+    const modal = document.getElementById('production-chat-modal');
+    if (!modal) return;
+
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+    productionChatMessages = [];
+
+    const subtitle = document.getElementById('production-chat-subtitle');
+    if (subtitle) subtitle.textContent = 'Loading conversation...';
+
+    const messagesContainer = document.getElementById('production-chat-messages');
+    if (messagesContainer) messagesContainer.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">Loading messages...</div>';
+
+    const input = document.getElementById('production-chat-input');
+    if (input) {
+        input.value = '';
+        input.onkeydown = function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendProductionMessage();
+            }
+        };
+    }
+
+    currentProductionOrderId = order.id || null;
+
+    if (!currentProductionOrderId) {
+        if (messagesContainer) messagesContainer.innerHTML = '<div class="text-xs text-slate-500 text-center py-8">No production work linked to this order.</div>';
+        if (subtitle) subtitle.textContent = 'No production work linked';
+        return;
+    }
+
+    productionChatMessages = await fetchProductionCommunications(currentProductionOrderId);
+
+    // Auto-mark unread incoming messages as read once the chat is open (like web panel)
+    const myId = Auth.getCurrentUser() ? Auth.getCurrentUser().id : null;
+    const pendingUnread = productionChatMessages.filter(m => !m.isRead && m.senderId !== myId);
+    if (pendingUnread.length > 0 && typeof supabase !== 'undefined') {
+        supabase
+            .from('production_communications')
+            .update({ is_read: true, read_at: new Date().toISOString() })
+            .in('id', pendingUnread.map(m => m.id))
+            .then(({ error }) => {
+                if (!error) {
+                    pendingUnread.forEach(m => { m.isRead = true; m.readAt = new Date().toISOString(); });
+                    renderProductionChat(productionChatMessages);
+                }
+            });
+    }
+    loadProductionUnreadIds();
+
+    renderProductionChat(productionChatMessages);
+
+    if (productionChatChannel) {
+        supabase.removeChannel(productionChatChannel);
+    }
+
+    if (productionChatPollInterval) {
+        clearInterval(productionChatPollInterval);
+    }
+
+    if (typeof supabase !== 'undefined' && currentProductionOrderId) {
+        productionChatChannel = supabase
+            .channel(`production-communications-${currentProductionOrderId}`)
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'production_communications',
+                filter: `production_order_id=eq.${currentProductionOrderId}`
+            }, async (payload) => {
+                const newComm = await fetchSingleProductionCommunication(payload.new.id);
+                if (newComm) {
+                    if (!productionChatMessages.find(m => m.id === newComm.id)) {
+                        productionChatMessages.push(newComm);
+                        renderProductionChat(productionChatMessages);
+                    }
+                }
+            })
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    console.log('Production realtime chat connected');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('Production realtime channel error');
+                }
+            });
+
+        productionChatPollInterval = setInterval(async () => {
+            if (currentProductionOrderId) {
+                const refreshed = await fetchProductionCommunications(currentProductionOrderId);
+                const existingIds = new Set(productionChatMessages.map(m => m.id));
+                const newMsgs = refreshed.filter(m => !existingIds.has(m.id));
+                if (newMsgs.length > 0) {
+                    productionChatMessages.push(...newMsgs);
+                    productionChatMessages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                    renderProductionChat(productionChatMessages);
+                }
+            }
+        }, 5000);
+    }
+
+    const currentUser = Auth.getCurrentUser();
+    if (subtitle) {
+        subtitle.textContent = currentUser ? `Chatting as ${currentUser.name || currentUser.email}` : 'Chat';
+    }
+}
+
+function closeProductionChatModal(event) {
+    if (event && event.target !== document.getElementById('production-chat-modal')) return;
+    const modal = document.getElementById('production-chat-modal');
+    if (modal) modal.classList.remove('open');
+    document.body.classList.remove('modal-open');
+    currentProductionOrderId = null;
+
+    if (productionChatChannel && typeof supabase !== 'undefined') {
+        supabase.removeChannel(productionChatChannel);
+        productionChatChannel = null;
+    }
+    if (productionChatPollInterval) {
+        clearInterval(productionChatPollInterval);
+        productionChatPollInterval = null;
+    }
+}
+
+async function sendProductionMessage() {
+    const input = document.getElementById('production-chat-input');
+    if (!input || !input.value.trim() || !currentProductionOrderId) return;
+
+    const messageText = input.value.trim();
+    input.value = '';
+
+    await sendProductionCommunication(currentProductionOrderId, messageText);
+}
+
+// =============================================
+// PRODUCTION UNREAD INDICATOR (red dots on rows)
+// =============================================
+async function loadProductionUnreadIds() {
+    if (typeof supabase === 'undefined') return;
+
+    const currentUser = Auth.getCurrentUser();
+    if (!currentUser) return;
+
+    const { data, error } = await supabase
+        .from('production_communications')
+        .select('production_order_id')
+        .eq('is_read', false)
+        .neq('sender_id', currentUser.id);
+
+    if (error) return;
+    productionUnreadIds = new Set((data || []).map(row => row.production_order_id));
+    refreshProductionUnreadDots();
+}
+
+function refreshProductionUnreadDots() {
+    document.querySelectorAll('tr.order-row').forEach(row => {
+        const index = row.getAttribute('data-index');
+        const order = ordersData[index];
+        const dot = row.querySelector('.prod-unread-dot');
+        if (!dot) return;
+        const hasUnread = order && productionUnreadIds.has(order.id);
+        dot.style.display = hasUnread ? 'inline-block' : 'none';
+    });
+
+    document.querySelectorAll('tr.aw-order-row').forEach(row => {
+        const id = row.getAttribute('data-id');
+        const dot = row.querySelector('.prod-unread-dot');
+        if (!dot) return;
+        dot.style.display = id && productionUnreadIds.has(id) ? 'inline-block' : 'none';
+    });
+
+    const sidebarDot = document.getElementById('sidebar-prod-unread-dot');
+    if (sidebarDot) {
+        sidebarDot.style.display = productionUnreadIds.size > 0 ? 'inline-block' : 'none';
+    }
+    const sidebarDotAw = document.getElementById('sidebar-prod-unread-dot-aw');
+    if (sidebarDotAw) {
+        sidebarDotAw.style.display = productionUnreadIds.size > 0 ? 'inline-block' : 'none';
+    }
+    if (typeof awRefreshUnreadDots === 'function') {
+        awRefreshUnreadDots();
+    }
+}
+
+function startProductionUnreadPoll() {
+    loadProductionUnreadIds();
+    if (productionChatUnreadPollInterval) {
+        clearInterval(productionChatUnreadPollInterval);
+    }
+    productionChatUnreadPollInterval = setInterval(loadProductionUnreadIds, 5000);
 }

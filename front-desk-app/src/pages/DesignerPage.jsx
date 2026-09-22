@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import DesignDetailModal from './front-desk/components/DesignDetailModal';
 import ProductionOrderModal from './front-desk/components/ProductionOrderModal';
+import ProductionChatPanel from '../components/ProductionChatPanel';
 import MessagesPage from './front-desk/components/MessagesPage';
 import NotificationsPage from './front-desk/components/NotificationsPage';
 import NotesPage from './front-desk/components/NotesPage';
@@ -44,6 +45,8 @@ export default function DesignerPage() {
   const [productionAttachedFiles, setProductionAttachedFiles] = useState([]);
   const [productionFileUrls, setProductionFileUrls] = useState({});
   const [editProductionOrder, setEditProductionOrder] = useState(null);
+  const [unreadProductionChatIds, setUnreadProductionChatIds] = useState(() => new Set());
+  const [productionModalTab, setProductionModalTab] = useState('details');
 
   // Reports state
   const [reportDateFrom, setReportDateFrom] = useState(() => {
@@ -82,6 +85,41 @@ export default function DesignerPage() {
     fetchCustomerApprovalVersions();
     fetchMyTasks();
     fetchProductionOrders();
+  }, [user?.id]);
+
+  // Fetch unread production communications (only relevant to this designer's orders)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const checkUnreadProductionChat = async () => {
+      const { data: myOrders, error: orderError } = await supabase
+        .from('production_orders')
+        .select('id')
+        .eq('designer_id', user.id);
+
+      if (orderError) return;
+
+      const orderIds = (myOrders || []).map((o) => o.id);
+      if (orderIds.length === 0) {
+        setUnreadProductionChatIds(new Set());
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('production_communications')
+        .select('production_order_id')
+        .eq('is_read', false)
+        .neq('sender_id', user.id)
+        .in('production_order_id', orderIds);
+
+      if (!error) {
+        setUnreadProductionChatIds(new Set((data || []).map((row) => row.production_order_id)));
+      }
+    };
+
+    checkUnreadProductionChat();
+    const interval = setInterval(checkUnreadProductionChat, 5000);
+    return () => clearInterval(interval);
   }, [user?.id]);
 
   // Fetch unread notification count and subscribe to realtime updates
@@ -304,6 +342,7 @@ export default function DesignerPage() {
   const handleViewProductionDetails = async (order) => {
     setSelectedProductionOrder(order);
     setShowProductionDetailModal(true);
+    setProductionModalTab('details');
 
     // Fetch attached files
     if (order.attached_file_ids && order.attached_file_ids.length > 0) {
@@ -338,6 +377,204 @@ export default function DesignerPage() {
     setShowProductionOrderModal(true);
   };
 
+  const renderProductionDetailModal = (withChat = false) => {
+    if (!showProductionDetailModal || !selectedProductionOrder) return null;
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 mt-16">
+        <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Production Order Details</h2>
+              <p className="text-sm text-slate-500">View detailed information</p>
+            </div>
+            <button
+              onClick={() => {
+                setShowProductionDetailModal(false);
+                setSelectedProductionOrder(null);
+                setProductionAttachedFiles([]);
+                setProductionFileUrls({});
+              }}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <i className="fa-solid fa-xmark text-xl"></i>
+            </button>
+          </div>
+
+          <div className="flex gap-2 px-6 pt-4 border-b border-slate-200">
+            <button
+              onClick={() => setProductionModalTab('details')}
+              className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${productionModalTab === 'details' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              <i className="fa-solid fa-circle-info mr-1.5"></i> Details
+            </button>
+            {withChat && (
+              <button
+                onClick={() => setProductionModalTab('communication')}
+                className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${productionModalTab === 'communication' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              >
+                <i className="fa-solid fa-comments mr-1.5"></i> Communication
+              </button>
+            )}
+          </div>
+
+          {productionModalTab === 'communication' && withChat ? (
+            <div className="p-6">
+              <ProductionChatPanel productionOrderId={selectedProductionOrder.id} height="460px" />
+            </div>
+          ) : (
+          <div className="p-6 space-y-6">
+            {/* Basic Information */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
+                <input
+                  type="text"
+                  value={selectedProductionOrder.task_type || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Order Number</label>
+                <input
+                  type="text"
+                  value={selectedProductionOrder.orders?.order_no || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Material</label>
+                <input
+                  type="text"
+                  value={selectedProductionOrder.material || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Machine</label>
+                <input
+                  type="text"
+                  value={`${selectedProductionOrder.machines?.name || '-'} ${selectedProductionOrder.machines?.machine_type ? `(${selectedProductionOrder.machines.machine_type})` : ''}`}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Designer</label>
+                <input
+                  type="text"
+                  value={selectedProductionOrder.designer?.username || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
+                <input
+                  type="text"
+                  value={selectedProductionOrder.task_type || '-'}
+                  readOnly
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                />
+              </div>
+            </div>
+
+            {/* Dimensions */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-2">Dimensions</label>
+              <div className="grid grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Length</label>
+                  <input
+                    type="text"
+                    value={selectedProductionOrder.length || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Width</label>
+                  <input
+                    type="text"
+                    value={selectedProductionOrder.width || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Height</label>
+                  <input
+                    type="text"
+                    value={selectedProductionOrder.height || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Gram</label>
+                  <input
+                    type="text"
+                    value={selectedProductionOrder.gram || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Note */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Note</label>
+              <textarea
+                value={selectedProductionOrder.note || ''}
+                readOnly
+                rows="3"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 resize-none"
+                placeholder="No note"
+              />
+            </div>
+
+            {/* Attached Files */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-2">Attached Files</label>
+              {productionAttachedFiles.length > 0 ? (
+                <div className="space-y-2">
+                  {productionAttachedFiles.map(file => (
+                    <div key={file.id} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+                      <div className="flex items-center gap-2">
+                        <i className="fa-solid fa-file text-blue-500"></i>
+                        {productionFileUrls[file.id] ? (
+                          <a
+                            href={productionFileUrls[file.id]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-slate-700 hover:text-blue-600 transition-colors"
+                          >
+                            {file.name}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-slate-700">{file.name}</span>
+                        )}
+                        <span className="text-xs text-slate-500">
+                          ({(file.file_size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-slate-400 italic">No attached files</div>
+              )}
+            </div>
+          </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Designer report menu items
   const designerReportMenuItems = [
     {
@@ -355,6 +592,7 @@ export default function DesignerPage() {
       name: 'Production',
       submenu: [
         { name: 'Send to Production', icon: 'fa-print' },
+        { name: 'Active Work', icon: 'fa-industry' },
       ]
     },
   ];
@@ -373,6 +611,8 @@ export default function DesignerPage() {
         return designs.filter(d => d.status === 'Completed').map(item => ({ ...item, _source: 'Production Files' }));
       case 'Send to Production':
         return productionOrders.map(item => ({ ...item, _source: 'Send to Production' }));
+      case 'Active Work':
+        return productionOrders.filter(o => o.status === 'In Progress').map(item => ({ ...item, _source: 'Active Work' }));
       case 'Design Library':
         return designs.map(item => ({ ...item, _source: 'Design Library' }));
       default:
@@ -421,6 +661,15 @@ export default function DesignerPage() {
         { key: 'created_at', label: 'Created Date' },
       ],
       'Send to Production': [
+        { key: 'orders.order_no', label: 'Order No' },
+        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'material', label: 'Material' },
+        { key: 'machines.name', label: 'Machine' },
+        { key: 'status', label: 'Status' },
+        { key: 'priority', label: 'Priority' },
+        { key: 'created_at', label: 'Created Date' },
+      ],
+      'Active Work': [
         { key: 'orders.order_no', label: 'Order No' },
         { key: 'orders.clients.name', label: 'Client' },
         { key: 'material', label: 'Material' },
@@ -690,6 +939,7 @@ export default function DesignerPage() {
     { name: 'Customer Approval', icon: 'fa-user-check', path: 'customer-approval' },
     { name: 'Production Files', icon: 'fa-folder-open', path: 'production-files' },
     { name: 'Send to Production', icon: 'fa-print', path: 'send-production' },
+    { name: 'Active Work', icon: 'fa-industry', path: 'active-work' },
     { name: 'Design Library', icon: 'fa-book-open', path: 'design-library' },
     { name: 'Reports', icon: 'fa-chart-simple', path: 'reports' },
     { name: 'AI Agent', icon: 'fa-robot', path: 'ai-agent' },
@@ -837,6 +1087,20 @@ export default function DesignerPage() {
               <div className="flex items-center gap-3"><i className="fa-solid fa-print w-4"></i> Send to Production</div>
               <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
                 {productionOrders.length}
+              </span>
+            </button>
+            <button
+              onClick={() => handleSectionChange('active-work-section')}
+              className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'active-work-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+            >
+              <div className="flex items-center gap-3"><i className="fa-solid fa-industry w-4"></i> Active Work</div>
+              <span className="flex items-center gap-2">
+                {productionOrders.filter(o => o.status === 'In Progress').length > 0 && (
+                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{productionOrders.filter(o => o.status === 'In Progress').length}</span>
+                )}
+                {unreadProductionChatIds.size > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-red-500" title="Unread production chat"></span>
+                )}
               </span>
             </button>
             <button
@@ -2230,6 +2494,122 @@ export default function DesignerPage() {
             </div>
           )}
 
+          {activeSection === 'active-work-section' && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900">Active Work</h1>
+                  <p className="text-xs text-slate-500">Production orders in progress with communication</p>
+                </div>
+                <button
+                  onClick={() => setShowProductionOrderModal(true)}
+                  className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                >
+                  <i className="fa-solid fa-plus"></i>
+                  New Production Order
+                </button>
+              </div>
+
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+                </div>
+              ) : productionOrders.filter(o => o.status === 'In Progress').length === 0 ? (
+                <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+                  <i className="fa-solid fa-industry text-4xl mb-4"></i>
+                  <p className="text-sm">No active work</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-left">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Task Type</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Material</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Machine</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Designer</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Priority</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productionOrders.filter(o => o.status === 'In Progress').map((order) => (
+                        <tr key={order.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-800">
+                            {order.task_type || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            <span className="flex items-center gap-2">
+                              {unreadProductionChatIds.has(order.id) && (
+                                <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
+                              )}
+                              {order.orders?.order_no || '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.material} / {order.thickness} / {order.color}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.machines?.name || '-'} ({order.machines?.machine_type || '-'})
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.designer?.username || '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                order.priority === 'High'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : order.priority === 'Medium'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {order.priority}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                order.status === 'New'
+                                  ? 'bg-blue-100 text-blue-700'
+                                  : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {order.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleViewProductionDetails(order)}
+                                className="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                                title="View Details"
+                              >
+                                <i className="fa-solid fa-eye"></i> Show
+                              </button>
+                              {/* <button
+                                onClick={() => handleEditProductionOrder(order)}
+                                className="text-emerald-600 hover:text-emerald-800 transition-colors p-2 rounded-lg hover:bg-emerald-50"
+                                title="Edit"
+                              >
+                                <i className="fa-solid fa-pen"></i> Edit
+                              </button> */}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {renderProductionDetailModal(true)}
+            </div>
+          )}
+
           {activeSection === 'reports-section' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
@@ -2713,7 +3093,7 @@ export default function DesignerPage() {
             </div>
           )}
 
-          {activeSection !== 'overview-section' && activeSection !== 'new-requests-section' && activeSection !== 'active-status-section' && activeSection !== 'my-tasks-section' && activeSection !== 'customer-approval-section' && activeSection !== 'profile-settings-section' && activeSection !== 'notifications-section' && activeSection !== 'private-messages-section' && activeSection !== 'production-files-section' && activeSection !== 'send-production-section' && activeSection !== 'design-library-section' && activeSection !== 'reports-section' && activeSection !== 'notes-section' && activeSection !== 'hr-requests-section' && activeSection !== 'ai-agent-section' && (
+          {activeSection !== 'overview-section' && activeSection !== 'new-requests-section' && activeSection !== 'active-status-section' && activeSection !== 'my-tasks-section' && activeSection !== 'customer-approval-section' && activeSection !== 'profile-settings-section' && activeSection !== 'notifications-section' && activeSection !== 'private-messages-section' && activeSection !== 'production-files-section' && activeSection !== 'send-production-section' && activeSection !== 'active-work-section' && activeSection !== 'design-library-section' && activeSection !== 'reports-section' && activeSection !== 'notes-section' && activeSection !== 'hr-requests-section' && activeSection !== 'ai-agent-section' && (
             <div className="flex items-center justify-center h-64 text-slate-400">
               <div className="text-center">
                 <i className="fa-solid fa-tools text-4xl mb-4"></i>

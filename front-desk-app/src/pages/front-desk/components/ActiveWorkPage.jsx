@@ -3,21 +3,21 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
 import ProductionChatPanel from '../../../components/ProductionChatPanel';
 
-export default function ProductionStatusPage() {
+export default function ActiveWorkPage() {
   const { profile } = useAuth();
   const [productionOrders, setProductionOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [priorityFilter, setPriorityFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalTab, setModalTab] = useState('details');
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [fileUrls, setFileUrls] = useState({});
   const [unreadProdChatIds, setUnreadProdChatIds] = useState(() => new Set());
 
   useEffect(() => {
-    fetchProductionOrders();
+    fetchActiveProductionOrders();
   }, []);
 
   useEffect(() => {
@@ -40,27 +40,28 @@ export default function ProductionStatusPage() {
     return () => clearInterval(interval);
   }, [profile?.id]);
 
-  const fetchProductionOrders = async () => {
+  const fetchActiveProductionOrders = async () => {
     try {
       const { data, error } = await supabase
         .from('production_orders')
-        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username)')
+        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username), job_order:job_orders(job_no)')
+        .eq('status', 'In Progress')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       setProductionOrders(data || []);
     } catch (error) {
-      console.error('Error fetching production orders:', error);
+      console.error('Error fetching active production orders:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDetails = async (order) => {
+  const handleOrderClick = async (order) => {
     setSelectedOrder(order);
-    setShowDetailModal(true);
+    setModalTab('details');
+    setShowModal(true);
 
-    // Fetch attached files
     if (order.attached_file_ids && order.attached_file_ids.length > 0) {
       try {
         const { data: files, error } = await supabase
@@ -71,7 +72,6 @@ export default function ProductionStatusPage() {
         if (error) throw error;
         setAttachedFiles(files || []);
 
-        // Generate file URLs
         const urls = {};
         for (const file of files || []) {
           urls[file.id] = await getFileUrl(file.path);
@@ -90,23 +90,10 @@ export default function ProductionStatusPage() {
 
   const getFileUrl = async (filePath) => {
     try {
-      console.log('Attempting to get signed URL for:', filePath);
       const { data, error } = await supabase.storage
         .from('documents')
         .createSignedUrl(filePath, 3600);
-      if (error) {
-        console.error('Supabase signed URL error:', error);
-        const { data: publicData, error: publicError } = await supabase.storage
-          .from('documents')
-          .getPublicUrl(filePath);
-        if (publicError) {
-          console.error('Public URL error:', publicError);
-          return null;
-        }
-        console.log('Using public URL:', publicData.publicUrl);
-        return publicData.publicUrl;
-      }
-      console.log('Signed URL generated:', data.signedUrl);
+      if (error) throw error;
       return data.signedUrl;
     } catch (error) {
       console.error('Error getting file URL:', error);
@@ -114,28 +101,35 @@ export default function ProductionStatusPage() {
     }
   };
 
-  const filteredOrders = productionOrders.filter(order => {
+  const filteredOrders = productionOrders.filter((order) => {
     const matchesSearch =
-      (order.material?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (order.task_type?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.orders?.order_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.orders?.clients?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.machines?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.designer?.username?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-    const matchesPriority = priorityFilter === 'All' || order.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
+    return matchesSearch && matchesStatus;
   });
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 20px' }}>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Production Status</h2>
-          <p className="text-xs text-slate-500 mt-1">Track all production orders and their current status</p>
+          <h2 className="text-xl font-bold text-slate-800">Active Work - In Progress</h2>
+          <p className="text-xs text-slate-500 mt-1">Production work currently being produced and its related communication</p>
         </div>
         <span className="text-xs font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
-          <i className="fa-solid fa-database text-blue-500"></i>
-          <span>{productionOrders.length}</span> orders
+          <i className="fa-solid fa-industry text-blue-500"></i>
+          <span>{productionOrders.length}</span> active jobs
         </span>
       </div>
 
@@ -158,36 +152,17 @@ export default function ProductionStatusPage() {
               className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
             >
               <option value="All">All Status</option>
-              <option value="New">New</option>
               <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-          </div>
-          <div>
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
-            >
-              <option value="All">All Priority</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
             </select>
           </div>
         </div>
       </div>
 
       {/* Table */}
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
-        </div>
-      ) : filteredOrders.length === 0 ? (
+      {filteredOrders.length === 0 ? (
         <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
-          <i className="fa-solid fa-print text-4xl mb-4"></i>
-          <p className="text-sm">No production orders found</p>
+          <i className="fa-solid fa-industry text-4xl mb-4"></i>
+          <p className="text-sm">No active production work found</p>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -195,25 +170,25 @@ export default function ProductionStatusPage() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Task Type</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Order</th>
+                <th className="p-4 text-left text-xs font-semibold text-slate-600">Task Type</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Material</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Machine</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Designer</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Priority</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Job Type</th>
-                <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
+                <th className="p-4 text-center text-xs font-semibold text-slate-600">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {filteredOrders.map((order, index) => (
-                <tr key={order.id} className="hover:bg-slate-50">
+                <tr
+                  key={order.id}
+                  className="hover:bg-slate-50 cursor-pointer"
+                  onClick={() => handleOrderClick(order)}
+                >
                   <td className="p-4 text-center">{index + 1}</td>
-                  <td className="p-4 font-medium text-slate-800">
-                    {order.material || '-'}
-                  </td>
-                  <td className="p-4 text-slate-600">
+                  <td className="p-4 font-medium">
                     <span className="flex items-center gap-2">
                       {unreadProdChatIds.has(order.id) && (
                         <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
@@ -221,57 +196,33 @@ export default function ProductionStatusPage() {
                       {order.orders?.order_no || '-'}
                     </span>
                   </td>
-                  <td className="p-4 text-slate-600">
+                  <td className="p-4">{order.task_type || '-'}</td>
+                  <td className="p-4">
                     {order.material || '-'}{order.thickness ? ` / ${order.thickness}` : ''}{order.color ? ` / ${order.color}` : ''}
                   </td>
-                  <td className="p-4 text-slate-600">
+                  <td className="p-4">
                     {order.machines?.name || '-'} {order.machines?.machine_type ? `(${order.machines.machine_type})` : ''}
                   </td>
-                  <td className="p-4 text-slate-600">
-                    {order.designer?.username || '-'}
-                  </td>
+                  <td className="p-4">{order.designer?.username || '-'}</td>
                   <td className="p-4">
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        order.priority === 'High'
-                          ? 'bg-rose-100 text-rose-700'
-                          : order.priority === 'Medium'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {order.priority || '-'}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      order.priority === 'High' ? 'bg-red-100 text-red-700' :
+                      order.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {order.priority}
                     </span>
                   </td>
                   <td className="p-4">
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        order.status === 'New'
-                          ? 'bg-blue-100 text-blue-700'
-                          : order.status === 'In Progress'
-                          ? 'bg-amber-100 text-amber-700'
-                          : order.status === 'Completed'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {order.status || '-'}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        order.job_type === 'received'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-purple-100 text-purple-700'
-                      }`}
-                    >
-                      {order.job_type || '-'}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      order.status === 'In Progress' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {order.status}
                     </span>
                   </td>
                   <td className="p-4 text-center">
                     <button
-                      onClick={() => handleViewDetails(order)}
+                      onClick={(e) => { e.stopPropagation(); handleOrderClick(order); }}
                       className="text-blue-600 hover:text-blue-800 transition-colors p-2 rounded-lg hover:bg-blue-50"
                       title="View Details"
                     >
@@ -286,17 +237,19 @@ export default function ProductionStatusPage() {
       )}
 
       {/* Detail Modal */}
-      {showDetailModal && selectedOrder && (
+      {showModal && selectedOrder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 mt-16">
-          <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Production Order Details</h2>
-                <p className="text-sm text-slate-500">View detailed information</p>
+                <h2 className="text-xl font-bold text-slate-900">Active Work Details</h2>
+                <p className="text-sm text-slate-500">
+                  {selectedOrder.orders?.order_no || '-'} • {selectedOrder.material || '-'}
+                </p>
               </div>
               <button
                 onClick={() => {
-                  setShowDetailModal(false);
+                  setShowModal(false);
                   setSelectedOrder(null);
                   setAttachedFiles([]);
                   setFileUrls({});
@@ -307,9 +260,28 @@ export default function ProductionStatusPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-2 gap-4">
+            <div className="flex gap-2 px-6 pt-4 border-b border-slate-200">
+              <button
+                onClick={() => setModalTab('details')}
+                className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${modalTab === 'details' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              >
+                <i className="fa-solid fa-circle-info mr-1.5"></i> Details
+              </button>
+              <button
+                onClick={() => setModalTab('communication')}
+                className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${modalTab === 'communication' ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              >
+                <i className="fa-solid fa-comments mr-1.5"></i> Communication
+              </button>
+            </div>
+
+            {modalTab === 'communication' ? (
+              <div className="p-6">
+                <ProductionChatPanel productionOrderId={selectedOrder.id} height="460px" />
+              </div>
+            ) : (
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
                   <input
@@ -320,19 +292,10 @@ export default function ProductionStatusPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Order Number</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Client</label>
                   <input
                     type="text"
-                    value={selectedOrder.orders?.order_no || '-'}
-                    readOnly
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Material</label>
-                  <input
-                    type="text"
-                    value={selectedOrder.material || '-'}
+                    value={selectedOrder.orders?.clients?.name || '-'}
                     readOnly
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
                   />
@@ -356,10 +319,19 @@ export default function ProductionStatusPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Task Type</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Job No</label>
                   <input
                     type="text"
-                    value={selectedOrder.task_type || '-'}
+                    value={selectedOrder.job_order?.job_no || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.status || '-'}
                     readOnly
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
                   />
@@ -367,62 +339,59 @@ export default function ProductionStatusPage() {
               </div>
 
               {/* Dimensions */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">Dimensions</label>
-                <div className="grid grid-cols-4 gap-3">
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Length</label>
-                    <input
-                      type="text"
-                      value={selectedOrder.length || '-'}
-                      readOnly
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Width</label>
-                    <input
-                      type="text"
-                      value={selectedOrder.width || '-'}
-                      readOnly
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Height</label>
-                    <input
-                      type="text"
-                      value={selectedOrder.height || '-'}
-                      readOnly
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-slate-500 mb-1">Gram</label>
-                    <input
-                      type="text"
-                      value={selectedOrder.gram || '-'}
-                      readOnly
-                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
-                    />
-                  </div>
+              <div className="grid grid-cols-4 gap-3 mb-6">
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Length</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.length || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Width</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.width || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Height</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.height || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">Gram</label>
+                  <input
+                    type="text"
+                    value={selectedOrder.gram || '-'}
+                    readOnly
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
+                  />
                 </div>
               </div>
 
               {/* Note */}
-              <div>
+              <div className="mb-6">
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Note</label>
                 <textarea
                   value={selectedOrder.note || ''}
                   readOnly
-                  rows="3"
+                  rows="2"
                   className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 resize-none"
                   placeholder="No note"
                 />
               </div>
 
               {/* Attached Files */}
-              <div>
+              <div className="mb-6">
                 <label className="block text-xs font-semibold text-slate-600 mb-2">Attached Files</label>
                 {attachedFiles.length > 0 ? (
                   <div className="space-y-2">
@@ -454,9 +423,8 @@ export default function ProductionStatusPage() {
                 )}
               </div>
 
-              {/* Communication */}
-              {selectedOrder.id && <ProductionChatPanel productionOrderId={selectedOrder.id} height="420px" />}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       )}

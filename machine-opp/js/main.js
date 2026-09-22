@@ -45,6 +45,11 @@ function switchTab(targetId) {
             }
             if (typeof renderOrdersTable === 'function') renderOrdersTable();
         },
+        'active-work': async () => {
+            if (typeof renderActiveWorkTable === 'function') {
+                await renderActiveWorkTable();
+            }
+        },
         'rework-login': () => {
             if (typeof renderReworkRecords === 'function') renderReworkRecords();
         },
@@ -611,6 +616,12 @@ window.onload = async function() {
     
     // Received Orders initialization
     if (typeof renderOrdersTable === 'function') renderOrdersTable();
+    
+    // Active Work initialization (sidebar count + data)
+    if (typeof fetchActiveWork === 'function') await fetchActiveWork();
+    
+    // Production chat unread indicator
+    if (typeof startProductionUnreadPoll === 'function') startProductionUnreadPoll();
     
     // Machine Maintenance initialization
     if (typeof switchMachine === 'function') switchMachine('cnc');

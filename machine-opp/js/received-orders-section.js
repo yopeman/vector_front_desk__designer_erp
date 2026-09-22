@@ -321,6 +321,9 @@ class ReceivedordersSection {
                                  <button onclick="openDesignerChat()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs py-2.5 rounded-lg text-center font-medium transition-all flex items-center justify-center gap-2">
                                      <i class="fa-solid fa-message text-sky-400"></i> Open Chat
                                  </button>
+                                 <button onclick="openProductionChat()" class="w-full bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-xs py-2.5 rounded-lg text-center font-medium transition-all flex items-center justify-center gap-2">
+                                     <i class="fa-solid fa-industry text-emerald-400"></i> Production Chat
+                                 </button>
                              </div>
 
                             <!-- Status Update Operations with Timeline -->
@@ -425,6 +428,35 @@ class ReceivedordersSection {
                          <div class="flex gap-3 pt-3 border-t border-slate-700/50">
                              <input id="designer-chat-input" type="text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 placeholder-slate-600" placeholder="Type a message to the designer...">
                              <button onclick="sendDesignerMessage()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
+                                 <i class="fa-solid fa-paper-plane text-[10px]"></i> Send
+                             </button>
+                         </div>
+                     </div>
+                 </div>
+
+                 <!-- ============================================================ -->
+                 <!-- PRODUCTION CHAT MODAL                                        -->
+                 <!-- ============================================================ -->
+                 <div id="production-chat-modal" class="modal-overlay" onclick="closeProductionChatModal(event)">
+                     <div class="modal-container max-w-2xl" onclick="event.stopPropagation()">
+                         <button onclick="closeProductionChatModal()" class="modal-close-btn">
+                             <i class="fa-solid fa-xmark"></i>
+                         </button>
+                         <div class="flex items-center gap-3 border-b border-slate-700/60 pb-4 mb-4">
+                             <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                                 <i class="fa-solid fa-industry text-white text-base"></i>
+                             </div>
+                             <div>
+                                 <h3 class="text-lg font-bold text-white tracking-wide">Production Chat</h3>
+                                 <p id="production-chat-subtitle" class="text-xs text-slate-400">Loading conversation...</p>
+                             </div>
+                         </div>
+                         <div id="production-chat-messages" class="bg-slate-900/50 border border-slate-700/50 rounded-xl p-4 h-80 overflow-y-auto space-y-3 mb-4">
+                             <div class="text-xs text-slate-500 text-center py-8">Loading messages...</div>
+                         </div>
+                         <div class="flex gap-3 pt-3 border-t border-slate-700/50">
+                             <input id="production-chat-input" type="text" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 placeholder-slate-600" placeholder="Type a message about this work...">
+                             <button onclick="sendProductionMessage()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5">
                                  <i class="fa-solid fa-paper-plane text-[10px]"></i> Send
                              </button>
                          </div>

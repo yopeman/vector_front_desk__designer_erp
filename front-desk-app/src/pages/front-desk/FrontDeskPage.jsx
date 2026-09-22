@@ -22,6 +22,7 @@ import SalesInvoicesPage from './components/SalesInvoicesPage';
 import PaymentsPage from './components/PaymentsPage';
 import JobOrdersPage from './components/JobOrdersPage';
 import ProductionStatusPage from './components/ProductionStatusPage';
+import ActiveWorkPage from './components/ActiveWorkPage';
 import DeliveryPage from './components/DeliveryPage';
 import InstallationPage from './components/InstallationPage';
 import FeedbackPage from './components/FeedbackPage';
@@ -190,6 +191,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Production Status Page Loaded</h2>
               <ProductionStatusPage />
+            </div>
+          ) : currentPage === 'active work' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Active Work Page Loaded</h2>
+              <ActiveWorkPage />
             </div>
           ) : currentPage === 'delivery' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

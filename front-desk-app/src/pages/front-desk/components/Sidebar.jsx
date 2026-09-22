@@ -6,6 +6,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
   const { profile } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({});
   const [hasUnreadDesignChat, setHasUnreadDesignChat] = useState(false);
+  const [hasUnreadProdChat, setHasUnreadProdChat] = useState(false);
 
   // Poll for unread design communications to show a red dot
   useEffect(() => {
@@ -37,6 +38,25 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
 
     checkUnreadDesignChat();
     const interval = setInterval(checkUnreadDesignChat, 5000);
+    return () => clearInterval(interval);
+  }, [profile?.id]);
+
+  // Poll for unread production communications to show red dots
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const checkUnreadProdChat = async () => {
+      const { count, error } = await supabase
+        .from('production_communications')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_read', false)
+        .neq('sender_id', profile.id);
+
+      if (!error) setHasUnreadProdChat((count || 0) > 0);
+    };
+
+    checkUnreadProdChat();
+    const interval = setInterval(checkUnreadProdChat, 5000);
     return () => clearInterval(interval);
   }, [profile?.id]);
 
@@ -87,6 +107,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       active: false,
       submenu: [
         { name: 'Job Orders', icon: 'fa-clipboard-list' },
+        { name: 'Active Work', icon: 'fa-industry' },
         { name: 'Production Status', icon: 'fa-chart-line' },
       ] 
     },
@@ -350,9 +371,9 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                         opacity: 0.7 
                       }}></i>
                       <span>{subItem.name}</span>
-                      {subItem.name === 'Design Status' && hasUnreadDesignChat && (
+                      {(subItem.name === 'Design Status' && hasUnreadDesignChat) || (subItem.name === 'Active Work' && hasUnreadProdChat) || (subItem.name === 'Production Status' && hasUnreadProdChat) ? (
                         <span
-                          title="Unread design chat"
+                          title="Unread production chat"
                           style={{
                             width: '8px',
                             height: '8px',
@@ -361,7 +382,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                             flexShrink: 0
                           }}
                         />
-                      )}
+                      ) : null}
                     </li>
                   ))}
                 </ul>

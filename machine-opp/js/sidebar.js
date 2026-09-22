@@ -12,6 +12,9 @@ function updateSidebarCounts() {
     if (receivedCountEl) {
         receivedCountEl.textContent = (typeof ordersData !== 'undefined' && Array.isArray(ordersData)) ? ordersData.length : 0;
     }
+    if (typeof awUpdateSidebarCount === 'function') {
+        awUpdateSidebarCount();
+    }
     if (reworkCountEl) {
         reworkCountEl.textContent = (typeof reworkData !== 'undefined' && Array.isArray(reworkData)) ? reworkData.length : 0;
     }

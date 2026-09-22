@@ -12,12 +12,14 @@ import ReportPage from './pages/front-desk/components/ReportPage';
 import Sidebar from './pages/front-desk/components/Sidebar';
 import TopHeader from './pages/front-desk/components/TopHeader';
 import DesignMessageNotifier from './components/DesignMessageNotifier';
+import ProductionMessageNotifier from './components/ProductionMessageNotifier';
 
 export default function App() {
   return (
     <HashRouter>
       <AuthProvider>
         <DesignMessageNotifier />
+        <ProductionMessageNotifier />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
 
