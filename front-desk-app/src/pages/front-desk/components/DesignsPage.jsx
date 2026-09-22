@@ -106,6 +106,7 @@ export default function DesignsPage() {
       const { data, error } = await supabase
         .from('users')
         .select('id, username')
+        .eq('role', 'designer')
         .order('username', { ascending: true });
 
       if (error) throw error;
