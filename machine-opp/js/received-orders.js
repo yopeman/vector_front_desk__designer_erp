@@ -36,7 +36,9 @@ async function fetchReceivedOrders() {
         return;
     }
 
-    const { data, error } = await supabase
+    const machineIds = typeof Auth !== 'undefined' && Auth.getAssignedMachineIds ? await Auth.getAssignedMachineIds() : null;
+
+    let query = supabase
         .from('production_orders')
         .select(`
             id,
@@ -60,8 +62,13 @@ async function fetchReceivedOrders() {
             job_orders(job_no)
         `)
         .eq('job_type', 'received')
-        .in('status', ['New', 'In Progress'])
-        .order('created_at', { ascending: false });
+        .in('status', ['New', 'In Progress']);
+
+    if (machineIds) {
+        query = query.in('machine_id', machineIds);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching received orders:', error);

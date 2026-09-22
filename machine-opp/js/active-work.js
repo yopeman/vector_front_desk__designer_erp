@@ -15,7 +15,9 @@ async function fetchActiveWork() {
         return;
     }
 
-    const { data, error } = await supabase
+    const machineIds = typeof Auth !== 'undefined' && Auth.getAssignedMachineIds ? await Auth.getAssignedMachineIds() : null;
+
+    let query = supabase
         .from('production_orders')
         .select(`
             id,
@@ -40,8 +42,13 @@ async function fetchActiveWork() {
             job_orders(job_no)
         `)
         .eq('job_type', 'received')
-        .eq('status', 'In Progress')
-        .order('created_at', { ascending: false });
+        .eq('status', 'In Progress');
+
+    if (machineIds) {
+        query = query.in('machine_id', machineIds);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching active work:', error);

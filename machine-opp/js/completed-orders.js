@@ -35,7 +35,9 @@ async function fetchCompletedOrders() {
         return;
     }
 
-    const { data, error } = await supabase
+    const machineIds = typeof Auth !== 'undefined' && Auth.getAssignedMachineIds ? await Auth.getAssignedMachineIds() : null;
+
+    let query = supabase
         .from('production_orders')
         .select(`
             id,
@@ -62,9 +64,15 @@ async function fetchCompletedOrders() {
             machines(name, machine_type),
             orders(id, order_no, order_date),
             job_orders(job_no)
-        `)
-        .eq('status', 'Completed')
-        .order('completed_at', { ascending: false });
+        `);
+
+    let chain = query.eq('status', 'Completed');
+
+    if (machineIds) {
+        chain = chain.in('machine_id', machineIds);
+    }
+
+    const { data, error } = await chain.order('completed_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching completed orders:', error);

@@ -200,6 +200,27 @@ const Auth = (function() {
         return currentUser ? Object.assign({}, currentUser) : null;
     }
 
+    async function getAssignedMachineIds() {
+        if (initPromise) {
+            await initPromise;
+        }
+        const user = getCurrentUser();
+        if (!user) return null;
+        if (user.role !== 'machine_operator') return null;
+
+        const { data, error } = await supabase
+            .from('machine_operator_users')
+            .select('machine_id')
+            .eq('user_id', user.id);
+
+        if (error) {
+            console.error('Error fetching assigned machines:', error);
+            return [];
+        }
+
+        return (data || []).map(a => a.machine_id);
+    }
+
     function getProfile() {
         try {
             const data = localStorage.getItem('vector_erp_profile');
@@ -224,6 +245,7 @@ const Auth = (function() {
         updateUserProfile,
         changePassword,
         getProfile,
-        saveProfile
+        saveProfile,
+        getAssignedMachineIds
     };
 })();

@@ -24,12 +24,19 @@ async function fetchReworkRecords() {
     }
 
     // Fetch only active statuses (exclude cancelled if needed)
-    const { data, error } = await supabase
+    const machineIds = typeof Auth !== 'undefined' && Auth.getAssignedMachineIds ? await Auth.getAssignedMachineIds() : null;
+
+    let query = supabase
         .from('production_orders')
         .select('*, job_orders(job_no)')
         .eq('job_type', 'rework')
-        .in('status', ['New', 'In Progress'])
-        .order('updated_at', { ascending: false });
+        .in('status', ['New', 'In Progress']);
+
+    if (machineIds) {
+        query = query.in('machine_id', machineIds);
+    }
+
+    const { data, error } = await query.order('updated_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching rework records:', error);

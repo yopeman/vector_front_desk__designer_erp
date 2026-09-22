@@ -50,7 +50,10 @@ function switchTab(targetId) {
                 await renderActiveWorkTable();
             }
         },
-        'rework-login': () => {
+        'rework-login': async () => {
+            if (typeof fetchReworkRecords === 'function') {
+                await fetchReworkRecords();
+            }
             if (typeof renderReworkRecords === 'function') renderReworkRecords();
         },
         'completed-orders': () => {
