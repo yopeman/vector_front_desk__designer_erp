@@ -215,9 +215,6 @@ export default function ProductionStatusPage() {
                   </td>
                   <td className="p-4 text-slate-600">
                     <span className="flex items-center gap-2">
-                      {unreadProdChatIds.has(order.id) && (
-                        <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
-                      )}
                       {order.orders?.order_no || '-'}
                     </span>
                   </td>

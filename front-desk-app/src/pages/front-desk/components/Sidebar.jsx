@@ -371,7 +371,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                         opacity: 0.7 
                       }}></i>
                       <span>{subItem.name}</span>
-                      {(subItem.name === 'Design Status' && hasUnreadDesignChat) || (subItem.name === 'Active Work' && hasUnreadProdChat) || (subItem.name === 'Production Status' && hasUnreadProdChat) ? (
+                      {(subItem.name === 'Design Status' && hasUnreadDesignChat) || (subItem.name === 'Active Work' && hasUnreadProdChat) ? (
                         <span
                           title="Unread production chat"
                           style={{
