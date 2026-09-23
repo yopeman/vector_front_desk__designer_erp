@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
 
@@ -32,6 +32,8 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [uploadedFileIds, setUploadedFileIds] = useState([]);
   const [existingFiles, setExistingFiles] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchOrders();
@@ -141,9 +143,43 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
     }
   };
 
+  const addFiles = (fileList) => {
+    const files = Array.from(fileList).filter(f => f && f.name);
+    if (files.length === 0) return;
+    setAttachedFiles(prev => {
+      const existing = new Set(prev.map(f => `${f.name}-${f.size}-${f.lastModified}`));
+      const unique = files.filter(f => !existing.has(`${f.name}-${f.size}-${f.lastModified}`));
+      return [...prev, ...unique];
+    });
+  };
+
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    setAttachedFiles(files);
+    addFiles(e.target.files);
+    e.target.value = '';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    addFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+  };
+
+  const handlePaste = (e) => {
+    const files = e.clipboardData?.files;
+    if (files && files.length > 0) {
+      e.preventDefault();
+      addFiles(files);
+    }
   };
 
   const uploadFile = async (file) => {
@@ -290,7 +326,7 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} onPaste={handlePaste} className="p-6 space-y-6">
           {/* Task Type */}
           {/* <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -555,13 +591,26 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               Attached Files
             </label>
-            <div className="border-2 border-dashed border-slate-200 rounded-lg p-4">
+            <div
+              onDragEnter={handleDragOver}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}
+            >
               <input
+                ref={fileInputRef}
                 type="file"
                 multiple
                 onChange={handleFileChange}
-                className="w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                className="hidden"
               />
+              <div className="text-sm text-slate-600 mb-1">
+                <i className="fa-solid fa-cloud-arrow-up text-blue-500 mr-1.5"></i>
+                Drag &amp; drop files here, click to select, or paste (Ctrl+V)
+              </div>
+              <div className="text-xs text-slate-400">Multiple files supported</div>
               {/* Existing files */}
               {existingFiles.length > 0 && (
                 <div className="mt-3 space-y-2">

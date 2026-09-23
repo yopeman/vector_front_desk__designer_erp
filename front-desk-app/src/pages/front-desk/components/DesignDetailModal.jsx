@@ -13,6 +13,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
   const [activeTab, setActiveTab] = useState(selectedVersion ? 'versions' : 'client');
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [versionFileUrls, setVersionFileUrls] = useState({});
   const [commFileUrls, setCommFileUrls] = useState({});
   const [newMessageNotice, setNewMessageNotice] = useState(null);
@@ -29,6 +30,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     file: null
   });
   const [versionUploading, setVersionUploading] = useState(false);
+  const [versionDragActive, setVersionDragActive] = useState(false);
 
   // Update version number when design versions change
   useEffect(() => {
@@ -372,12 +374,46 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
   };
 
   const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    setAttachedFiles(prev => [...prev, ...files]);
+    addFiles(e.target.files);
+    e.target.value = '';
   };
 
   const handleRemoveFile = (index) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addFiles = (fileList) => {
+    const files = Array.from(fileList).filter(f => f && f.name);
+    if (files.length === 0) return;
+    setAttachedFiles(prev => {
+      const existing = new Set(prev.map(f => `${f.name}-${f.size}-${f.lastModified}`));
+      const unique = files.filter(f => !existing.has(`${f.name}-${f.size}-${f.lastModified}`));
+      return [...prev, ...unique];
+    });
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    addFiles(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+  };
+
+  const handlePaste = (e) => {
+    const files = e.clipboardData?.files;
+    if (files && files.length > 0) {
+      e.preventDefault();
+      addFiles(files);
+    }
   };
 
   const handleAddNewVersion = async (e) => {
@@ -454,6 +490,38 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     const file = e.target.files[0];
     if (file) {
       setNewVersion(prev => ({ ...prev, file }));
+    }
+    e.target.value = '';
+  };
+
+  const setVersionFile = (fileList) => {
+    const file = Array.from(fileList).find(f => f && f.name);
+    if (file) {
+      setNewVersion(prev => ({ ...prev, file }));
+    }
+  };
+
+  const handleVersionDrop = (e) => {
+    e.preventDefault();
+    setVersionDragActive(false);
+    setVersionFile(e.dataTransfer.files);
+  };
+
+  const handleVersionDragOver = (e) => {
+    e.preventDefault();
+    setVersionDragActive(true);
+  };
+
+  const handleVersionDragLeave = (e) => {
+    e.preventDefault();
+    setVersionDragActive(false);
+  };
+
+  const handleVersionPaste = (e) => {
+    const files = e.clipboardData?.files;
+    if (files && files.length > 0) {
+      e.preventDefault();
+      setVersionFile(files);
     }
   };
 
@@ -652,7 +720,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                 {/* New Version Form */}
                 {showNewVersionForm && (
                   <div className="bg-white p-4 rounded-lg border border-slate-200 mb-4">
-                    <form onSubmit={handleAddNewVersion} className="space-y-3">
+                    <form onSubmit={handleAddNewVersion} onPaste={handleVersionPaste} className="space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs font-medium text-slate-500 mb-1">Version Number</label>
@@ -699,18 +767,20 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                           {newVersion.sent_by}
                         </div>
                       </div>
-                      <div>
+                      <div
+                        onDragEnter={handleVersionDragOver}
+                        onDragOver={handleVersionDragOver}
+                        onDragLeave={handleVersionDragLeave}
+                        onDrop={handleVersionDrop}
+                        className={`border-2 border-dashed rounded-lg p-3 transition-colors ${versionDragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}
+                      >
                         <label className="block text-xs font-medium text-slate-500 mb-1">Upload File</label>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <input
-                              type="file"
-                              onChange={handleVersionFileChange}
-                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
-                              required
-                            />
-                          </div>
-                        </div>
+                        <input
+                          type="file"
+                          onChange={handleVersionFileChange}
+                          className="w-full text-xs focus:outline-none bg-transparent cursor-pointer"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1">Drag &amp; drop a file here or paste (Ctrl+V)</p>
                         {newVersion.file && (
                           <div className="flex items-center gap-2 bg-green-50 p-2 rounded-lg mt-2">
                             <i className="fa-solid fa-check text-green-700"></i>
@@ -870,7 +940,16 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                   )}
                 </div>
 
-                <form onSubmit={handleSendMessage} className="space-y-3">
+                <form
+                  onSubmit={handleSendMessage}
+                  onPaste={handlePaste}
+                  className="space-y-3"
+                >
+                  {dragActive && (
+                    <div className="border-2 border-dashed border-blue-500 bg-blue-50 rounded-lg px-3 py-2 text-center text-xs text-blue-700 font-semibold">
+                      Drop files here to attach
+                    </div>
+                  )}
                   {attachedFiles.length > 0 && (
                     <div className="space-y-2">
                       {attachedFiles.map((file, index) => (
@@ -889,15 +968,21 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                     </div>
                   )}
                   <div className="flex gap-2">
-                    <div className="flex-1 flex gap-2">
+                    <div
+                      className="flex-1 flex gap-2"
+                      onDragEnter={handleDragOver}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
                       <input
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder="Type your message..."
+                        placeholder={dragActive ? 'Drop files to attach...' : 'Type your message or paste files (Ctrl+V)...'}
                         className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                       />
-                      <label className="cursor-pointer flex items-center justify-center w-10 h-10 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                      <label title="Attach files (click, drag & drop, or paste)" className="cursor-pointer flex items-center justify-center w-10 h-10 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
                         <i className="fa-solid fa-paperclip text-slate-500 text-xs"></i>
                         <input
                           type="file"

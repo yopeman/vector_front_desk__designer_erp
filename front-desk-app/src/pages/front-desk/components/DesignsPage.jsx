@@ -13,6 +13,7 @@ export default function DesignsPage() {
   const [loading, setLoading] = useState(true);
   const [fileUrls, setFileUrls] = useState({});
   const [versionFileUrls, setVersionFileUrls] = useState({});
+  const [versionDropIndex, setVersionDropIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -362,6 +363,40 @@ export default function DesignsPage() {
     const updatedVersions = [...formData.design_versions];
     updatedVersions[index][field] = value;
     setFormData({ ...formData, design_versions: updatedVersions });
+  };
+
+  const setDesignVersionFile = (index, fileList) => {
+    const file = Array.from(fileList).find(f => f && f.name);
+    if (!file) return;
+    const updatedVersions = [...formData.design_versions];
+    if (updatedVersions[index]) {
+      updatedVersions[index].file = file;
+      setFormData({ ...formData, design_versions: updatedVersions });
+    }
+  };
+
+  const handleVersionDrop = (e, index) => {
+    e.preventDefault();
+    setVersionDropIndex(null);
+    setDesignVersionFile(index, e.dataTransfer.files);
+  };
+
+  const handleVersionDragOver = (e, index) => {
+    e.preventDefault();
+    setVersionDropIndex(index);
+  };
+
+  const handleVersionDragLeave = (e) => {
+    e.preventDefault();
+    setVersionDropIndex(null);
+  };
+
+  const handleVersionPaste = (e, index) => {
+    const files = e.clipboardData?.files;
+    if (files && files.length > 0) {
+      e.preventDefault();
+      setDesignVersionFile(index, files);
+    }
   };
 
   const removeDesignVersion = (index) => {
@@ -952,19 +987,24 @@ export default function DesignsPage() {
                           <div>
                             <label className="block text-xs font-medium text-slate-500 mb-1">Upload File</label>
                             <div className="flex items-center gap-3">
-                              <div className="flex-1">
+                              <div
+                                className={`flex-1 border-2 border-dashed rounded-lg p-3 transition-colors ${versionDropIndex === index ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}
+                                onDragEnter={(e) => handleVersionDragOver(e, index)}
+                                onDragOver={(e) => handleVersionDragOver(e, index)}
+                                onDragLeave={handleVersionDragLeave}
+                                onDrop={(e) => handleVersionDrop(e, index)}
+                                onPaste={(e) => handleVersionPaste(e, index)}
+                                tabIndex={0}
+                              >
                                 <input
                                   type="file"
                                   onChange={(e) => {
-                                    const file = e.target.files[0];
-                                    if (file) {
-                                      const updatedVersions = [...formData.design_versions];
-                                      updatedVersions[index].file = file;
-                                      setFormData({ ...formData, design_versions: updatedVersions });
-                                    }
+                                    setDesignVersionFile(index, e.target.files);
+                                    e.target.value = '';
                                   }}
-                                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
+                                  className="w-full text-xs focus:outline-none bg-transparent cursor-pointer"
                                 />
+                                <p className="text-[10px] text-slate-400 mt-1">Drag &amp; drop a file here or paste (Ctrl+V)</p>
                               </div>
                               <button
                                 type="button"
@@ -974,6 +1014,13 @@ export default function DesignsPage() {
                                 (+ save)
                               </button>
                             </div>
+                            {version.file && !version.file_id && (
+                              <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-lg mt-2">
+                                <i className="fa-solid fa-paperclip text-blue-600"></i>
+                                <span className="text-xs text-blue-700">{version.file.name}</span>
+                                <span className="text-[10px] text-blue-400">(pending - click save)</span>
+                              </div>
+                            )}
                             {version.file_id && (
                               <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg mt-2">
                                 {versionFileUrls[version.file_id] ? (
