@@ -44,6 +44,7 @@ export default function DesignMessageNotifier() {
         .maybeSingle();
 
       if (!isRelevant(design, row, me)) return null;
+      if (design?.status !== 'In Progress') return null;
 
       const { data: sender } = await supabase
         .from('users')

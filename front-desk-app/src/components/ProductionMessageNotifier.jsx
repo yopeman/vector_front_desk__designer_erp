@@ -44,6 +44,7 @@ export default function ProductionMessageNotifier() {
         .maybeSingle();
 
       if (!isRelevant(order, row, me)) return null;
+      if (order?.status !== 'In Progress') return null;
 
       const { data: sender } = await supabase
         .from('users')
