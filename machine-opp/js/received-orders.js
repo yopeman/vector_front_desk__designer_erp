@@ -1688,11 +1688,33 @@ async function loadProductionUnreadIds() {
     const currentUser = Auth.getCurrentUser();
     if (!currentUser) return;
 
+    const machineIds = typeof Auth !== 'undefined' && Auth.getAssignedMachineIds ? await Auth.getAssignedMachineIds() : null;
+
+    let orderQuery = supabase
+        .from('production_orders')
+        .select('id')
+        .eq('status', 'In Progress');
+
+    if (machineIds) {
+        orderQuery = orderQuery.in('machine_id', machineIds);
+    }
+
+    const { data: activeOrders, error: orderError } = await orderQuery;
+
+    if (orderError || !activeOrders || activeOrders.length === 0) {
+        productionUnreadIds = new Set();
+        refreshProductionUnreadDots();
+        return;
+    }
+
+    const activeIds = activeOrders.map(o => o.id);
+
     const { data, error } = await supabase
         .from('production_communications')
         .select('production_order_id')
         .eq('is_read', false)
-        .neq('sender_id', currentUser.id);
+        .neq('sender_id', currentUser.id)
+        .in('production_order_id', activeIds);
 
     if (error) return;
     productionUnreadIds = new Set((data || []).map(row => row.production_order_id));
