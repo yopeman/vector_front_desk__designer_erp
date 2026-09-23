@@ -61,12 +61,12 @@ export default function DesignsPage() {
 
       let query = supabase
         .from('designs')
-        .select('*, order:orders(order_no), assigned_designer:users(username), design_versions(*)', { count: 'exact' })
+        .select('*, order:orders(order_no, clients(name)), assigned_designer:users(username), design_versions(*)', { count: 'exact' })
         .order('created_at', { ascending: false });
 
       // Apply search filter
       if (searchQuery) {
-        query = query.or(`design_type.ilike.%${searchQuery}%,purpose.ilike.%${searchQuery}%,order.order_no.ilike.%${searchQuery}%,assigned_designer.username.ilike.%${searchQuery}%`);
+        query = query.or(`design_type.ilike.%${searchQuery}%,purpose.ilike.%${searchQuery}%,order.order_no.ilike.%${searchQuery}%,order.clients.name.ilike.%${searchQuery}%,assigned_designer.username.ilike.%${searchQuery}%`);
       }
 
       // Apply status filter
@@ -561,7 +561,7 @@ export default function DesignsPage() {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search by type, purpose, or order no..."
+              placeholder="Search by type, purpose, order no, or client..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
@@ -602,6 +602,7 @@ export default function DesignsPage() {
             <tr>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Order No</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Design Type</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Purpose</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Requested Date</th>
@@ -614,7 +615,7 @@ export default function DesignsPage() {
           <tbody className="divide-y divide-slate-100 text-xs">
             {designs.length === 0 ? (
               <tr>
-                <td colSpan="9" className="p-8 text-center text-slate-400">
+                <td colSpan="10" className="p-8 text-center text-slate-400">
                   No designs found
                 </td>
               </tr>
@@ -623,6 +624,7 @@ export default function DesignsPage() {
                 <tr key={design.id} className="hover:bg-slate-50">
                   <td className="p-4 text-center">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="p-4 font-medium">{design.order?.order_no || '-'}</td>
+                  <td className="p-4">{design.order?.clients?.name || '-'}</td>
                   <td className="p-4">{design.design_type || '-'}</td>
                   <td className="p-4">{design.purpose || '-'}</td>
                   <td className="p-4">{design.requested_date || '-'}</td>
