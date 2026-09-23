@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase';
+import useRealtimeTables from '../../../lib/useRealtimeTables';
 
 // ── Chart data processing helpers ──
 
@@ -98,8 +99,8 @@ export default function useDashboardData() {
     clientTypeDistribution: [],
   });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (opts = {}) => {
+    if (!opts.silent) setLoading(true);
     try {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
@@ -291,6 +292,17 @@ export default function useDashboardData() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Realtime + gentle polling: keep dashboard KPIs fresh without page reloads
+  useRealtimeTables(
+    [
+      'clients', 'items', 'orders', 'invoices', 'payments', 'site_visits',
+      'job_orders', 'designs', 'installations', 'feedbacks', 'notifications',
+      'notes', 'warranties', 'deliveries', 'test_proforma_invoices', 'production_orders',
+    ],
+    () => fetchData({ silent: true }),
+    { debounceMs: 1000, pollMs: 30000, channelName: 'dashboard' }
+  );
 
   return { loading, data, refetch: fetchData };
 }

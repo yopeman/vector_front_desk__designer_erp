@@ -5,6 +5,93 @@
 // =============================================
 // TAB ROUTING & NAVIGATION
 // =============================================
+window.activeTabId = null;
+
+// Refetch/refresh data for a given tab without a full page reload
+const TAB_REFRESH_FUNCTIONS = {
+    'dashboard': async () => {
+        if (typeof updateDashboardStats === 'function') await updateDashboardStats();
+        if (typeof renderDashboardCharts === 'function') await renderDashboardCharts();
+    },
+    'received-orders': async () => {
+        if (typeof fetchReceivedOrders === 'function') {
+            await fetchReceivedOrders();
+        }
+        if (typeof renderOrdersTable === 'function') renderOrdersTable();
+    },
+    'active-work': async () => {
+        if (typeof renderActiveWorkTable === 'function') {
+            await renderActiveWorkTable();
+        }
+    },
+    'rework-login': async () => {
+        if (typeof fetchReworkRecords === 'function') {
+            await fetchReworkRecords();
+        }
+        if (typeof renderReworkRecords === 'function') renderReworkRecords();
+    },
+    'completed-orders': () => {
+        if (typeof renderCompletedOrdersTable === 'function') renderCompletedOrdersTable();
+    },
+    'delivery': () => {
+        if (typeof renderDeliveryTable === 'function') renderDeliveryTable();
+    },
+    'installation': () => {
+        if (typeof renderInstallationTable === 'function') renderInstallationTable();
+    },
+    'machine-login': () => {
+        if (typeof switchMachine === 'function') {
+            const currentMachineKey = typeof currentMachine !== 'undefined' ? currentMachine : 'cnc';
+            switchMachine(currentMachineKey);
+        }
+    },
+    'store-request': () => {
+        if (typeof renderStoreItemsTable === 'function') renderStoreItemsTable();
+    },
+    'inventory': () => {
+        if (typeof loadInventoryItems === 'function') loadInventoryItems();
+    },
+    'inventory-movements': () => {
+        if (typeof loadInventoryMovements === 'function') loadInventoryMovements();
+    },
+    'notes': async () => {
+        if (typeof fetchNotes === 'function') await fetchNotes();
+    },
+    'messages': async () => {
+        if (typeof renderUserList === 'function') renderUserList();
+        if (typeof renderMsgDropdown === 'function') await renderMsgDropdown();
+    },
+    'notifications': async () => {
+        if (typeof renderNotifications === 'function') renderNotifications();
+        if (typeof renderNotifDropdown === 'function') await renderNotifDropdown();
+    },
+    'reports': () => {
+        if (typeof filterReports === 'function') filterReports();
+    },
+    'ai-agent': () => {
+        if (typeof AIAgent !== 'undefined' && typeof AIAgent.loadSessions === 'function') {
+            AIAgent.loadSessions();
+        }
+    },
+    'settings': async () => {
+        if (typeof loadProfile === 'function') await loadProfile();
+        if (typeof loadNotificationSettings === 'function') loadNotificationSettings();
+        if (typeof loadAppearanceSettings === 'function') loadAppearanceSettings();
+    }
+};
+
+window.refreshActiveTabData = function(targetId) {
+    const tabId = targetId || window.activeTabId;
+    if (!tabId) return;
+    const refreshFn = TAB_REFRESH_FUNCTIONS[tabId];
+    if (typeof refreshFn !== 'function') return;
+    try {
+        refreshFn();
+    } catch (error) {
+        console.error(`Error refreshing ${tabId} tab:`, error);
+    }
+};
+
 function switchTab(targetId) {
     // Check if user is trying to navigate away from public reports without auth
     if (window.location.hash === '#machine-public-report' && targetId !== 'reports') {
@@ -33,87 +120,11 @@ function switchTab(targetId) {
         targetTab.classList.add('active-tab');
     }
 
-    // Refetch/refresh data when switching tabs
-    const refreshFunctions = {
-        'dashboard': async () => {
-            if (typeof updateDashboardStats === 'function') await updateDashboardStats();
-            if (typeof renderDashboardCharts === 'function') await renderDashboardCharts();
-        },
-        'received-orders': async () => {
-            if (typeof fetchReceivedOrders === 'function') {
-                await fetchReceivedOrders();
-            }
-            if (typeof renderOrdersTable === 'function') renderOrdersTable();
-        },
-        'active-work': async () => {
-            if (typeof renderActiveWorkTable === 'function') {
-                await renderActiveWorkTable();
-            }
-        },
-        'rework-login': async () => {
-            if (typeof fetchReworkRecords === 'function') {
-                await fetchReworkRecords();
-            }
-            if (typeof renderReworkRecords === 'function') renderReworkRecords();
-        },
-        'completed-orders': () => {
-            if (typeof renderCompletedOrdersTable === 'function') renderCompletedOrdersTable();
-        },
-        'delivery': () => {
-            if (typeof renderDeliveryTable === 'function') renderDeliveryTable();
-        },
-        'installation': () => {
-            if (typeof renderInstallationTable === 'function') renderInstallationTable();
-        },
-        'machine-login': () => {
-            if (typeof switchMachine === 'function') {
-                const currentMachineKey = typeof currentMachine !== 'undefined' ? currentMachine : 'cnc';
-                switchMachine(currentMachineKey);
-            }
-        },
-        'store-request': () => {
-            if (typeof renderStoreItemsTable === 'function') renderStoreItemsTable();
-        },
-        'inventory': () => {
-            if (typeof loadInventoryItems === 'function') loadInventoryItems();
-        },
-        'inventory-movements': () => {
-            if (typeof loadInventoryMovements === 'function') loadInventoryMovements();
-        },
-        'notes': async () => {
-            if (typeof fetchNotes === 'function') await fetchNotes();
-        },
-        'messages': async () => {
-            if (typeof renderUserList === 'function') renderUserList();
-            if (typeof renderMsgDropdown === 'function') await renderMsgDropdown();
-        },
-        'notifications': async () => {
-            if (typeof renderNotifications === 'function') renderNotifications();
-            if (typeof renderNotifDropdown === 'function') await renderNotifDropdown();
-        },
-        'reports': () => {
-            if (typeof filterReports === 'function') filterReports();
-        },
-        'ai-agent': () => {
-            if (typeof AIAgent !== 'undefined' && typeof AIAgent.loadSessions === 'function') {
-                AIAgent.loadSessions();
-            }
-        },
-        'settings': async () => {
-            if (typeof loadProfile === 'function') await loadProfile();
-            if (typeof loadNotificationSettings === 'function') loadNotificationSettings();
-            if (typeof loadAppearanceSettings === 'function') loadAppearanceSettings();
-        }
-    };
+    // Remember the active tab for realtime refreshes
+    window.activeTabId = targetId;
 
-    const refreshFn = refreshFunctions[targetId];
-    if (typeof refreshFn === 'function') {
-        try {
-            refreshFn();
-        } catch (error) {
-            console.error(`Error refreshing ${targetId} tab:`, error);
-        }
-    }
+    // Refetch/refresh data when switching tabs
+    window.refreshActiveTabData(targetId);
 }
 
 // =============================================

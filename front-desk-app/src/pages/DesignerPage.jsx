@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import jsPDF from 'jspdf';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
+import useRealtimeTables from '../lib/useRealtimeTables';
 import DesignDetailModal from './front-desk/components/DesignDetailModal';
 import ProductionOrderModal from './front-desk/components/ProductionOrderModal';
 import ProductionChatPanel from '../components/ProductionChatPanel';
@@ -210,21 +211,41 @@ export default function DesignerPage() {
     return () => clearInterval(interval);
   }, [user?.id]);
 
-  useEffect(() => {
-    // Refresh data when switching sections
-    if (activeSection === 'my-tasks-section') {
+  const activeSectionRef = useRef(activeSection);
+  activeSectionRef.current = activeSection;
+
+  const refreshSectionData = (section = activeSectionRef.current) => {
+    if (section === 'my-tasks-section') {
       fetchMyTasks();
-    } else if (activeSection === 'customer-approval-section') {
+    } else if (section === 'customer-approval-section') {
       fetchCustomerApprovalVersions();
-    } else if (activeSection === 'new-requests-section' ||
-               activeSection === 'active-design-section' ||
-               activeSection === 'production-files-section' ||
-               activeSection === 'design-library-section') {
+    } else if (section === 'new-requests-section' ||
+               section === 'active-status-section' ||
+               section === 'production-files-section' ||
+               section === 'design-library-section') {
       fetchDesigns();
-    } else if (activeSection === 'send-production-section') {
+    } else if (section === 'send-production-section' ||
+               section === 'active-work-section') {
+      fetchProductionOrders();
+    } else if (section === 'overview-section') {
+      fetchDesigns();
+      fetchMyTasks();
       fetchProductionOrders();
     }
+  };
+
+  useEffect(() => {
+    // Refresh data when switching sections
+    refreshSectionData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
+
+  // Realtime + gentle polling: keep the active section fresh without page reloads
+  useRealtimeTables(
+    ['designs', 'design_versions', 'production_orders', 'files'],
+    refreshSectionData,
+    { debounceMs: 1000, pollMs: 30000, channelName: 'designer' }
+  );
 
   const fetchDesigns = async () => {
     try {
