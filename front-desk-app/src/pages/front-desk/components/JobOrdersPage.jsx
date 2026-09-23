@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 export default function JobOrdersPage() {
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   const [jobOrders, setJobOrders] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,8 +24,8 @@ export default function JobOrdersPage() {
     job_no: '',
     collaboration: '',
     order_status: 'Pending',
-    start_time: '',
-    delivery_time: '',
+    start_time: todayISO(),
+    delivery_time: todayISO(),
     expected_date: '',
     follow_up: 'No',
     delivery_status: 'Pending'
@@ -134,8 +139,8 @@ export default function JobOrdersPage() {
         job_no: '',
         collaboration: '',
         order_status: 'Pending',
-        start_time: '',
-        delivery_time: '',
+        start_time: todayISO(),
+        delivery_time: todayISO(),
         expected_date: '',
         follow_up: '',
         delivery_status: ''
@@ -154,8 +159,8 @@ export default function JobOrdersPage() {
       job_no: jobOrder.job_no || '',
       collaboration: jobOrder.collaboration || '',
       order_status: jobOrder.order_status || 'Pending',
-      start_time: jobOrder.start_time ? jobOrder.start_time.split('T')[0] : '',
-      delivery_time: jobOrder.delivery_time ? jobOrder.delivery_time.split('T')[0] : '',
+      start_time: jobOrder.start_time ? jobOrder.start_time.split('T')[0] : todayISO(),
+      delivery_time: jobOrder.delivery_time ? jobOrder.delivery_time.split('T')[0] : todayISO(),
       expected_date: jobOrder.expected_date || '',
       follow_up: jobOrder.follow_up || 'No',
       delivery_status: jobOrder.delivery_status || 'Pending'
@@ -197,8 +202,8 @@ export default function JobOrdersPage() {
       job_no: nextJobNo,
       collaboration: '',
       order_status: 'Pending',
-      start_time: '',
-      delivery_time: '',
+      start_time: todayISO(),
+      delivery_time: todayISO(),
       expected_date: '',
       follow_up: 'No',
       delivery_status: 'Pending'

@@ -8,6 +8,16 @@ let editingDeliveryId = null;
 let existingDeliveryFileIds = [];
 let existingDeliveryFiles = [];
 
+function todayISODate() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function currentTime() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 // =============================================
 // FETCH DELIVERIES FROM SUPABASE
 // =============================================
@@ -143,6 +153,9 @@ window.openDeliveryModal = function() {
     document.getElementById('delivery-modal-title').textContent = 'New Delivery';
     document.getElementById('delivery-submit-btn').textContent = 'Create';
     document.getElementById('delivery-form').reset();
+    document.getElementById('delivery-scheduled-date').value = todayISODate();
+    document.getElementById('delivery-scheduled-time').value = currentTime();
+    document.getElementById('delivery-actual-time').value = todayISODate();
     document.getElementById('delivery-existing-files').innerHTML = '';
     document.getElementById('delivery-new-files').innerHTML = '';
     
@@ -186,9 +199,9 @@ window.editDelivery = async function(id) {
     document.getElementById('delivery-contact-phone').value = delivery.contact_phone || '';
     document.getElementById('delivery-items').value = delivery.items || '';
     document.getElementById('delivery-vehicle-driver').value = delivery.vehicle_driver || '';
-    document.getElementById('delivery-scheduled-date').value = delivery.scheduled_date || '';
-    document.getElementById('delivery-scheduled-time').value = delivery.scheduled_time || '';
-    document.getElementById('delivery-actual-time').value = delivery.actual_delivery_time ? delivery.actual_delivery_time.split('T')[0] : '';
+    document.getElementById('delivery-scheduled-date').value = delivery.scheduled_date || todayISODate();
+    document.getElementById('delivery-scheduled-time').value = delivery.scheduled_time || currentTime();
+    document.getElementById('delivery-actual-time').value = delivery.actual_delivery_time ? delivery.actual_delivery_time.split('T')[0] : todayISODate();
     document.getElementById('delivery-status').value = delivery.status || 'Pending';
     document.getElementById('delivery-received-by').value = delivery.received_by || '';
     document.getElementById('delivery-note').value = delivery.note || '';

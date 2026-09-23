@@ -23,12 +23,17 @@ export default function DesignsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
 
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   // Form state
   const [formData, setFormData] = useState({
     order_id: '',
     design_type: '',
     purpose: '',
-    requested_date: '',
+    requested_date: todayISO(),
     required_date: '',
     priority: 'Medium',
     status: 'Pending',
@@ -268,7 +273,7 @@ export default function DesignsPage() {
       order_id: design.order_id || '',
       design_type: design.design_type || '',
       purpose: design.purpose || '',
-      requested_date: design.requested_date || '',
+      requested_date: design.requested_date || todayISO(),
       required_date: design.required_date || '',
       priority: design.priority || 'Medium',
       status: design.status || 'Pending',
@@ -320,7 +325,7 @@ export default function DesignsPage() {
       order_id: '',
       design_type: '',
       purpose: '',
-      requested_date: '',
+      requested_date: todayISO(),
       required_date: '',
       priority: 'Medium',
       status: 'Pending',

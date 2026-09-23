@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 export default function InstallationPage() {
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const currentTime = () => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
   const [installations, setInstallations] = useState([]);
   const [jobOrders, setJobOrders] = useState([]);
   const [clients, setClients] = useState([]);
@@ -25,8 +35,8 @@ export default function InstallationPage() {
     items_installed: '',
     team: '',
     team_lead: '',
-    scheduled_date: '',
-    scheduled_time: '',
+    scheduled_date: todayISO(),
+    scheduled_time: currentTime(),
     completion_time: '',
     status: 'Scheduled',
     signed_off_by: '',
@@ -305,8 +315,8 @@ export default function InstallationPage() {
         items_installed: '',
         team: '',
         team_lead: '',
-        scheduled_date: '',
-        scheduled_time: '',
+        scheduled_date: todayISO(),
+        scheduled_time: currentTime(),
         completion_time: '',
         status: 'Scheduled',
         signed_off_by: '',
@@ -334,8 +344,8 @@ export default function InstallationPage() {
       items_installed: installation.items_installed || '',
       team: installation.team || '',
       team_lead: installation.team_lead || '',
-      scheduled_date: installation.scheduled_date || '',
-      scheduled_time: installation.scheduled_time || '',
+      scheduled_date: installation.scheduled_date || todayISO(),
+      scheduled_time: installation.scheduled_time || currentTime(),
       completion_time: installation.completion_time ? installation.completion_time.split('T')[0] : '',
       status: installation.status || 'Scheduled',
       signed_off_by: installation.signed_off_by || '',
@@ -364,8 +374,8 @@ export default function InstallationPage() {
       items_installed: '',
       team: '',
       team_lead: '',
-      scheduled_date: '',
-      scheduled_time: '',
+      scheduled_date: todayISO(),
+      scheduled_time: currentTime(),
       completion_time: '',
       status: 'Scheduled',
       signed_off_by: ''

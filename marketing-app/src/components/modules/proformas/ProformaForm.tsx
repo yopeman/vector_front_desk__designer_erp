@@ -27,7 +27,7 @@ export function ProformaForm({ proforma, onSubmit, onCancel, isLoading }: Profor
     client_email: proforma?.client_email || '',
     amount: proforma?.amount || 0,
     status: proforma?.status || 'requested',
-    requested_at: proforma?.requested_at || '',
+    requested_at: proforma?.requested_at || new Date().toISOString().slice(0, 10),
     notes: proforma?.notes || '',
   })
 

@@ -8,6 +8,16 @@ let editingInstallationId = null;
 let existingInstallationFileIds = [];
 let existingInstallationFiles = [];
 
+function todayISODate() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function currentTime() {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 // =============================================
 // FETCH INSTALLATIONS FROM SUPABASE
 // =============================================
@@ -143,6 +153,8 @@ window.openInstallationModal = function() {
     document.getElementById('installation-modal-title').textContent = 'New Installation';
     document.getElementById('installation-submit-btn').textContent = 'Create';
     document.getElementById('installation-form').reset();
+    document.getElementById('installation-scheduled-date').value = todayISODate();
+    document.getElementById('installation-scheduled-time').value = currentTime();
     document.getElementById('installation-existing-files').innerHTML = '';
     document.getElementById('installation-new-files').innerHTML = '';
     
@@ -187,8 +199,8 @@ window.editInstallation = async function(id) {
     document.getElementById('installation-items-installed').value = installation.items_installed || '';
     document.getElementById('installation-team').value = installation.team || '';
     document.getElementById('installation-team-lead').value = installation.team_lead || '';
-    document.getElementById('installation-scheduled-date').value = installation.scheduled_date || '';
-    document.getElementById('installation-scheduled-time').value = installation.scheduled_time || '';
+    document.getElementById('installation-scheduled-date').value = installation.scheduled_date || todayISODate();
+    document.getElementById('installation-scheduled-time').value = installation.scheduled_time || currentTime();
     document.getElementById('installation-completion-time').value = installation.completion_time ? installation.completion_time.split('T')[0] : '';
     document.getElementById('installation-status').value = installation.status || 'Scheduled';
     document.getElementById('installation-signed-off-by').value = installation.signed_off_by || '';

@@ -2,6 +2,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 export default function DeliveryPage() {
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  const currentTime = () => {
+    const d = new Date();
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  };
+
   const [deliveries, setDeliveries] = useState([]);
   const [jobOrders, setJobOrders] = useState([]);
   const [clients, setClients] = useState([]);
@@ -24,9 +34,9 @@ export default function DeliveryPage() {
     contact_phone: '',
     items: '',
     vehicle_driver: '',
-    scheduled_date: '',
-    scheduled_time: '',
-    actual_delivery_time: '',
+    scheduled_date: todayISO(),
+    scheduled_time: currentTime(),
+    actual_delivery_time: todayISO(),
     status: 'Pending',
     received_by: '',
     note: ''
@@ -301,9 +311,9 @@ export default function DeliveryPage() {
         contact_phone: '',
         items: '',
         vehicle_driver: '',
-        scheduled_date: '',
-        scheduled_time: '',
-        actual_delivery_time: '',
+        scheduled_date: todayISO(),
+        scheduled_time: currentTime(),
+        actual_delivery_time: todayISO(),
         status: 'Pending',
         received_by: '',
         note: ''
@@ -329,9 +339,9 @@ export default function DeliveryPage() {
       contact_phone: delivery.contact_phone || '',
       items: delivery.items || '',
       vehicle_driver: delivery.vehicle_driver || '',
-      scheduled_date: delivery.scheduled_date || '',
-      scheduled_time: delivery.scheduled_time || '',
-      actual_delivery_time: delivery.actual_delivery_time ? delivery.actual_delivery_time.split('T')[0] : '',
+      scheduled_date: delivery.scheduled_date || todayISO(),
+      scheduled_time: delivery.scheduled_time || currentTime(),
+      actual_delivery_time: delivery.actual_delivery_time ? delivery.actual_delivery_time.split('T')[0] : todayISO(),
       status: delivery.status || 'Pending',
       received_by: delivery.received_by || '',
       note: delivery.note || ''
@@ -358,9 +368,9 @@ export default function DeliveryPage() {
       contact_phone: '',
       items: '',
       vehicle_driver: '',
-      scheduled_date: '',
-      scheduled_time: '',
-      actual_delivery_time: '',
+      scheduled_date: todayISO(),
+      scheduled_time: currentTime(),
+      actual_delivery_time: todayISO(),
       status: 'Pending',
       received_by: ''
     });

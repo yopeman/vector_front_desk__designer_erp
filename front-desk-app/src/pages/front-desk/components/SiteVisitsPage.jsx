@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 export default function SiteVisitsPage() {
+  const todayISO = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
   const [showModal, setShowModal] = useState(false);
   const [siteVisits, setSiteVisits] = useState([]);
   const [clients, setClients] = useState([]);
@@ -23,7 +28,7 @@ export default function SiteVisitsPage() {
     visit_purpose: '',
     city: '',
     detailed_address: '',
-    requested_date: '',
+    requested_date: todayISO(),
     preferred_date: '',
     preferred_time: '',
     requested_by: '',
@@ -165,7 +170,7 @@ export default function SiteVisitsPage() {
       visit_purpose: visit.visit_purpose || '',
       city: visit.city || '',
       detailed_address: visit.detailed_address || '',
-      requested_date: visit.requested_date || '',
+      requested_date: visit.requested_date || todayISO(),
       preferred_date: visit.preferred_date || '',
       preferred_time: visit.preferred_time || '',
       requested_by: visit.requested_by || '',
@@ -191,7 +196,7 @@ export default function SiteVisitsPage() {
       visit_purpose: '',
       city: '',
       detailed_address: '',
-      requested_date: '',
+      requested_date: todayISO(),
       preferred_date: '',
       preferred_time: '',
       requested_by: '',
