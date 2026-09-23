@@ -95,7 +95,8 @@ export default function DesignerPage() {
       const { data: myOrders, error: orderError } = await supabase
         .from('production_orders')
         .select('id')
-        .eq('designer_id', user.id);
+        .eq('designer_id', user.id)
+        .eq('status', 'In Progress');
 
       if (orderError) return;
 

@@ -24,11 +24,25 @@ export default function ActiveWorkPage() {
     if (!profile?.id) return;
 
     const checkUnreadProdChat = async () => {
+      const { data: activeOrders, error: orderError } = await supabase
+        .from('production_orders')
+        .select('id')
+        .eq('status', 'In Progress');
+
+      if (orderError) return;
+
+      const activeIds = (activeOrders || []).map((o) => o.id);
+      if (activeIds.length === 0) {
+        setUnreadProdChatIds(new Set());
+        return;
+      }
+
       const { data, error } = await supabase
         .from('production_communications')
         .select('production_order_id')
         .eq('is_read', false)
-        .neq('sender_id', profile.id);
+        .neq('sender_id', profile.id)
+        .in('production_order_id', activeIds);
 
       if (!error) {
         setUnreadProdChatIds(new Set((data || []).map((row) => row.production_order_id)));

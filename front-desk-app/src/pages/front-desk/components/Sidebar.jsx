@@ -46,11 +46,25 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
     if (!profile?.id) return;
 
     const checkUnreadProdChat = async () => {
+      const { data: activeOrders, error: orderError } = await supabase
+        .from('production_orders')
+        .select('id')
+        .eq('status', 'In Progress');
+
+      if (orderError) return;
+
+      const activeIds = (activeOrders || []).map((o) => o.id);
+      if (activeIds.length === 0) {
+        setHasUnreadProdChat(false);
+        return;
+      }
+
       const { count, error } = await supabase
         .from('production_communications')
         .select('id', { count: 'exact', head: true })
         .eq('is_read', false)
-        .neq('sender_id', profile.id);
+        .neq('sender_id', profile.id)
+        .in('production_order_id', activeIds);
 
       if (!error) setHasUnreadProdChat((count || 0) > 0);
     };
