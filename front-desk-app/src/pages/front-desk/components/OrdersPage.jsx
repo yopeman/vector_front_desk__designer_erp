@@ -634,7 +634,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Priority</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Total</th>
-              <th className="p-4 text-left text-xs font-semibold text-slate-600">Balance</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Unpaid Amount</th>
               <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
             </tr>
           </thead>

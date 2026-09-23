@@ -204,7 +204,7 @@ export default function SalesInvoicesPage() {
       y += 8;
       doc.text(`Grand Total: ${invoiceData.grand_total}`, 130, y);
       y += 8;
-      doc.text(`Balance: ${invoiceData.balance}`, 130, y);
+      doc.text(`Unpaid Amount: ${invoiceData.balance}`, 130, y);
       y += 8;
       doc.text(`Status: ${invoiceData.status}`, 130, y);
       y += 20;
@@ -415,7 +415,7 @@ export default function SalesInvoicesPage() {
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Subtotal</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">VAT</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Grand Total</th>
-              <th className="p-4 text-left text-xs font-semibold text-slate-600">Balance</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Unpaid Amount</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
               <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
             </tr>
@@ -656,7 +656,7 @@ export default function SalesInvoicesPage() {
                       <span className="text-slate-800">{previewInvoice.grand_total || 0}</span>
                     </div>
                     <div className="flex justify-between text-sm mt-2">
-                      <span className="font-semibold text-slate-600">Balance:</span>
+                      <span className="font-semibold text-slate-600">Unpaid Amount:</span>
                       <span className="text-slate-800">{previewInvoice.balance || 0}</span>
                     </div>
                   </div>

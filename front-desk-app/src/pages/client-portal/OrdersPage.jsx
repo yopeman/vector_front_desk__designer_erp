@@ -555,7 +555,7 @@ export default function OrdersPage({ clientId: propClientId }) {
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Order Date</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Total</th>
-              <th className="p-4 text-left text-xs font-semibold text-slate-600">Balance</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Unpaid Amount</th>
               <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
             </tr>
           </thead>
@@ -631,7 +631,7 @@ export default function OrdersPage({ clientId: propClientId }) {
                   <span className="ml-1 text-slate-600">{order.total_amount || 0} {order.currency || 'ETB'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400">Balance:</span>
+                  <span className="text-slate-400">Unpaid Amount:</span>
                   <span className="ml-1 text-slate-600">{order.balance || 0} {order.currency || 'ETB'}</span>
                 </div>
               </div>

@@ -415,7 +415,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
       y += 8;
       doc.text(`Grand Total: ${invoiceData.grand_total}`, 130, y);
       y += 8;
-      doc.text(`Balance: ${invoiceData.balance}`, 130, y);
+      doc.text(`Unpaid Amount: ${invoiceData.balance}`, 130, y);
       y += 8;
       doc.text(`Status: ${invoiceData.status}`, 130, y);
       y += 20;
@@ -828,8 +828,8 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Subtotal</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">VAT</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Grand Total</th>
-              <th className="p-4 text-left text-xs font-semibold text-slate-600">Balance</th>
-              {/* <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th> */}
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Unpaid Amount</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
               <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
             </tr>
           </thead>
@@ -853,7 +853,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                   <td className="p-4">{invoice.vat_amount || 0}</td>
                   <td className="p-4 font-medium">{invoice.grand_total || 0}</td>
                   <td className="p-4">{invoice.balance || 0}</td>
-                  {/* <td className="p-4">
+                  <td className="p-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       invoice.status === 'Paid' ? 'bg-green-100 text-green-700' :
                       invoice.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-700' :
@@ -861,7 +861,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                     }`}>
                       {invoice.status}
                     </span>
-                  </td> */}
+                  </td>
                   <td className="p-4 text-center">
                     <button
                       onClick={() => handlePreview(invoice)}
@@ -1069,7 +1069,7 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
                         <span className="text-slate-800">{previewInvoice.grand_total || 0}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="font-semibold text-slate-600">Balance:</span>
+                        <span className="font-semibold text-slate-600">Unpaid Amount:</span>
                         <span className="text-slate-800">{previewInvoice.balance || 0}</span>
                       </div>
                     </div>

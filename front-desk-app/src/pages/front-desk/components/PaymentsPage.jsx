@@ -95,10 +95,10 @@ export default function PaymentsPage() {
       return;
     }
 
-    if (!formData.amount_paid || parseFloat(formData.amount_paid) <= 0) {
-      alert('Please enter a valid amount');
-      return;
-    }
+    // if (!formData.amount_paid || parseFloat(formData.amount_paid) <= 0) {
+    //   alert('Please enter a valid amount');
+    //   return;
+    // }
 
     try {
       const invoice = invoices.find(inv => inv.id === selectedInvoice);
@@ -775,7 +775,7 @@ export default function PaymentsPage() {
                       <option value="">Select an invoice</option>
                       {invoices.map(invoice => (
                         <option key={invoice.id} value={invoice.id}>
-                          {invoice.invoice_no} - {invoice.order?.client?.name} (Balance: {invoice.balance || 0})
+                          {invoice.invoice_no} - {invoice.order?.client?.name} (Unpaid Amount: {invoice.balance || 0})
                         </option>
                       ))}
                     </select>
@@ -790,7 +790,7 @@ export default function PaymentsPage() {
                             <p>Invoice No: {invoices.find(inv => inv.id === selectedInvoice).invoice_no}</p>
                             <p>Client: {invoices.find(inv => inv.id === selectedInvoice).order?.client?.name}</p>
                             <p>Grand Total: {invoices.find(inv => inv.id === selectedInvoice).grand_total}</p>
-                            <p>Balance: {invoices.find(inv => inv.id === selectedInvoice).balance}</p>
+                            <p>Unpaid Amount: {invoices.find(inv => inv.id === selectedInvoice).balance}</p>
                           </>
                         )}
                       </div>
