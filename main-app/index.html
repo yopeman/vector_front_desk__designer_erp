@@ -407,8 +407,17 @@
               Twelve purpose-built modules that talk to each other in real time from the front desk to the finishing line.
             </p>
           </div>
-          <div class="shrink-0 rounded-full border border-slate-200 bg-white/70 px-5 py-2 text-sm font-medium text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
-            <span class="font-semibold text-brand-600 dark:text-brand-400">12</span> available
+          <div class="flex shrink-0 flex-col items-stretch gap-3 sm:items-end">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-slate-400"></i>
+              <input id="moduleSearch" type="search" placeholder="Search modules…"
+                     class="w-full rounded-full border border-slate-200 bg-white/70 py-2.5 pl-11 pr-4 text-sm font-medium text-slate-700 shadow-sm outline-none backdrop-blur transition-all duration-300
+                            placeholder:text-slate-400 focus:border-brand-500/60 focus:ring-2 focus:ring-brand-500/20
+                            dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:focus:border-brand-400/60" />
+            </div>
+            <div class="rounded-full border border-slate-200 bg-white/70 px-5 py-2 text-sm font-medium text-slate-600 backdrop-blur dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
+              <span id="moduleCount" class="font-semibold text-brand-600 dark:text-brand-400">12</span> available
+            </div>
           </div>
         </div>
 
@@ -525,8 +534,8 @@
      ══════════════════════════════════════════════ */
   const MODULES = [
     { name: 'HR',         icon: 'fa-user',               desc: 'People, payroll & attendance',       href: 'https://vectoradvert.com/erp/hr' },
-    { name: 'Front Desk', icon: 'fa-desktop',            desc: 'Client intake & job tracking',       href: 'https://vectoradvert.com/erp/frontdesk' },
-    { name: 'Design',     icon: 'fa-pen-nib',            desc: 'Briefs, proofs & approvals',         href: 'https://vectoradvert.com/erp/frontdesk' },
+    { name: 'Front Desk', icon: 'fa-desktop',            desc: 'Client intake & job tracking',       href: 'https://vectoradvert.com/erp/frontdesk/#/frontdesk' },
+    { name: 'Design',     icon: 'fa-pen-nib',            desc: 'Briefs, proofs & approvals',         href: 'https://vectoradvert.com/erp/frontdesk/#/designers' },
     { name: 'Machine',    icon: 'fa-gear',               desc: 'Press scheduling & maintenance',     href: 'https://vectoradvert.com/erp/machine' },
     { name: 'Marketing',  icon: 'fa-chart-line',         desc: 'Leads, campaigns & pipeline',        href: 'https://vectoradvert.com/erp/marketing' },
     { name: 'Store',      icon: 'fa-store',              desc: 'Inventory & stock movements',        href: 'https://vectoradvert.com/erp/store' },
@@ -539,8 +548,10 @@
   ];
 
   const grid = document.getElementById('moduleGrid');
+  const search = document.getElementById('moduleSearch');
+  const count = document.getElementById('moduleCount');
 
-  grid.innerHTML = MODULES.map((m, i) => {
+  const cardHTML = (m, i) => {
     const num = String(i + 1).padStart(2, '0');
     return `
       <a href="${m.href}" class="tilt-wrap reveal group block" style="transition-delay:${i * 55}ms">
@@ -572,7 +583,35 @@
           </div>
         </div>
       </a>`;
-  }).join('');
+  };
+
+  function renderModules(query) {
+    const q = (query || '').trim().toLowerCase();
+    const visible = MODULES.filter(m =>
+      !q || m.name.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q)
+    );
+    grid.innerHTML = visible.map((m, i) => cardHTML(m, i)).join('');
+    count.textContent = visible.length;
+
+    if (q && visible.length === 0) {
+      grid.innerHTML = `
+        <div class="col-span-full flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-300 py-16 text-center dark:border-white/15">
+          <i class="fa-solid fa-screwdriver-wrench text-3xl text-slate-300 dark:text-slate-600"></i>
+          <p class="text-sm font-medium text-slate-500 dark:text-slate-400">No modules match “${query.trim()}”.</p>
+          <button id="clearSearch" class="mt-1 text-sm font-semibold text-brand-600 transition-colors hover:text-brand-500 dark:text-brand-400">Clear search</button>
+        </div>`;
+      const clear = document.getElementById('clearSearch');
+      if (clear) clear.addEventListener('click', () => { search.value = ''; renderModules(''); });
+    }
+
+    document.querySelectorAll('#moduleGrid .tilt-wrap').forEach(wrap => {
+      revealObserver.observe(wrap);
+    });
+  }
+
+  search.addEventListener('input', (e) => {
+    renderModules(e.target.value);
+  });
 
   /* ══════════════════════════════════════════════
      3. MARQUEE
@@ -599,6 +638,7 @@
   }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
 
   document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  renderModules('');
 
   /* ══════════════════════════════════════════════
      5. COUNT-UP STATS
