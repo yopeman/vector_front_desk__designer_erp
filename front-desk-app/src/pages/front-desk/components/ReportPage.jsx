@@ -76,6 +76,11 @@ export default function ReportPage() {
   const [reportFiles, setReportFiles] = useState([]);
   const [reportDragActive, setReportDragActive] = useState(false);
   const [reportSaving, setReportSaving] = useState(false);
+  const [activeReportTab, setActiveReportTab] = useState('generate');
+  const [savedReports, setSavedReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [viewReport, setViewReport] = useState(null);
+  const [downloadingFileId, setDownloadingFileId] = useState(null);
   const reportFileInputRef = useRef(null);
 
   useEffect(() => {
@@ -669,6 +674,7 @@ export default function ReportPage() {
 
       alert('Report saved successfully.');
       setShowReportModal(false);
+      fetchSavedReports();
     } catch (error) {
       console.error('Error saving report:', error);
       alert('Error saving report: ' + error.message);
@@ -677,29 +683,151 @@ export default function ReportPage() {
     }
   };
 
+  const fetchSavedReports = async () => {
+    setReportsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('report_captions')
+        .select('*')
+        .eq('department', 'frontdesk')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const reportIds = (data || []).flatMap(r => r.attached_file_ids || []);
+      let fileMap = {};
+      let userMap = {};
+
+      if (reportIds.length > 0) {
+        const { data: files } = await supabase
+          .from('files')
+          .select('id, name, path, mime_type, file_size')
+          .in('id', reportIds);
+        fileMap = Object.fromEntries((files || []).map(f => [f.id, f]));
+      }
+
+      const creatorIds = (data || []).map(r => r.user_id).filter(Boolean);
+      if (creatorIds.length > 0) {
+        const { data: creators } = await supabase
+          .from('users')
+          .select('id, username')
+          .in('id', creatorIds);
+        userMap = Object.fromEntries((creators || []).map(u => [u.id, u.username]));
+      }
+
+      setSavedReports((data || []).map(r => ({
+        ...r,
+        files: (r.attached_file_ids || []).map(id => fileMap[id]).filter(Boolean),
+        creatorName: userMap[r.user_id] || null
+      })));
+    } catch (error) {
+      console.error('Error fetching saved reports:', error);
+      setSavedReports([]);
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSavedReports();
+  }, []);
+
+  const switchReportTab = (tab) => {
+    setActiveReportTab(tab);
+    if (tab === 'saved') {
+      fetchSavedReports();
+    }
+  };
+
+  const openReportInGenerate = (report) => {
+    const allSubmenus = menuItems.flatMap(menu => menu.submenu.map(sub => sub.name));
+    setFromDate(report.from_date || '');
+    setToDate(report.to_date || '');
+    setSelectedSubmenus(allSubmenus);
+    setViewReport(null);
+    setActiveReportTab('generate');
+  };
+
+  const downloadReportFile = async (file) => {
+    setDownloadingFileId(file.id);
+    try {
+      const { data } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(file.path, 60);
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (error) {
+      console.error('Error getting file download link:', error);
+      alert('Failed to get download link for: ' + file.name);
+    } finally {
+      setDownloadingFileId(null);
+    }
+  };
+
+  const formatReportDate = (value) => {
+    if (!value) return '';
+    const [y, m, d] = String(value).split('-');
+    if (y && m && d) {
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    return String(value);
+  };
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-slate-800">Reports</h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={openSaveReportModal}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
-          >
-            <i className="fa-solid fa-plus"></i> Save Report
-          </button>
-          <button
-            onClick={handleExportPDF}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
-            disabled={data.length === 0}
-          >
-            <i className="fa-solid fa-file-pdf"></i> Export PDF
-          </button>
-        </div>
+      <h2 className="text-xl font-bold text-slate-800 mb-4">Reports</h2>
+
+      {/* Report Tabs */}
+      <div className="flex gap-2 border-b border-slate-200 mb-6">
+        <button
+          onClick={() => switchReportTab('generate')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-t-lg text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer ${
+            activeReportTab === 'generate'
+              ? 'border-blue-600 text-blue-700 bg-blue-50'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <i className="fa-solid fa-file-pen"></i> Generate Report
+        </button>
+        <button
+          onClick={() => switchReportTab('saved')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-t-lg text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer ${
+            activeReportTab === 'saved'
+              ? 'border-blue-600 text-blue-700 bg-blue-50'
+              : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <i className="fa-solid fa-folder-open"></i> Saved Reports
+          {savedReports.length > 0 && (
+            <span className="ml-0.5 grid min-w-4 h-4 px-1 place-items-center rounded-full bg-blue-600 text-white text-[10px] font-semibold leading-none">
+              {savedReports.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* Date Range Filter */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6">
+      {activeReportTab === 'generate' ? (
+        <>
+          <div className="flex justify-end items-center gap-2 mb-4">
+            <button
+              onClick={openSaveReportModal}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
+            >
+              <i className="fa-solid fa-plus"></i> Save Report
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-xs flex items-center gap-2 transition-colors border-none cursor-pointer"
+              disabled={data.length === 0}
+            >
+              <i className="fa-solid fa-file-pdf"></i> Export PDF
+            </button>
+          </div>
+
+          {/* Date Range Filter */}
+          <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6">
         <div className="flex gap-4 items-center flex-wrap">
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">From Date</label>
@@ -917,6 +1045,76 @@ export default function ReportPage() {
           </div>
         );
       })}
+        </>
+      ) : (
+        <div>
+          {reportsLoading ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-16 text-slate-400">
+              <i className="fa-solid fa-spinner fa-spin text-2xl"></i>
+              <span className="text-sm">Loading saved reports…</span>
+            </div>
+          ) : savedReports.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200 border-dashed py-16 text-center">
+              <i className="fa-solid fa-folder-open text-3xl text-slate-300 mb-3"></i>
+              <p className="text-sm text-slate-500">No saved reports yet.</p>
+              <p className="text-xs text-slate-400 mt-1">Go to the <span className="font-medium text-slate-600">Generate Report</span> tab and save one.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {savedReports.map(report => (
+                <div key={report.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="flex justify-between items-start gap-4 p-4 border-b border-slate-100 bg-slate-50">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-blue-100 text-blue-700 px-2 py-0.5 text-xs font-semibold">
+                          <i className="fa-solid fa-calendar-days"></i>
+                          {formatReportDate(report.from_date)} → {formatReportDate(report.to_date)}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {report.creatorName ? `by ${report.creatorName}` : `by #${(report.user_id || '').slice(0, 8)}`}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1.5">
+                        Saved {new Date(report.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                        {report.files.length > 0 && (
+                          <span className="ml-2">
+                            <i className="fa-solid fa-paperclip mr-1"></i>{report.files.length} attachment{report.files.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => openReportInGenerate(report)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 text-green-600 hover:bg-green-50 px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer"
+                        title="Apply this report's date range, select all modules, and open in the Generate Report tab"
+                      >
+                        <i className="fa-solid fa-file-pen"></i> Open in Generate
+                      </button>
+                      <button
+                        onClick={() => setViewReport(report)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 text-blue-600 hover:bg-blue-50 px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer"
+                      >
+                        <i className="fa-solid fa-eye"></i> View
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    {report.note && report.note.trim() ? (
+                      <div className="max-h-44 overflow-hidden relative">
+                        <MDEditor.Markdown source={report.note} />
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent"></div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400">No content.</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Save Report Modal */}
       {showReportModal && (
@@ -1068,6 +1266,98 @@ export default function ReportPage() {
                     <i className="fa-solid fa-floppy-disk"></i> Save Report
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Report Modal */}
+      {viewReport && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setViewReport(null)}
+        >
+          <div
+            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center px-6 py-4 border-b border-slate-200">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">Saved Report</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  <span className="inline-flex items-center gap-1 rounded bg-blue-100 text-blue-700 px-1.5 py-0.5 text-[11px] font-semibold">
+                    <i className="fa-solid fa-calendar-days"></i>
+                    {formatReportDate(viewReport.from_date)} → {formatReportDate(viewReport.to_date)}
+                  </span>
+                  <span className="ml-2">
+                    Department: <span className="text-slate-700 font-medium">frontdesk</span>
+                  </span>
+                  <span className="ml-2">
+                    Saved on {new Date(viewReport.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                    {viewReport.creatorName ? ` · by ${viewReport.creatorName}` : ''}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={() => setViewReport(null)}
+                className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors border-none cursor-pointer"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Report Content</label>
+                <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 text-sm">
+                  {viewReport.note && viewReport.note.trim() ? (
+                    <MDEditor.Markdown source={viewReport.note} />
+                  ) : (
+                    <p className="text-slate-400 text-sm">No content.</p>
+                  )}
+                </div>
+              </div>
+
+              {viewReport.files.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">Attached Files</label>
+                  <div className="space-y-2">
+                    {viewReport.files.map(file => (
+                      <div key={file.id} className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <i className="fa-solid fa-file text-blue-500 shrink-0"></i>
+                          <span className="text-sm text-slate-700 truncate">{file.name}</span>
+                          {typeof file.file_size === 'number' && (
+                            <span className="text-xs text-slate-500 shrink-0">({(file.file_size / 1024).toFixed(1)} KB)</span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => downloadReportFile(file)}
+                          disabled={downloadingFileId === file.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 text-blue-600 hover:bg-blue-100 px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer disabled:opacity-60"
+                        >
+                          {downloadingFileId === file.id ? (
+                            <i className="fa-solid fa-spinner fa-spin"></i>
+                          ) : (
+                            <i className="fa-solid fa-download"></i>
+                          )}
+                          Download
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl flex justify-end">
+              <button
+                onClick={() => setViewReport(null)}
+                className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 border border-slate-300 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>
