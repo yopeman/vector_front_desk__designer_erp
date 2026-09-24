@@ -284,7 +284,7 @@ export default function DesignerPage() {
       .from('designs')
       .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
       .eq('assigned_designer_id', user.id)
-      .neq('status', 'Completed')
+      // .neq('status', 'Completed')
       .order('created_at', { ascending: false });
 
     if (error) {
