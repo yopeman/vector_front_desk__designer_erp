@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import jsPDF from 'jspdf';
-import Markdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import MDEditor from '@uiw/react-md-editor';
+import '@uiw/react-md-editor/markdown-editor.css';
+import '@uiw/react-markdown-preview/markdown.css';
 
 const menuItems = [
   { 
@@ -74,7 +75,6 @@ export default function ReportPage() {
   const [reportUserId, setReportUserId] = useState(null);
   const [reportFiles, setReportFiles] = useState([]);
   const [reportDragActive, setReportDragActive] = useState(false);
-  const [reportView, setReportView] = useState('write');
   const [reportSaving, setReportSaving] = useState(false);
   const reportFileInputRef = useRef(null);
 
@@ -553,7 +553,6 @@ export default function ReportPage() {
     setReportToDate(toDate || '');
     setReportMarkdown('');
     setReportFiles([]);
-    setReportView('write');
     try {
       const { data: { user } } = await supabase.auth.getUser();
       setReportUserId(user?.id || null);
@@ -978,46 +977,22 @@ export default function ReportPage() {
                 </div>
               </div>
 
-              {/* Markdown editor / preview */}
+              {/* Markdown editor */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold text-slate-700">Report Content</label>
-                  <div className="flex gap-1 rounded-lg border border-slate-200 p-1 bg-slate-50">
-                    <button
-                      onClick={() => setReportView('write')}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium border-none cursor-pointer transition-colors ${reportView === 'write' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-200'}`}
-                    >
-                      <i className="fa-solid fa-pen"></i> Write
-                    </button>
-                    <button
-                      onClick={() => setReportView('preview')}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium border-none cursor-pointer transition-colors ${reportView === 'preview' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-200'}`}
-                    >
-                      <i className="fa-solid fa-eye"></i> Preview
-                    </button>
-                  </div>
-                </div>
-
-                {reportView === 'write' ? (
-                  <textarea
-                    rows={10}
-                    value={reportMarkdown}
-                    onChange={(e) => setReportMarkdown(e.target.value)}
-                    onPaste={handleReportPaste}
-                    placeholder={'# Report title\n\nWrite your report in Markdown…\n\n- bullet points\n- **bold** and *italic*'}
-                    className="w-full font-mono text-sm border border-slate-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y"
-                  />
-                ) : (
-                  <div className="min-h-[240px] border border-slate-200 rounded-lg p-4 bg-slate-50 text-sm">
-                    {reportMarkdown.trim() ? (
-                      <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>{reportMarkdown}</Markdown>
-                    ) : (
-                      <p className="text-slate-400 text-sm">Nothing to preview yet.</p>
-                    )}
-                  </div>
-                )}
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Report Content</label>
+                <MDEditor
+                  value={reportMarkdown}
+                  onChange={(value) => setReportMarkdown(value || '')}
+                  onPaste={handleReportPaste}
+                  preview="live"
+                  height={300}
+                  previewOptions={{ components: mdComponents }}
+                  textareaProps={{
+                    placeholder: '# Report title\n\nWrite your report in Markdown…\n\n- bullet points\n- **bold** and *italic*'
+                  }}
+                />
                 <p className="text-xs text-slate-400 mt-1.5">
-                  Markdown supported. You can also drag &amp; drop, select, or paste (Ctrl+V) files into the editor.
+                  Markdown supported with live preview. You can also drag &amp; drop, select, or paste (Ctrl+V) files into the editor.
                 </p>
               </div>
 
