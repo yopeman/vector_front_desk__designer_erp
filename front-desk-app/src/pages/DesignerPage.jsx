@@ -352,7 +352,7 @@ export default function DesignerPage() {
     try {
       const { data, error } = await supabase
         .from('production_orders')
-        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username)')
+        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username), job_order:job_orders(job_no)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -2250,7 +2250,7 @@ export default function DesignerPage() {
                     <thead className="bg-slate-50 text-left">
                       <tr>
                         <th className="px-4 py-3 font-semibold text-slate-600">Task Type</th>
-                        <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Job Order No</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Material</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Machine</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Designer</th>
@@ -2267,7 +2267,7 @@ export default function DesignerPage() {
                             {order.task_type || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
-                            {order.orders?.order_no || '-'}
+                            {order.job_order?.job_no || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {order.material} / {order.thickness} / {order.color}
