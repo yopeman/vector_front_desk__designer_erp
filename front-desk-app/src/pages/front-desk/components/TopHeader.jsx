@@ -182,7 +182,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
       boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
       position: 'sticky',
       top: 0,
-      zIndex: 300
+      // zIndex: 300
     }}>
       <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
         <div 
