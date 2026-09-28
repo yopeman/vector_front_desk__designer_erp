@@ -325,6 +325,474 @@ async function getReportData() {
 }
 
 // =============================================
+// SAVE REPORT
+// =============================================
+const saveReportState = {
+    userId: null,
+    files: [],
+    activeTab: 'generate',
+    viewReport: null
+};
+
+const REPORT_TAB_BASE_CLS = 'flex items-center gap-1.5 px-4 py-2 rounded-t-lg text-xs font-medium border-b-2 -mb-px transition-colors cursor-pointer';
+const REPORT_TAB_ACTIVE_CLS = 'border-violet-500 text-violet-300 bg-violet-500/10';
+const REPORT_TAB_IDLE_CLS = 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-700/20';
+
+function switchReportTab(tab) {
+    saveReportState.activeTab = tab;
+
+    const generatePanel = document.getElementById('report-generate-panel');
+    const savedPanel = document.getElementById('report-saved-panel');
+    const generateActions = document.getElementById('report-generate-actions');
+    const generateTab = document.getElementById('report-tab-generate');
+    const savedTab = document.getElementById('report-tab-saved');
+
+    if (tab === 'saved') {
+        if (generatePanel) generatePanel.classList.add('hidden');
+        if (savedPanel) savedPanel.classList.remove('hidden');
+        if (generateActions) generateActions.classList.add('hidden');
+        if (savedTab) savedTab.className = REPORT_TAB_BASE_CLS + ' ' + REPORT_TAB_ACTIVE_CLS;
+        if (generateTab) generateTab.className = REPORT_TAB_BASE_CLS + ' ' + REPORT_TAB_IDLE_CLS;
+        fetchSavedReports();
+    } else {
+        if (generatePanel) generatePanel.classList.remove('hidden');
+        if (savedPanel) savedPanel.classList.add('hidden');
+        if (generateActions) generateActions.classList.remove('hidden');
+        if (generateTab) generateTab.className = REPORT_TAB_BASE_CLS + ' ' + REPORT_TAB_ACTIVE_CLS;
+        if (savedTab) savedTab.className = REPORT_TAB_BASE_CLS + ' ' + REPORT_TAB_IDLE_CLS;
+    }
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function renderReportMarkdown(md) {
+    if (!md || !md.trim()) return '<p class="text-slate-500">No content.</p>';
+    if (typeof marked !== 'undefined') {
+        return marked.parse(md);
+    }
+    return '<pre class="whitespace-pre-wrap font-mono text-xs">' + escapeHtml(md) + '</pre>';
+}
+
+function formatReportDate(value) {
+    if (!value) return '';
+    const parts = String(value).split('-');
+    if (parts.length === 3) {
+        const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+    }
+    return String(value);
+}
+
+async function openSaveReportModal() {
+    const fromInput = document.getElementById('report-date-from');
+    const toInput = document.getElementById('report-date-to');
+    document.getElementById('save-report-from').value = fromInput ? fromInput.value : '';
+    document.getElementById('save-report-to').value = toInput ? toInput.value : '';
+    document.getElementById('save-report-markdown').value = '';
+    document.getElementById('save-report-preview').innerHTML = '<p class="text-slate-500">Nothing to preview yet.</p>';
+    saveReportState.files = [];
+    renderSaveReportFiles();
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        saveReportState.userId = user ? user.id : null;
+    } catch (error) {
+        console.error('Error getting current user:', error);
+        saveReportState.userId = null;
+    }
+
+    const userLabel = document.getElementById('save-report-user-id');
+    if (userLabel) {
+        userLabel.textContent = saveReportState.userId ? '#' + saveReportState.userId.slice(0, 8) : '(not signed in)';
+    }
+
+    document.getElementById('save-report-modal').classList.remove('hidden');
+}
+
+function closeSaveReportModal() {
+    const modal = document.getElementById('save-report-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function updateSaveReportPreview() {
+    const editor = document.getElementById('save-report-markdown');
+    const preview = document.getElementById('save-report-preview');
+    if (!editor || !preview) return;
+    preview.innerHTML = renderReportMarkdown(editor.value);
+}
+
+function addSaveReportFiles(list) {
+    if (!list) return;
+    const incoming = Array.from(list);
+    const existing = new Set(saveReportState.files.map(f => f.name + '-' + f.size + '-' + f.lastModified));
+    const unique = incoming.filter(f => !existing.has(f.name + '-' + f.size + '-' + f.lastModified));
+    saveReportState.files = saveReportState.files.concat(unique);
+    renderSaveReportFiles();
+}
+
+function reportFilesSelected(event) {
+    addSaveReportFiles(event.target.files);
+    event.target.value = '';
+}
+
+function reportDragOver(event) {
+    event.preventDefault();
+    const zone = document.getElementById('save-report-dropzone');
+    if (zone) zone.classList.add('border-violet-500', 'bg-violet-500/10');
+}
+
+function reportDragLeave(event) {
+    event.preventDefault();
+    const zone = document.getElementById('save-report-dropzone');
+    if (zone) zone.classList.remove('border-violet-500', 'bg-violet-500/10');
+}
+
+function reportDrop(event) {
+    event.preventDefault();
+    reportDragLeave(event);
+    addSaveReportFiles(event.dataTransfer.files);
+}
+
+function renderSaveReportFiles() {
+    const list = document.getElementById('save-report-file-list');
+    if (!list) return;
+    if (saveReportState.files.length === 0) {
+        list.innerHTML = '';
+        return;
+    }
+    list.innerHTML = saveReportState.files.map((file, index) => `
+        <div class="flex items-center justify-between bg-violet-500/10 rounded-lg px-3 py-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <i class="fa-solid fa-file text-violet-400 shrink-0"></i>
+                <span class="text-sm text-slate-200 truncate">${escapeHtml(file.name)}</span>
+                <span class="text-xs text-slate-400 shrink-0">(${(file.size / 1024).toFixed(1)} KB)</span>
+            </div>
+            <button type="button" onclick="removeSaveReportFile(${index})" class="text-slate-400 hover:text-red-400 transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function removeSaveReportFile(index) {
+    saveReportState.files = saveReportState.files.filter((_, i) => i !== index);
+    renderSaveReportFiles();
+}
+
+async function uploadSaveReportFile(file) {
+    const fileName = Date.now() + '-' + file.name;
+    const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(fileName, file);
+
+    if (error) throw error;
+
+    const { data: fileRecord, error: insertError } = await supabase
+        .from('files')
+        .insert({
+            name: file.name,
+            path: data.path,
+            mime_type: file.type,
+            file_size: file.size,
+            uploaded_by: saveReportState.userId
+        })
+        .select()
+        .single();
+
+    if (insertError) throw insertError;
+    return fileRecord.id;
+}
+
+async function handleSaveReport() {
+    if (!saveReportState.userId) {
+        alert('Could not determine current user. Please sign in and try again.');
+        return;
+    }
+
+    const fromDate = document.getElementById('save-report-from').value;
+    const toDate = document.getElementById('save-report-to').value;
+    const note = document.getElementById('save-report-markdown').value;
+
+    if (!fromDate || !toDate) {
+        alert('From date and To date are required.');
+        return;
+    }
+    if (!note.trim()) {
+        alert('Please enter the report content.');
+        return;
+    }
+
+    const submitBtn = document.getElementById('save-report-submit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving…';
+
+    try {
+        const fileIds = [];
+        for (const file of saveReportState.files) {
+            try {
+                const id = await uploadSaveReportFile(file);
+                fileIds.push(id);
+            } catch (error) {
+                console.error('Error uploading file:', file.name, error);
+                alert('Failed to upload file: ' + file.name);
+            }
+        }
+
+        const { error } = await supabase
+            .from('report_captions')
+            .insert({
+                user_id: saveReportState.userId,
+                department: 'production',
+                from_date: fromDate,
+                to_date: toDate,
+                note: note,
+                attached_file_ids: fileIds
+            });
+
+        if (error) throw error;
+
+        alert('Report saved successfully.');
+        closeSaveReportModal();
+        fetchSavedReports();
+    } catch (error) {
+        console.error('Error saving report:', error);
+        alert('Error saving report: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Report';
+    }
+}
+
+async function fetchSavedReports() {
+    const tabCount = document.getElementById('report-tab-saved-count');
+    const list = document.getElementById('report-saved-list');
+    const count = document.getElementById('report-saved-count');
+    if (!list) return;
+
+    try {
+        const { data, error } = await supabase
+            .from('report_captions')
+            .select('*')
+            .eq('department', 'production')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const reports = data || [];
+        const reportIds = reports.flatMap(r => r.attached_file_ids || []);
+        let fileMap = {};
+        let userMap = {};
+
+        if (reportIds.length > 0) {
+            const { data: files } = await supabase
+                .from('files')
+                .select('id, name, path, mime_type, file_size')
+                .in('id', reportIds);
+            fileMap = Object.fromEntries((files || []).map(f => [f.id, f]));
+        }
+
+        const creatorIds = reports.map(r => r.user_id).filter(Boolean);
+        if (creatorIds.length > 0) {
+            const { data: creators } = await supabase
+                .from('users')
+                .select('id, username')
+                .in('id', creatorIds);
+            userMap = Object.fromEntries((creators || []).map(u => [u.id, u.username]));
+        }
+
+        const enriched = reports.map(r => ({
+            ...r,
+            files: (r.attached_file_ids || []).map(id => fileMap[id]).filter(Boolean),
+            creatorName: userMap[r.user_id] || null
+        }));
+
+        if (count) count.textContent = '(' + enriched.length + ')';
+        if (tabCount) {
+            tabCount.textContent = enriched.length;
+            tabCount.style.display = enriched.length > 0 ? '' : 'none';
+        }
+
+        if (enriched.length === 0) {
+            list.innerHTML = `
+                <div class="bg-slate-800/30 border border-dashed border-slate-700 rounded-2xl py-12 text-center">
+                    <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-3"></i>
+                    <p class="text-sm text-slate-400">No saved reports yet.</p>
+                    <p class="text-xs text-slate-500 mt-1">Use the Save Report button above to create one.</p>
+                </div>`;
+            return;
+        }
+
+        list.innerHTML = enriched.map((report, index) => `
+            <div class="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl mb-4">
+                <div class="flex justify-between items-start gap-4 p-4 border-b border-slate-700/50 bg-slate-800/60">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="inline-flex items-center gap-1 rounded-md bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 text-xs font-semibold">
+                                <i class="fa-regular fa-calendar text-[10px]"></i>
+                                ${escapeHtml(formatReportDate(report.from_date))} → ${escapeHtml(formatReportDate(report.to_date))}
+                            </span>
+                            <span class="text-xs text-slate-400">
+                                ${report.creatorName ? 'by ' + escapeHtml(report.creatorName) : 'by #' + String(report.user_id || '').slice(0, 8)}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1.5">
+                            Saved ${escapeHtml(new Date(report.created_at).toLocaleString())}
+                            ${report.files.length > 0 ? '<span class="ml-2"><i class="fa-solid fa-paperclip mr-1"></i>' + report.files.length + ' attachment' + (report.files.length > 1 ? 's' : '') + '</span>' : ''}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="openReportInGenerate(${index})"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 px-3 py-1.5 text-xs font-medium transition-colors">
+                            <i class="fa-solid fa-file-pen"></i> Open in Generate
+                        </button>
+                        <button type="button" onclick="viewSavedReport(${index})"
+                            class="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 px-3 py-1.5 text-xs font-medium transition-colors">
+                            <i class="fa-solid fa-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+                <div class="p-4 max-h-44 overflow-hidden relative">
+                    <div class="report-md text-sm text-slate-300">${renderReportMarkdown(report.note)}</div>
+                    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                </div>
+            </div>
+        `).join('');
+
+        saveReportState.enrichedReports = enriched;
+    } catch (error) {
+        console.error('Error fetching saved reports:', error);
+        list.innerHTML = '<div class="bg-slate-800/30 border border-slate-700/50 rounded-2xl py-8 text-center text-sm text-slate-400">Failed to load saved reports.</div>';
+    }
+}
+
+function viewSavedReport(index) {
+    const report = (saveReportState.enrichedReports || [])[index];
+    if (!report) return;
+
+    const meta = document.getElementById('view-report-meta');
+    if (meta) {
+        meta.innerHTML = `
+            <span class="inline-flex items-center gap-1 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20 px-1.5 py-0.5 text-[11px] font-semibold">
+                <i class="fa-regular fa-calendar text-[10px]"></i>
+                ${escapeHtml(formatReportDate(report.from_date))} → ${escapeHtml(formatReportDate(report.to_date))}
+            </span>
+            <span class="ml-2">Department: <span class="text-slate-200 font-medium">production</span></span>
+            <span class="ml-2">Saved on ${escapeHtml(new Date(report.created_at).toLocaleString())}${report.creatorName ? ' · by ' + escapeHtml(report.creatorName) : ''}</span>`;
+    }
+
+    const content = document.getElementById('view-report-content');
+    if (content) content.innerHTML = renderReportMarkdown(report.note);
+
+    const filesWrap = document.getElementById('view-report-files-wrap');
+    const filesEl = document.getElementById('view-report-files');
+    if (filesWrap && filesEl) {
+        if (report.files.length > 0) {
+            filesWrap.classList.remove('hidden');
+            filesEl.innerHTML = report.files.map(f => `
+                <div class="flex items-center justify-between bg-violet-500/10 rounded-lg px-3 py-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i class="fa-solid fa-file text-violet-400 shrink-0"></i>
+                        <span class="text-sm text-slate-200 truncate">${escapeHtml(f.name)}</span>
+                        ${typeof f.file_size === 'number' ? '<span class="text-xs text-slate-400 shrink-0">(' + (f.file_size / 1024).toFixed(1) + ' KB)</span>' : ''}
+                    </div>
+                    <button type="button" onclick="downloadSavedReportFile(${f.id})"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-blue-500/30 text-blue-400 hover:bg-blue-500/10 px-2.5 py-1 text-xs font-medium transition-colors">
+                        <i class="fa-solid fa-download"></i> Download
+                    </button>
+                </div>
+            `).join('');
+        } else {
+            filesWrap.classList.add('hidden');
+            filesEl.innerHTML = '';
+        }
+    }
+
+    const modal = document.getElementById('view-report-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeViewReportModal() {
+    const modal = document.getElementById('view-report-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+async function downloadSavedReportFile(fileId) {
+    const report = (saveReportState.enrichedReports || []).find(r => r.files.some(f => f.id === fileId));
+    if (!report) return;
+    const file = report.files.find(f => f.id === fileId);
+    if (!file) return;
+
+    try {
+        const { data } = await supabase.storage
+            .from('documents')
+            .createSignedUrl(file.path, 60);
+        if (data && data.signedUrl) {
+            window.open(data.signedUrl, '_blank');
+        }
+    } catch (error) {
+        console.error('Error getting file download link:', error);
+        alert('Failed to get download link for: ' + file.name);
+    }
+}
+
+function openReportInGenerate(index) {
+    const report = (saveReportState.enrichedReports || [])[index];
+    if (!report) return;
+
+    const fromInput = document.getElementById('report-date-from');
+    const toInput = document.getElementById('report-date-to');
+    if (fromInput) fromInput.value = report.from_date || '';
+    if (toInput) toInput.value = report.to_date || '';
+
+    document.querySelectorAll('.module-checkbox').forEach(cb => { cb.checked = true; });
+    closeViewReportModal();
+    switchReportTab('generate');
+    updateModuleSelection();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // The reports section HTML is rendered by reports-section.js on the same
+    // event, so defer setup to let it finish rendering first.
+    setTimeout(() => {
+    // Live preview for the save report editor
+    const editor = document.getElementById('save-report-markdown');
+    if (editor) {
+        editor.addEventListener('input', updateSaveReportPreview);
+    }
+
+    // Paste files into the save report editor
+    const modal = document.getElementById('save-report-modal');
+    if (modal) {
+        modal.addEventListener('paste', (e) => {
+            const files = e.clipboardData && e.clipboardData.files;
+            if (files && files.length > 0) {
+                e.preventDefault();
+                addSaveReportFiles(files);
+            }
+        });
+    }
+
+    // Close save modal on backdrop click
+    const saveModal = document.getElementById('save-report-modal');
+    if (saveModal) {
+        saveModal.addEventListener('click', () => closeSaveReportModal());
+    }
+
+    fetchSavedReports();
+    }, 0);
+});
+
+// =============================================
 // DATE PARSING UTILITIES
 // =============================================
 function parseReportDate(dateStr) {

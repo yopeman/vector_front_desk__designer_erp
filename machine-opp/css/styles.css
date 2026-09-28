@@ -2179,3 +2179,20 @@ body.modal-open {
   .asst-window.asst-fullscreen .asst-msgs { padding: 16px 16px 16px; }
   .asst-window.asst-fullscreen .asst-composer { padding: 12px 16px 16px; }
 }
+
+/* ============ Markdown rendering (saved reports) ============ */
+.report-md h1 { font-size: 1rem; font-weight: 700; color: #fff; margin: 0 0 .5rem; }
+.report-md h2 { font-size: .875rem; font-weight: 700; color: #fff; margin: .75rem 0 .375rem; }
+.report-md h3 { font-size: .8125rem; font-weight: 600; color: #e2e8f0; margin: .625rem 0 .25rem; }
+.report-md p { margin: 0 0 .5rem; }
+.report-md ul { list-style: disc; padding-left: 1.25rem; margin: 0 0 .5rem; }
+.report-md ol { list-style: decimal; padding-left: 1.25rem; margin: 0 0 .5rem; }
+.report-md a { color: #a78bfa; text-decoration: underline; }
+.report-md strong { color: #fff; font-weight: 600; }
+.report-md code { background: rgba(148,163,184,.15); border-radius: 4px; padding: 1px 4px; font-size: .7rem; font-family: ui-monospace, monospace; }
+.report-md pre { background: rgba(15,23,42,.8); border-radius: 8px; padding: .75rem; overflow-x: auto; margin: 0 0 .5rem; }
+.report-md pre code { background: transparent; padding: 0; }
+.report-md blockquote { border-left: 3px solid #8b5cf6; padding-left: .75rem; color: #94a3b8; font-style: italic; margin: 0 0 .5rem; }
+.report-md table { width: 100%; border-collapse: collapse; margin: 0 0 .5rem; font-size: .7rem; }
+.report-md th, .report-md td { border: 1px solid rgba(100,116,139,.35); padding: .25rem .5rem; text-align: left; }
+.report-md th { background: rgba(148,163,184,.12); font-weight: 600; }
