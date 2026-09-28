@@ -110,6 +110,7 @@ async function fetchCompletedOrders() {
             id: row.id,
             no: row.id.slice(0, 8),
             date: formattedDate,
+            created_at: row.created_at || null,
             taskType: row.task_type || 'task',
             orderNum: row.job_orders?.job_no || row.orders?.order_no || row.id.slice(0, 8),
             title: row.job_type || 'Untitled',

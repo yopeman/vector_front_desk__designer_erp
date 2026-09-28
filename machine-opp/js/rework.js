@@ -47,6 +47,7 @@ async function fetchReworkRecords() {
         id: row.id,
         taskType: row.task_type || 'task',
         date: formatDate(row.created_at || row.date),
+        created_at: row.created_at || null,
         jobNum: row.job_orders?.job_no || '',
         job_order_id: row.job_order_id || '',
         material: row.material || 'N/A',

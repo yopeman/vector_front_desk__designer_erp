@@ -80,6 +80,7 @@ async function fetchReceivedOrders() {
         orderId: po.orders?.id || null,
         no: String(index + 1).padStart(2, '0'),
         date: po.orders?.order_date || formatDate(po.created_at),
+        created_at: po.created_at || null,
         taskType: po.task_type || 'task',
         jobNum: po.job_orders?.job_no || null,
         orderNum: po.job_orders?.job_no || po.orders?.order_no || 'N/A',

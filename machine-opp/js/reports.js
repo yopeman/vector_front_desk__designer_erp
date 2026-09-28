@@ -7,6 +7,47 @@
 // =============================================
 // BUILD REPORT DATA FROM ALL MODULES
 // =============================================
+
+// Normalize any date-ish value to 'YYYY-MM-DD' (empty string when unknown)
+function toReportDateValue(value) {
+    if (!value) return '';
+    if (value instanceof Date) {
+        if (isNaN(value.getTime())) return '';
+        return value.getFullYear() + '-' +
+            String(value.getMonth() + 1).padStart(2, '0') + '-' +
+            String(value.getDate()).padStart(2, '0');
+    }
+    const str = String(value);
+    const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) return isoMatch[1] + '-' + isoMatch[2] + '-' + isoMatch[3];
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) return toReportDateValue(parsed);
+    return '';
+}
+
+// First non-empty value from a list of candidate keys
+function pickCreatedAt(row, keys) {
+    if (!row) return null;
+    for (const key of keys) {
+        const v = row[key];
+        if (v !== null && v !== undefined && v !== '' && v !== '-') return v;
+    }
+    return null;
+}
+
+// Filter records by the report date range. Records without a resolvable date
+// are excluded only when a range is actually set.
+function filterByReportDateRange(records, dateFrom, dateTo) {
+    if (!dateFrom && !dateTo) return records;
+    return records.filter(r => {
+        const d = toReportDateValue(r.created_at || r.date);
+        if (!d) return false;
+        if (dateFrom && d < dateFrom) return false;
+        if (dateTo && d > dateTo) return false;
+        return true;
+    });
+}
+
 async function getReportData() {
     const records = [];
 
@@ -42,6 +83,8 @@ async function getReportData() {
             year: 'numeric' 
         }) : '-';
         records.push({
+            date: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'order_date', 'date'])),
+            created_at: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'order_date', 'date'])),
             module: 'received-orders',
             moduleLabel: 'Received Order',
             order_date: formattedDate,
@@ -84,6 +127,8 @@ async function getReportData() {
         }) : '-';
         const machineName = order.machine_id ? (completedMachineNames[order.machine_id] || 'Unknown Machine') : '-';
         records.push({
+            date: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'completed_at', 'date'])),
+            created_at: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'completed_at', 'date'])),
             module: 'completed-orders',
             moduleLabel: 'Completed Order',
             completed_at: formattedDate,
@@ -119,17 +164,12 @@ async function getReportData() {
         }
 
         reworkData.forEach(entry => {
-            const createdDate = entry.created_at ? new Date(entry.created_at) : null;
-            const formattedDate = createdDate ? createdDate.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            }) : '-';
             const machineName = entry.machine_id ? (machineNames[entry.machine_id] || 'Unknown Machine') : '-';
             records.push({
+                date: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'date'])),
+                created_at: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'date'])),
                 module: 'rework',
                 moduleLabel: 'Rework Recording',
-                created_at: formattedDate,
                 task_type: entry.task_type || '-',
                 machine_id: machineName,
                 material: entry.material || '-',
@@ -172,17 +212,13 @@ async function getReportData() {
                         day: 'numeric', 
                         year: 'numeric' 
                     }) : '-';
-                    const createdDate = log.created_at ? new Date(log.created_at) : null;
-                    const formattedCreated = createdDate ? createdDate.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric', 
-                        year: 'numeric' 
-                    }) : '-';
 
                     const machineName = log.machine?.name || 'Unknown Machine';
                     const performerName = log.performed_by ? (userNames[log.performed_by] || 'Unknown') : 'System';
 
                     records.push({
+                        date: toReportDateValue(pickCreatedAt(log, ['created_at', 'createdAt', 'performed_at'])),
+                        created_at: toReportDateValue(pickCreatedAt(log, ['created_at', 'createdAt', 'performed_at'])),
                         module: 'machine-maintenance',
                         moduleLabel: 'Machine Maintenance Logs',
                         performed_at: formattedDate,
@@ -193,7 +229,6 @@ async function getReportData() {
                         statusColor: log.status === 'completed' ? 'text-emerald-400' : log.status === 'partial' ? 'text-amber-400' : 'text-slate-400',
                         statusBg: log.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : log.status === 'partial' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40',
                         notes: log.notes || '-',
-                        created_at: formattedCreated
                     });
                 });
             }
@@ -218,6 +253,8 @@ async function getReportData() {
                 year: 'numeric' 
             }) : '-';
             records.push({
+                date: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'scheduled_date', 'actual_delivery_time'])),
+                created_at: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'scheduled_date', 'actual_delivery_time'])),
                 module: 'delivery',
                 moduleLabel: 'Delivery',
                 scheduled_date: formattedDate,
@@ -249,6 +286,8 @@ async function getReportData() {
                 year: 'numeric' 
             }) : '-';
             records.push({
+                date: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'scheduled_date', 'completion_time'])),
+                created_at: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'scheduled_date', 'completion_time'])),
                 module: 'installation',
                 moduleLabel: 'Installation',
                 scheduled_date: formattedDate,
@@ -267,12 +306,6 @@ async function getReportData() {
     // Add inventory records from Supabase
     if (typeof inventoryItems !== 'undefined' && inventoryItems.length > 0) {
         inventoryItems.forEach(entry => {
-            const createdDate = entry.created_at ? new Date(entry.created_at) : null;
-            const formattedDate = createdDate ? createdDate.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            }) : '-';
             const updatedDate = entry.updated_at ? new Date(entry.updated_at) : null;
             const formattedUpdated = updatedDate ? updatedDate.toLocaleDateString('en-US', { 
                 month: 'short', 
@@ -280,9 +313,10 @@ async function getReportData() {
                 year: 'numeric' 
             }) : '-';
             records.push({
+                date: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt'])),
+                created_at: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt'])),
                 module: 'inventory',
                 moduleLabel: 'Inventory',
-                created_at: formattedDate,
                 id: entry.id?.substring(0, 8).toUpperCase() || '-',
                 name: entry.name || '-',
                 pcs: entry.pcs || '-',
@@ -299,16 +333,11 @@ async function getReportData() {
     // Add stock movement records from Supabase
     if (typeof inventoryMovements !== 'undefined' && inventoryMovements.length > 0) {
         inventoryMovements.forEach(entry => {
-            const createdDate = entry.created_at ? new Date(entry.created_at) : null;
-            const formattedDate = createdDate ? createdDate.toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            }) : '-';
             records.push({
+                date: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt'])),
+                created_at: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt'])),
                 module: 'stock-movement',
                 moduleLabel: 'Stock Movement',
-                created_at: formattedDate,
                 id: entry.id?.substring(0, 8).toUpperCase() || '-',
                 movement_type: entry.movement_type || '-',
                 item_id: entry.item_id?.substring(0, 8).toUpperCase() || '-',
@@ -975,23 +1004,12 @@ async function filterReports() {
     // Apply search filter
     if (searchVal) {
         filtered = filtered.filter(r =>
-            (r.title + ' ' + r.orderNum + ' ' + r.designer + ' ' + r.material + ' ' + r.machine + ' ' + r.status).toLowerCase().includes(searchVal)
+            Object.values(r).some(v => v !== null && v !== undefined && String(v).toLowerCase().includes(searchVal))
         );
     }
 
     // Apply date range filter
-    if (dateFrom) {
-        filtered = filtered.filter(r => {
-            const d = formatDateForCompare(r.date);
-            return d && d >= dateFrom;
-        });
-    }
-    if (dateTo) {
-        filtered = filtered.filter(r => {
-            const d = formatDateForCompare(r.date);
-            return d && d <= dateTo;
-        });
-    }
+    filtered = filterByReportDateRange(filtered, dateFrom, dateTo);
 
     if (filtered.length === 0) {
         noResults.classList.remove('hidden');
@@ -1281,21 +1299,10 @@ async function exportReportPDF() {
     }
     if (searchVal) {
         filtered = filtered.filter(r =>
-            (r.title + ' ' + r.orderNum + ' ' + r.designer + ' ' + r.material + ' ' + r.machine + ' ' + r.status).toLowerCase().includes(searchVal)
+            Object.values(r).some(v => v !== null && v !== undefined && String(v).toLowerCase().includes(searchVal))
         );
     }
-    if (dateFrom) {
-        filtered = filtered.filter(r => {
-            const d = formatDateForCompare(r.date);
-            return d && d >= dateFrom;
-        });
-    }
-    if (dateTo) {
-        filtered = filtered.filter(r => {
-            const d = formatDateForCompare(r.date);
-            return d && d <= dateTo;
-        });
-    }
+    filtered = filterByReportDateRange(filtered, dateFrom, dateTo);
 
     if (filtered.length === 0) {
         alert('No data available to export. Please adjust your filters.');

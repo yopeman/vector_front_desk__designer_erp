@@ -126,17 +126,18 @@ const reportColumnConfigs = {
         { key: 'priority', label: 'Priority', cls: 'text-xs' },
         { key: 'total_amount', label: 'Total Amount', cls: 'text-xs' },
         { key: 'paid_amount', label: 'Paid Amount', cls: 'text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
+        { key: 'status', label: 'Status', cls: '' },
+        { key: 'created_at', label: 'Created', cls: 'font-mono text-xs' },
     ],
     'rework': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'created_at', label: 'Date', cls: '' },
         { key: 'task_type', label: 'Task Type', cls: '' },
         { key: 'machine_id', label: 'Machine', cls: 'text-xs' },
         { key: 'material', label: 'Material', cls: 'text-xs' },
         { key: 'quality_status', label: 'Quality', cls: 'text-xs' },
         { key: 'priority', label: 'Priority', cls: 'text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
+        { key: 'status', label: 'Status', cls: '' },
+        { key: 'created_at', label: 'Created', cls: 'font-mono text-xs' },
     ],
     'completed-orders': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
@@ -146,7 +147,8 @@ const reportColumnConfigs = {
         { key: 'material', label: 'Material', cls: 'text-xs' },
         { key: 'quality_status', label: 'Quality', cls: 'text-xs' },
         { key: 'priority', label: 'Priority', cls: 'text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
+        { key: 'status', label: 'Status', cls: '' },
+        { key: 'created_at', label: 'Created', cls: 'font-mono text-xs' },
     ],
     'machine-maintenance': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
@@ -166,7 +168,8 @@ const reportColumnConfigs = {
         { key: 'contact_person', label: 'Contact', cls: 'text-xs' },
         { key: 'vehicle_driver', label: 'Driver', cls: 'text-xs' },
         { key: 'actual_delivery_time', label: 'Delivered', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
+        { key: 'status', label: 'Status', cls: '' },
+        { key: 'created_at', label: 'Created', cls: 'font-mono text-xs' },
     ],
     'installation': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
@@ -176,27 +179,28 @@ const reportColumnConfigs = {
         { key: 'contact_person', label: 'Contact', cls: 'text-xs' },
         { key: 'team', label: 'Team', cls: 'text-xs' },
         { key: 'completion_time', label: 'Completed', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
+        { key: 'status', label: 'Status', cls: '' },
+        { key: 'created_at', label: 'Created', cls: 'font-mono text-xs' },
     ],
     'inventory': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'created_at', label: 'Created', cls: '' },
         { key: 'id', label: 'Item ID', cls: 'font-mono' },
         { key: 'name', label: 'Item Name', cls: '' },
         { key: 'pcs', label: 'Pieces', cls: 'text-xs' },
         { key: 'kilo', label: 'Kilograms', cls: 'text-xs' },
         { key: 'meter', label: 'Meters', cls: 'font-mono text-xs' },
+        { key: 'created_at', label: 'Created', cls: 'font-mono text-xs' },
         { key: 'updated_at', label: 'Updated', cls: '' }
     ],
     'stock-movement': [
         { key: 'no', label: 'No', cls: 'text-center w-16' },
-        { key: 'created_at', label: 'Date', cls: '' },
         { key: 'id', label: 'Movement ID', cls: 'font-mono' },
         { key: 'movement_type', label: 'Movement Type', cls: '' },
         { key: 'item_id', label: 'Item', cls: 'text-xs' },
         { key: 'quantity', label: 'Quantity', cls: 'text-xs' },
         { key: 'location', label: 'From/To', cls: 'font-mono text-xs' },
-        { key: 'status', label: 'Status', cls: '' }
+        { key: 'status', label: 'Status', cls: '' },
+        { key: 'created_at', label: 'Created', cls: 'font-mono text-xs' },
     ]
 };
 
