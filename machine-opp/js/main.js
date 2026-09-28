@@ -480,8 +480,9 @@ async function handleAuthLogin(event) {
 
     setTimeout(() => {
         updateAuthUI();
-        document.getElementById('auth-overlay').classList.add('hidden');
-        document.body.classList.remove('modal-open');
+        // document.getElementById('auth-overlay').classList.add('hidden');
+        // document.body.classList.remove('modal-open');
+        window.location.reload();
     }, 800);
 
     return false;
