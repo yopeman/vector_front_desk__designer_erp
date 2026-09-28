@@ -948,12 +948,21 @@ async function filterReports() {
     const dateFrom = document.getElementById('report-date-from').value;
     const dateTo = document.getElementById('report-date-to').value;
     const noResults = document.getElementById('report-no-results');
+    const tablesContainer = document.getElementById('report-tables-container');
 
     // Render column checklist
     renderColumnChecklist();
     const clearBtn = document.getElementById('report-search-clear');
     const filterCount = document.getElementById('report-filter-count');
     const activeModule = document.getElementById('report-active-module');
+
+    // Single place that shows the "no records" state and clears stale tables
+    const showNoResults = async () => {
+        if (tablesContainer) tablesContainer.innerHTML = '';
+        if (noResults) noResults.classList.remove('hidden');
+        if (filterCount) filterCount.textContent = '0';
+        await updateReportStats();
+    };
 
     // Show/hide clear button
     if (searchVal.length > 0) {
@@ -971,11 +980,7 @@ async function filterReports() {
 
     // If no modules selected, show no results
     if (selectedModules.length === 0) {
-        const tablesContainer = document.getElementById('report-tables-container');
-        if (tablesContainer) tablesContainer.innerHTML = '';
-        noResults.classList.remove('hidden');
-        filterCount.textContent = '0';
-        await updateReportStats();
+        await showNoResults();
         return;
     }
 
@@ -984,11 +989,7 @@ async function filterReports() {
     const columns = getVisibleColumns(allColumns);
 
     if (columns.length === 0) {
-        const tablesContainer = document.getElementById('report-tables-container');
-        if (tablesContainer) tablesContainer.innerHTML = '';
-        noResults.classList.remove('hidden');
-        filterCount.textContent = '0';
-        await updateReportStats();
+        await showNoResults();
         return;
     }
 
@@ -1012,18 +1013,15 @@ async function filterReports() {
     filtered = filterByReportDateRange(filtered, dateFrom, dateTo);
 
     if (filtered.length === 0) {
-        noResults.classList.remove('hidden');
-        filterCount.textContent = '0';
-        await updateReportStats();
+        await showNoResults();
         return;
     }
 
-    noResults.classList.add('hidden');
-    filterCount.textContent = filtered.length;
+    if (noResults) noResults.classList.add('hidden');
+    if (filterCount) filterCount.textContent = filtered.length;
 
     // Render separate tables for each selected module
-    const tablesContainer = document.getElementById('report-tables-container');
-    tablesContainer.innerHTML = '';
+    if (tablesContainer) tablesContainer.innerHTML = '';
 
     selectedModules.forEach(module => {
         const moduleRecords = filtered.filter(r => r.module === module);
@@ -1214,7 +1212,7 @@ async function filterReports() {
             tableWrapper.appendChild(paginationDiv);
         }
 
-        tablesContainer.appendChild(tableWrapper);
+        if (tablesContainer) tablesContainer.appendChild(tableWrapper);
     });
 
     await updateReportStats();
