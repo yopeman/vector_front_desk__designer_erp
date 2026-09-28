@@ -43,7 +43,7 @@ class ReportsSection {
 
                 <div id="report-generate-panel">
                 <!-- Stats Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 mb-4" id="report-stats-container">
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-4" id="report-stats-container">
                     <div class="stat-card bg-gradient-to-br from-violet-500/10 to-violet-600/5 border border-violet-500/20 rounded-2xl p-5 flex items-center gap-4">
                         <div class="w-12 h-12 rounded-xl bg-violet-500/15 flex items-center justify-center shrink-0">
                             <i class="fa-solid fa-database text-violet-400 text-xl"></i>
@@ -92,7 +92,7 @@ class ReportsSection {
                 </div>
 
                 <!-- Filters: Module Selection, Search, Date Range -->
-                <div class="bg-slate-800/60 p-5 rounded-xl border border-slate-700/50 shadow-lg">
+                <div class="bg-slate-800/60 p-5 rounded-xl border border-slate-700/50 shadow-lg my-4">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <!-- Module Selection Dropdown -->
                         <div>
