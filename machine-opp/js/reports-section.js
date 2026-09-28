@@ -189,6 +189,13 @@ class ReportsSection {
                     </div>
 </div>
 
+                 <!-- Loading indicator -->
+                 <div id="report-loading" class="hidden flex flex-col items-center justify-center py-16 px-4">
+                     <div class="w-12 h-12 rounded-full border-4 border-slate-700 border-t-violet-500 animate-spin"></div>
+                     <p class="text-slate-400 font-medium mt-4">Loading report data…</p>
+                     <p class="text-xs text-slate-500 mt-1">Fetching records from the database</p>
+                 </div>
+
                  <!-- Reports Tables Container -->
                  <div id="report-tables-container">
                      <!-- Dynamic tables will be rendered here by JS -->
@@ -217,6 +224,10 @@ class ReportsSection {
                          <button onclick="fetchSavedReports()" class="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-slate-700/30">
                              <i class="fa-solid fa-rotate"></i> Refresh
                          </button>
+                     </div>
+                     <div id="report-saved-loading" class="hidden flex flex-col items-center justify-center py-12">
+                         <div class="w-10 h-10 rounded-full border-4 border-slate-700 border-t-violet-500 animate-spin"></div>
+                         <p class="text-slate-400 text-sm mt-3">Loading saved reports…</p>
                      </div>
                      <div id="report-saved-list"></div>
                  </div>

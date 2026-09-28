@@ -604,6 +604,8 @@ async function handleSaveReport() {
 async function fetchSavedReports() {
     const tabCount = document.getElementById('report-tab-saved-count');
     const list = document.getElementById('report-saved-list');
+    const savedLoading = document.getElementById('report-saved-loading');
+    if (savedLoading) savedLoading.classList.remove('hidden');
     const count = document.getElementById('report-saved-count');
     if (!list) return;
 
@@ -700,6 +702,8 @@ async function fetchSavedReports() {
     } catch (error) {
         console.error('Error fetching saved reports:', error);
         list.innerHTML = '<div class="bg-slate-800/30 border border-slate-700/50 rounded-2xl py-8 text-center text-sm text-slate-400">Failed to load saved reports.</div>';
+    } finally {
+        if (savedLoading) savedLoading.classList.add('hidden');
     }
 }
 
@@ -949,6 +953,26 @@ async function filterReports() {
     const dateTo = document.getElementById('report-date-to').value;
     const noResults = document.getElementById('report-no-results');
     const tablesContainer = document.getElementById('report-tables-container');
+    const loading = document.getElementById('report-loading');
+
+    // Keep the spinner visible for a minimum time so it doesn't flicker
+    const MIN_SPINNER_MS = 300;
+    const spinnerStart = Date.now();
+    const showSpinner = () => {
+        // Clear the previous render so stale tables / the "no records" state
+        // never show alongside the spinner
+        if (tablesContainer) tablesContainer.innerHTML = '';
+        if (noResults) noResults.classList.add('hidden');
+        if (filterCount) filterCount.textContent = '0';
+        if (loading) loading.classList.remove('hidden');
+    };
+    const hideSpinner = async () => {
+        const elapsed = Date.now() - spinnerStart;
+        if (elapsed < MIN_SPINNER_MS) {
+            await new Promise(r => setTimeout(r, MIN_SPINNER_MS - elapsed));
+        }
+        if (loading) loading.classList.add('hidden');
+    };
 
     // Render column checklist
     renderColumnChecklist();
@@ -957,11 +981,11 @@ async function filterReports() {
     const activeModule = document.getElementById('report-active-module');
 
     // Single place that shows the "no records" state and clears stale tables
-    const showNoResults = async () => {
+    const showNoResults = async (records) => {
         if (tablesContainer) tablesContainer.innerHTML = '';
         if (noResults) noResults.classList.remove('hidden');
         if (filterCount) filterCount.textContent = '0';
-        await updateReportStats();
+        await updateReportStats(records);
     };
 
     // Show/hide clear button
@@ -984,245 +1008,252 @@ async function filterReports() {
         return;
     }
 
-    // Get merged columns and filter by visibility
-    const allColumns = getMergedColumnConfig(selectedModules);
-    const columns = getVisibleColumns(allColumns);
+    // Fetching from the database: show the activity indicator
+    showSpinner();
 
-    if (columns.length === 0) {
-        await showNoResults();
-        return;
-    }
+    try {
+        // Get merged columns and filter by visibility
+        const allColumns = getMergedColumnConfig(selectedModules);
+        const columns = getVisibleColumns(allColumns);
 
-    // Get all records
-    const allRecords = await getReportData();
-    let filtered = allRecords;
+        if (columns.length === 0) {
+            await showNoResults();
+            return;
+        }
 
-    // Apply multi-module filter
-    if (selectedModules.length > 0) {
-        filtered = filtered.filter(r => selectedModules.includes(r.module));
-    }
+        // Get all records
+        const allRecords = await getReportData();
+        let filtered = allRecords;
 
-    // Apply search filter
-    if (searchVal) {
-        filtered = filtered.filter(r =>
-            Object.values(r).some(v => v !== null && v !== undefined && String(v).toLowerCase().includes(searchVal))
-        );
-    }
+        // Apply multi-module filter
+        if (selectedModules.length > 0) {
+            filtered = filtered.filter(r => selectedModules.includes(r.module));
+        }
 
-    // Apply date range filter
-    filtered = filterByReportDateRange(filtered, dateFrom, dateTo);
-
-    if (filtered.length === 0) {
-        await showNoResults();
-        return;
-    }
-
-    if (noResults) noResults.classList.add('hidden');
-    if (filterCount) filterCount.textContent = filtered.length;
-
-    // Render separate tables for each selected module
-    if (tablesContainer) tablesContainer.innerHTML = '';
-
-    selectedModules.forEach(module => {
-        const moduleRecords = filtered.filter(r => r.module === module);
-
-        const moduleColumns = getMergedColumnConfig([module]);
-        const visibleColumns = getVisibleColumns(moduleColumns);
-        const allColumns = moduleColumns.filter(col => col.key !== '__src__' && col.key !== 'no');
-
-        // Get or initialize table state
-        const tableSearch = tableSearchQueries[module] || '';
-        const currentPage = tableCurrentPages[module] || 1;
-        
-        // Apply per-table search filter
-        let tableFiltered = moduleRecords;
-        if (tableSearch) {
-            tableFiltered = moduleRecords.filter(r => 
-                visibleColumns.some(col => {
-                    if (col.key === 'no' || col.key === '__src__') return false;
-                    let value = r[col.key] || '-';
-                    return String(value).toLowerCase().includes(tableSearch.toLowerCase());
-                })
+        // Apply search filter
+        if (searchVal) {
+            filtered = filtered.filter(r =>
+                Object.values(r).some(v => v !== null && v !== undefined && String(v).toLowerCase().includes(searchVal))
             );
         }
 
-        // Pagination
-        const totalPages = Math.ceil(tableFiltered.length / itemsPerPage);
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const paginatedRecords = tableFiltered.slice(startIndex, endIndex);
+        // Apply date range filter
+        filtered = filterByReportDateRange(filtered, dateFrom, dateTo);
 
-        // Create table wrapper
-        const tableWrapper = document.createElement('div');
-        tableWrapper.className = 'bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl mb-6';
-
-        // Create table header with module name and controls
-        const tableHeader = document.createElement('div');
-        tableHeader.className = 'p-4 border-b border-slate-700/50 bg-slate-800/80';
-        tableHeader.innerHTML = `
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-table text-violet-400"></i>
-                    ${moduleLabels[module] || module}
-                    <span class="text-xs text-slate-400 font-normal">(${tableFiltered.length} records)</span>
-                </h3>
-            </div>
-            <div class="flex gap-3 items-center">
-                <div class="flex-1">
-                    <input type="text" 
-                           placeholder="Search ${moduleLabels[module]}..." 
-                           value="${tableSearch}"
-                           oninput="updateTableSearch('${module}', this.value)"
-                           class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-violet-500 placeholder-slate-500">
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    ${allColumns.map(col => {
-                        const visibilityKey = module + '_' + col.key;
-                        const isVisible = columnVisibility[visibilityKey] !== false;
-                        return `
-                        <button type="button" 
-                                onclick="toggleTableColumn('${module}', '${col.key}')"
-                                class="flex items-center gap-1 px-2 py-1 rounded text-xs border cursor-pointer transition-colors ${
-                                    isVisible
-                                        ? 'bg-violet-500/10 border-violet-500/30 text-violet-400'
-                                        : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'
-                                }">
-                            <i class="fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'} text-[10px]"></i>
-                            <span>${col.label}</span>
-                        </button>
-                    `}).join('')}
-                </div>
-            </div>
-        `;
-        tableWrapper.appendChild(tableHeader);
-
-        // Create table
-        const tableDiv = document.createElement('div');
-        tableDiv.className = 'table-wrapper max-h-[400px] overflow-y-auto';
-
-        const table = document.createElement('table');
-        table.className = 'w-full text-left border-collapse min-w-[700px]';
-
-        // Table head
-        const thead = document.createElement('thead');
-        thead.className = 'bg-slate-800/80 border-b border-slate-700/60 text-xs font-semibold text-slate-300 uppercase tracking-wider sticky top-0 z-10';
-        const theadRow = document.createElement('tr');
-        theadRow.innerHTML = renderReportHeader(visibleColumns);
-        thead.appendChild(theadRow);
-        table.appendChild(thead);
-
-        // Table body
-        const tbody = document.createElement('tbody');
-        tbody.className = 'divide-y divide-slate-800 text-sm text-slate-300';
-
-        paginatedRecords.forEach((record, index) => {
-            const row = document.createElement('tr');
-            row.className = 'order-row hover:bg-violet-600/10 transition-colors';
-
-            visibleColumns.forEach(col => {
-                let value = record[col.key] || '-';
-                let cellCls = 'p-4';
-                if (col.cls) cellCls += ' ' + col.cls;
-
-                const cell = document.createElement('td');
-                cell.className = cellCls;
-
-                if (col.key === '__src__') {
-                    cell.innerHTML = `<span class="px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs rounded border border-violet-500/20 font-medium">${value}</span>`;
-                } else if (col.key === 'no') {
-                    cell.textContent = String(startIndex + index + 1).padStart(2, '0') + ' -';
-                    cell.classList.add('font-mono', 'font-medium', 'text-slate-400');
-                } else if (col.key === 'status') {
-                    cell.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${record.statusBg} ${record.statusColor} border">${value}</span>`;
-                } else {
-                    cell.textContent = value;
-                    if (col.key === 'date') {
-                        cell.classList.add('font-mono', 'text-xs');
-                    } else {
-                        cell.classList.add('text-xs', 'text-slate-300');
-                    }
-                }
-
-                row.appendChild(cell);
-            });
-
-            tbody.appendChild(row);
-        });
-
-        table.appendChild(tbody);
-        tableDiv.appendChild(table);
-        tableWrapper.appendChild(tableDiv);
-
-        // Add pagination controls
-        if (totalPages > 1 || tableFiltered.length > 0) {
-            const paginationDiv = document.createElement('div');
-            paginationDiv.className = 'p-4 border-t border-slate-700/50 bg-slate-800/80 flex justify-between items-center';
-            paginationDiv.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="text-xs text-slate-400">
-                        Page ${currentPage} of ${totalPages} (${tableFiltered.length} total)
-                    </div>
-                    <select onchange="changeTableItemsPerPage('${module}', this.value)" 
-                            class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-violet-500">
-                        <option value="5" ${itemsPerPage === 5 ? 'selected' : ''}>5</option>
-                        <option value="10" ${itemsPerPage === 10 ? 'selected' : ''}>10</option>
-                        <option value="25" ${itemsPerPage === 25 ? 'selected' : ''}>25</option>
-                        <option value="50" ${itemsPerPage === 50 ? 'selected' : ''}>50</option>
-                        <option value="100" ${itemsPerPage === 100 ? 'selected' : ''}>100</option>
-                    </select>
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" 
-                            onclick="changeTablePage('${module}', ${currentPage - 1})"
-                            ${currentPage === 1 ? 'disabled' : ''}
-                            class="px-3 py-1 rounded border border-slate-700 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
-                        Previous
-                    </button>
-                    <div class="flex gap-1">
-                        ${Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                                pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                                pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                                pageNum = totalPages - 4 + i;
-                            } else {
-                                pageNum = currentPage - 2 + i;
-                            }
-                            return `<button type="button" 
-                                            onclick="changeTablePage('${module}', ${pageNum})"
-                                            class="px-3 py-1 rounded border text-xs cursor-pointer transition-colors ${
-                                                currentPage === pageNum
-                                                    ? 'bg-violet-600 text-white border-violet-600'
-                                                    : 'border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white'
-                                            }">
-                                        ${pageNum}
-                                    </button>`;
-                        }).join('')}
-                    </div>
-                    <button type="button" 
-                            onclick="changeTablePage('${module}', ${currentPage + 1})"
-                            ${currentPage === totalPages ? 'disabled' : ''}
-                            class="px-3 py-1 rounded border border-slate-700 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
-                        Next
-                    </button>
-                </div>
-            `;
-            tableWrapper.appendChild(paginationDiv);
+        if (filtered.length === 0) {
+            await showNoResults(allRecords);
+            return;
         }
 
-        if (tablesContainer) tablesContainer.appendChild(tableWrapper);
-    });
+        if (noResults) noResults.classList.add('hidden');
+        if (filterCount) filterCount.textContent = filtered.length;
 
-    await updateReportStats();
+        // Render separate tables for each selected module
+        if (tablesContainer) tablesContainer.innerHTML = '';
+
+        selectedModules.forEach(module => {
+            const moduleRecords = filtered.filter(r => r.module === module);
+
+            const moduleColumns = getMergedColumnConfig([module]);
+            const visibleColumns = getVisibleColumns(moduleColumns);
+            const allColumns = moduleColumns.filter(col => col.key !== '__src__' && col.key !== 'no');
+
+            // Get or initialize table state
+            const tableSearch = tableSearchQueries[module] || '';
+            const currentPage = tableCurrentPages[module] || 1;
+        
+            // Apply per-table search filter
+            let tableFiltered = moduleRecords;
+            if (tableSearch) {
+                tableFiltered = moduleRecords.filter(r => 
+                    visibleColumns.some(col => {
+                        if (col.key === 'no' || col.key === '__src__') return false;
+                        let value = r[col.key] || '-';
+                        return String(value).toLowerCase().includes(tableSearch.toLowerCase());
+                    })
+                );
+            }
+
+            // Pagination
+            const totalPages = Math.ceil(tableFiltered.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const paginatedRecords = tableFiltered.slice(startIndex, endIndex);
+
+            // Create table wrapper
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden shadow-xl mb-6';
+
+            // Create table header with module name and controls
+            const tableHeader = document.createElement('div');
+            tableHeader.className = 'p-4 border-b border-slate-700/50 bg-slate-800/80';
+            tableHeader.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-table text-violet-400"></i>
+                        ${moduleLabels[module] || module}
+                        <span class="text-xs text-slate-400 font-normal">(${tableFiltered.length} records)</span>
+                    </h3>
+                </div>
+                <div class="flex gap-3 items-center">
+                    <div class="flex-1">
+                        <input type="text" 
+                               placeholder="Search ${moduleLabels[module]}..." 
+                               value="${tableSearch}"
+                               oninput="updateTableSearch('${module}', this.value)"
+                               class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-violet-500 placeholder-slate-500">
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        ${allColumns.map(col => {
+                            const visibilityKey = module + '_' + col.key;
+                            const isVisible = columnVisibility[visibilityKey] !== false;
+                            return `
+                            <button type="button" 
+                                    onclick="toggleTableColumn('${module}', '${col.key}')"
+                                    class="flex items-center gap-1 px-2 py-1 rounded text-xs border cursor-pointer transition-colors ${
+                                        isVisible
+                                            ? 'bg-violet-500/10 border-violet-500/30 text-violet-400'
+                                            : 'bg-slate-900 border-slate-700 text-slate-500 hover:bg-slate-800'
+                                    }">
+                                <i class="fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'} text-[10px]"></i>
+                                <span>${col.label}</span>
+                            </button>
+                        `}).join('')}
+                    </div>
+                </div>
+            `;
+            tableWrapper.appendChild(tableHeader);
+
+            // Create table
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'table-wrapper max-h-[400px] overflow-y-auto';
+
+            const table = document.createElement('table');
+            table.className = 'w-full text-left border-collapse min-w-[700px]';
+
+            // Table head
+            const thead = document.createElement('thead');
+            thead.className = 'bg-slate-800/80 border-b border-slate-700/60 text-xs font-semibold text-slate-300 uppercase tracking-wider sticky top-0 z-10';
+            const theadRow = document.createElement('tr');
+            theadRow.innerHTML = renderReportHeader(visibleColumns);
+            thead.appendChild(theadRow);
+            table.appendChild(thead);
+
+            // Table body
+            const tbody = document.createElement('tbody');
+            tbody.className = 'divide-y divide-slate-800 text-sm text-slate-300';
+
+            paginatedRecords.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.className = 'order-row hover:bg-violet-600/10 transition-colors';
+
+                visibleColumns.forEach(col => {
+                    let value = record[col.key] || '-';
+                    let cellCls = 'p-4';
+                    if (col.cls) cellCls += ' ' + col.cls;
+
+                    const cell = document.createElement('td');
+                    cell.className = cellCls;
+
+                    if (col.key === '__src__') {
+                        cell.innerHTML = `<span class="px-2 py-0.5 bg-violet-500/10 text-violet-400 text-xs rounded border border-violet-500/20 font-medium">${value}</span>`;
+                    } else if (col.key === 'no') {
+                        cell.textContent = String(startIndex + index + 1).padStart(2, '0') + ' -';
+                        cell.classList.add('font-mono', 'font-medium', 'text-slate-400');
+                    } else if (col.key === 'status') {
+                        cell.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${record.statusBg} ${record.statusColor} border">${value}</span>`;
+                    } else {
+                        cell.textContent = value;
+                        if (col.key === 'date') {
+                            cell.classList.add('font-mono', 'text-xs');
+                        } else {
+                            cell.classList.add('text-xs', 'text-slate-300');
+                        }
+                    }
+
+                    row.appendChild(cell);
+                });
+
+                tbody.appendChild(row);
+            });
+
+            table.appendChild(tbody);
+            tableDiv.appendChild(table);
+            tableWrapper.appendChild(tableDiv);
+
+            // Add pagination controls
+            if (totalPages > 1 || tableFiltered.length > 0) {
+                const paginationDiv = document.createElement('div');
+                paginationDiv.className = 'p-4 border-t border-slate-700/50 bg-slate-800/80 flex justify-between items-center';
+                paginationDiv.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-xs text-slate-400">
+                            Page ${currentPage} of ${totalPages} (${tableFiltered.length} total)
+                        </div>
+                        <select onchange="changeTableItemsPerPage('${module}', this.value)" 
+                                class="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-violet-500">
+                            <option value="5" ${itemsPerPage === 5 ? 'selected' : ''}>5</option>
+                            <option value="10" ${itemsPerPage === 10 ? 'selected' : ''}>10</option>
+                            <option value="25" ${itemsPerPage === 25 ? 'selected' : ''}>25</option>
+                            <option value="50" ${itemsPerPage === 50 ? 'selected' : ''}>50</option>
+                            <option value="100" ${itemsPerPage === 100 ? 'selected' : ''}>100</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" 
+                                onclick="changeTablePage('${module}', ${currentPage - 1})"
+                                ${currentPage === 1 ? 'disabled' : ''}
+                                class="px-3 py-1 rounded border border-slate-700 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                            Previous
+                        </button>
+                        <div class="flex gap-1">
+                            ${Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+                                return `<button type="button" 
+                                                onclick="changeTablePage('${module}', ${pageNum})"
+                                                class="px-3 py-1 rounded border text-xs cursor-pointer transition-colors ${
+                                                    currentPage === pageNum
+                                                        ? 'bg-violet-600 text-white border-violet-600'
+                                                        : 'border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                                }">
+                                            ${pageNum}
+                                        </button>`;
+                            }).join('')}
+                        </div>
+                        <button type="button" 
+                                onclick="changeTablePage('${module}', ${currentPage + 1})"
+                                ${currentPage === totalPages ? 'disabled' : ''}
+                                class="px-3 py-1 rounded border border-slate-700 text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                            Next
+                        </button>
+                    </div>
+                `;
+                tableWrapper.appendChild(paginationDiv);
+            }
+
+            if (tablesContainer) tablesContainer.appendChild(tableWrapper);
+        });
+
+        await updateReportStats(allRecords);
+    } finally {
+        await hideSpinner();
+    }
 }
 
 // =============================================
 // UPDATE REPORT STATS
 // =============================================
-async function updateReportStats() {
-    const allRecords = await getReportData();
+async function updateReportStats(preloadedRecords) {
+    const allRecords = Array.isArray(preloadedRecords) ? preloadedRecords : await getReportData();
     const total = allRecords.length;
     const received = allRecords.filter(r => r.module === 'received-orders').length;
     const completed = allRecords.filter(r => r.module === 'completed-orders').length;
