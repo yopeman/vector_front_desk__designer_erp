@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "vector-erp",
+    "name": "Vector ERP",
     "slug": "vector-erp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -17,7 +17,9 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.vector.erp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -37,6 +39,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "fb49d38c-ffdb-432f-8d38-7b5d05b74f53"
+      }
+    },
+    "owner": "j16912031"
   }
 }
