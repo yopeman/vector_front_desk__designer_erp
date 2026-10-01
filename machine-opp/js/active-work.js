@@ -437,9 +437,9 @@ function awRenderPendingFiles() {
         <span class="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
             <i class="fa-solid ${productionFileTypeIcon(file.type || '')} text-cyan-400 text-[10px]"></i>
             <span class="max-w-[140px] truncate">${escapeHtml(file.name)}</span>
-            <button onclick="awRemovePendingFile(${index})" class="text-slate-400 hover:text-rose-400 transition-colors" title="Remove">
+            <!-- <button onclick="awRemovePendingFile(${index})" class="text-slate-400 hover:text-rose-400 transition-colors" title="Remove">
                 <i class="fa-solid fa-xmark text-[10px]"></i>
-            </button>
+            </button> -->
         </span>
     `).join('');
 }

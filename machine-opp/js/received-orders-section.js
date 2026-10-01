@@ -269,13 +269,13 @@ class ReceivedordersSection {
                                 </span>
                                 Attached Files
                             </span>
-                            <div class="flex items-center gap-2">
+                            <!-- <div class="flex items-center gap-2">
                                 <input type="file" id="det-file-input" multiple class="hidden" onchange="handleAttachedFiles(this, 'attached-files-list')">
                                 <button onclick="document.getElementById('det-file-input').click()" class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 text-xs py-2 px-3 rounded-lg transition-all flex items-center gap-2">
                                     <i class="fa-solid fa-upload"></i> Upload Files
                                 </button>
                                 <span id="det-file-count" class="text-xs text-slate-500">0 files selected</span>
-                            </div>
+                            </div> -->
                             <div id="attached-files-list" class="space-y-2">
                                 <div class="text-xs text-slate-500">No attached files</div>
                             </div>
@@ -311,7 +311,7 @@ class ReceivedordersSection {
                              </div>
 
                             <!-- Message Interaction Blocks Segment -->
-                            <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
+                            <!-- <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
                                  <span class="block text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                      <span class="w-6 h-6 rounded-lg bg-sky-500/10 flex items-center justify-center">
                                          <i class="fa-solid fa-comments text-sky-400 text-[10px]"></i>
@@ -324,7 +324,7 @@ class ReceivedordersSection {
                                  <button onclick="openProductionChat()" class="w-full bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-xs py-2.5 rounded-lg text-center font-medium transition-all flex items-center justify-center gap-2">
                                      <i class="fa-solid fa-industry text-emerald-400"></i> Production Chat
                                  </button>
-                             </div>
+                             </div> -->
 
                             <!-- Status Update Operations with Timeline -->
                             <div class="bg-slate-900/30 border border-slate-700/50 p-4 rounded-xl space-y-3">
@@ -490,9 +490,9 @@ function handleAttachedFiles(input, listId) {
                     <span class="text-xs text-slate-300 truncate max-w-[200px]">${file.name}</span>
                     <span class="text-[10px] text-slate-500">(${formatFileSize(file.size)})</span>
                 </div>
-                <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
+                <!-- <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
                     <i class="fa-solid fa-xmark text-xs"></i>
-                </button>
+                </button> -->
             `;
             listElement.appendChild(fileItem);
         });

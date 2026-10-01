@@ -254,9 +254,9 @@ function renderDeliveryExistingFiles() {
                     <span class="text-sm text-slate-300">${file.name}</span>
                     <span class="text-xs text-slate-500">(${(file.file_size / 1024).toFixed(1)} KB)</span>
                 </div>
-                <button type="button" onclick="removeDeliveryExistingFile('${file.id}')" class="text-slate-400 hover:text-red-400 transition-colors">
+                <!-- <button type="button" onclick="removeDeliveryExistingFile('${file.id}')" class="text-slate-400 hover:text-red-400 transition-colors">
                     <i class="fa-solid fa-xmark"></i>
-                </button>
+                </button> -->
             </div>
         `).join('');
 }
@@ -293,9 +293,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="text-sm text-slate-300">${file.name}</span>
                             <span class="text-xs text-slate-500">(${(file.size / 1024).toFixed(1)} KB)</span>
                         </div>
-                        <button type="button" onclick="removeDeliveryNewFile(${index})" class="text-slate-400 hover:text-red-400 transition-colors">
+                        <!-- <button type="button" onclick="removeDeliveryNewFile(${index})" class="text-slate-400 hover:text-red-400 transition-colors">
                             <i class="fa-solid fa-xmark"></i>
-                        </button>
+                        </button> -->
                     </div>
                 `).join('');
         });

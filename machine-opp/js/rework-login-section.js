@@ -382,9 +382,9 @@ async function handleAttachedFiles(input, listId) {
                         <a href="${fileData.url}" target="_blank" class="text-xs text-slate-300 hover:text-blue-400 truncate max-w-[200px] transition-colors">${file.name}</a>
                         <span class="text-[10px] text-slate-500">(${formatFileSize(file.size)})</span>
                     </div>
-                    <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
+                    <!-- <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
                         <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
+                    </button> -->
                 `;
             } else {
                 fileItem.innerHTML = `
@@ -392,9 +392,9 @@ async function handleAttachedFiles(input, listId) {
                         <i class="fa-solid fa-file-exclamation text-red-400 text-xs"></i>
                         <span class="text-xs text-red-400 truncate max-w-[200px]">${file.name} (upload failed)</span>
                     </div>
-                    <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
+                    <!-- <button type="button" onclick="removeFile(this, '${input.id}')" class="text-slate-500 hover:text-red-400 transition-colors">
                         <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
+                    </button> -->
                 `;
             }
             listElement.appendChild(fileItem);

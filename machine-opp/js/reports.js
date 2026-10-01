@@ -505,9 +505,9 @@ function renderSaveReportFiles() {
                 <span class="text-sm text-slate-200 truncate">${escapeHtml(file.name)}</span>
                 <span class="text-xs text-slate-400 shrink-0">(${(file.size / 1024).toFixed(1)} KB)</span>
             </div>
-            <button type="button" onclick="removeSaveReportFile(${index})" class="text-slate-400 hover:text-red-400 transition-colors">
+            <!-- <button type="button" onclick="removeSaveReportFile(${index})" class="text-slate-400 hover:text-red-400 transition-colors">
                 <i class="fa-solid fa-xmark"></i>
-            </button>
+            </button> -->
         </div>
     `).join('');
 }
