@@ -25,7 +25,7 @@ Request flow: `routes -> controllers -> services -> models -> Supabase`.
 
 ```bash
 npm install
-cp .env.example .env      # add SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+cp .env.example .env      # add SUPABASE_* + FIREBASE_* values
 ```
 
 Apply the migration to your Supabase project:
@@ -36,11 +36,7 @@ supabase db push           # or paste supabase/migrations/*.sql into the SQL edi
 
 This creates `public.push_devices` with a unique `token`, an index on `user_id`, and an `updated_at` trigger. The service-role key bypasses RLS; anon/authenticated only get `select`.
 
-The Firebase service account is resolved in this order:
-
-1. `FIREBASE_SERVICE_ACCOUNT_JSON` (inline JSON, useful for CI)
-2. `FIREBASE_SERVICE_ACCOUNT_PATH` (defaults to `./service-account.json`)
-3. `../vector-erp/vector-erp-9b02d-firebase-adminsdk-fbsvc-cedbebb6c8.json`
+Firebase credentials live in `.env` as three values copied from the service-account JSON: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` (single line, `\n` for newlines). No JSON file is read at runtime.
 
 ```bash
 npm run dev   # nodemon

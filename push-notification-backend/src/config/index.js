@@ -18,8 +18,9 @@ export const config = {
   },
 
   firebase: {
-    serviceAccountPath: process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
-    serviceAccountJson: process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+    projectId: required('FIREBASE_PROJECT_ID'),
+    clientEmail: required('FIREBASE_CLIENT_EMAIL'),
+    privateKey: required('FIREBASE_PRIVATE_KEY'),
   },
 
   notification: {
