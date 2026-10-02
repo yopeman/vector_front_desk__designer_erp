@@ -37,7 +37,6 @@ function buildNotification(dbChange) {
       return {
         title: `New item ${record.name} are created`,
         body: `New item ${record.name} are created with:\n${formatUnits(record)}`,
-        data: { url: '/items' },
       };
     }
     case 'messages':
@@ -49,7 +48,6 @@ function buildNotification(dbChange) {
         ? {
             title: 'Payment received',
             body: `Payment recorded for ${dbChange.record?.amount ?? 'order'}`,
-            data: { url: '/payments' },
           }
         : null;
     case 'production_orders':
@@ -57,7 +55,6 @@ function buildNotification(dbChange) {
         ? {
             title: 'New production order',
             body: `Production order ${dbChange.record?.order_number ?? ''} created`.trim(),
-            data: { url: '/production' },
           }
         : null;
     default:
