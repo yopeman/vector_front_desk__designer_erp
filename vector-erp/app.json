@@ -41,6 +41,7 @@
           "icon": "./assets/vector_logo.jpg",
           "color": "#00CED1",
           "defaultChannel": "default",
+          "sounds": ["./assets/notification_sound.mp3"],
           "enableBackgroundRemoteNotifications": true
         }
       ]

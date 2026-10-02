@@ -78,7 +78,7 @@ async function ensureAndroidChannel() {
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#208AEF',
-    // sound: 'default',
+    sound: 'notification_sound.mp3',
   });
 }
 

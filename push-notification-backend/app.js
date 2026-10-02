@@ -7,6 +7,7 @@ import { initFirebase, messaging } from './lib/firebase.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
+const SOUND_NAME = process.env.NOTIFICATION_SOUND ?? 'notification_sound.mp3';
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -72,13 +73,13 @@ app.post(
         priority,
         notification: {
           channelId: process.env.ANDROID_CHANNEL_ID ?? 'default',
-          sound: 'default',
+          sound: SOUND_NAME,
         },
       },
       apns: {
         payload: {
           aps: {
-            sound: 'default',
+            sound: SOUND_NAME,
             ...(body ? {} : { 'content-available': 1 }),
           },
         },
