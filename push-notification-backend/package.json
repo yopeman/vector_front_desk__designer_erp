@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "test:notify": "node scripts/send-test-notification.mjs"
   },
   "dependencies": {
     "dotenv": "^18.0.5",

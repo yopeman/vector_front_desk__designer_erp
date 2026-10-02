@@ -4,7 +4,7 @@
     "slug": "vector-erp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/vector-logo.jpg",
+    "icon": "./assets/vector_logo.jpg",
     "scheme": "vectorerp",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -13,9 +13,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/vector-logo.jpg",
-        "backgroundImage": "./assets/vector-logo.jpg",
-        "monochromeImage": "./assets/vector-logo.jpg"
+        "foregroundImage": "./assets/vector_logo.jpg",
+        "backgroundImage": "./assets/vector_logo.jpg",
+        "monochromeImage": "./assets/vector_logo.jpg"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.vector.erp",
@@ -23,7 +23,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/vector-logo.jpg"
+      "favicon": "./assets/vector_logo.jpg"
     },
     "plugins": [
       "expo-router",
@@ -31,14 +31,15 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./assets/vector-logo.jpg",
+          "image": "./assets/vector_logo.jpg",
           "imageWidth": 76
         }
       ],
       [
         "expo-notifications",
         {
-          "color": "#208AEF",
+          "icon": "./assets/vector_logo.jpg",
+          "color": "#00CED1",
           "defaultChannel": "default",
           "enableBackgroundRemoteNotifications": true
         }

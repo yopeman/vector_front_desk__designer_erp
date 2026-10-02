@@ -3,8 +3,14 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+const isAndroidEmulator =
+  Platform.OS === 'android' && Constants.isAndroid === true && !Constants.isDevice;
+
+// 10.0.2.2 is the Android emulator's alias for the host machine's loopback.
+const DEFAULT_API_BASE_URL = isAndroidEmulator ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
+
 const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') ?? 'http://10.0.2.2:4000';
+  process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '') ?? DEFAULT_API_BASE_URL;
 const ANDROID_CHANNEL_ID = process.env.EXPO_PUBLIC_ANDROID_CHANNEL_ID ?? 'default';
 
 Notifications.setNotificationHandler({
@@ -72,7 +78,7 @@ async function ensureAndroidChannel() {
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#208AEF',
-    sound: 'default',
+    // sound: 'default',
   });
 }
 
