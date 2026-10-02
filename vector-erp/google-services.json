@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "772075428564",
+    "project_id": "vector-erp-9b02d",
+    "storage_bucket": "vector-erp-9b02d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:772075428564:android:e71d355fb8d4a03bee7941",
+        "android_client_info": {
+          "package_name": "com.vector.erp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1ioiFbAfvYQIaZc0MMEMIQy5H-4Ld8TU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
