@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { WebView } from 'react-native-webview';
 
-const INITIAL_URL = 'https://yohanesdbb.vercel.app/';
+const INITIAL_URL = 'https://vectoradvert.com/erp/hr/#/ceo-dashboard';
 const MAX_PULL = 120; // How many pixels to pull for a full 360° rotation
 
 export type WebViewScreenProps = {
@@ -210,8 +210,8 @@ export function WebViewScreen({ onClose }: WebViewScreenProps) {
 }
 
 const colors = {
-  primary: '#208AEF',
-  secondary: '#fbad18',
+  primary: '#000000',
+  secondary: '#ffffff',
 } as const;
 
 const styles = StyleSheet.create({
