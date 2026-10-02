@@ -43,6 +43,23 @@ npm run dev   # nodemon
 npm start
 ```
 
+## Deploy to Vercel
+
+The service is a stateless Express app exposed as a single serverless function (`api/index.js`); `vercel.json` rewrites every non-`/api` path to it, so `/health`, `/devices`, `/notify`, `/change` work unchanged.
+
+```bash
+npm i -g vercel
+vercel link      # once, creates .vercel/
+vercel env add SUPABASE_URL production
+vercel env add SUPABASE_SERVICE_ROLE_KEY production
+vercel env add FIREBASE_PROJECT_ID production
+vercel env add FIREBASE_CLIENT_EMAIL production
+vercel env add FIREBASE_PRIVATE_KEY production   # single line, \n for newlines
+vercel --prod
+```
+
+Copy the same variables into the Preview environment for non-production deploys. `.env` is never uploaded. Node 22 is pinned in `package.json` because `firebase-admin@14` requires `>=22`.
+
 ## Endpoints
 
 | Method | Path | Body | Purpose |
