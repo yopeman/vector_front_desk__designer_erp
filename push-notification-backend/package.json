@@ -2,13 +2,14 @@
   "name": "push-notification-backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "app.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "test:notify": "node scripts/send-test-notification.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
     "firebase-admin": "^14.5.0"

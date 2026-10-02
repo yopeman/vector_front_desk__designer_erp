@@ -1,13 +1,40 @@
 # Push Notification Backend
 
-Express + `firebase-admin` service that stores device FCM tokens and pushes notifications to the `vector-erp` mobile app.
+Express service (MVC) that stores device FCM tokens in **Supabase** and pushes notifications to the `vector-erp` mobile app via `firebase-admin`.
+
+## Structure
+
+```
+src/
+  server.js                 # entrypoint: env -> firebase init -> listen
+  app.js                    # express app factory (json, routes, error handling)
+  config/                   # env, supabase client, firebase admin
+  models/                   # data access (Supabase queries)
+  services/                 # business logic
+  controllers/              # req/res handling
+  routes/                   # route table
+  middleware/               # asyncHandler, validation, error handler
+  utils/                    # HttpError helpers
+supabase/migrations/        # SQL for the device registry table
+scripts/                    # dev helpers
+```
+
+Request flow: `routes -> controllers -> services -> models -> Supabase`.
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env
+cp .env.example .env      # add SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
 ```
+
+Apply the migration to your Supabase project:
+
+```bash
+supabase db push           # or paste supabase/migrations/*.sql into the SQL editor
+```
+
+This creates `public.push_devices` with a unique `token`, an index on `user_id`, and an `updated_at` trigger. The service-role key bypasses RLS; anon/authenticated only get `select`.
 
 The Firebase service account is resolved in this order:
 
@@ -29,8 +56,9 @@ npm start
 | `GET` | `/devices` | `?userId=` | List registered devices |
 | `DELETE` | `/devices/:token` | – | Unregister a device |
 | `POST` | `/notify` | `{ title, body\|data, tokens?\|userId?\|topic? }` | Send a notification |
+| `POST` | `/change` | Supabase webhook payload | Translate a DB change into a notification |
 
-Tokens are persisted to `data/devices.json`. Tokens that FCM reports as invalid are pruned automatically on send.
+Tokens that FCM reports as invalid are pruned from `push_devices` automatically on send.
 
 ### Send an example notification
 
@@ -61,6 +89,16 @@ Targeting options:
 // topic
 { "title": "Hello", "body": "Topic", "topic": "staff" }
 ```
+
+### Database webhooks
+
+`POST /change` accepts a Supabase Postgres webhook body:
+
+```jsonc
+{ "type": "INSERT", "table": "items", "record": { "name": "Rose", "pcs": 10 } }
+```
+
+`src/services/webhook.service.js` maps `items`, `messages`, `payments`, and `production_orders` inserts to notifications; unmapped tables/change types return `{ ok: true, skipped: true }`. Add the webhook in Supabase Dashboard → Database → Webhooks, pointing at your deployed `/change` URL.
 
 ## App side
 
