@@ -1,22 +1,5 @@
 import { dispatchNotification } from './notification.service.js';
 
-const UNIT_LABELS = {
-  pcs: 'PCS',
-  care: 'Care',
-  gram: 'Gram',
-  kilo: 'Kilo',
-  pack: 'Pack',
-  liter: 'Liter',
-  meter: 'Meter',
-};
-
-function formatUnits(record = {}) {
-  return Object.entries(UNIT_LABELS)
-    .filter(([key]) => record[key] !== undefined && record[key] !== null)
-    .map(([key, label]) => `${label} = ${record[key]}`)
-    .join('\n');
-}
-
 /**
  * Maps a Supabase Postgres webhook payload to a notification. Returns null for
  * tables / change types that should not produce a push.
@@ -28,38 +11,67 @@ function buildNotification(dbChange) {
 
   const type = dbChange.type?.toLowerCase();
 
-  switch (dbChange.table) {
-    case 'items': {
-      if (type !== 'insert') {
-        return null;
-      }
-      const record = dbChange.record ?? {};
-      return {
-        title: `New item ${record.name} are created`,
-        body: `New item ${record.name} are created with:\n${formatUnits(record)}`,
-      };
-    }
-    case 'messages':
-      return type === 'insert'
-        ? { title: 'New message', body: dbChange.record?.body ?? '', data: { url: '/messages' } }
-        : null;
-    case 'payments':
-      return type === 'insert'
-        ? {
-            title: 'Payment received',
-            body: `Payment recorded for ${dbChange.record?.amount ?? 'order'}`,
-          }
-        : null;
-    case 'production_orders':
-      return type === 'insert'
-        ? {
-            title: 'New production order',
-            body: `Production order ${dbChange.record?.order_number ?? ''} created`.trim(),
-          }
-        : null;
+
+  switch (type) {
+    case 'insert':
+        return {
+          title: `New ${dbChange.table} are created`,
+          body: `New ${dbChange.table} are created with:\n${JSON.stringify(dbChange.record)}`,
+        };
+      break;
+
+    case 'update':
+          return {
+            title: `New ${dbChange.table} are updated`,
+            body: `New ${dbChange.table} are updated from:\n${JSON.stringify(dbChange.record)}\nto\n${JSON.stringify(dbChange.new_record)}`,
+          };
+      break;
+
+    case 'delete':
+        return {
+          title: `New ${dbChange.table} are deleted`,
+          body: `New ${dbChange.table} are deleted with:\n${JSON.stringify(dbChange.old_record)}`,
+        };
+      break;
+  
     default:
-      return null;
+      break;
   }
+
+  return null;
+
+  // switch (dbChange.table) {
+  //   case 'items': {
+  //     if (type !== 'insert') {
+  //       return null;
+  //     }
+  //     const record = dbChange.record ?? {};
+  //     return {
+  //       title: `New item ${record.name} are created`,
+  //       body: `New item ${record.name} are created with:\n${formatUnits(record)}`,
+  //     };
+  //   }
+  //   case 'messages':
+  //     return type === 'insert'
+  //       ? { title: 'New message', body: dbChange.record?.body ?? '', data: { url: '/messages' } }
+  //       : null;
+  //   case 'payments':
+  //     return type === 'insert'
+  //       ? {
+  //           title: 'Payment received',
+  //           body: `Payment recorded for ${dbChange.record?.amount ?? 'order'}`,
+  //         }
+  //       : null;
+  //   case 'production_orders':
+  //     return type === 'insert'
+  //       ? {
+  //           title: 'New production order',
+  //           body: `Production order ${dbChange.record?.order_number ?? ''} created`.trim(),
+  //         }
+  //       : null;
+  //   default:
+  //     return null;
+  // }
 }
 
 export async function handleDatabaseChange(dbChange) {
@@ -71,7 +83,7 @@ export async function handleDatabaseChange(dbChange) {
 
   const result = await dispatchNotification({
     ...notification,
-    userId: dbChange.userId ?? dbChange.record?.user_id ?? null,
+    userId: null,
   });
 
   return { ok: true, notification, result };
