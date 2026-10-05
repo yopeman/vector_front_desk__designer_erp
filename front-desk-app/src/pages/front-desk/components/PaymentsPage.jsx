@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
+const round2 = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+const formatAmount = (value) => round2(value || 0).toFixed(2);
+
 export default function PaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -33,6 +36,7 @@ export default function PaymentsPage() {
   const [newPaymentDocuments, setNewPaymentDocuments] = useState([]);
   const [newPaymentDocFileUrls, setNewPaymentDocFileUrls] = useState({});
   const [newPaymentNotes, setNewPaymentNotes] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchPayments();
@@ -100,15 +104,19 @@ export default function PaymentsPage() {
     //   return;
     // }
 
+    if (submitting) return;
+    setSubmitting(true);
+
     try {
       const invoice = invoices.find(inv => inv.id === selectedInvoice);
       if (!invoice) {
         alert('Invoice not found');
+        setSubmitting(false);
         return;
       }
 
-      const amountPaid = parseFloat(formData.amount_paid);
-      const grossAmount = invoice.grand_total || 0;
+      const amountPaid = round2(parseFloat(formData.amount_paid));
+      const grossAmount = round2(invoice.grand_total);
 
       // Upload documents and get file IDs
       const fileIds = [];
@@ -150,9 +158,9 @@ export default function PaymentsPage() {
       if (paymentsError) throw paymentsError;
 
       // Calculate total paid amount from all payments
-      const totalPaidFromExisting = existingPayments?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0;
-      const newTotalPaid = totalPaidFromExisting + amountPaid;
-      const newBalance = grossAmount - newTotalPaid;
+      const totalPaidFromExisting = round2(existingPayments?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0);
+      const newTotalPaid = round2(totalPaidFromExisting + amountPaid);
+      const newBalance = round2(grossAmount - newTotalPaid);
       const invoiceStatus = newBalance <= 0 ? 'Paid' : 'Partially Paid';
 
       // Insert payment
@@ -291,6 +299,8 @@ export default function PaymentsPage() {
     } catch (error) {
       console.error('Error creating payment:', error);
       alert('Error creating payment: ' + error.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -609,9 +619,9 @@ export default function PaymentsPage() {
                       <td className="p-4 font-medium">{payment.invoice?.invoice_no || '-'}</td>
                       <td className="p-4">{payment.client?.name || '-'}</td>
                       <td className="p-4">{payment.payment_date || '-'}</td>
-                      <td className="p-4 text-right">{payment.amount_paid || 0}</td>
-                      <td className="p-4 text-right">{payment.gross_amount || 0}</td>
-                      <td className="p-4 text-right">{payment.unpaid_amount || 0}</td>
+                      <td className="p-4 text-right">{formatAmount(payment.amount_paid)}</td>
+                      <td className="p-4 text-right">{formatAmount(payment.gross_amount)}</td>
+                      <td className="p-4 text-right">{formatAmount(payment.unpaid_amount)}</td>
                       <td className="p-4">{payment.payment_method || '-'}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -775,7 +785,7 @@ export default function PaymentsPage() {
                       <option value="">Select an invoice</option>
                       {invoices.map(invoice => (
                         <option key={invoice.id} value={invoice.id}>
-                          {invoice.invoice_no} - {invoice.order?.client?.name} (Unpaid Amount: {invoice.balance || 0})
+                          {invoice.invoice_no} - {invoice.order?.client?.name} (Unpaid Amount: {formatAmount(invoice.balance)})
                         </option>
                       ))}
                     </select>
@@ -789,8 +799,8 @@ export default function PaymentsPage() {
                           <>
                             <p>Invoice No: {invoices.find(inv => inv.id === selectedInvoice).invoice_no}</p>
                             <p>Client: {invoices.find(inv => inv.id === selectedInvoice).order?.client?.name}</p>
-                            <p>Grand Total: {invoices.find(inv => inv.id === selectedInvoice).grand_total}</p>
-                            <p>Unpaid Amount: {invoices.find(inv => inv.id === selectedInvoice).balance}</p>
+                            <p>Grand Total: {formatAmount(invoices.find(inv => inv.id === selectedInvoice).grand_total)}</p>
+                            <p>Unpaid Amount: {formatAmount(invoices.find(inv => inv.id === selectedInvoice).balance)}</p>
                           </>
                         )}
                       </div>
@@ -1043,9 +1053,18 @@ export default function PaymentsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium cursor-pointer"
+                  disabled={submitting}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium cursor-pointer"
                 >
-                  <i className="fa-solid fa-check mr-2"></i>Record Payment
+                  {submitting ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin mr-2"></i>Processing...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-check mr-2"></i>Record Payment
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -1156,15 +1175,15 @@ export default function PaymentsPage() {
                   <div className="bg-slate-50 p-4 rounded-lg">
                     <div className="flex justify-between text-sm mb-2">
                       <span className="font-semibold text-slate-600">Amount Paid:</span>
-                      <span className="text-slate-800 font-medium">{previewPayment.amount_paid || 0}</span>
+                      <span className="text-slate-800 font-medium">{formatAmount(previewPayment.amount_paid)}</span>
                     </div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="font-semibold text-slate-600">Gross Amount:</span>
-                      <span className="text-slate-800">{previewPayment.gross_amount || 0}</span>
+                      <span className="text-slate-800">{formatAmount(previewPayment.gross_amount)}</span>
                     </div>
                     <div className="flex justify-between text-sm mb-2">
                       <span className="font-semibold text-slate-600">Unpaid Amount:</span>
-                      <span className="text-slate-800">{previewPayment.unpaid_amount || 0}</span>
+                      <span className="text-slate-800">{formatAmount(previewPayment.unpaid_amount)}</span>
                     </div>
                     <div className="flex justify-between text-sm font-bold text-lg border-t pt-2">
                       <span className="font-semibold text-slate-600">Invoice Status:</span>
