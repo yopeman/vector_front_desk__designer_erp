@@ -430,7 +430,7 @@ export default function DesignerPage() {
     try {
       const { data, error } = await supabase
         .from('production_orders')
-        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username), job_order:job_orders(job_no)')
+        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username), job_order:job_orders(job_no, invoice:invoices(order:orders(clients(name)))))')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -698,6 +698,12 @@ export default function DesignerPage() {
     },
   ];
 
+  const getProductionClientName = (order) => (
+    order?.orders?.clients?.name
+    || order?.job_order?.invoice?.order?.clients?.name
+    || ''
+  );
+
   const getReportData = (module) => {
     switch (module) {
       case 'My Tasks':
@@ -711,9 +717,17 @@ export default function DesignerPage() {
       case 'Production Files':
         return designs.filter(d => d.status === 'Completed').map(item => ({ ...item, _source: 'Production Files' }));
       case 'Send to Production':
-        return productionOrders.map(item => ({ ...item, _source: 'Send to Production' }));
+        return productionOrders.map(item => ({
+          ...item,
+          _source: 'Send to Production',
+          client_name: getProductionClientName(item),
+        }));
       case 'Active Work':
-        return productionOrders.filter(o => o.status === 'In Progress').map(item => ({ ...item, _source: 'Active Work' }));
+        return productionOrders.filter(o => o.status === 'In Progress').map(item => ({
+          ...item,
+          _source: 'Active Work',
+          client_name: getProductionClientName(item),
+        }));
       case 'Design Library':
         return designs.map(item => ({ ...item, _source: 'Design Library' }));
       default:
@@ -762,8 +776,8 @@ export default function DesignerPage() {
         { key: 'created_at', label: 'Created Date' },
       ],
       'Send to Production': [
-        { key: 'orders.order_no', label: 'Order No' },
-        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'job_order.job_no', label: 'Job Order No' },
+        { key: 'client_name', label: 'Client' },
         { key: 'material', label: 'Material' },
         { key: 'machines.name', label: 'Machine' },
         { key: 'status', label: 'Status' },
@@ -771,8 +785,8 @@ export default function DesignerPage() {
         { key: 'created_at', label: 'Created Date' },
       ],
       'Active Work': [
-        { key: 'orders.order_no', label: 'Order No' },
-        { key: 'orders.clients.name', label: 'Client' },
+        { key: 'job_order.job_no', label: 'Job Order No' },
+        { key: 'client_name', label: 'Client' },
         { key: 'material', label: 'Material' },
         { key: 'machines.name', label: 'Machine' },
         { key: 'status', label: 'Status' },
@@ -2585,7 +2599,7 @@ export default function DesignerPage() {
                             {order.job_order?.job_no || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
-                            {order.orders?.clients?.name || '-'}
+                            {getProductionClientName(order) || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {order.material} / {order.thickness} / {order.color}
@@ -2887,7 +2901,7 @@ export default function DesignerPage() {
                             {order.job_order?.job_no || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
-                            {order.orders?.clients?.name || '-'}
+                            {getProductionClientName(order) || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             <span className="flex items-center gap-2">
