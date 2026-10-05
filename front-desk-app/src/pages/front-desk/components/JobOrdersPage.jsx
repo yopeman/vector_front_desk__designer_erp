@@ -265,8 +265,10 @@ export default function JobOrdersPage() {
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Invoice No</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Collaboration</th>
-              <th className="p-4 text-left text-xs font-semibold text-slate-600">Order Status</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Start Time</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Delivery Time</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Expected Date</th>
+              <th className="p-4 text-left text-xs font-semibold text-slate-600">Order Status</th>
               <th className="p-4 text-left text-xs font-semibold text-slate-600">Delivery Status</th>
               <th className="p-4 text-center text-xs font-semibold text-slate-600">Actions</th>
             </tr>
@@ -274,7 +276,7 @@ export default function JobOrdersPage() {
           <tbody className="divide-y divide-slate-100 text-xs">
             {jobOrders.length === 0 ? (
               <tr>
-                <td colSpan="9" className="p-8 text-center text-slate-400">
+                <td colSpan="11" className="p-8 text-center text-slate-400">
                   No job orders found
                 </td>
               </tr>
@@ -286,6 +288,9 @@ export default function JobOrdersPage() {
                   <td className="p-4">{jobOrder.invoice?.invoice_no || '-'}</td>
                   <td className="p-4">{jobOrder.invoice?.order?.client?.name || '-'}</td>
                   <td className="p-4">{jobOrder.collaboration || '-'}</td>
+                  <td className="p-4">{jobOrder.start_time ? jobOrder.start_time.split('T')[0] : '-'}</td>
+                  <td className="p-4">{jobOrder.delivery_time ? jobOrder.delivery_time.split('T')[0] : '-'}</td>
+                  <td className="p-4">{jobOrder.expected_date || '-'}</td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       jobOrder.order_status === 'Completed' ? 'bg-green-100 text-green-700' :
@@ -295,7 +300,6 @@ export default function JobOrdersPage() {
                       {jobOrder.order_status}
                     </span>
                   </td>
-                  <td className="p-4">{jobOrder.expected_date || '-'}</td>
                   <td className="p-4">{jobOrder.delivery_status || '-'}</td>
                   <td className="p-4 text-center">
                     <button
