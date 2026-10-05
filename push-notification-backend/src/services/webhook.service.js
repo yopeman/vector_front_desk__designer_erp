@@ -1,7 +1,7 @@
 import { dispatchNotification } from './notification.service.js';
 
 const values = (k, record) => {
-  if (k === 'id') {
+  if (k === 'id' || k.endsWith('_id') || k.endsWith('_by')) {
     return record[k].split('-')[0]
   } else if (k.endsWith('_at')) {
     return new Date(record[k]).toLocaleString()
