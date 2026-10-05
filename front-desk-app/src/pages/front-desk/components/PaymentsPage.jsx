@@ -174,8 +174,12 @@ export default function PaymentsPage() {
       // Calculate total paid amount from all payments
       const totalPaidFromExisting = round2(existingPayments?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0);
       const newTotalPaid = round2(totalPaidFromExisting + amountPaid);
-      const newBalance = round2(grossAmount - newTotalPaid);
-      const invoiceStatus = newBalance <= 0 ? 'Paid' : 'Partially Paid';
+      const rawBalance = round2(grossAmount - newTotalPaid);
+      const newBalance = rawBalance > 0 ? rawBalance : 0;
+      const invoiceStatus =
+        newTotalPaid <= 0 ? 'Unpaid'
+        : newBalance === 0 ? 'Paid'
+        : 'Partially Paid';
 
       // Insert payment
       const { data: paymentData, error: paymentError } = await supabase
@@ -222,7 +226,7 @@ export default function PaymentsPage() {
         .update({
           paid_amount: newTotalPaid,
           balance: newBalance,
-          status: newBalance <= 0 ? 'Paid' : 'Partially Paid'
+          status: invoiceStatus
         })
         .eq('id', selectedInvoice);
 
@@ -260,7 +264,7 @@ export default function PaymentsPage() {
             grand_total: invoice.grand_total,
             paid_amount: newTotalPaid,
             balance: newBalance,
-            status: newBalance <= 0 ? 'Paid' : 'Partially Paid'
+            status: invoiceStatus
           }])
           .select()
           .single();
