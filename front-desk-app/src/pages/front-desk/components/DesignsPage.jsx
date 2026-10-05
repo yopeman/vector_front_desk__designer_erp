@@ -15,6 +15,7 @@ export default function DesignsPage() {
   const [fileUrls, setFileUrls] = useState({});
   const [versionFileUrls, setVersionFileUrls] = useState({});
   const [versionDropIndex, setVersionDropIndex] = useState(null);
+  const [docDropIndex, setDocDropIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
@@ -112,7 +113,7 @@ export default function DesignsPage() {
     try {
       const { data, error } = await supabase
         .from('orders')
-        .select('id, order_no')
+        .select('id, order_no, clients(name)')
         .eq('sales_type', 'from_design')
         .order('created_at', { ascending: false });
 
@@ -417,6 +418,38 @@ export default function DesignsPage() {
     if (files && files.length > 0) {
       e.preventDefault();
       setDesignVersionFile(index, files);
+    }
+  };
+
+  const setDocumentFile = (index, fileList) => {
+    const file = Array.from(fileList).find(f => f && f.name);
+    if (!file) return;
+    const newDocs = [...documents];
+    newDocs[index] = { ...newDocs[index], file };
+    setDocuments(newDocs);
+  };
+
+  const handleDocDrop = (e, index) => {
+    e.preventDefault();
+    setDocDropIndex(null);
+    setDocumentFile(index, e.dataTransfer.files);
+  };
+
+  const handleDocDragOver = (e, index) => {
+    e.preventDefault();
+    setDocDropIndex(index);
+  };
+
+  const handleDocDragLeave = (e) => {
+    e.preventDefault();
+    setDocDropIndex(null);
+  };
+
+  const handleDocPaste = (e, index) => {
+    const files = e.clipboardData?.files;
+    if (files && files.length > 0) {
+      e.preventDefault();
+      setDocumentFile(index, files);
     }
   };
 
@@ -762,7 +795,9 @@ export default function DesignsPage() {
                     >
                       <option value="">Select order</option>
                       {orders.map(order => (
-                        <option key={order.id} value={order.id}>{order.order_no}</option>
+                        <option key={order.id} value={order.id}>
+                          {order.order_no || 'No Order No'} - {order.clients?.name || 'Unknown Client'}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -918,29 +953,43 @@ export default function DesignsPage() {
                             className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
                           />
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1">
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Upload file (file chooser)</label>
-                            <input
-                              type="file"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                  const newDocs = [...documents];
-                                  newDocs[idx].file = file;
-                                  setDocuments(newDocs);
-                                }
-                              }}
-                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none bg-white"
-                            />
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Upload File</label>
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`flex-1 border-2 border-dashed rounded-lg p-3 transition-colors ${docDropIndex === idx ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}`}
+                              onDragEnter={(e) => handleDocDragOver(e, idx)}
+                              onDragOver={(e) => handleDocDragOver(e, idx)}
+                              onDragLeave={handleDocDragLeave}
+                              onDrop={(e) => handleDocDrop(e, idx)}
+                              onPaste={(e) => handleDocPaste(e, idx)}
+                              tabIndex={0}
+                            >
+                              <input
+                                type="file"
+                                onChange={(e) => {
+                                  setDocumentFile(idx, e.target.files);
+                                  e.target.value = '';
+                                }}
+                                className="w-full text-xs focus:outline-none bg-transparent cursor-pointer"
+                              />
+                              <p className="text-[10px] text-slate-400 mt-1">Drag &amp; drop a file here or paste (Ctrl+V)</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleSaveDocument(idx)}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium cursor-pointer border-none"
+                            >
+                              (+ save)
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleSaveDocument(idx)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium cursor-pointer border-none mt-5"
-                          >
-                            (+ save)
-                          </button>
+                          {doc.file && !doc.file_id && (
+                            <div className="flex items-center gap-2 bg-blue-50 p-2 rounded-lg mt-2">
+                              <i className="fa-solid fa-paperclip text-blue-600"></i>
+                              <span className="text-xs text-blue-700">{doc.file.name}</span>
+                              <span className="text-[10px] text-blue-400">(pending - click save)</span>
+                            </div>
+                          )}
                         </div>
                         {doc.file_id && (
                           <div className="flex items-center justify-between bg-green-50 p-2 rounded-lg">
