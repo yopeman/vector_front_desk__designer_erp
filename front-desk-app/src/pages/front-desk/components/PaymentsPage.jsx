@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 const round2 = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 const formatAmount = (value) => round2(value || 0).toFixed(2);
@@ -42,6 +43,19 @@ export default function PaymentsPage() {
     fetchPayments();
     fetchInvoices();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchPayments();
+      fetchInvoices();
+    },
+    {
+      tables: ['payments', 'invoices', 'orders', 'clients'],
+      pollMs: 30000,
+      channelName: 'payments',
+    }
+  );
 
   const fetchPayments = async () => {
     try {

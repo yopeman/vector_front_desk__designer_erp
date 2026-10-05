@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { setOpenProductionChat } from '../lib/productionChatState';
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 30000;
 
 export default function ProductionChatPanel({ productionOrderId, height = '480px' }) {
   const { profile } = useAuth();
@@ -88,7 +88,7 @@ export default function ProductionChatPanel({ productionOrderId, height = '480px
   useEffect(() => {
     if (!productionOrderId) return;
     const interval = setInterval(() => {
-      fetchCommunications();
+      if (!document.hidden) fetchCommunications();
     }, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [productionOrderId]);

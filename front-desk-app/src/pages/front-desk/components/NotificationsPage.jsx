@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import { getCurrentUserId } from '../../../lib/currentUser';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -42,6 +43,19 @@ export default function NotificationsPage() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchNotifications();
+      fetchReadNotifications();
+    },
+    {
+      tables: ['notifications', 'read_notifications'],
+      pollMs: 30000,
+      channelName: 'notifications',
+    }
+  );
 
   const fetchNotifications = async () => {
     try {

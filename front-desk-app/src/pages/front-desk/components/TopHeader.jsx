@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 import CalendarModal from './CalendarModal';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: customMenuItems }) {
   const { profile } = useAuth();
@@ -84,6 +85,21 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
 
   const filteredMenuItems = menuItems.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Keep the header badge counts and dropdown previews fresh. This component is
+  // mounted on every page, so a 30s poll plus realtime keeps them accurate
+  // without a reload.
+  usePageAutoRefresh(
+    () => {
+      fetchNotifications();
+      fetchMessages();
+    },
+    {
+      tables: ['notifications', 'read_notifications', 'messages'],
+      pollMs: 30000,
+      channelName: 'topheader-badges',
+    }
   );
 
   const fetchNotifications = async () => {

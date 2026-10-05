@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import jsPDF from 'jspdf';
 import logo from '../../../assets/logo.png';
 import address from '../../../assets/address.png';
@@ -26,6 +27,18 @@ export default function SalesInvoicesPage() {
   useEffect(() => {
     fetchInvoices();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchInvoices();
+    },
+    {
+      tables: ['invoices', 'invoice_items', 'orders', 'clients', 'users', 'notes'],
+      pollMs: 30000,
+      channelName: 'salesinvoices',
+    }
+  );
 
   const fetchInvoices = async () => {
     try {

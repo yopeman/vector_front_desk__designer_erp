@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function FeedbackPage() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -17,6 +18,18 @@ export default function FeedbackPage() {
   useEffect(() => {
     fetchFeedbacks();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchFeedbacks();
+    },
+    {
+      tables: ['feedbacks'],
+      pollMs: 30000,
+      channelName: 'feedback',
+    }
+  );
 
   const fetchFeedbacks = async () => {
     try {

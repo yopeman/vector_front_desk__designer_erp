@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase';
-import useRealtimeTables from '../../../lib/useRealtimeTables';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 // ── Chart data processing helpers ──
 
@@ -47,7 +47,7 @@ function processClientTypes(clients) {
   return Object.entries(counts).map(([name, value]) => ({ name, value }));
 }
 
-export default function useDashboardData() {
+export default function useDashboardData({ active = true } = {}) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     // KpiGrid7
@@ -289,20 +289,23 @@ export default function useDashboardData() {
     }
   }, []);
 
+  // Only load (and auto-refresh) while the dashboard is the visible page.
   useEffect(() => {
+    if (!active) return;
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, active]);
 
-  // Realtime + gentle polling: keep dashboard KPIs fresh without page reloads
-  useRealtimeTables(
-    [
+  // Realtime + gentle polling, only while the dashboard is open.
+  usePageAutoRefresh(fetchData, {
+    tables: [
       'clients', 'items', 'orders', 'invoices', 'payments', 'site_visits',
       'job_orders', 'designs', 'installations', 'feedbacks', 'notifications',
       'notes', 'warranties', 'deliveries', 'test_proforma_invoices', 'production_orders',
     ],
-    () => fetchData({ silent: true }),
-    { debounceMs: 1000, pollMs: 30000, channelName: 'dashboard' }
-  );
+    pollMs: 30000,
+    channelName: 'dashboard',
+    enabled: active,
+  });
 
   return { loading, data, refetch: fetchData };
 }

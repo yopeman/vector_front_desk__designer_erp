@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import jsPDF from 'jspdf';
 import logo from '../../../assets/logo.png';
 import address from '../../../assets/address.png';
@@ -53,6 +54,19 @@ export default function TestProformaInvoicesPage({ onUpgradeToOrder }) {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchInvoices();
+      fetchItems();
+    },
+    {
+      tables: ['test_proforma_invoices', 'items', 'clients', 'orders', 'notes'],
+      pollMs: 30000,
+      channelName: 'testproformainvoices',
+    }
+  );
 
   const fetchInvoices = async () => {
     try {

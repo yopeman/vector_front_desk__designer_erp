@@ -127,13 +127,15 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
     };
   }, [design?.id]);
 
-  // Fallback polling for messages (in case realtime doesn't work)
+  // Fallback polling for messages (in case realtime doesn't work or the tab was
+  // in the background when a message arrived). 30s is enough given the
+  // realtime channel above already handles the live case.
   useEffect(() => {
     if (!design?.id) return;
 
     const interval = setInterval(() => {
-      fetchCommunications();
-    }, 5000); // Poll every 5 seconds
+      if (!document.hidden) fetchCommunications();
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [design?.id]);

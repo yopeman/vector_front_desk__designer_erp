@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState([]);
@@ -22,6 +23,18 @@ export default function ComplaintsPage() {
   useEffect(() => {
     fetchComplaints();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchComplaints();
+    },
+    {
+      tables: ['complaints'],
+      pollMs: 30000,
+      channelName: 'complaints',
+    }
+  );
 
   const fetchComplaints = async () => {
     try {

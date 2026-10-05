@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import { getCurrentUserId } from '../../../lib/currentUser';
 
 export default function NotesPage() {
@@ -22,6 +23,18 @@ export default function NotesPage() {
   useEffect(() => {
     fetchNotes();
   }, []);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchNotes();
+    },
+    {
+      tables: ['notes'],
+      pollMs: 30000,
+      channelName: 'notes',
+    }
+  );
 
   const fetchNotes = async () => {
     try {

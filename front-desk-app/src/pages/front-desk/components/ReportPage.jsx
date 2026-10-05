@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import jsPDF from 'jspdf';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
@@ -96,8 +97,20 @@ export default function ReportPage() {
     });
   }, [tableSearchQueries]);
 
-  const fetchData = async () => {
-    setLoading(true);
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    (opts = {}) => {
+      fetchData(opts);
+    },
+    {
+      tables: ['orders', 'clients', 'items', 'invoices', 'payments', 'job_orders', 'designs', 'production_orders', 'installations', 'deliveries', 'site_visits', 'users'],
+      pollMs: 30000,
+      channelName: 'report',
+    }
+  );
+
+  const fetchData = async (opts = {}) => {
+    if (!opts.silent) setLoading(true);
     try {
       let allData = [];
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function ItemsPage() {
   const [showModal, setShowModal] = useState(false);
@@ -28,6 +29,18 @@ export default function ItemsPage() {
   useEffect(() => {
     fetchItems();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchItems();
+    },
+    {
+      tables: ['items'],
+      pollMs: 30000,
+      channelName: 'items',
+    }
+  );
 
   const fetchItems = async () => {
     try {

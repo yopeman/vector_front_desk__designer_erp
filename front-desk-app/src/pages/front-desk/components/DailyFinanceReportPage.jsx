@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function DailyFinanceReportPage() {
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -19,8 +20,20 @@ export default function DailyFinanceReportPage() {
     fetchDailyData();
   }, [selectedDate]);
 
-  const fetchDailyData = async () => {
-    setLoading(true);
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    (opts = {}) => {
+      fetchDailyData(opts);
+    },
+    {
+      tables: ['invoices', 'orders', 'payments', 'clients'],
+      pollMs: 30000,
+      channelName: 'dailyfinancereport',
+    }
+  );
+
+  const fetchDailyData = async (opts = {}) => {
+    if (!opts.silent) setLoading(true);
     try {
       // Fetch sales invoices for the day by issue_date
       const { data: sales, error: salesError } = await supabase

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import { useAuth } from '../../../lib/auth';
 
 export default function DesignsPage() {
@@ -53,6 +54,21 @@ export default function DesignsPage() {
     fetchUsers();
     fetchFiles();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchDesigns();
+      fetchOrders();
+      fetchUsers();
+      fetchFiles();
+    },
+    {
+      tables: ['designs', 'design_versions', 'orders', 'clients', 'users', 'files'],
+      pollMs: 30000,
+      channelName: 'designs',
+    }
+  );
 
   const fetchDesigns = async () => {
     try {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import usePageAutoRefresh from '../../lib/usePageAutoRefresh';
 
 export default function ClientsPage() {
   const [view, setView] = useState('dashboard');
@@ -85,6 +86,18 @@ export default function ClientsPage() {
       sessionStorage.removeItem('upgradeLeadData');
     }
   }, []);
+
+  // Auto-refresh the client list while this page is open (realtime + 30s poll).
+  usePageAutoRefresh(
+    () => {
+      fetchClients();
+    },
+    {
+      tables: ['clients', 'payments', 'invoices', 'orders', 'client_contacts'],
+      pollMs: 30000,
+      channelName: 'clients',
+    }
+  );
 
   const fetchClients = async () => {
     try {

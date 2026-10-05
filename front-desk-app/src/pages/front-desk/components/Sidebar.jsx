@@ -37,8 +37,29 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
     };
 
     checkUnreadDesignChat();
-    const interval = setInterval(checkUnreadDesignChat, 5000);
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel('sidebar-unread-design-chat')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'design_communications' },
+        () => checkUnreadDesignChat()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'designs' },
+        () => checkUnreadDesignChat()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) checkUnreadDesignChat();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [profile?.id]);
 
   // Poll for unread production communications to show red dots
@@ -70,8 +91,29 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
     };
 
     checkUnreadProdChat();
-    const interval = setInterval(checkUnreadProdChat, 5000);
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel('sidebar-unread-production-chat')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'production_communications' },
+        () => checkUnreadProdChat()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'production_orders' },
+        () => checkUnreadProdChat()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) checkUnreadProdChat();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [profile?.id]);
 
   // Determine which menu contains the current page

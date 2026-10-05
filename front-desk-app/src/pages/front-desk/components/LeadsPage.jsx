@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function LeadsPage({ onUpgradeToClient }) {
   const [view, setView] = useState('dashboard'); // dashboard | form
@@ -49,6 +50,19 @@ export default function LeadsPage({ onUpgradeToClient }) {
       console.error('Error fetching paying client IDs:', error);
     }
   };
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchLeads();
+      fetchPayingClientIds();
+    },
+    {
+      tables: ['clients', 'payments', 'orders'],
+      pollMs: 30000,
+      channelName: 'leads',
+    }
+  );
 
   const fetchLeads = async () => {
     try {

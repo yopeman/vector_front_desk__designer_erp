@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import { useAuth } from '../../../lib/auth';
 import ProductionChatPanel from '../../../components/ProductionChatPanel';
 
@@ -50,9 +51,42 @@ export default function ActiveWorkPage() {
     };
 
     checkUnreadProdChat();
-    const interval = setInterval(checkUnreadProdChat, 5000);
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel('activeworkpage-unread-production-chat')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'production_communications' },
+        () => checkUnreadProdChat()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'production_orders' },
+        () => checkUnreadProdChat()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) checkUnreadProdChat();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [profile?.id]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchActiveProductionOrders();
+    },
+    {
+      tables: ['production_orders', 'production_communications', 'orders', 'machines', 'job_orders'],
+      pollMs: 30000,
+      channelName: 'activework',
+    }
+  );
 
   const fetchActiveProductionOrders = async () => {
     try {

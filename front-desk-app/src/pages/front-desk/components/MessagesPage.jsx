@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
 import { getCurrentUserId } from '../../../lib/currentUser';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function MessagesPage() {
   const { profile } = useAuth();
@@ -77,6 +78,21 @@ export default function MessagesPage() {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // Auto-refresh the open conversation (and the user list) while this page is
+  // open. The per-conversation realtime channel above already handles incoming
+  // messages; this covers the user list and anything realtime misses.
+  usePageAutoRefresh(
+    () => {
+      fetchUsers();
+      if (selectedUser) fetchMessages(selectedUser.id);
+    },
+    {
+      tables: ['messages', 'users', 'files'],
+      pollMs: 30000,
+      channelName: 'messages',
+    }
+  );
 
   const fetchUsers = async () => {
     try {

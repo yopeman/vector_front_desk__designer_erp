@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import jsPDF from 'jspdf';
 import logo from '../../../assets/logo.png';
 import address from '../../../assets/address.png';
@@ -73,6 +74,19 @@ export default function ProformaInvoicesPage({ preselectedOrderId }) {
       console.error('Error fetching orders:', error);
     }
   };
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchInvoices();
+      fetchClients();
+    },
+    {
+      tables: ['invoices', 'invoice_items', 'orders', 'clients', 'users', 'notes'],
+      pollMs: 30000,
+      channelName: 'proformainvoices',
+    }
+  );
 
   const fetchInvoices = async () => {
     try {

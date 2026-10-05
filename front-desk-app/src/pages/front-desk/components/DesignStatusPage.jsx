@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import { useAuth } from '../../../lib/auth';
 import DesignDetailModal from './DesignDetailModal';
 
@@ -32,9 +33,42 @@ export default function DesignStatusPage() {
     };
 
     checkUnreadDesignChat();
-    const interval = setInterval(checkUnreadDesignChat, 5000);
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel('designstatuspage-unread-design-chat')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'design_communications' },
+        () => checkUnreadDesignChat()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'designs' },
+        () => checkUnreadDesignChat()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) checkUnreadDesignChat();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [profile?.id]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchInProgressDesigns();
+    },
+    {
+      tables: ['designs', 'orders', 'clients', 'users', 'design_versions', 'design_communications'],
+      pollMs: 30000,
+      channelName: 'designstatus',
+    }
+  );
 
   const fetchInProgressDesigns = async () => {
     try {

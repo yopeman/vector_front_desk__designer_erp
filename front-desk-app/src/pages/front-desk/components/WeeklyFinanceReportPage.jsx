@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function WeeklyFinanceReportPage() {
   const [selectedWeek, setSelectedWeek] = useState(() => {
@@ -31,8 +32,20 @@ export default function WeeklyFinanceReportPage() {
     return { startDate, endDate };
   };
 
-  const fetchWeeklyData = async () => {
-    setLoading(true);
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    (opts = {}) => {
+      fetchWeeklyData(opts);
+    },
+    {
+      tables: ['invoices', 'orders', 'payments', 'clients'],
+      pollMs: 30000,
+      channelName: 'weeklyfinancereport',
+    }
+  );
+
+  const fetchWeeklyData = async (opts = {}) => {
+    if (!opts.silent) setLoading(true);
     try {
       const { startDate, endDate } = getWeekRange(selectedWeek);
       const startDateStr = startDate.toISOString().split('T')[0];

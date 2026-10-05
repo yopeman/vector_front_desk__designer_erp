@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function SiteVisitsPage() {
   const todayISO = () => {
@@ -49,6 +50,20 @@ export default function SiteVisitsPage() {
     fetchClients();
     fetchDepartments();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchSiteVisits();
+      fetchClients();
+      fetchDepartments();
+    },
+    {
+      tables: ['site_visits', 'clients', 'departments'],
+      pollMs: 30000,
+      channelName: 'sitevisits',
+    }
+  );
 
   const fetchSiteVisits = async () => {
     try {

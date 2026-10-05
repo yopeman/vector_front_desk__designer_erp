@@ -5,7 +5,7 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
-import useRealtimeTables from '../lib/useRealtimeTables';
+import usePageAutoRefresh from '../lib/usePageAutoRefresh';
 import DesignDetailModal from './front-desk/components/DesignDetailModal';
 import ProductionOrderModal from './front-desk/components/ProductionOrderModal';
 import ProductionChatPanel from '../components/ProductionChatPanel';
@@ -40,6 +40,7 @@ export default function DesignerPage() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [fileUrls, setFileUrls] = useState({});
+  const fileUrlsRef = useRef({});
   const [showProductionOrderModal, setShowProductionOrderModal] = useState(false);
   const [productionOrders, setProductionOrders] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -106,7 +107,7 @@ export default function DesignerPage() {
     fetchProductionOrders();
   }, [user?.id]);
 
-  // Fetch unread production communications (only relevant to this designer's orders)
+  // Unread production chat badges (only for this designer's in-progress orders)
   useEffect(() => {
     if (!user?.id) return;
 
@@ -138,8 +139,29 @@ export default function DesignerPage() {
     };
 
     checkUnreadProductionChat();
-    const interval = setInterval(checkUnreadProductionChat, 5000);
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel('designer-unread-production-chat')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'production_communications' },
+        () => checkUnreadProductionChat()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'production_orders' },
+        () => checkUnreadProductionChat()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) checkUnreadProductionChat();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   // Fetch unread notification count and subscribe to realtime updates
@@ -194,6 +216,7 @@ export default function DesignerPage() {
     };
   }, [user?.id]);
 
+  // Unread design chat badges (only for this designer's in-progress designs)
   useEffect(() => {
     if (!user?.id) return;
 
@@ -225,30 +248,62 @@ export default function DesignerPage() {
     };
 
     checkUnreadDesignChat();
-    const interval = setInterval(checkUnreadDesignChat, 5000);
-    return () => clearInterval(interval);
+
+    const channel = supabase
+      .channel('designer-unread-design-chat')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'design_communications' },
+        () => checkUnreadDesignChat()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'designs' },
+        () => checkUnreadDesignChat()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) checkUnreadDesignChat();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
 
   const activeSectionRef = useRef(activeSection);
   activeSectionRef.current = activeSection;
 
-  const refreshSectionData = (section = activeSectionRef.current) => {
+  // Fetches only what the given section needs. Sections that render their own
+  // self-refreshing components (messages, notifications, notes, settings, ai
+  // agent) are intentionally left out.
+  const refreshSectionData = (opts = {}) => {
+    const section = activeSectionRef.current;
+
     if (section === 'my-tasks-section') {
-      fetchMyTasks();
+      fetchMyTasks(opts);
     } else if (section === 'customer-approval-section') {
-      fetchCustomerApprovalVersions();
+      fetchCustomerApprovalVersions(opts);
     } else if (section === 'new-requests-section' ||
                section === 'active-status-section' ||
                section === 'production-files-section' ||
                section === 'design-library-section') {
-      fetchDesigns();
+      fetchDesigns(opts);
     } else if (section === 'send-production-section' ||
                section === 'active-work-section') {
-      fetchProductionOrders();
+      fetchProductionOrders(opts);
+    } else if (section === 'reports-section') {
+      fetchSavedReports(opts);
+      fetchDesigns(opts);
+      fetchMyTasks(opts);
+      fetchProductionOrders(opts);
+      fetchCustomerApprovalVersions(opts);
     } else if (section === 'overview-section') {
-      fetchDesigns();
-      fetchMyTasks();
-      fetchProductionOrders();
+      fetchDesigns(opts);
+      fetchMyTasks(opts);
+      fetchProductionOrders(opts);
     }
   };
 
@@ -258,12 +313,16 @@ export default function DesignerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
 
-  // Realtime + gentle polling: keep the active section fresh without page reloads
-  useRealtimeTables(
-    ['designs', 'design_versions', 'production_orders', 'files'],
-    refreshSectionData,
-    { debounceMs: 1000, pollMs: 30000, channelName: 'designer' }
-  );
+  // Auto-refresh the active section while this page is open (realtime + 30s poll).
+  usePageAutoRefresh(refreshSectionData, {
+    tables: [
+      'designs', 'design_versions', 'production_orders', 'files',
+      'orders', 'clients', 'users', 'machines', 'job_orders',
+      'report_captions',
+    ],
+    pollMs: 30000,
+    channelName: 'designer',
+  });
 
   const fetchDesigns = async () => {
     try {
@@ -311,8 +370,6 @@ export default function DesignerPage() {
     }
 
     if (data) {
-      console.log('My tasks fetched:', data.length, 'tasks for user:', user.id);
-
       // Fetch attached files
       const allFileIds = data.flatMap(d => d.attached_file_ids || []);
       const { data: files } = await supabase
@@ -327,11 +384,13 @@ export default function DesignerPage() {
         .select('*, files(id, name, path)')
         .in('design_id', designIds);
 
-      // Generate signed URLs for files
-      const urls = {};
+      // Generate signed URLs for files, reusing ones we already have. This runs
+      // on every auto-refresh, so re-requesting every URL each time would be
+      // needlessly expensive (signed URLs are valid for an hour).
+      const urls = { ...fileUrlsRef.current };
       if (files) {
         for (const file of files) {
-          if (file.path) {
+          if (file.path && !urls[file.id]) {
             const url = await getFileUrl(file.path);
             if (url) {
               urls[file.id] = url;
@@ -345,7 +404,7 @@ export default function DesignerPage() {
       // Generate signed URLs for version files
       if (designVersions) {
         for (const version of designVersions) {
-          if (version.files?.path) {
+          if (version.files?.path && !urls[version.files.id]) {
             const url = await getFileUrl(version.files.path);
             if (url) {
               urls[version.files.id] = url;
@@ -353,6 +412,7 @@ export default function DesignerPage() {
           }
         }
       }
+      fileUrlsRef.current = urls;
       setFileUrls(urls);
 
       // Combine data
@@ -1055,8 +1115,8 @@ export default function DesignerPage() {
     }
   };
 
-  const fetchSavedReports = async () => {
-    setReportsLoading(true);
+  const fetchSavedReports = async (opts = {}) => {
+    if (!opts.silent) setReportsLoading(true);
     try {
       const { data, error } = await supabase
         .from('report_captions')
@@ -1149,7 +1209,6 @@ export default function DesignerPage() {
 
   async function getFileUrl(filePath) {
     try {
-      console.log('Attempting to get signed URL for:', filePath);
       const { data, error } = await supabase.storage
         .from('documents')
         .createSignedUrl(filePath, 3600); // 1 hour expiry
@@ -1163,10 +1222,8 @@ export default function DesignerPage() {
           console.error('Public URL error:', publicError);
           return null;
         }
-        console.log('Using public URL:', publicData.publicUrl);
         return publicData.publicUrl;
       }
-      console.log('Signed URL generated:', data.signedUrl);
       return data.signedUrl;
     } catch (error) {
       console.error('Error getting file URL:', error);

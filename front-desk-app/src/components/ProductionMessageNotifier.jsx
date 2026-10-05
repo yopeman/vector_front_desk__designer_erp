@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { getOpenProductionChat } from '../lib/productionChatState';
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 30000;
 
 export default function ProductionMessageNotifier() {
   const { profile } = useAuth();
@@ -117,9 +117,24 @@ export default function ProductionMessageNotifier() {
     };
 
     checkForNewMessages();
-    const interval = setInterval(checkForNewMessages, POLL_INTERVAL);
 
-    return () => clearInterval(interval);
+    const channel = supabase
+      .channel('production-communication-notifier')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'production_communications' },
+        () => checkForNewMessages()
+      )
+      .subscribe();
+
+    const interval = setInterval(() => {
+      if (!document.hidden) checkForNewMessages();
+    }, POLL_INTERVAL);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [profile?.id, profile?.role]);
 
   if (!notice) return null;

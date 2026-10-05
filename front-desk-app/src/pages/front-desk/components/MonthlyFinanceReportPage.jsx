@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function MonthlyFinanceReportPage() {
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -25,8 +26,20 @@ export default function MonthlyFinanceReportPage() {
     return { startDate, endDate };
   };
 
-  const fetchMonthlyData = async () => {
-    setLoading(true);
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    (opts = {}) => {
+      fetchMonthlyData(opts);
+    },
+    {
+      tables: ['invoices', 'orders', 'payments', 'clients'],
+      pollMs: 30000,
+      channelName: 'monthlyfinancereport',
+    }
+  );
+
+  const fetchMonthlyData = async (opts = {}) => {
+    if (!opts.silent) setLoading(true);
     try {
       const { startDate, endDate } = getMonthRange(selectedMonth);
       const startDateStr = startDate.toISOString().split('T')[0];

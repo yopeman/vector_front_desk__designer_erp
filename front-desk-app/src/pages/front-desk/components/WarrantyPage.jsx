@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function WarrantyPage() {
   const [warranties, setWarranties] = useState([]);
@@ -22,6 +23,18 @@ export default function WarrantyPage() {
   useEffect(() => {
     fetchWarranties();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchWarranties();
+    },
+    {
+      tables: ['warranties'],
+      pollMs: 30000,
+      channelName: 'warranty',
+    }
+  );
 
   const fetchWarranties = async () => {
     try {

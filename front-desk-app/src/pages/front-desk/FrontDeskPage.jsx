@@ -50,11 +50,10 @@ export default function FrontDeskPage() {
   const [preselectedOrderId, setPreselectedOrderId] = useState(null);
   const [prefillOrderData, setPrefillOrderData] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { loading, data } = useDashboardData();
+  const dashboardActive = currentPage === 'dashboard';
+  const { loading, data } = useDashboardData({ active: dashboardActive });
 
   const handleMenuClick = (page, orderId = null) => {
-    console.log('Menu clicked:', page, '- setting currentPage to:', page);
-    
     // Check if user is trying to navigate away from public reports without auth
     if (window.location.hash === '#/frontdesk-public-report' && page !== 'report') {
       if (!isFrontDesk) {
@@ -65,7 +64,6 @@ export default function FrontDeskPage() {
     
     setPreselectedOrderId(orderId);
     setCurrentPage(page);
-    console.log('currentPage set to:', page);
   };
 
   const handleUpgradeToOrder = (orderData) => {
@@ -102,8 +100,7 @@ export default function FrontDeskPage() {
           flexDirection: 'column',
           gap: '18px'
         }}>
-          {console.log('Rendering page:', currentPage, 'loading:', loading)}
-          {loading && currentPage === 'dashboard' ? (
+          {loading && dashboardActive ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 20px' }}>
               <div style={{
                 width: '40px',

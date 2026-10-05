@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 import { useAuth } from '../../../lib/auth';
 
 export default function DesignLibraryPage() {
@@ -16,9 +17,21 @@ export default function DesignLibraryPage() {
     fetchDesigns();
   }, []);
 
-  const fetchDesigns = async () => {
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    (opts = {}) => {
+      fetchDesigns(opts);
+    },
+    {
+      tables: ['designs', 'design_versions', 'orders', 'clients', 'users', 'files'],
+      pollMs: 30000,
+      channelName: 'designlibrary',
+    }
+  );
+
+  const fetchDesigns = async (opts = {}) => {
     try {
-      setLoading(true);
+      if (!opts.silent) setLoading(true);
       const { data, error } = await supabase
         .from('designs')
         .select('*, orders(order_no, clients(name)), assigned_designer:users(id, username)')

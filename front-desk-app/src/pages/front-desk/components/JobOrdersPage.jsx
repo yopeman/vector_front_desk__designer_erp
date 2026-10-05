@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function JobOrdersPage() {
   const todayISO = () => {
@@ -35,6 +36,19 @@ export default function JobOrdersPage() {
     fetchJobOrders();
     fetchInvoices();
   }, [currentPage, itemsPerPage]);
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchJobOrders();
+      fetchInvoices();
+    },
+    {
+      tables: ['job_orders', 'invoices', 'orders', 'clients'],
+      pollMs: 30000,
+      channelName: 'joborders',
+    }
+  );
 
   const fetchJobOrders = async () => {
     try {

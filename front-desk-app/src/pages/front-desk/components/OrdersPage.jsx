@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
+import usePageAutoRefresh from '../../../lib/usePageAutoRefresh';
 
 export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
   const [showModal, setShowModal] = useState(false);
@@ -98,6 +99,20 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
       console.error('Error fetching current user:', error);
     }
   };
+
+  // Auto-refresh while this page is open (realtime + interval poll).
+  usePageAutoRefresh(
+    () => {
+      fetchOrders();
+      fetchItems();
+      fetchDepartments();
+    },
+    {
+      tables: ['orders', 'order_items', 'items', 'clients', 'departments'],
+      pollMs: 30000,
+      channelName: 'orders',
+    }
+  );
 
   const fetchOrders = async () => {
     try {
