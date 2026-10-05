@@ -1,5 +1,32 @@
 import { dispatchNotification } from './notification.service.js';
 
+const values = (k, record) => {
+  if (k === 'id') {
+    return record[k].split('-')[0]
+  } else if (k.endsWith('_at')) {
+    return new Date(record[k]).toLocaleString()
+  }
+  return record[k]
+}
+
+const formatCreateRecord = (record) => {
+  const keys = Object.keys(record)
+  return keys.map(k => `${k} = ${values(k, record)}`).join('\n')
+}
+
+const formatUpdateRecord = (record, old_record) => {
+  const keys = Object.keys(record)
+  return keys.map(k => `${k}: ${values(k, old_record)} => ${values(k, record)}`).join('\n')
+}
+
+const formatDeleteRecord = (old_record) => {
+  const keys = Object.keys(old_record)
+  return keys.map(k => `${k} = ${values(k, old_record)}`).join('\n')
+}
+
+
+
+
 /**
  * Maps a Supabase Postgres webhook payload to a notification. Returns null for
  * tables / change types that should not produce a push.
@@ -16,21 +43,21 @@ function buildNotification(dbChange) {
     case 'insert':
         return {
           title: `New ${dbChange.table} are created`,
-          body: `New ${dbChange.table} are created with:\n${JSON.stringify(dbChange.record)}`,
+          body: `New ${dbChange.table} are created with:\n${formatCreateRecord(dbChange.record)}`,
         };
       break;
 
     case 'update':
           return {
             title: `New ${dbChange.table} are updated`,
-            body: `New ${dbChange.table} are updated from:\n${JSON.stringify(dbChange.record)}\nto\n${JSON.stringify(dbChange.new_record)}`,
+            body: `New ${dbChange.table} are updated with:\n${formatUpdateRecord(dbChange.record, dbChange.old_record)}`,
           };
       break;
 
     case 'delete':
         return {
           title: `New ${dbChange.table} are deleted`,
-          body: `New ${dbChange.table} are deleted with:\n${JSON.stringify(dbChange.old_record)}`,
+          body: `New ${dbChange.table} are deleted with:\n${formatDeleteRecord(dbChange.old_record)}`,
         };
       break;
   
