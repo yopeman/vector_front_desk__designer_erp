@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
 
-export default function DailyFinanceReportPage() {
-  const [selectedDate, setSelectedDate] = useState(() => {
+export default function MonthlyFinanceReportPage() {
+  const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}`;
   });
   const [loading, setLoading] = useState(false);
   const [salesData, setSalesData] = useState([]);
@@ -16,52 +15,67 @@ export default function DailyFinanceReportPage() {
   const [ordersData, setOrdersData] = useState([]);
 
   useEffect(() => {
-    fetchDailyData();
-  }, [selectedDate]);
+    fetchMonthlyData();
+  }, [selectedMonth]);
 
-  const fetchDailyData = async () => {
+  const getMonthRange = (monthStr) => {
+    const [year, month] = monthStr.split('-').map(Number);
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    return { startDate, endDate };
+  };
+
+  const fetchMonthlyData = async () => {
     setLoading(true);
     try {
-      // Fetch sales invoices for the day by issue_date
+      const { startDate, endDate } = getMonthRange(selectedMonth);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      // Fetch sales invoices for the month by issue_date
       const { data: sales, error: salesError } = await supabase
         .from('invoices')
         .select('*, order:orders(order_no, client:clients(name))')
-        .eq('issue_date', selectedDate)
+        .gte('issue_date', startDateStr)
+        .lte('issue_date', endDateStr)
         .eq('invoice_type', 'Sales Invoice');
 
       if (salesError) throw salesError;
       setSalesData(sales || []);
 
-      // Fetch payments for the day by payment_date
+      // Fetch payments for the month by payment_date
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
         .select('*, client:clients(name), invoice:invoices(invoice_no, order:orders(order_no, client:clients(name)))')
-        .eq('payment_date', selectedDate);
+        .gte('payment_date', startDateStr)
+        .lte('payment_date', endDateStr);
 
       if (paymentsError) throw paymentsError;
       setPaymentsData(payments || []);
 
-      // Fetch proforma invoices for the day by issue_date
+      // Fetch proforma invoices for the month by issue_date
       const { data: proforma, error: proformaError } = await supabase
         .from('invoices')
         .select('*, order:orders(order_no, client:clients(name))')
-        .eq('issue_date', selectedDate)
+        .gte('issue_date', startDateStr)
+        .lte('issue_date', endDateStr)
         .eq('invoice_type', 'Proforma');
 
       if (proformaError) throw proformaError;
       setProformaData(proforma || []);
 
-      // Fetch orders for the day by order_date
+      // Fetch orders for the month by order_date
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('*, client:clients(name)')
-        .eq('order_date', selectedDate);
+        .gte('order_date', startDateStr)
+        .lte('order_date', endDateStr);
 
       if (ordersError) throw ordersError;
       setOrdersData(orders || []);
 
     } catch (error) {
-      console.error('Error fetching daily data:', error);
+      console.error('Error fetching monthly data:', error);
     } finally {
       setLoading(false);
     }
@@ -85,29 +99,41 @@ export default function DailyFinanceReportPage() {
     };
   };
 
+  const groupByDate = (rows, dateField) => {
+    const groups = {};
+    rows.forEach((row) => {
+      const key = row[dateField] || 'Undated';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(row);
+    });
+    return Object.entries(groups).sort(([a], [b]) => (a < b ? -1 : 1));
+  };
+
   const totals = calculateTotals();
+  const { startDate, endDate } = getMonthRange(selectedMonth);
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-slate-800">Daily Finance Report</h2>
+        <h2 className="text-xl font-bold text-slate-800">Monthly Finance Report</h2>
       </div>
 
-      {/* Date Selector */}
+      {/* Month Selector */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 mb-6">
         <div className="flex gap-4 items-center">
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">Select Date</label>
+            <label className="block text-xs font-medium text-slate-700 mb-1">Select Month</label>
             <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
               className="border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
             />
           </div>
           <div className="flex-1">
             <p className="text-sm text-slate-600">
-              Report for: <span className="font-bold">{new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              Report for: <span className="font-bold">{startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</span>
+              {' '}({startDate.toLocaleDateString('en-US', { day: 'numeric' })} - {endDate.toLocaleDateString('en-US', { day: 'numeric' })})
             </p>
           </div>
         </div>
@@ -155,6 +181,7 @@ export default function DailyFinanceReportPage() {
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Invoice No</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Order No</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Issue Date</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Amount</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
                 </tr>
@@ -162,7 +189,7 @@ export default function DailyFinanceReportPage() {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {salesData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-slate-400">No sales invoices found</td>
+                    <td colSpan="7" className="p-8 text-center text-slate-400">No sales invoices found</td>
                   </tr>
                 ) : (
                   salesData.map((sale, index) => (
@@ -171,11 +198,12 @@ export default function DailyFinanceReportPage() {
                       <td className="p-4">{sale.invoice_no || '-'}</td>
                       <td className="p-4">{sale.order?.order_no || '-'}</td>
                       <td className="p-4">{sale.order?.client?.name || '-'}</td>
+                      <td className="p-4">{sale.issue_date || '-'}</td>
                       <td className="p-4 font-medium">${Number(sale.grand_total ?? 0).toFixed(2)}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           sale.status === 'Paid' ? 'bg-green-100 text-green-700' :
-                          sale.status === 'Partial' ? 'bg-yellow-100 text-yellow-700' :
+                          sale.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-red-100 text-red-700'
                         }`}>
                           {sale.status}
@@ -199,6 +227,7 @@ export default function DailyFinanceReportPage() {
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Invoice No</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Payment Date</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Amount</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Method</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
@@ -207,14 +236,15 @@ export default function DailyFinanceReportPage() {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {paymentsData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-slate-400">No payments found</td>
+                    <td colSpan="7" className="p-8 text-center text-slate-400">No payments found</td>
                   </tr>
                 ) : (
                   paymentsData.map((payment, index) => (
                     <tr key={payment.id} className="hover:bg-slate-50">
                       <td className="p-4 text-center">{index + 1}</td>
                       <td className="p-4">{payment.invoice?.invoice_no || '-'}</td>
-                      <td className="p-4">{payment.client?.name || '-'}</td>
+                      <td className="p-4">{payment.client?.name || payment.invoice?.order?.client?.name || '-'}</td>
+                      <td className="p-4">{payment.payment_date || '-'}</td>
                       <td className="p-4 font-medium">${Number(payment.amount_paid ?? 0).toFixed(2)}</td>
                       <td className="p-4">{payment.payment_method || '-'}</td>
                       <td className="p-4">
@@ -245,6 +275,7 @@ export default function DailyFinanceReportPage() {
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Invoice No</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Order No</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Issue Date</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Amount</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
                 </tr>
@@ -252,7 +283,7 @@ export default function DailyFinanceReportPage() {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {proformaData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-8 text-center text-slate-400">No proforma invoices found</td>
+                    <td colSpan="7" className="p-8 text-center text-slate-400">No proforma invoices found</td>
                   </tr>
                 ) : (
                   proformaData.map((proforma, index) => (
@@ -261,11 +292,12 @@ export default function DailyFinanceReportPage() {
                       <td className="p-4">{proforma.invoice_no || '-'}</td>
                       <td className="p-4">{proforma.order?.order_no || '-'}</td>
                       <td className="p-4">{proforma.order?.client?.name || '-'}</td>
+                      <td className="p-4">{proforma.issue_date || '-'}</td>
                       <td className="p-4 font-medium">${Number(proforma.grand_total ?? 0).toFixed(2)}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           proforma.status === 'Paid' ? 'bg-green-100 text-green-700' :
-                          proforma.status === 'Partial' ? 'bg-yellow-100 text-yellow-700' :
+                          proforma.status === 'Partially Paid' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-red-100 text-red-700'
                         }`}>
                           {proforma.status}
@@ -279,7 +311,7 @@ export default function DailyFinanceReportPage() {
           </div>
 
           {/* Orders Table */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-6">
             <div className="p-4 border-b border-slate-200">
               <h3 className="text-sm font-bold text-slate-800">Orders ({totals.ordersCount})</h3>
             </div>
@@ -289,6 +321,7 @@ export default function DailyFinanceReportPage() {
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Order No</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Order Date</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Amount</th>
                   <th className="p-4 text-left text-xs font-semibold text-slate-600">Status</th>
                 </tr>
@@ -296,7 +329,7 @@ export default function DailyFinanceReportPage() {
               <tbody className="divide-y divide-slate-100 text-xs">
                 {ordersData.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="p-8 text-center text-slate-400">No orders found</td>
+                    <td colSpan="6" className="p-8 text-center text-slate-400">No orders found</td>
                   </tr>
                 ) : (
                   ordersData.map((order, index) => (
@@ -304,7 +337,8 @@ export default function DailyFinanceReportPage() {
                       <td className="p-4 text-center">{index + 1}</td>
                       <td className="p-4">{order.order_no || '-'}</td>
                       <td className="p-4">{order.client?.name || '-'}</td>
-                      <td className="p-4 font-medium">${(order.total_amount || 0).toFixed(2)}</td>
+                      <td className="p-4">{order.order_date || '-'}</td>
+                      <td className="p-4 font-medium">${Number(order.total_amount ?? 0).toFixed(2)}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           order.status === 'Completed' ? 'bg-green-100 text-green-700' :
@@ -317,6 +351,67 @@ export default function DailyFinanceReportPage() {
                     </tr>
                   ))
                 )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Daily Breakdown */}
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="p-4 border-b border-slate-200">
+              <h3 className="text-sm font-bold text-slate-800">Daily Breakdown</h3>
+            </div>
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Date</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Orders</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Orders Amount</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Proforma</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Proforma Amount</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Sales</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Sales Amount</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Payments</th>
+                  <th className="p-4 text-left text-xs font-semibold text-slate-600">Payments Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {(() => {
+                  const ordersByDate = Object.fromEntries(groupByDate(ordersData, 'order_date'));
+                  const proformaByDate = Object.fromEntries(groupByDate(proformaData, 'issue_date'));
+                  const salesByDate = Object.fromEntries(groupByDate(salesData, 'issue_date'));
+                  const paymentsByDate = Object.fromEntries(groupByDate(paymentsData, 'payment_date'));
+                  const dates = [...new Set([
+                    ...Object.keys(ordersByDate),
+                    ...Object.keys(proformaByDate),
+                    ...Object.keys(salesByDate),
+                    ...Object.keys(paymentsByDate)
+                  ])].sort();
+
+                  if (dates.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan="9" className="p-8 text-center text-slate-400">No activity found</td>
+                      </tr>
+                    );
+                  }
+
+                  const sumBy = (rows, field) =>
+                    (rows || []).reduce((sum, row) => sum + Number(row[field] ?? 0), 0);
+
+                  return dates.map((date) => (
+                    <tr key={date} className="hover:bg-slate-50">
+                      <td className="p-4 font-medium">{date}</td>
+                      <td className="p-4">{ordersByDate[date]?.length || 0}</td>
+                      <td className="p-4">${sumBy(ordersByDate[date], 'total_amount').toFixed(2)}</td>
+                      <td className="p-4">{proformaByDate[date]?.length || 0}</td>
+                      <td className="p-4">${sumBy(proformaByDate[date], 'grand_total').toFixed(2)}</td>
+                      <td className="p-4">{salesByDate[date]?.length || 0}</td>
+                      <td className="p-4">${sumBy(salesByDate[date], 'grand_total').toFixed(2)}</td>
+                      <td className="p-4">{paymentsByDate[date]?.length || 0}</td>
+                      <td className="p-4">${sumBy(paymentsByDate[date], 'amount_paid').toFixed(2)}</td>
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           </div>

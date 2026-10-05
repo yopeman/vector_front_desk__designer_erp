@@ -30,6 +30,7 @@ import ComplaintsPage from './components/ComplaintsPage';
 import WarrantyPage from './components/WarrantyPage';
 import DailyFinanceReportPage from './components/DailyFinanceReportPage';
 import WeeklyFinanceReportPage from './components/WeeklyFinanceReportPage';
+import MonthlyFinanceReportPage from './components/MonthlyFinanceReportPage';
 import ReportPage from './components/ReportPage';
 import MessagesPage from './components/MessagesPage';
 import NotificationsPage from './components/NotificationsPage';
@@ -231,6 +232,11 @@ export default function FrontDeskPage() {
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
               <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Weekly Finance Report Page Loaded</h2>
               <WeeklyFinanceReportPage />
+            </div>
+          ) : currentPage === 'monthly finance report' ? (
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '16px' }}>Monthly Finance Report Page Loaded</h2>
+              <MonthlyFinanceReportPage />
             </div>
           ) : currentPage === 'report' ? (
             <div style={{ background: '#fff', padding: '20px', borderRadius: '12px' }}>

@@ -151,7 +151,8 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       submenu: [
         { name: 'Report', icon: 'fa-calendar-day' },
         { name: 'Daily Finance Report', icon: 'fa-coins' },
-        { name: 'Weekly Finance Report', icon: 'fa-chart-line' }
+        { name: 'Weekly Finance Report', icon: 'fa-chart-line' },
+        { name: 'Monthly Finance Report', icon: 'fa-calendar' }
       ] 
     },
     {

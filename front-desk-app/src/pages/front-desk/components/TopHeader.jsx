@@ -38,6 +38,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
     { name: 'Report', icon: 'fa-calendar-day', path: 'report' },
     { name: 'Daily Finance Report', icon: 'fa-coins', path: 'daily finance report' },
     { name: 'Weekly Finance Report', icon: 'fa-chart-line', path: 'weekly finance report' },
+    { name: 'Monthly Finance Report', icon: 'fa-calendar', path: 'monthly finance report' },
     { name: 'Messages', icon: 'fa-envelope', path: 'messages' },
     { name: 'Notifications', icon: 'fa-bell', path: 'notifications' },
     { name: 'Notes', icon: 'fa-sticky-note', path: 'notes' },
