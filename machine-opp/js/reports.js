@@ -76,67 +76,45 @@ async function getReportData() {
 
     // Add received orders
     ordersData.forEach(order => {
-        const orderDate = order.order_date ? new Date(order.order_date) : null;
-        const formattedDate = orderDate ? orderDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-        }) : '-';
+        const statusLabel = String(order.status || 'new')
+            .split('-')
+            .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+            .join(' ');
         records.push({
             date: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'order_date', 'date'])),
             created_at: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'order_date', 'date'])),
             module: 'received-orders',
             moduleLabel: 'Received Order',
-            order_date: formattedDate,
-            job_no: order.jobNum || order.orderNum || '-',
-            required_date: order.required_date || '-',
-            priority: order.priority || 'Medium',
-            total_amount: order.total_amount || '-',
-            paid_amount: order.paid_amount || '-',
-            status: order.status || 'New',
-            statusColor: order.status === 'Completed' ? 'text-emerald-400' : order.status === 'In Progress' ? 'text-amber-400' : 'text-slate-400',
-            statusBg: order.status === 'Completed' ? 'bg-emerald-500/10 border-emerald-500/20' : order.status === 'In Progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
+            date: order.date || '-',
+            task_type: order.taskType || '-',
+            job_no: order.orderNum || order.jobNum || '-',
+            designer: order.designer || '-',
+            title: order.title || '-',
+            priority: order.priority || 'normal',
+            status: statusLabel,
+            machine: order.machine || 'N/A',
+            statusColor: order.status === 'completed' ? 'text-emerald-400' : order.status === 'in-progress' ? 'text-amber-400' : 'text-slate-400',
+            statusBg: order.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : order.status === 'in-progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
         });
     });
 
-    // Add completed orders
-    // Fetch machines to get machine names
-    let completedMachineNames = {};
-    const completedMachineIds = [...new Set(completedOrdersData.map(o => o.machine_id).filter(Boolean))];
-    if (completedMachineIds.length > 0 && typeof supabase !== 'undefined') {
-        try {
-            const { data: machines } = await supabase
-                .from('machines')
-                .select('id, name')
-                .in('id', completedMachineIds);
-            
-            (machines || []).forEach(m => {
-                completedMachineNames[m.id] = m.name || 'Unknown Machine';
-            });
-        } catch (error) {
-            console.error('Error fetching machines:', error);
-        }
-    }
-
     completedOrdersData.forEach(order => {
-        const completedDate = order.completed_at ? new Date(order.completed_at) : null;
-        const formattedDate = completedDate ? completedDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-        }) : '-';
-        const machineName = order.machine_id ? (completedMachineNames[order.machine_id] || 'Unknown Machine') : '-';
         records.push({
-            date: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'completed_at', 'date'])),
+            date: order.date || '-',
             created_at: toReportDateValue(pickCreatedAt(order, ['created_at', 'createdAt', 'completed_at', 'date'])),
             module: 'completed-orders',
             moduleLabel: 'Completed Order',
-            completed_at: formattedDate,
-            task_type: order.task_type || '-',
-            machine_id: machineName,
+            task_type: order.taskType || '-',
+            job_no: order.orderNum || '-',
+            title: order.title || '-',
+            machine: order.machine || 'N/A',
             material: order.material || '-',
-            quality_status: order.quality_status || '-',
-            priority: order.priority || 'Medium',
+            thickness: order.thickness || '-',
+            color: order.color || '-',
+            length: order.length || '-',
+            width: order.width || '-',
+            area: order.area ?? '-',
+            quality: order.quality || '-',
             status: order.status || 'Completed',
             statusColor: 'text-emerald-400',
             statusBg: 'bg-emerald-500/10 border-emerald-500/20'
@@ -164,20 +142,27 @@ async function getReportData() {
         }
 
         reworkData.forEach(entry => {
-            const machineName = entry.machine_id ? (machineNames[entry.machine_id] || 'Unknown Machine') : '-';
+            const statusLabel = String(entry.status || 'new')
+                .split('-')
+                .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+                .join(' ');
+            const machineName = entry.machine_id
+                ? (machineNames[entry.machine_id] || entry.machine || 'N/A')
+                : (entry.machine || 'N/A');
             records.push({
-                date: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'date'])),
+                date: entry.date || '-',
                 created_at: toReportDateValue(pickCreatedAt(entry, ['created_at', 'createdAt', 'date'])),
                 module: 'rework',
                 moduleLabel: 'Rework Recording',
-                task_type: entry.task_type || '-',
-                machine_id: machineName,
+                task_type: entry.taskType || '-',
+                job_no: entry.jobNum || '-',
                 material: entry.material || '-',
-                quality_status: entry.quality_status || '-',
-                priority: entry.priority || 'Medium',
-                status: entry.status || 'New',
-                statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'In Progress' ? 'text-amber-400' : 'text-slate-400',
-                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'In Progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
+                thickness: entry.thickness || '-',
+                color: entry.color || '-',
+                machine: machineName,
+                status: statusLabel,
+                statusColor: entry.status === 'completed' ? 'text-emerald-400' : entry.status === 'in-progress' ? 'text-amber-400' : 'text-slate-400',
+                statusBg: entry.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/20' : entry.status === 'in-progress' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-slate-700/60 border-slate-600/40'
             });
         });
     }
