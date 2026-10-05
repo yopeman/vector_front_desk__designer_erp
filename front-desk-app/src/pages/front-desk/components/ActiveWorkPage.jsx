@@ -118,7 +118,7 @@ export default function ActiveWorkPage() {
   const filteredOrders = productionOrders.filter((order) => {
     const matchesSearch =
       (order.task_type?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (order.orders?.order_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (order.job_order?.job_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.orders?.clients?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.machines?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.designer?.username?.toLowerCase() || '').includes(searchQuery.toLowerCase());
@@ -184,7 +184,8 @@ export default function ActiveWorkPage() {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Order</th>
+                <th className="p-4 text-left text-xs font-semibold text-slate-600">Job No</th>
+                <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Task Type</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Material</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Machine</th>
@@ -207,9 +208,10 @@ export default function ActiveWorkPage() {
                       {unreadProdChatIds.has(order.id) && (
                         <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
                       )}
-                      {order.orders?.order_no || '-'}
+                      {order.job_order?.job_no || '-'}
                     </span>
                   </td>
+                  <td className="p-4">{order.orders?.clients?.name || '-'}</td>
                   <td className="p-4">{order.task_type || '-'}</td>
                   <td className="p-4">
                     {order.material || '-'}{order.thickness ? ` / ${order.thickness}` : ''}{order.color ? ` / ${order.color}` : ''}
@@ -258,7 +260,7 @@ export default function ActiveWorkPage() {
               <div>
                 <h2 className="text-xl font-bold text-slate-900">Active Work Details</h2>
                 <p className="text-sm text-slate-500">
-                  {selectedOrder.orders?.order_no || '-'} • {selectedOrder.material || '-'}
+                  {selectedOrder.job_order?.job_no || '-'} • {selectedOrder.material || '-'}
                 </p>
               </div>
               <button

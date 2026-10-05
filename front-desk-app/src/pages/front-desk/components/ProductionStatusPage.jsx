@@ -44,7 +44,7 @@ export default function ProductionStatusPage() {
     try {
       const { data, error } = await supabase
         .from('production_orders')
-        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username)')
+        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username), job_order:job_orders(job_no)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -117,7 +117,7 @@ export default function ProductionStatusPage() {
   const filteredOrders = productionOrders.filter(order => {
     const matchesSearch =
       (order.material?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (order.orders?.order_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (order.job_order?.job_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.orders?.clients?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.machines?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
       (order.designer?.username?.toLowerCase() || '').includes(searchQuery.toLowerCase());
@@ -196,7 +196,8 @@ export default function ProductionStatusPage() {
               <tr>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">#</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Task Type</th>
-                <th className="p-4 text-left text-xs font-semibold text-slate-600">Order</th>
+                <th className="p-4 text-left text-xs font-semibold text-slate-600">Job No</th>
+                <th className="p-4 text-left text-xs font-semibold text-slate-600">Client</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Material</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Machine</th>
                 <th className="p-4 text-left text-xs font-semibold text-slate-600">Designer</th>
@@ -215,8 +216,11 @@ export default function ProductionStatusPage() {
                   </td>
                   <td className="p-4 text-slate-600">
                     <span className="flex items-center gap-2">
-                      {order.orders?.order_no || '-'}
+                      {order.job_order?.job_no || '-'}
                     </span>
+                  </td>
+                  <td className="p-4 text-slate-600">
+                    {order.orders?.clients?.name || '-'}
                   </td>
                   <td className="p-4 text-slate-600">
                     {order.material || '-'}{order.thickness ? ` / ${order.thickness}` : ''}{order.color ? ` / ${order.color}` : ''}
@@ -317,10 +321,10 @@ export default function ProductionStatusPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Order Number</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Job No</label>
                   <input
                     type="text"
-                    value={selectedOrder.orders?.order_no || '-'}
+                    value={selectedOrder.job_order?.job_no || '-'}
                     readOnly
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700"
                   />
