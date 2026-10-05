@@ -591,7 +591,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                         <p className="text-slate-800">{client.company_name}</p>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* <div className="grid grid-cols-2 gap-2">
                       <div>
                         <span className="font-medium text-slate-500">Phone:</span>
                         <p className="text-slate-800">{client.phone || '-'}</p>
@@ -616,7 +616,7 @@ export default function DesignDetailModal({ design, onClose, selectedVersion }) 
                         <span className="font-medium text-slate-500">Status:</span>
                         <p className="text-slate-800">{client.status || '-'}</p>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 ) : (
                   <p className="text-xs text-slate-400 italic">No client information available</p>

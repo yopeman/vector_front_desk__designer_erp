@@ -98,7 +98,7 @@ export default function DesignsPage() {
         .from('orders')
         .select('id, order_no')
         .eq('sales_type', 'from_design')
-        .order('order_no', { ascending: true });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setOrders(data || []);
