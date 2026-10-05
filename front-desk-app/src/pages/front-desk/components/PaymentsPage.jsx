@@ -174,11 +174,44 @@ export default function PaymentsPage() {
       // Calculate total paid amount from all payments
       const totalPaidFromExisting = round2(existingPayments?.reduce((sum, p) => sum + (p.amount_paid || 0), 0) || 0);
       const newTotalPaid = round2(totalPaidFromExisting + amountPaid);
-      const rawBalance = round2(grossAmount - newTotalPaid);
-      const newBalance = rawBalance > 0 ? rawBalance : 0;
+
+      const isCredit = formData.payment_method === 'Credit';
+
+      if (!(amountPaid > 0) && !(isCredit && amountPaid === 0)) {
+        const zeroAmount = Number(formData.amount_paid) === 0;
+        alert(
+          zeroAmount && !isCredit
+            ? 'An amount of 0 is only allowed with the Credit payment method. Please change the payment method to Credit.'
+            : isCredit
+              ? 'Please enter an amount of 0 or more'
+              : 'Please enter a valid amount greater than 0'
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      // Remaining unpaid = least of invoice.balance and (gross_total - payments already recorded)
+      const remainingFromPayments = round2(grossAmount - totalPaidFromExisting);
+      const remainingFromInvoice = round2(invoice.balance);
+      const remainingBalance = Math.min(
+        remainingFromPayments > 0 ? remainingFromPayments : 0,
+        remainingFromInvoice > 0 ? remainingFromInvoice : 0
+      );
+
+      if (amountPaid > remainingBalance) {
+        alert(
+          remainingBalance <= 0
+            ? 'This invoice has no unpaid amount remaining.'
+            : `Amount paid cannot exceed the unpaid amount of ${formatAmount(remainingBalance)}`
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      const newBalance = round2(grossAmount - newTotalPaid);
       const invoiceStatus =
         newTotalPaid <= 0 ? 'Unpaid'
-        : newBalance === 0 ? 'Paid'
+        : newBalance <= 0 ? 'Paid'
         : 'Partially Paid';
 
       // Insert payment
