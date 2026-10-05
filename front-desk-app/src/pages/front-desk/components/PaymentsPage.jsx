@@ -113,11 +113,6 @@ export default function PaymentsPage() {
       return;
     }
 
-    // if (!formData.amount_paid || parseFloat(formData.amount_paid) <= 0) {
-    //   alert('Please enter a valid amount');
-    //   return;
-    // }
-
     if (submitting) return;
     setSubmitting(true);
 
