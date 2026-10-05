@@ -2565,6 +2565,7 @@ export default function DesignerPage() {
                       <tr>
                         <th className="px-4 py-3 font-semibold text-slate-600">Task Type</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Job Order No</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Client</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Material</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Machine</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Designer</th>
@@ -2582,6 +2583,9 @@ export default function DesignerPage() {
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {order.job_order?.job_no || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.orders?.clients?.name || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {order.material} / {order.thickness} / {order.color}
@@ -2862,6 +2866,8 @@ export default function DesignerPage() {
                     <thead className="bg-slate-50 text-left">
                       <tr>
                         <th className="px-4 py-3 font-semibold text-slate-600">Task Type</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Job Order No</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Client</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Material</th>
                         <th className="px-4 py-3 font-semibold text-slate-600">Machine</th>
@@ -2876,6 +2882,12 @@ export default function DesignerPage() {
                         <tr key={order.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
                             {order.task_type || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.job_order?.job_no || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {order.orders?.clients?.name || '-'}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             <span className="flex items-center gap-2">
