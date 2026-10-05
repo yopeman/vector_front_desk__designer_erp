@@ -19,7 +19,7 @@ class MessagesSection {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" style="min-height: calc(100vh - 280px);">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4" style="height: calc(100vh - 280px);">
                     <div class="lg:col-span-1 bg-slate-800/40 border border-slate-700/50 rounded-2xl flex flex-col overflow-hidden">
                         <div class="p-4 border-b border-slate-700/40">
                             <div class="relative">
