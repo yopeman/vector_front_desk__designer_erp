@@ -875,7 +875,7 @@ export default function OrdersPage({ onNavigateToProforma, prefillOrderData }) {
                       className="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none bg-white"
                     >
                       <option value="direct_sales">Direct Sales</option>
-                      <option value="from_design">From Design</option>
+                      <option value="from_design">For Design</option>
                     </select>
                   </div>
                 </div>
