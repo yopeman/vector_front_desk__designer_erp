@@ -727,14 +727,13 @@ const AIAgent = (function() {
   function chatBodyHTML() {
     if (S.humanize) {
       const talking = S.sending || Boolean(S.speakingId);
-      const gif = S.sending ? 'talk-ai-3.gif' : S.speakingId ? 'talk-ai-1.gif' : 'talk-ai-2.gif';
       const lastMsg = S.messages[S.messages.length - 1];
       const speakingMsg = S.speakingId ? S.messages.find((m) => m.id === S.speakingId) : null;
       const subtitle = speakingMsg ? toPlainText(speakingMsg.text) : '';
       return `
       <div class="asst-body asst-human-body">
         <div class="asst-human-frame">
-          <img class="asst-human-gif ${talking ? 'talking' : ''}" src="${AI_IMG(gif)}" alt="" draggable="false" />
+          <img class="asst-human-gif ${talking ? 'talking' : ''}" src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80' alt="" draggable="false" />
           <div class="asst-human-scrim"></div>
           ${S.listening ? `
             <div class="asst-human-top" style="top:auto;bottom:18px;">
@@ -758,7 +757,7 @@ const AIAgent = (function() {
     if (showWelcome) {
       msgsInner = `
         <div class="asst-welcome">
-          ${S.showAvatar ? `<img class="asst-welcome-mascot" src="${AI_IMG('talk-ai-2.gif')}" alt="" />` : ''}
+          ${S.showAvatar ? `<img class="asst-welcome-mascot" src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80' alt="" />` : ''}
           <div class="asst-welcome-title">How can I help?</div>
           <div class="asst-welcome-sub">${escapeHtml(S.messages[0].text)}</div>
         </div>`;
@@ -768,7 +767,7 @@ const AIAgent = (function() {
         return `
         <div class="asst-row ${isUser ? 'asst-row-user' : ''}">
           ${!isUser && S.showAvatar ? `
-            <div class="asst-avatar-sm"><img src="${AI_IMG(S.speakingId === msg.id ? 'talk-ai-1.gif' : 'talk-ai-2.gif')}" alt="" /></div>` : ''}
+            <div class="asst-avatar-sm"><img src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80' alt="" /></div>` : ''}
           <div class="asst-bubble ${isUser ? 'asst-bubble-user' : 'asst-bubble-bot'} ${msg.error ? 'asst-bubble-error' : ''}">
             ${isUser ? `<div style="white-space:pre-wrap">${escapeHtml(msg.text)}</div>` : `<div class="asst-md">${mdToHtml(msg.text)}</div>`}
             <div class="asst-meta">
@@ -788,7 +787,7 @@ const AIAgent = (function() {
     if (S.sending) {
       msgsInner += `
         <div class="asst-row">
-          ${S.showAvatar ? `<div class="asst-avatar-sm"><img src="${AI_IMG('talk-ai-1.gif')}" alt="" /></div>` : ''}
+          ${S.showAvatar ? `<div class="asst-avatar-sm"><img src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80' alt="" /></div>` : ''}
           <div class="asst-bubble asst-bubble-bot asst-typing"><span class="asst-dot"></span><span class="asst-dot"></span><span class="asst-dot"></span></div>
         </div>`;
     }

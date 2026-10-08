@@ -3,10 +3,6 @@ import { useAuthStore } from '../../stores/authStore';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import talkAI1 from '../../assets/assistant/talk-ai-1.gif';
-import talkAI2 from '../../assets/assistant/talk-ai-2.gif';
-import talkAI3 from '../../assets/assistant/talk-ai-3.gif';
-
 const AI_API = (import.meta.env.VITE_AI_API_URL || 'http://localhost:8000/api/v1').replace(/\/+$/, '');
 
 const ACCEPTED = [
@@ -926,7 +922,7 @@ export default function FloatingAssistant({ onNavigate, embedded = false, onClos
           <div className="asst-human-frame">
             <img
               className={`asst-human-gif ${humanTalking ? 'talking' : ''}`}
-              src={sending ? talkAI3 : speakingId ? talkAI1 : talkAI2}
+              src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80'
               alt=""
               draggable={false}
             />
@@ -971,7 +967,7 @@ export default function FloatingAssistant({ onNavigate, embedded = false, onClos
                   {showAvatar && (
                     <img
                       className="asst-welcome-mascot"
-                      src={speakingId ? talkAI1 : talkAI2}
+                      src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80'
                       alt=""
                     />
                   )}
@@ -985,7 +981,7 @@ export default function FloatingAssistant({ onNavigate, embedded = false, onClos
                     <div key={msg.id} className={`asst-row ${isUser ? 'asst-row-user' : ''}`}>
                       {!isUser && showAvatar && (
                         <div className="asst-avatar-sm">
-                          <img src={speakingId === msg.id ? talkAI1 : talkAI2} alt="" />
+                          <img src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80' alt="" />
                         </div>
                       )}
                       <div className={`asst-bubble ${isUser ? 'asst-bubble-user' : 'asst-bubble-bot'} ${msg.error ? 'asst-bubble-error' : ''}`}>
@@ -1032,7 +1028,7 @@ export default function FloatingAssistant({ onNavigate, embedded = false, onClos
                 <div className="asst-row">
                   {showAvatar && (
                     <div className="asst-avatar-sm">
-                      <img src={talkAI1} alt="" />
+                      <img src='https://img.magnific.com/premium-vector/professional-business-man-avatar-vector-illustration-isolated-white-background_1322553-77267.jpg?semt=ais_hybrid&w=740&q=80' alt="" />
                     </div>
                   )}
                   <div className="asst-bubble asst-bubble-bot asst-typing">
