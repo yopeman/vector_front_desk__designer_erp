@@ -64,7 +64,7 @@ class InventorySection {
 
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     <!-- Action Buttons Row -->
-                    <div class="lg:col-span-12">
+                    <!-- <div class="lg:col-span-12">
                         <div class="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 shadow-lg hover:shadow-xl transition-shadow">
                             <div class="flex items-center gap-3 text-slate-400 text-xs">
                                 <i class="fa-solid fa-bolt text-amber-400"></i>
@@ -85,7 +85,7 @@ class InventorySection {
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                         
                     <!-- Inventory Table Panel -->
                     <div class="lg:col-span-12 space-y-4">

@@ -91,12 +91,12 @@ function renderInventoryTable() {
                     </span>
                 </td>
                 <td class="p-3 text-center">
-                    <button onclick="openMovementModal('in', '${item.id}')" class="text-emerald-400 hover:text-emerald-300 mr-2 transition-colors" title="Stock IN">
+                    <!-- <button onclick="openMovementModal('in', '${item.id}')" class="text-emerald-400 hover:text-emerald-300 mr-2 transition-colors" title="Stock IN">
                         <i class="fa-solid fa-arrow-down"></i>
-                    </button>
-                    <button onclick="openMovementModal('out', '${item.id}')" class="text-red-400 hover:text-red-300 mr-2 transition-colors" title="Stock OUT">
+                    </button> -->
+                    <!-- <button onclick="openMovementModal('out', '${item.id}')" class="text-red-400 hover:text-red-300 mr-2 transition-colors" title="Stock OUT">
                         <i class="fa-solid fa-arrow-up"></i>
-                    </button>
+                    </button> -->
                     <button onclick="editInventoryItem('${item.id}')" class="text-blue-400 hover:text-blue-300 mr-2 transition-colors" title="Edit">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </button>
