@@ -13,7 +13,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-const updateInventory = async ({userId, type, itemName, quantity}) => {
+const updateInventory = async ({userId, type, itemName, quantity, jobOrderNo}) => {
   console.log('Updating inventory...')
   console.log('User ID:', userId)
   console.log('Type:', type)
@@ -26,6 +26,7 @@ const updateInventory = async ({userId, type, itemName, quantity}) => {
     .select('*')
     .eq('user_id', userId)
     .eq('name', itemName)
+    .maybeSingle()
 
   let inventoryId = existingInventoryData?.id  
   if (!existingInventoryData) {
@@ -37,6 +38,12 @@ const updateInventory = async ({userId, type, itemName, quantity}) => {
     inventoryId = insertedInventoryData?.id
   }
 
+  const { data: jobOrdersData } = await supabase
+    .from('production_orders')
+    .select('*')
+    .eq('job_order_id', jobOrderNo)
+    .maybeSingle()
+
   const inventoryMovementType = type === 'in' ? 'in' : 'out'
   const quantityToUpdate = type === 'in' ? quantity : -quantity
 
@@ -44,7 +51,11 @@ const updateInventory = async ({userId, type, itemName, quantity}) => {
       inventory_id: inventoryId,
       movement_type: inventoryMovementType,
       quantity: quantityToUpdate,
-      user_id: userId
+      production_order_id: jobOrdersData?.id,
+      reference_type: `Job - ${jobOrderNo}`,
+      reference_id: jobOrdersData?.id,
+      performed_by: userId,
+      notes: `${jobOrderNo} - ${type} - ${quantity} - ${itemName}`
   })
 
   const { data: updatedInventoryData } = await supabase.from('inventory').update({
@@ -56,7 +67,8 @@ const updateInventory = async ({userId, type, itemName, quantity}) => {
 
 updateInventory({
   userId: "1fbb9459-bea3-415a-abd5-5348f1afecdc",
-  type: "in",
+  type: "out",
   itemName: "Plywood",
-  quantity: 10
+  quantity: 5,
+  jobOrderNo: "CS21"
 })
