@@ -12,6 +12,9 @@ class SidebarSection {
         await Auth.initPromise;
         const container = document.getElementById('sidebar-container');
         const currentUser = Auth.getCurrentUser();
+        const loggedInUserId = currentUser ? currentUser.id : '';
+        const loggedInUserName = currentUser ? currentUser.name : '';
+        const loggedInUserEmail = currentUser ? currentUser.email : '';
         const isFinishRole = currentUser && currentUser.role === 'finish';
         const isMachineOperator = currentUser && (currentUser.role === 'machine_operator' || currentUser.role === 'admin_machine_operator');
         const isAdminMachineOperator = currentUser && currentUser.role === 'admin_machine_operator';
@@ -82,7 +85,7 @@ class SidebarSection {
                             <span class="truncate font-medium">Machine Maintenance</span>
                         </button>` : ''}
                         <!-- <button onclick="switchTab('store-request')" id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all"> -->
-                        <button onclick="window.location.href = 'https://vectoradvert.com/erp/store'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
+                        <button onclick="window.location.href = 'https://vectoradvert.com/erp/store/#/staff-login?id=${loggedInUserId}&name=${loggedInUserName}&email=${loggedInUserEmail}'; " id="tab-store-request" class="nav-item w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-white rounded-xl transition-all">
                             <span class="active-indicator"></span>
                             <i class="fa-solid fa-boxes-stacked w-5 text-left text-base shrink-0"></i>
                             <span class="truncate font-medium">Store Request</span>
