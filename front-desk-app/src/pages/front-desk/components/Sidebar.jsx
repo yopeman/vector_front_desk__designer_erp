@@ -219,13 +219,6 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       submenu: null 
     },
     { 
-      name: 'HR Requests', 
-      icon: 'fa-user-tie', 
-      active: false,
-      submenu: null,
-      externalUrl: 'https://vectoradvert.com/erp/hr'
-    },
-    { 
       name: 'Settings', 
       icon: 'fa-gear', 
       active: false,

@@ -61,60 +61,6 @@ const Sidebar = ({ activeTab, onTabSwitch }) => {
               {tab.label}
             </button>
           ))}
-          
-          {/* Request Dropdown */}
-          {/* <div className="relative">
-            <button
-              onClick={() => setRequestDropdownOpen(!requestDropdownOpen)}
-              className={`w-full flex items-center justify-between gap-3.5 px-4 py-3 rounded-xl font-medium transition text-left ${
-                requestDropdownOpen || requestSubCategories.some(cat => activeTab === cat.id)
-                  ? 'bg-gradient-to-r from-primary-600 to-primary-600 text-white shadow-md shadow-primary-600/10'
-                  : 'text-slate-400 hover:bg-primary-800 hover:text-slate-100'
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <i className="fa-solid fa-file-lines text-base text-primary-400"></i>
-                <span>Request</span>
-              </div>
-              <i className={`fa-solid fa-chevron-down text-xs transition-transform ${requestDropdownOpen ? 'rotate-180' : ''}`}></i>
-            </button>
-            
-            {requestDropdownOpen && (
-              <div className="ml-4 mt-1 space-y-1">
-                {requestSubCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => {
-                      onTabSwitch(category.id)
-                      setRequestDropdownOpen(false)
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition text-left text-xs ${
-                      activeTab === category.id
-                        ? 'bg-primary-500/30 text-primary-300'
-                        : 'text-slate-500 hover:bg-primary-800 hover:text-slate-300'
-                    }`}
-                  >
-                    <i className={`fa-solid ${category.icon} text-sm`}></i>
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div> */}
-
-            <button
-              onClick={() => window.open('https://vectoradvert.com/erp/hr', '_self')}
-              className={`w-full flex items-center justify-between gap-3.5 px-4 py-3 rounded-xl font-medium transition text-left ${
-                requestDropdownOpen || requestSubCategories.some(cat => activeTab === cat.id)
-                  ? 'bg-gradient-to-r from-primary-600 to-primary-600 text-white shadow-md shadow-primary-600/10'
-                  : 'text-slate-400 hover:bg-primary-800 hover:text-slate-100'
-              }`}
-            >
-              <div className="flex items-center gap-3.5">
-                <i className="fa-solid fa-file-lines text-base text-primary-400"></i>
-                <span>HR Request</span>
-              </div>
-            </button>
         </nav>
       </div>
     </aside>

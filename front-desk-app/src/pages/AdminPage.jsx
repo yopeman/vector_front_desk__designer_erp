@@ -53,14 +53,6 @@ function AdminSidebar({ activeTab, onTabSwitch }) {
               {tab.label}
             </button>
           ))}
-
-          <button
-            onClick={() => window.open('https://vectoradvert.com/erp/hr', '_self')}
-            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl font-medium transition text-left text-slate-400 hover:bg-primary-800 hover:text-slate-100"
-          >
-            <i className="fa-solid fa-file-lines text-base text-primary-400"></i>
-            HR Request
-          </button>
         </nav>
       </div>
     </aside>

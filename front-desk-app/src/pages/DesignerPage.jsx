@@ -1500,13 +1500,6 @@ export default function DesignerPage() {
               <div className="flex items-center gap-3"><i className="fa-solid fa-sticky-note w-4"></i> Notes</div>
             </button>
             <button 
-            //   onClick={() => handleSectionChange('hr-requests-section')}
-              onClick={() => { window.location = 'https://vectoradvert.com/erp/hr' }}
-              className={`flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'hr-requests-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
-            >
-              <div className="flex items-center gap-3"><i className="fa-solid fa-users w-4"></i> HR Requests</div>
-            </button>
-            <button 
               onClick={() => handleSectionChange('profile-settings-section')}
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'profile-settings-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >

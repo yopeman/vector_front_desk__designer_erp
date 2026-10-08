@@ -39,10 +39,6 @@ const layoutHTML = `
     <div class="menu-node" id="node-notes" onclick="switchView('notes')">
         <h4>📒 Notes</h4><span>Workspace</span>
     </div>
-    <!-- <div class="menu-node" id="node-leave" onclick="switchView('leave')"> -->
-    <div class="menu-node" id="node-leave" onclick="window.location.href='https://vectoradvert.com/erp/hr'">
-        <h4>🏖️ Leave Request</h4><span>HR</span>
-    </div>
     <div class="menu-node" id="node-settings" onclick="switchView('settings')">
         <h4>⚙️ Settings</h4><span>Configuration</span>
     </div>
