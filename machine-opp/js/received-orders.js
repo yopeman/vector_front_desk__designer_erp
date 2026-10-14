@@ -439,10 +439,10 @@ async function openOrderDetails(index) {
     await populateOrderAttachments(order.id);
 
     // Set dimension values using dedicated IDs
-    document.getElementById('det-length').value = order.length || '600 mm';
-    document.getElementById('det-width').value = order.width || '400 mm';
-    document.getElementById('det-height').value = order.height || '12 mm';
-    document.getElementById('det-gram').value = order.gram || '150 g';
+    document.getElementById('det-length').value = order.length || '';
+    document.getElementById('det-width').value = order.width || '';
+    document.getElementById('det-height').value = order.height || '';
+    document.getElementById('det-gram').value = order.gram || '';
 
     // Set priority bar
     const isUrgent = order.priority === 'urgent';
