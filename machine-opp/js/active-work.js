@@ -36,16 +36,16 @@ async function fetchActiveWork() {
             started_at,
             completed_at,
             created_at,
+            machine_ids,
             users!designer_id(username),
-            machines(name, machine_type),
             orders(id, order_no, order_date),
             job_orders(job_no)
         `)
         .eq('job_type', 'received')
         .eq('status', 'In Progress');
 
-    if (machineIds) {
-        query = query.in('machine_id', machineIds);
+    if (machineIds && machineIds.length > 0) {
+        query = query.overlaps('machine_ids', machineIds);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -55,19 +55,27 @@ async function fetchActiveWork() {
         return;
     }
 
-    activeWorkData = (data || []).map((po, index) => ({
-        id: po.id,
-        orderId: po.orders?.id || null,
-        no: String(index + 1).padStart(2, '0'),
-        date: po.orders?.order_date || formatDate(po.created_at),
-        taskType: po.task_type || 'task',
-        jobNum: po.job_orders?.job_no || null,
-        orderNum: po.job_orders?.job_no || po.orders?.order_no || 'N/A',
-        designer: po.users?.username || 'Unknown',
-        title: po.job_orders?.job_no || po.orders?.order_no || 'Untitled Order',
-        priority: po.priority === 'High' ? 'urgent' : (po.priority === 'Medium' ? 'normal' : 'normal'),
-        machine: po.machines?.machine_type || po.machines?.name || 'N/A',
-        material: po.material || '',
+    const machines = typeof fetchMachines === 'function' ? await fetchMachines() : [];
+    const machinesMap = {};
+    (machines || []).forEach(m => { machinesMap[m.id] = m.name || m.machine_type; });
+
+    activeWorkData = (data || []).map((po, index) => {
+        const mIds = Array.isArray(po.machine_ids) ? po.machine_ids : (po.machine_id ? [po.machine_id] : []);
+        return {
+            id: po.id,
+            orderId: po.orders?.id || null,
+            no: String(index + 1).padStart(2, '0'),
+            date: po.orders?.order_date || formatDate(po.created_at),
+            taskType: po.task_type || 'task',
+            jobNum: po.job_orders?.job_no || null,
+            orderNum: po.job_orders?.job_no || po.orders?.order_no || 'N/A',
+            designer: po.users?.username || 'Unknown',
+            title: po.job_orders?.job_no || po.orders?.order_no || 'Untitled Order',
+            priority: po.priority === 'High' ? 'urgent' : (po.priority === 'Medium' ? 'normal' : 'normal'),
+            machine: mIds.map(id => machinesMap[id]).filter(Boolean).join(', ') || po.machines?.machine_type || po.machines?.name || 'N/A',
+            machine_ids: mIds,
+            machine_id: mIds[0] || '',
+            material: po.material || '',
         thickness: po.thickness || '',
         color: po.color || '',
         length: po.length || '',
@@ -78,7 +86,8 @@ async function fetchActiveWork() {
         attachedFileIds: po.attached_file_ids || [],
         startedAt: po.started_at || null,
         completedAt: po.completed_at || null
-    }));
+    };
+    });
 
     awUpdateSidebarCount();
 }

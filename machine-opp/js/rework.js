@@ -32,8 +32,8 @@ async function fetchReworkRecords() {
         .eq('job_type', 'rework')
         .in('status', ['New', 'In Progress']);
 
-    if (machineIds) {
-        query = query.in('machine_id', machineIds);
+    if (machineIds && machineIds.length > 0) {
+        query = query.overlaps('machine_ids', machineIds);
     }
 
     const { data, error } = await query.order('updated_at', { ascending: false });
@@ -54,7 +54,8 @@ async function fetchReworkRecords() {
         thickness: row.thickness || 'N/A',
         color: row.color || 'N/A',
         machine: row.machine || '',
-        machine_id: row.machine_id || '',
+        machine_ids: Array.isArray(row.machine_ids) ? row.machine_ids : (row.machine_id ? [row.machine_id] : []),
+        machine_id: (Array.isArray(row.machine_ids) && row.machine_ids[0]) || row.machine_id || '',
         length: row.length || 'N/A',
         width: row.width || 'N/A',
         height: row.height || 'N/A',
@@ -117,7 +118,7 @@ async function addReworkEntry() {
             material: material || 'N/A',
             thickness: thickness || 'N/A',
             color: color || 'N/A',
-            machine_id: machineId,
+            machine_ids: machineId ? [machineId] : [],
             length: length || 'N/A',
             width: width || 'N/A',
             height: height || 'N/A',
@@ -205,12 +206,17 @@ function renderRows(tbody) {
             statusBadge = '<span class="px-2 py-1 bg-blue-500/10 text-blue-400 text-xs font-bold rounded border border-blue-500/20">New</span>';
         }
 
-        // Find machine name by machine_id
+        // Find machine name by machine_ids or machine_id
         let machineName = 'N/A';
-        if (entry.machine_id && machinesCache.length > 0) {
-            const machine = machinesCache.find(m => m.id === entry.machine_id);
-            if (machine) {
-                machineName = machine.name;
+        const entryMachineIds = Array.isArray(entry.machine_ids) && entry.machine_ids.length > 0
+            ? entry.machine_ids
+            : (entry.machine_id ? [entry.machine_id] : []);
+        if (entryMachineIds.length > 0 && machinesCache.length > 0) {
+            const matchedNames = entryMachineIds
+                .map(id => machinesCache.find(m => m.id === id)?.name)
+                .filter(Boolean);
+            if (matchedNames.length > 0) {
+                machineName = matchedNames.join(', ');
             }
         } else if (entry.machine) {
             machineName = entry.machine;
@@ -334,9 +340,10 @@ async function editReworkEntry(entryId) {
                     .filter(m => m !== null);
             }
             
-            // Find and select the machine by matching the machine_id
-            if (entry.machine_id && machines.length > 0) {
-                const matchedMachine = machines.find(m => m.id === entry.machine_id);
+            // Find and select the machine by matching the machine_ids or machine_id
+            const mId = (Array.isArray(entry.machine_ids) && entry.machine_ids[0]) || entry.machine_id;
+            if (mId && machines.length > 0) {
+                const matchedMachine = machines.find(m => m.id === mId);
                 if (matchedMachine && machineSelect) {
                     machineSelect.value = matchedMachine.id;
                 }
@@ -501,7 +508,7 @@ async function updateReworkEntry() {
             material: material || 'N/A',
             thickness: thickness || 'N/A',
             color: color || 'N/A',
-            machine_id: machineId,
+            machine_ids: machineId ? [machineId] : [],
             length: length || 'N/A',
             width: width || 'N/A',
             height: height || 'N/A',

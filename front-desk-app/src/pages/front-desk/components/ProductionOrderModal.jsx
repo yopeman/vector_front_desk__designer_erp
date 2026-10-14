@@ -15,7 +15,8 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
     material: '',
     thickness: '',
     color: '',
-    machine_id: '',
+    machine_ids: [],
+    finishing_operations: [],
     order_id: '',
     job_order_id: '',
     length: '',
@@ -47,7 +48,12 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
         material: editOrder.material || '',
         thickness: editOrder.thickness || '',
         color: editOrder.color || '',
-        machine_id: editOrder.machine_id || '',
+        machine_ids: Array.isArray(editOrder.machine_ids)
+          ? editOrder.machine_ids
+          : (editOrder.machine_id ? [editOrder.machine_id] : []),
+        finishing_operations: Array.isArray(editOrder.finishing_operations)
+          ? editOrder.finishing_operations
+          : [],
         order_id: editOrder.order_id || '',
         job_order_id: editOrder.job_order_id || '',
         length: editOrder.length || '',
@@ -222,6 +228,12 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
     e.preventDefault();
     setLoading(true);
 
+    if (!formData.machine_ids || formData.machine_ids.length === 0) {
+      alert('Please select at least one machine.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Upload files and get their IDs
       const fileIds = [];
@@ -245,7 +257,8 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
           .update({
             order_id: formData.order_id || null,
             job_order_id: formData.job_order_id || null,
-            machine_id: formData.machine_id || null,
+            machine_ids: formData.machine_ids || [],
+            finishing_operations: formData.finishing_operations || [],
             material: formData.material,
             thickness: formData.thickness,
             color: formData.color,
@@ -270,7 +283,8 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
             order_id: formData.order_id || null,
             job_order_id: formData.job_order_id || null,
             designer_id: user.id,
-            machine_id: formData.machine_id || null,
+            machine_ids: formData.machine_ids || [],
+            finishing_operations: formData.finishing_operations || [],
             material: formData.material,
             thickness: formData.thickness,
             color: formData.color,
@@ -450,25 +464,117 @@ export default function ProductionOrderModal({ onClose, onSuccess, editOrder }) 
             </div>
           </div>
 
-          {/* Machine Selection */}
+          {/* Machine Selection (Multiple Allowed) */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Machine <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="machine_id"
-              value={formData.machine_id}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="">Select Machine</option>
-              {machines.map(machine => (
-                <option key={machine.id} value={machine.id}>
-                  {machine.name} ({machine.machine_type})
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-slate-700">
+                Machines <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-slate-500 font-medium">
+                {formData.machine_ids.length === 0
+                  ? 'Select one or more'
+                  : `${formData.machine_ids.length} machine${formData.machine_ids.length > 1 ? 's' : ''} selected`}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg max-h-48 overflow-y-auto">
+              {machines.map(machine => {
+                const isSelected = formData.machine_ids.includes(machine.id);
+                return (
+                  <button
+                    key={machine.id}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        machine_ids: isSelected
+                          ? prev.machine_ids.filter(id => id !== machine.id)
+                          : [...prev.machine_ids, machine.id]
+                      }));
+                    }}
+                    className={`flex items-center justify-between p-2.5 rounded-lg border text-left transition-all text-xs ${
+                      isSelected
+                        ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-sm font-medium ring-1 ring-blue-500'
+                        : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="truncate mr-2">
+                      <div className="font-semibold truncate">{machine.name}</div>
+                      <div className="text-[10px] text-slate-500 capitalize">{machine.machine_type || 'Machine'}</div>
+                    </div>
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                      isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'
+                    }`}>
+                      {isSelected && <i className="fa-solid fa-check text-[10px]" />}
+                    </div>
+                  </button>
+                );
+              })}
+              {machines.length === 0 && (
+                <div className="col-span-2 text-center py-4 text-xs text-slate-400">
+                  No active machines found
+                </div>
+              )}
+            </div>
+            {formData.machine_ids.length === 0 && (
+              <p className="text-[11px] text-amber-600 mt-1">Please select at least one machine for this production order.</p>
+            )}
+          </div>
+
+          {/* Finishing Operations */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-slate-700">
+                Finishing Operations
+              </label>
+              <span className="text-xs text-slate-500 font-medium">
+                {formData.finishing_operations.length === 0
+                  ? 'Optional (select applicable)'
+                  : `${formData.finishing_operations.length} selected`}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { label: 'Electrical wiring', icon: 'fa-bolt' },
+                { label: 'Measurement and installation', icon: 'fa-ruler-combined' },
+                { label: 'Welding', icon: 'fa-fire-burner' },
+                { label: 'Quality Finish', icon: 'fa-award' },
+              ].map(op => {
+                const isSelected = formData.finishing_operations.includes(op.label);
+                return (
+                  <button
+                    key={op.label}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        finishing_operations: isSelected
+                          ? prev.finishing_operations.filter(item => item !== op.label)
+                          : [...prev.finishing_operations, op.label]
+                      }));
+                    }}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-lg border text-left transition-all ${
+                      isSelected
+                        ? 'bg-blue-50/80 border-blue-500 text-blue-900 shadow-sm ring-1 ring-blue-500'
+                        : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                      isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      <i className={`fa-solid ${op.icon} text-xs`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold leading-tight">{op.label}</p>
+                    </div>
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                      isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'
+                    }`}>
+                      {isSelected && <i className="fa-solid fa-check text-[10px]" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Designer (Read Only) */}

@@ -125,7 +125,7 @@ async function getReportData() {
     if (typeof reworkData !== 'undefined' && reworkData.length > 0) {
         // Fetch machines to get machine names
         let machineNames = {};
-        const machineIds = [...new Set(reworkData.map(r => r.machine_id).filter(Boolean))];
+        const machineIds = [...new Set(reworkData.flatMap(r => (Array.isArray(r.machine_ids) ? r.machine_ids : (r.machine_id ? [r.machine_id] : []))).filter(Boolean))];
         if (machineIds.length > 0 && typeof supabase !== 'undefined') {
             try {
                 const { data: machines } = await supabase
@@ -146,8 +146,11 @@ async function getReportData() {
                 .split('-')
                 .map(s => s.charAt(0).toUpperCase() + s.slice(1))
                 .join(' ');
-            const machineName = entry.machine_id
-                ? (machineNames[entry.machine_id] || entry.machine || 'N/A')
+            const mIds = Array.isArray(entry.machine_ids) && entry.machine_ids.length > 0
+                ? entry.machine_ids
+                : (entry.machine_id ? [entry.machine_id] : []);
+            const machineName = mIds.length > 0
+                ? mIds.map(id => machineNames[id]).filter(Boolean).join(', ') || entry.machine || 'N/A'
                 : (entry.machine || 'N/A');
             records.push({
                 date: entry.date || '-',

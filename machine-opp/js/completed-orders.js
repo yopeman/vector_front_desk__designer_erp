@@ -59,17 +59,16 @@ async function fetchCompletedOrders() {
             note,
             attached_file_ids,
             quality_status,
-            machine_id,
+            machine_ids,
             users!designer_id(username),
-            machines(name, machine_type),
             orders(id, order_no, order_date),
             job_orders(job_no)
         `);
 
     let chain = query.eq('status', 'Completed');
 
-    if (machineIds) {
-        chain = chain.in('machine_id', machineIds);
+    if (machineIds && machineIds.length > 0) {
+        chain = chain.overlaps('machine_ids', machineIds);
     }
 
     const { data, error } = await chain.order('completed_at', { ascending: false });
@@ -114,7 +113,9 @@ async function fetchCompletedOrders() {
             taskType: row.task_type || 'task',
             orderNum: row.job_orders?.job_no || row.orders?.order_no || row.id.slice(0, 8),
             title: row.job_type || 'Untitled',
-            machine: machinesMap[row.machine_id] || row.machines?.machine_type || row.machines?.name || row.machine || 'N/A',
+            machine: (Array.isArray(row.machine_ids) ? row.machine_ids : (row.machine_id ? [row.machine_id] : [])).map(id => machinesMap[id]).filter(Boolean).join(', ') || row.machines?.machine_type || row.machines?.name || row.machine || 'N/A',
+            machine_ids: Array.isArray(row.machine_ids) ? row.machine_ids : (row.machine_id ? [row.machine_id] : []),
+            machine_id: (Array.isArray(row.machine_ids) && row.machine_ids[0]) || row.machine_id || '',
             material: row.material || 'N/A',
             thickness: row.thickness || 'N/A',
             color: row.color || 'N/A',

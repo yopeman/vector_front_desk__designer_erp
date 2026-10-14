@@ -56,16 +56,16 @@ async function fetchReceivedOrders() {
             started_at,
             completed_at,
             created_at,
+            machine_ids,
             users!designer_id(username),
-            machines(name, machine_type),
             orders(id, order_no, order_date),
             job_orders(job_no)
         `)
         .eq('job_type', 'received')
         .in('status', ['New', 'In Progress']);
 
-    if (machineIds) {
-        query = query.in('machine_id', machineIds);
+    if (machineIds && machineIds.length > 0) {
+        query = query.overlaps('machine_ids', machineIds);
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -75,30 +75,39 @@ async function fetchReceivedOrders() {
         return;
     }
 
-    ordersData = (data || []).map((po, index) => ({
-        id: po.id,
-        orderId: po.orders?.id || null,
-        no: String(index + 1).padStart(2, '0'),
-        date: po.orders?.order_date || formatDate(po.created_at),
-        created_at: po.created_at || null,
-        taskType: po.task_type || 'task',
-        jobNum: po.job_orders?.job_no || null,
-        orderNum: po.job_orders?.job_no || po.orders?.order_no || 'N/A',
-        designer: po.users?.username || 'Unknown',
-        title: po.job_orders?.job_no || po.orders?.order_no || 'Untitled Order',
-        priority: po.priority === 'High' ? 'urgent' : (po.priority === 'Medium' ? 'normal' : 'normal'),
-        machine: po.machines?.machine_type || po.machines?.name || 'N/A',
-        material: po.material || '',
-        thickness: po.thickness || '',
-        color: po.color || '',
-        length: po.length || '',
-        width: po.width || '',
-        height: po.height || '',
-        gram: po.gram || '',
-        status: (po.status || 'New').toLowerCase().replace(/\s+/g, '-'),
-        startedAt: po.started_at || null,
-        completedAt: po.completed_at || null
-    }));
+    const machines = typeof fetchMachines === 'function' ? await fetchMachines() : [];
+    const machinesMap = {};
+    (machines || []).forEach(m => { machinesMap[m.id] = m.name || m.machine_type; });
+
+    ordersData = (data || []).map((po, index) => {
+        const mIds = Array.isArray(po.machine_ids) ? po.machine_ids : (po.machine_id ? [po.machine_id] : []);
+        return {
+            id: po.id,
+            orderId: po.orders?.id || null,
+            no: String(index + 1).padStart(2, '0'),
+            date: po.orders?.order_date || formatDate(po.created_at),
+            created_at: po.created_at || null,
+            taskType: po.task_type || 'task',
+            jobNum: po.job_orders?.job_no || null,
+            orderNum: po.job_orders?.job_no || po.orders?.order_no || 'N/A',
+            designer: po.users?.username || 'Unknown',
+            title: po.job_orders?.job_no || po.orders?.order_no || 'Untitled Order',
+            priority: po.priority === 'High' ? 'urgent' : (po.priority === 'Medium' ? 'normal' : 'normal'),
+            machine: mIds.map(id => machinesMap[id]).filter(Boolean).join(', ') || po.machines?.machine_type || po.machines?.name || 'N/A',
+            machine_ids: mIds,
+            machine_id: mIds[0] || '',
+            material: po.material || '',
+            thickness: po.thickness || '',
+            color: po.color || '',
+            length: po.length || '',
+            width: po.width || '',
+            height: po.height || '',
+            gram: po.gram || '',
+            status: (po.status || 'New').toLowerCase().replace(/\s+/g, '-'),
+            startedAt: po.started_at || null,
+            completedAt: po.completed_at || null
+        };
+    });
 
     receivedOrdersLoaded = true;
     if (typeof updateSidebarCounts === 'function') updateSidebarCounts();
@@ -427,9 +436,9 @@ async function openOrderDetails(index) {
     // Populate all fields with order data
     document.getElementById('det-date').value = order.date;
     document.getElementById('det-title').value = `${order.title} (${order.orderNum})`;
-    document.getElementById('det-material').value = order.material || 'Premium Acrylic';
-    document.getElementById('det-thickness').value = order.thickness || '4mm';
-    document.getElementById('det-color').value = order.color || 'Transparent Glossy';
+    document.getElementById('det-material').value = order.material || '';
+    document.getElementById('det-thickness').value = order.thickness || '';
+    document.getElementById('det-color').value = order.color || '';
     document.getElementById('det-machine').value = order.machine;
     document.getElementById('det-designer').value = order.designer;
     document.getElementById('det-order-num').value = order.orderNum;
@@ -1696,8 +1705,8 @@ async function loadProductionUnreadIds() {
         .select('id')
         .eq('status', 'In Progress');
 
-    if (machineIds) {
-        orderQuery = orderQuery.in('machine_id', machineIds);
+    if (machineIds && machineIds.length > 0) {
+        orderQuery = orderQuery.overlaps('machine_ids', machineIds);
     }
 
     const { data: activeOrders, error: orderError } = await orderQuery;

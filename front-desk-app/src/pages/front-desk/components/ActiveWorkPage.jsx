@@ -90,14 +90,32 @@ export default function ActiveWorkPage() {
 
   const fetchActiveProductionOrders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('production_orders')
-        .select('*, orders(order_no, clients(name)), machines(name, machine_type), designer:users(username), job_order:job_orders(job_no)')
-        .eq('status', 'In Progress')
-        .order('created_at', { ascending: false });
+      const [{ data, error }, { data: machinesData }] = await Promise.all([
+        supabase
+          .from('production_orders')
+          .select('*, orders(order_no, clients(name)), designer:users(username), job_order:job_orders(job_no)')
+          .eq('status', 'In Progress')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('machines')
+          .select('id, name, machine_type')
+      ]);
 
       if (error) throw error;
-      setProductionOrders(data || []);
+      const machineMap = new Map((machinesData || []).map(m => [m.id, m]));
+      const mapped = (data || []).map(order => {
+        const ids = Array.isArray(order.machine_ids) ? order.machine_ids : (order.machine_id ? [order.machine_id] : []);
+        const assignedMachines = ids.map(id => machineMap.get(id)).filter(Boolean);
+        return {
+          ...order,
+          assigned_machines: assignedMachines,
+          machines: assignedMachines.length > 0 ? {
+            name: assignedMachines.map(m => m.name).join(', '),
+            machine_type: assignedMachines.map(m => m.machine_type).filter(Boolean).join(', ')
+          } : null
+        };
+      });
+      setProductionOrders(mapped);
     } catch (error) {
       console.error('Error fetching active production orders:', error);
     } finally {

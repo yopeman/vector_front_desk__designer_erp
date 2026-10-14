@@ -178,10 +178,14 @@ const fetchKpis = async () => {
 
   const machineBatches = {}
   productionOrders.forEach((p) => {
-    const key = p.machine_id
-    if (!key) return
-    if (!machineBatches[key]) machineBatches[key] = []
-    machineBatches[key].push(p)
+    const ids = Array.isArray(p.machine_ids) && p.machine_ids.length > 0
+      ? p.machine_ids
+      : (p.machine_id ? [p.machine_id] : [])
+    ids.forEach((key) => {
+      if (!key) return
+      if (!machineBatches[key]) machineBatches[key] = []
+      machineBatches[key].push(p)
+    })
   })
 
   const machineStatus = countBy(machines, 'status')
