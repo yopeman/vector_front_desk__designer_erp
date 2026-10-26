@@ -6,7 +6,6 @@
 --      'Electrical wiring', 'Measurement and installation', 'Welding', 'Quality Finish'
 --   2. Adds machine_ids (UUID[]) to support multiple machine assignment
 --   3. Backfills machine_ids from existing machine_id
---   4. Drops obsolete machine_id column and its index
 -- ============================================================
 
 -- 1. Add finishing_operations column to production_orders
@@ -40,13 +39,7 @@ BEGIN
     END IF;
 END $$;
 
--- 4. Drop the obsolete single machine_id index and foreign key / column
-DROP INDEX IF EXISTS idx_production_orders_machine_id;
-
-ALTER TABLE production_orders
-    DROP COLUMN IF EXISTS machine_id;
-
--- 5. Create GIN indexes for array containment and search performance
+-- 4. Create GIN indexes for array containment and search performance
 CREATE INDEX IF NOT EXISTS idx_production_orders_machine_ids 
     ON production_orders USING GIN (machine_ids);
 
