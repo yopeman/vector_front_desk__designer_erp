@@ -26,7 +26,7 @@ async function checkSupabaseConnection(name, connection) {
     // Perform a lightweight query (e.g., fetching a dummy selection or health check)
     // Replace 'your_table_name' with a valid table in your database, or just limit to 1 row
     const { data, error } = await connection
-      .from('test') 
+      .from('users') 
       .select('*')
       .limit(1)
 
@@ -35,6 +35,7 @@ async function checkSupabaseConnection(name, connection) {
     }
 
     console.log(`${name}: ✅ Supabase connection successful!`)
+    console.log({data})
   } catch (error) {
     console.error(`${name}: ❌ Supabase connection failed:`, error.message)
   }
