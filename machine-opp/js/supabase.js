@@ -1,6 +1,6 @@
 // Supabase client for Machine Operation ERP (vanilla JS)
-window.SUPABASE_URL = 'https://rjsbcqpxllsxsdudjojn.supabase.co';
-window.SUPABASE_ANON_KEY = 'sb_publishable_PMQ8RAtz4D15lAqk8dPONA_AH_aCIFk';
+window.SUPABASE_URL = 'https://frontdesk.vectoradvert.com';
+window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 window.AI_API_BASE_URL = 'https://vector-erp-ai-ms-app.vercel.app/api/v1';
 
 window.supabase = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
