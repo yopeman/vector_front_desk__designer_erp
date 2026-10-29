@@ -17,11 +17,181 @@ import TopHeader from './front-desk/components/TopHeader';
 import FloatingAssistant from './front-desk/components/FloatingAssistant';
 import './DesignerPage.css';
 
+function useDebounce(value, delay = 350) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+function Pagination({
+  currentPage,
+  totalCount,
+  itemsPerPage,
+  onPageChange,
+  onItemsPerPageChange,
+  itemName = 'items',
+}) {
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
+  const startItem = totalCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalCount);
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-t border-slate-200 bg-white">
+      <div className="text-xs text-slate-500">
+        Showing <span className="font-semibold text-slate-700">{startItem}</span>-
+        <span className="font-semibold text-slate-700">{endItem}</span> of{' '}
+        <span className="font-semibold text-slate-700">{totalCount}</span> {itemName}
+      </div>
+      <div className="flex items-center gap-2">
+        <select
+          value={itemsPerPage}
+          onChange={(e) => {
+            onItemsPerPageChange(Number(e.target.value));
+            onPageChange(1);
+          }}
+          className="border border-slate-200 rounded-lg px-2.5 py-1 text-xs outline-none bg-white text-slate-700 focus:ring-1 focus:ring-blue-500"
+        >
+          <option value={5}>5 per page</option>
+          <option value={10}>10 per page</option>
+          <option value={20}>20 per page</option>
+          <option value={50}>50 per page</option>
+          <option value={100}>100 per page</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => onPageChange(1)}
+          disabled={currentPage <= 1}
+          className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 transition"
+          title="First page"
+        >
+          <i className="fa-solid fa-angles-left"></i>
+        </button>
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 transition"
+          title="Previous page"
+        >
+          <i className="fa-solid fa-chevron-left"></i>
+        </button>
+        <span className="px-2 py-1 text-xs text-slate-600 font-medium">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 transition"
+          title="Next page"
+        >
+          <i className="fa-solid fa-chevron-right"></i>
+        </button>
+        <button
+          type="button"
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage >= totalPages}
+          className="px-2.5 py-1 text-xs border border-slate-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 transition"
+          title="Last page"
+        >
+          <i className="fa-solid fa-angles-right"></i>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DesignerPage() {
   const { user, profile, signOut, isDesigner } = useAuth();
-  const [designs, setDesigns] = useState([]);
-  const [myTasks, setMyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Dashboard counts
+  const [counts, setCounts] = useState({
+    totalDesigns: 0,
+    activeProjects: 0,
+    completedDesigns: 0,
+    newRequests: 0,
+    highPriority: 0,
+    mediumPriority: 0,
+    lowPriority: 0,
+    myTasks: 0,
+    pendingApprovals: 0,
+    productionOrders: 0,
+    activeWork: 0,
+  });
+
+  // Recent designs for overview
+  const [recentDesigns, setRecentDesigns] = useState([]);
+
+  // 1. My Tasks pagination state
+  const [myTasks, setMyTasks] = useState([]);
+  const [myTasksPage, setMyTasksPage] = useState(1);
+  const [myTasksPerPage, setMyTasksPerPage] = useState(10);
+  const [myTasksTotalCount, setMyTasksTotalCount] = useState(0);
+  const [myTasksLoading, setMyTasksLoading] = useState(false);
+
+  // 2. New Requests pagination state
+  const [newRequestsList, setNewRequestsList] = useState([]);
+  const [newRequestsPage, setNewRequestsPage] = useState(1);
+  const [newRequestsPerPage, setNewRequestsPerPage] = useState(10);
+  const [newRequestsTotalCount, setNewRequestsTotalCount] = useState(0);
+  const [newRequestsLoading, setNewRequestsLoading] = useState(false);
+
+  // 3. Active Design Status pagination state
+  const [activeDesigns, setActiveDesigns] = useState([]);
+  const [activeDesignsPage, setActiveDesignsPage] = useState(1);
+  const [activeDesignsPerPage, setActiveDesignsPerPage] = useState(10);
+  const [activeDesignsTotalCount, setActiveDesignsTotalCount] = useState(0);
+  const [activeDesignsLoading, setActiveDesignsLoading] = useState(false);
+
+  // 4. Customer Approval pagination state
+  const [customerApprovalVersions, setCustomerApprovalVersions] = useState([]);
+  const [customerApprovalPage, setCustomerApprovalPage] = useState(1);
+  const [customerApprovalPerPage, setCustomerApprovalPerPage] = useState(10);
+  const [customerApprovalTotalCount, setCustomerApprovalTotalCount] = useState(0);
+  const [customerApprovalLoading, setCustomerApprovalLoading] = useState(false);
+
+  // 5. Production Files pagination state
+  const [productionFiles, setProductionFiles] = useState([]);
+  const [productionFilesPage, setProductionFilesPage] = useState(1);
+  const [productionFilesPerPage, setProductionFilesPerPage] = useState(10);
+  const [productionFilesTotalCount, setProductionFilesTotalCount] = useState(0);
+  const [productionFilesLoading, setProductionFilesLoading] = useState(false);
+
+  // 6. Send to Production pagination state
+  const [productionOrders, setProductionOrders] = useState([]);
+  const [sendProductionPage, setSendProductionPage] = useState(1);
+  const [sendProductionPerPage, setSendProductionPerPage] = useState(10);
+  const [sendProductionTotalCount, setSendProductionTotalCount] = useState(0);
+  const [sendProductionLoading, setSendProductionLoading] = useState(false);
+
+  // 7. Active Work pagination state
+  const [activeWorkOrders, setActiveWorkOrders] = useState([]);
+  const [activeWorkPage, setActiveWorkPage] = useState(1);
+  const [activeWorkPerPage, setActiveWorkPerPage] = useState(10);
+  const [activeWorkTotalCount, setActiveWorkTotalCount] = useState(0);
+  const [activeWorkLoading, setActiveWorkLoading] = useState(false);
+
+  // 8. Design Library pagination state
+  const [designLibraryDesigns, setDesignLibraryDesigns] = useState([]);
+  const [designLibraryPage, setDesignLibraryPage] = useState(1);
+  const [designLibraryPerPage, setDesignLibraryPerPage] = useState(10);
+  const [designLibraryTotalCount, setDesignLibraryTotalCount] = useState(0);
+  const [designLibraryLoading, setDesignLibraryLoading] = useState(false);
+
+  // Reports data cache
+  const [reportDesigns, setReportDesigns] = useState([]);
+  const [reportMyTasks, setReportMyTasks] = useState([]);
+  const [reportCustomerApprovalVersions, setReportCustomerApprovalVersions] = useState([]);
+  const [reportProductionOrders, setReportProductionOrders] = useState([]);
+
+  // Backward compatibility alias for any remaining references
+  const designs = designLibraryDesigns;
   const [activeSection, setActiveSection] = useState(() => {
     // Check if accessing via public report URL
     if (window.location.hash === '#/design-public-report') {
@@ -35,14 +205,12 @@ export default function DesignerPage() {
   const [selectedDesign, setSelectedDesign] = useState(null);
   const [showDesignDetailModal, setShowDesignDetailModal] = useState(false);
   const [adsSearchQuery, setAdsSearchQuery] = useState('');
-  const [customerApprovalVersions, setCustomerApprovalVersions] = useState([]);
   const [selectedVersion, setSelectedVersion] = useState(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [fileUrls, setFileUrls] = useState({});
   const fileUrlsRef = useRef({});
   const [showProductionOrderModal, setShowProductionOrderModal] = useState(false);
-  const [productionOrders, setProductionOrders] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [unreadDesignChatIds, setUnreadDesignChatIds] = useState(() => new Set());
   const [selectedProductionOrder, setSelectedProductionOrder] = useState(null);
@@ -100,12 +268,38 @@ export default function DesignerPage() {
   const [designLibrarySearch, setDesignLibrarySearch] = useState('');
   const [designLibraryFilter, setDesignLibraryFilter] = useState('all');
 
+  // Debounced search terms for backend pagination queries
+  const debouncedMyTasksSearch = useDebounce(myTasksSearch);
+  const debouncedNewRequestsSearch = useDebounce(newRequestsSearch);
+  const debouncedAdsSearch = useDebounce(adsSearchQuery);
+  const debouncedCustomerApprovalSearch = useDebounce(customerApprovalSearch);
+  const debouncedProductionFilesSearch = useDebounce(productionFilesSearch);
+  const debouncedDesignLibrarySearch = useDebounce(designLibrarySearch);
+
+  // Reset page to 1 when search or filter changes
   useEffect(() => {
-    fetchDesigns();
-    fetchCustomerApprovalVersions();
-    fetchMyTasks();
-    fetchProductionOrders();
-  }, [user?.id]);
+    setMyTasksPage(1);
+  }, [debouncedMyTasksSearch, myTasksFilter]);
+
+  useEffect(() => {
+    setNewRequestsPage(1);
+  }, [debouncedNewRequestsSearch, newRequestsFilter]);
+
+  useEffect(() => {
+    setActiveDesignsPage(1);
+  }, [debouncedAdsSearch, activeDesignFilter]);
+
+  useEffect(() => {
+    setCustomerApprovalPage(1);
+  }, [debouncedCustomerApprovalSearch]);
+
+  useEffect(() => {
+    setProductionFilesPage(1);
+  }, [debouncedProductionFilesSearch]);
+
+  useEffect(() => {
+    setDesignLibraryPage(1);
+  }, [debouncedDesignLibrarySearch, designLibraryFilter]);
 
   // Unread production chat badges (only for this designer's in-progress orders)
   useEffect(() => {
@@ -276,41 +470,610 @@ export default function DesignerPage() {
   const activeSectionRef = useRef(activeSection);
   activeSectionRef.current = activeSection;
 
-  // Fetches only what the given section needs. Sections that render their own
-  // self-refreshing components (messages, notifications, notes, settings, ai
-  // agent) are intentionally left out.
-  const refreshSectionData = (opts = {}) => {
-    const section = activeSectionRef.current;
+  // Helper to resolve search term across client names and order numbers
+  const resolveMatchingOrderIds = async (searchTerm) => {
+    if (!searchTerm || !searchTerm.trim()) return null;
+    const term = searchTerm.trim();
+    try {
+      const { data: matchedClients } = await supabase
+        .from('clients')
+        .select('id')
+        .ilike('name', `%${term}%`);
+      const clientIds = (matchedClients || []).map((c) => c.id);
 
-    if (section === 'my-tasks-section') {
-      fetchMyTasks(opts);
-    } else if (section === 'customer-approval-section') {
-      fetchCustomerApprovalVersions(opts);
-    } else if (section === 'new-requests-section' ||
-               section === 'active-status-section' ||
-               section === 'production-files-section' ||
-               section === 'design-library-section') {
-      fetchDesigns(opts);
-    } else if (section === 'send-production-section' ||
-               section === 'active-work-section') {
-      fetchProductionOrders(opts);
-    } else if (section === 'reports-section') {
-      fetchSavedReports(opts);
-      fetchDesigns(opts);
-      fetchMyTasks(opts);
-      fetchProductionOrders(opts);
-      fetchCustomerApprovalVersions(opts);
-    } else if (section === 'overview-section') {
-      fetchDesigns(opts);
-      fetchMyTasks(opts);
-      fetchProductionOrders(opts);
+      let orderQuery = supabase.from('orders').select('id');
+      if (clientIds.length > 0) {
+        orderQuery = orderQuery.or(`order_no.ilike.%${term}%,client_id.in.(${clientIds.join(',')})`);
+      } else {
+        orderQuery = orderQuery.ilike('order_no', `%${term}%`);
+      }
+      const { data: matchedOrders } = await orderQuery;
+      return (matchedOrders || []).map((o) => o.id);
+    } catch (err) {
+      console.error('Error resolving matching order ids:', err);
+      return [];
     }
   };
+
+  // Helper to build search filter string for designs across design_type, purpose, order_no, and client name
+  const getDesignSearchFilter = async (searchTerm) => {
+    if (!searchTerm || !searchTerm.trim()) return null;
+    const term = searchTerm.trim();
+    const orderIds = await resolveMatchingOrderIds(term);
+    const orParts = [`design_type.ilike.%${term}%`, `purpose.ilike.%${term}%`];
+    if (orderIds && orderIds.length > 0) {
+      orParts.push(`order_id.in.(${orderIds.slice(0, 100).join(',')})`);
+    }
+    return orParts.join(',');
+  };
+
+  // Helper to get matching design IDs for customer approval versions search
+  const getCustomerApprovalDesignIds = async (searchTerm) => {
+    if (!searchTerm || !searchTerm.trim()) return null;
+    const term = searchTerm.trim();
+    const orderIds = await resolveMatchingOrderIds(term);
+    let dQuery = supabase.from('designs').select('id');
+    const dOrParts = [`design_type.ilike.%${term}%`, `purpose.ilike.%${term}%`];
+    if (orderIds && orderIds.length > 0) {
+      dOrParts.push(`order_id.in.(${orderIds.slice(0, 100).join(',')})`);
+    }
+    dQuery = dQuery.or(dOrParts.join(','));
+    const { data: matchedDesigns } = await dQuery;
+    return (matchedDesigns || []).map((d) => d.id);
+  };
+
+  // Fetch overview KPI cards and sidebar badge counts directly from database
+  const fetchDashboardCounts = async () => {
+    try {
+      const promises = [
+        supabase.from('designs').select('*', { count: 'exact', head: true }),
+        supabase.from('designs').select('*', { count: 'exact', head: true }).eq('status', 'In Progress'),
+        supabase.from('designs').select('*', { count: 'exact', head: true }).eq('status', 'Completed'),
+        supabase.from('designs').select('*', { count: 'exact', head: true }).eq('status', 'Pending'),
+        supabase.from('designs').select('*', { count: 'exact', head: true }).eq('priority', 'High'),
+        supabase.from('designs').select('*', { count: 'exact', head: true }).eq('priority', 'Medium'),
+        supabase.from('designs').select('*', { count: 'exact', head: true }).eq('priority', 'Low'),
+        user?.id
+          ? supabase.from('designs').select('*', { count: 'exact', head: true }).eq('assigned_designer_id', user.id)
+          : Promise.resolve({ count: 0 }),
+        supabase.from('design_versions').select('*', { count: 'exact', head: true }).in('status', ['Sent', 'Reviewed']),
+        supabase.from('production_orders').select('*', { count: 'exact', head: true }),
+        supabase.from('production_orders').select('*', { count: 'exact', head: true }).eq('status', 'In Progress'),
+      ];
+
+      const [
+        totalRes,
+        activeRes,
+        completedRes,
+        pendingRes,
+        highRes,
+        medRes,
+        lowRes,
+        myTasksRes,
+        approvalsRes,
+        prodRes,
+        activeProdRes,
+      ] = await Promise.all(promises);
+
+      setCounts({
+        totalDesigns: totalRes?.count || 0,
+        activeProjects: activeRes?.count || 0,
+        completedDesigns: completedRes?.count || 0,
+        newRequests: pendingRes?.count || 0,
+        highPriority: highRes?.count || 0,
+        mediumPriority: medRes?.count || 0,
+        lowPriority: lowRes?.count || 0,
+        myTasks: myTasksRes?.count || 0,
+        pendingApprovals: approvalsRes?.count || 0,
+        productionOrders: prodRes?.count || 0,
+        activeWork: activeProdRes?.count || 0,
+      });
+    } catch (err) {
+      console.error('Error fetching dashboard counts:', err);
+    }
+  };
+
+  // Fetch recent designs for overview live feed (top 8)
+  const fetchRecentDesigns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('designs')
+        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
+        .order('created_at', { ascending: false })
+        .range(0, 7);
+
+      if (error) throw error;
+      setRecentDesigns(data || []);
+    } catch (err) {
+      console.error('Error fetching recent designs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 1. My Tasks backend paginated fetch
+  async function fetchMyTasks() {
+    if (!user?.id) return;
+    try {
+      setMyTasksLoading(true);
+      const from = (myTasksPage - 1) * myTasksPerPage;
+      const to = from + myTasksPerPage - 1;
+
+      let query = supabase
+        .from('designs')
+        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)', { count: 'exact' })
+        .eq('assigned_designer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (myTasksFilter !== 'all') {
+        query = query.eq('status', myTasksFilter);
+      }
+      const myTasksSearchFilter = await getDesignSearchFilter(debouncedMyTasksSearch);
+      if (myTasksSearchFilter) {
+        query = query.or(myTasksSearchFilter);
+      }
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+
+      if (data) {
+        const allFileIds = data.flatMap((d) => d.attached_file_ids || []);
+        let files = [];
+        if (allFileIds.length > 0) {
+          const { data: fData } = await supabase
+            .from('files')
+            .select('id, name, path')
+            .in('id', allFileIds);
+          files = fData || [];
+        }
+
+        const designIds = data.map((d) => d.id);
+        let designVersions = [];
+        if (designIds.length > 0) {
+          const { data: vData } = await supabase
+            .from('design_versions')
+            .select('*, files(id, name, path)')
+            .in('design_id', designIds);
+          designVersions = vData || [];
+        }
+
+        const urls = { ...fileUrlsRef.current };
+        for (const file of files) {
+          if (file.path && !urls[file.id]) {
+            const url = await getFileUrl(file.path);
+            if (url) urls[file.id] = url;
+          }
+        }
+        for (const version of designVersions) {
+          if (version.files?.path && !urls[version.files.id]) {
+            const url = await getFileUrl(version.files.path);
+            if (url) urls[version.files.id] = url;
+          }
+        }
+        fileUrlsRef.current = urls;
+        setFileUrls(urls);
+
+        const tasksWithDetails = data.map((task) => ({
+          ...task,
+          attached_files: files.filter((f) => (task.attached_file_ids || []).includes(f.id)),
+          design_versions: designVersions.filter((v) => v.design_id === task.id),
+        }));
+
+        setMyTasks(tasksWithDetails);
+        setMyTasksTotalCount(count || 0);
+      } else {
+        setMyTasks([]);
+        setMyTasksTotalCount(0);
+      }
+    } catch (err) {
+      console.error('Error fetching my tasks:', err);
+    } finally {
+      setMyTasksLoading(false);
+      setLoading(false);
+    }
+  }
+
+  // 2. New Requests backend paginated fetch
+  const fetchNewRequests = async () => {
+    try {
+      setNewRequestsLoading(true);
+      const from = (newRequestsPage - 1) * newRequestsPerPage;
+      const to = from + newRequestsPerPage - 1;
+
+      let query = supabase
+        .from('designs')
+        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)', { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      if (newRequestsFilter === 'all') {
+        query = query.in('status', ['Pending', 'In Progress']);
+      } else {
+        query = query.eq('status', newRequestsFilter);
+      }
+      const newRequestsSearchFilter = await getDesignSearchFilter(debouncedNewRequestsSearch);
+      if (newRequestsSearchFilter) {
+        query = query.or(newRequestsSearchFilter);
+      }
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+      setNewRequestsList(data || []);
+      setNewRequestsTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching new requests:', error);
+    } finally {
+      setNewRequestsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // 3. Active Design Status backend paginated fetch
+  const fetchActiveDesigns = async () => {
+    if (!user?.id) return;
+    try {
+      setActiveDesignsLoading(true);
+      const from = (activeDesignsPage - 1) * activeDesignsPerPage;
+      const to = from + activeDesignsPerPage - 1;
+
+      let query = supabase
+        .from('designs')
+        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)', { count: 'exact' })
+        .eq('status', 'In Progress')
+        .eq('assigned_designer_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (activeDesignFilter !== 'all') {
+        query = query.eq('priority', activeDesignFilter);
+      }
+      const activeDesignsSearchFilter = await getDesignSearchFilter(debouncedAdsSearch);
+      if (activeDesignsSearchFilter) {
+        query = query.or(activeDesignsSearchFilter);
+      }
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+      setActiveDesigns(data || []);
+      setActiveDesignsTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching active designs:', error);
+    } finally {
+      setActiveDesignsLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // 4. Customer Approval backend paginated fetch
+  const fetchCustomerApprovalVersions = async () => {
+    try {
+      setCustomerApprovalLoading(true);
+      const from = (customerApprovalPage - 1) * customerApprovalPerPage;
+      const to = from + customerApprovalPerPage - 1;
+
+      let query = supabase
+        .from('design_versions')
+        .select('*, designs(*, orders(order_no, clients(name)), assigned_designer:users(username)), file:files(id, name, path)', { count: 'exact' })
+        .in('status', ['Sent', 'Reviewed'])
+        .order('created_at', { ascending: false });
+
+      const matchingDesignIds = await getCustomerApprovalDesignIds(debouncedCustomerApprovalSearch);
+      if (matchingDesignIds !== null) {
+        if (matchingDesignIds.length > 0) {
+          query = query.in('design_id', matchingDesignIds.slice(0, 100));
+        } else {
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000');
+        }
+      }
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+      setCustomerApprovalVersions(data || []);
+      setCustomerApprovalTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching customer approval versions:', error);
+    } finally {
+      setCustomerApprovalLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // 5. Production Files backend paginated fetch
+  const fetchProductionFiles = async () => {
+    try {
+      setProductionFilesLoading(true);
+      const from = (productionFilesPage - 1) * productionFilesPerPage;
+      const to = from + productionFilesPerPage - 1;
+
+      let query = supabase
+        .from('designs')
+        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)', { count: 'exact' })
+        .eq('status', 'Completed')
+        .order('updated_at', { ascending: false });
+
+      const prodFilesSearchFilter = await getDesignSearchFilter(debouncedProductionFilesSearch);
+      if (prodFilesSearchFilter) {
+        query = query.or(prodFilesSearchFilter);
+      }
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+      setProductionFiles(data || []);
+      setProductionFilesTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching production files:', error);
+    } finally {
+      setProductionFilesLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // 6. Send to Production backend paginated fetch
+  const fetchProductionOrders = async () => {
+    try {
+      setSendProductionLoading(true);
+      const from = (sendProductionPage - 1) * sendProductionPerPage;
+      const to = from + sendProductionPerPage - 1;
+
+      const [{ data, count, error }, { data: machinesData }] = await Promise.all([
+        supabase
+          .from('production_orders')
+          .select('*, orders(order_no, clients(name)), designer:users(username), job_order:job_orders(job_no, invoice:invoices(order:orders(clients(name)))))', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .range(from, to),
+        supabase
+          .from('machines')
+          .select('id, name, machine_type'),
+      ]);
+
+      if (error) throw error;
+      const machineMap = new Map((machinesData || []).map((m) => [m.id, m]));
+      const mapped = (data || []).map((order) => {
+        const ids = Array.isArray(order.machine_ids) ? order.machine_ids : (order.machine_id ? [order.machine_id] : []);
+        const assignedMachines = ids.map((id) => machineMap.get(id)).filter(Boolean);
+        return {
+          ...order,
+          assigned_machines: assignedMachines,
+          machines: assignedMachines.length > 0 ? {
+            name: assignedMachines.map((m) => m.name).join(', '),
+            machine_type: assignedMachines.map((m) => m.machine_type).filter(Boolean).join(', '),
+          } : null,
+        };
+      });
+      setProductionOrders(mapped);
+      setSendProductionTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching production orders:', error);
+    } finally {
+      setSendProductionLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // 7. Active Work backend paginated fetch
+  const fetchActiveWorkOrders = async () => {
+    try {
+      setActiveWorkLoading(true);
+      const from = (activeWorkPage - 1) * activeWorkPerPage;
+      const to = from + activeWorkPerPage - 1;
+
+      const [{ data, count, error }, { data: machinesData }] = await Promise.all([
+        supabase
+          .from('production_orders')
+          .select('*, orders(order_no, clients(name)), designer:users(username), job_order:job_orders(job_no, invoice:invoices(order:orders(clients(name)))))', { count: 'exact' })
+          .eq('status', 'In Progress')
+          .order('created_at', { ascending: false })
+          .range(from, to),
+        supabase
+          .from('machines')
+          .select('id, name, machine_type'),
+      ]);
+
+      if (error) throw error;
+      const machineMap = new Map((machinesData || []).map((m) => [m.id, m]));
+      const mapped = (data || []).map((order) => {
+        const ids = Array.isArray(order.machine_ids) ? order.machine_ids : (order.machine_id ? [order.machine_id] : []);
+        const assignedMachines = ids.map((id) => machineMap.get(id)).filter(Boolean);
+        return {
+          ...order,
+          assigned_machines: assignedMachines,
+          machines: assignedMachines.length > 0 ? {
+            name: assignedMachines.map((m) => m.name).join(', '),
+            machine_type: assignedMachines.map((m) => m.machine_type).filter(Boolean).join(', '),
+          } : null,
+        };
+      });
+      setActiveWorkOrders(mapped);
+      setActiveWorkTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching active work orders:', error);
+    } finally {
+      setActiveWorkLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // 8. Design Library backend paginated fetch
+  const fetchDesignLibrary = async () => {
+    try {
+      setDesignLibraryLoading(true);
+      const from = (designLibraryPage - 1) * designLibraryPerPage;
+      const to = from + designLibraryPerPage - 1;
+
+      let query = supabase
+        .from('designs')
+        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)', { count: 'exact' })
+        .order('created_at', { ascending: false });
+
+      if (designLibraryFilter !== 'all') {
+        query = query.eq('status', designLibraryFilter);
+      }
+      const designLibSearchFilter = await getDesignSearchFilter(debouncedDesignLibrarySearch);
+      if (designLibSearchFilter) {
+        query = query.or(designLibSearchFilter);
+      }
+      query = query.range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+      setDesignLibraryDesigns(data || []);
+      setDesignLibraryTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching design library:', error);
+    } finally {
+      setDesignLibraryLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // Backward compatibility wrapper for fetchDesigns
+  const fetchDesigns = async () => {
+    await Promise.all([
+      fetchDesignLibrary(),
+      fetchDashboardCounts(),
+      fetchRecentDesigns(),
+    ]);
+  };
+
+  // Fetch all module data for reports generator & export
+  const fetchReportData = async () => {
+    try {
+      setReportsLoading(true);
+      const [
+        { data: allDesigns },
+        { data: myTasksData },
+        { data: approvalData },
+        { data: prodData },
+      ] = await Promise.all([
+        supabase
+          .from('designs')
+          .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
+          .order('created_at', { ascending: false }),
+        user?.id
+          ? supabase
+              .from('designs')
+              .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
+              .eq('assigned_designer_id', user.id)
+              .order('created_at', { ascending: false })
+          : Promise.resolve({ data: [] }),
+        supabase
+          .from('design_versions')
+          .select('*, designs(*, orders(order_no, clients(name)), assigned_designer:users(username)), file:files(id, name, path)')
+          .in('status', ['Sent', 'Reviewed'])
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('production_orders')
+          .select('*, orders(order_no, clients(name)), designer:users(username), job_order:job_orders(job_no, invoice:invoices(order:orders(clients(name)))))')
+          .order('created_at', { ascending: false }),
+      ]);
+      setReportDesigns(allDesigns || []);
+      setReportMyTasks(myTasksData || []);
+      setReportCustomerApprovalVersions(approvalData || []);
+      setReportProductionOrders(prodData || []);
+    } catch (err) {
+      console.error('Error fetching report data:', err);
+    } finally {
+      setReportsLoading(false);
+    }
+  };
+
+  // Fetches only what the given section needs.
+  const refreshSectionData = (opts = {}) => {
+    const section = activeSectionRef.current;
+    fetchDashboardCounts();
+
+    if (section === 'overview-section') {
+      fetchRecentDesigns();
+    } else if (section === 'my-tasks-section') {
+      fetchMyTasks();
+    } else if (section === 'customer-approval-section') {
+      fetchCustomerApprovalVersions();
+    } else if (section === 'new-requests-section') {
+      fetchNewRequests();
+    } else if (section === 'active-status-section') {
+      fetchActiveDesigns();
+    } else if (section === 'production-files-section') {
+      fetchProductionFiles();
+    } else if (section === 'send-production-section') {
+      fetchProductionOrders();
+    } else if (section === 'active-work-section') {
+      fetchActiveWorkOrders();
+    } else if (section === 'design-library-section') {
+      fetchDesignLibrary();
+    } else if (section === 'reports-section') {
+      fetchSavedReports(opts);
+      fetchReportData();
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardCounts();
+    fetchRecentDesigns();
+  }, [user?.id]);
 
   useEffect(() => {
     // Refresh data when switching sections
     refreshSectionData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
+
+  // Section-specific fetch triggers on page/perPage/search/filter changes
+  useEffect(() => {
+    if (activeSection === 'my-tasks-section') {
+      fetchMyTasks();
+    }
+  }, [activeSection, myTasksPage, myTasksPerPage, myTasksFilter, debouncedMyTasksSearch, user?.id]);
+
+  useEffect(() => {
+    if (activeSection === 'new-requests-section') {
+      fetchNewRequests();
+    }
+  }, [activeSection, newRequestsPage, newRequestsPerPage, newRequestsFilter, debouncedNewRequestsSearch]);
+
+  useEffect(() => {
+    if (activeSection === 'active-status-section') {
+      fetchActiveDesigns();
+    }
+  }, [activeSection, activeDesignsPage, activeDesignsPerPage, activeDesignFilter, debouncedAdsSearch, user?.id]);
+
+  useEffect(() => {
+    if (activeSection === 'customer-approval-section') {
+      fetchCustomerApprovalVersions();
+    }
+  }, [activeSection, customerApprovalPage, customerApprovalPerPage, debouncedCustomerApprovalSearch]);
+
+  useEffect(() => {
+    if (activeSection === 'production-files-section') {
+      fetchProductionFiles();
+    }
+  }, [activeSection, productionFilesPage, productionFilesPerPage, debouncedProductionFilesSearch]);
+
+  useEffect(() => {
+    if (activeSection === 'send-production-section') {
+      fetchProductionOrders();
+    }
+  }, [activeSection, sendProductionPage, sendProductionPerPage]);
+
+  useEffect(() => {
+    if (activeSection === 'active-work-section') {
+      fetchActiveWorkOrders();
+    }
+  }, [activeSection, activeWorkPage, activeWorkPerPage]);
+
+  useEffect(() => {
+    if (activeSection === 'design-library-section') {
+      fetchDesignLibrary();
+    }
+  }, [activeSection, designLibraryPage, designLibraryPerPage, designLibraryFilter, debouncedDesignLibrarySearch]);
+
+  useEffect(() => {
+    if (activeSection === 'reports-section') {
+      fetchSavedReports();
+      fetchReportData();
+    }
   }, [activeSection]);
 
   // Auto-refresh the active section while this page is open (realtime + 30s poll).
@@ -323,140 +1086,6 @@ export default function DesignerPage() {
     pollMs: 30000,
     channelName: 'designer',
   });
-
-  const fetchDesigns = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('designs')
-        .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setDesigns(data || []);
-    } catch (error) {
-      console.error('Error fetching designs:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCustomerApprovalVersions = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('design_versions')
-        .select('*, designs(*, orders(order_no, clients(name)), assigned_designer:users(username)), file:files(id, name, path)')
-        .in('status', ['Sent', 'Reviewed'])
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setCustomerApprovalVersions(data || []);
-    } catch (error) {
-      console.error('Error fetching customer approval versions:', error);
-    }
-  };
-
-  async function fetchMyTasks() {
-    if (!user?.id) return;
-    const { data, error } = await supabase
-      .from('designs')
-      .select('*, orders(order_no, clients(name)), assigned_designer:users(username)')
-      .eq('assigned_designer_id', user.id)
-      // .neq('status', 'Completed')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching my tasks:', error);
-      return;
-    }
-
-    if (data) {
-      // Fetch attached files
-      const allFileIds = data.flatMap(d => d.attached_file_ids || []);
-      const { data: files } = await supabase
-        .from('files')
-        .select('id, name, path')
-        .in('id', allFileIds);
-
-      // Fetch design versions
-      const designIds = data.map(d => d.id);
-      const { data: designVersions } = await supabase
-        .from('design_versions')
-        .select('*, files(id, name, path)')
-        .in('design_id', designIds);
-
-      // Generate signed URLs for files, reusing ones we already have. This runs
-      // on every auto-refresh, so re-requesting every URL each time would be
-      // needlessly expensive (signed URLs are valid for an hour).
-      const urls = { ...fileUrlsRef.current };
-      if (files) {
-        for (const file of files) {
-          if (file.path && !urls[file.id]) {
-            const url = await getFileUrl(file.path);
-            if (url) {
-              urls[file.id] = url;
-            } else {
-              console.warn('Failed to get URL for file:', file.id, file.path);
-            }
-          }
-        }
-      }
-
-      // Generate signed URLs for version files
-      if (designVersions) {
-        for (const version of designVersions) {
-          if (version.files?.path && !urls[version.files.id]) {
-            const url = await getFileUrl(version.files.path);
-            if (url) {
-              urls[version.files.id] = url;
-            }
-          }
-        }
-      }
-      fileUrlsRef.current = urls;
-      setFileUrls(urls);
-
-      // Combine data
-      const tasksWithDetails = data.map(task => ({
-        ...task,
-        attached_files: files?.filter(f => (task.attached_file_ids || []).includes(f.id)) || [],
-        design_versions: designVersions?.filter(v => v.design_id === task.id) || []
-      }));
-      
-      setMyTasks(tasksWithDetails);
-    }
-  }
-
-  const fetchProductionOrders = async () => {
-    try {
-      const [{ data, error }, { data: machinesData }] = await Promise.all([
-        supabase
-          .from('production_orders')
-          .select('*, orders(order_no, clients(name)), designer:users(username), job_order:job_orders(job_no, invoice:invoices(order:orders(clients(name)))))')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('machines')
-          .select('id, name, machine_type')
-      ]);
-
-      if (error) throw error;
-      const machineMap = new Map((machinesData || []).map(m => [m.id, m]));
-      const mapped = (data || []).map(order => {
-        const ids = Array.isArray(order.machine_ids) ? order.machine_ids : (order.machine_id ? [order.machine_id] : []);
-        const assignedMachines = ids.map(id => machineMap.get(id)).filter(Boolean);
-        return {
-          ...order,
-          assigned_machines: assignedMachines,
-          machines: assignedMachines.length > 0 ? {
-            name: assignedMachines.map(m => m.name).join(', '),
-            machine_type: assignedMachines.map(m => m.machine_type).filter(Boolean).join(', ')
-          } : null
-        };
-      });
-      setProductionOrders(mapped);
-    } catch (error) {
-      console.error('Error fetching production orders:', error);
-    }
-  };
 
   const handleViewProductionDetails = async (order) => {
     setSelectedProductionOrder(order);
@@ -725,29 +1354,29 @@ export default function DesignerPage() {
   const getReportData = (module) => {
     switch (module) {
       case 'My Tasks':
-        return myTasks.map(item => ({ ...item, _source: 'My Tasks' }));
+        return (reportMyTasks.length > 0 ? reportMyTasks : myTasks).map(item => ({ ...item, _source: 'My Tasks' }));
       case 'New Design Requests':
-        return designs.filter(d => d.status === 'New' || d.status === 'Pending').map(item => ({ ...item, _source: 'New Design Requests' }));
+        return (reportDesigns.length > 0 ? reportDesigns : newRequestsList).filter(d => d.status === 'New' || d.status === 'Pending').map(item => ({ ...item, _source: 'New Design Requests' }));
       case 'Active Design Status':
-        return designs.filter(d => d.status === 'In Progress').map(item => ({ ...item, _source: 'Active Design Status' }));
+        return (reportDesigns.length > 0 ? reportDesigns : activeDesigns).filter(d => d.status === 'In Progress').map(item => ({ ...item, _source: 'Active Design Status' }));
       case 'Customer Approval':
-        return customerApprovalVersions.map(item => ({ ...item, _source: 'Customer Approval' }));
+        return (reportCustomerApprovalVersions.length > 0 ? reportCustomerApprovalVersions : customerApprovalVersions).map(item => ({ ...item, _source: 'Customer Approval' }));
       case 'Production Files':
-        return designs.filter(d => d.status === 'Completed').map(item => ({ ...item, _source: 'Production Files' }));
+        return (reportDesigns.length > 0 ? reportDesigns : productionFiles).filter(d => d.status === 'Completed').map(item => ({ ...item, _source: 'Production Files' }));
       case 'Send to Production':
-        return productionOrders.map(item => ({
+        return (reportProductionOrders.length > 0 ? reportProductionOrders : productionOrders).map(item => ({
           ...item,
           _source: 'Send to Production',
           client_name: getProductionClientName(item),
         }));
       case 'Active Work':
-        return productionOrders.filter(o => o.status === 'In Progress').map(item => ({
+        return (reportProductionOrders.length > 0 ? reportProductionOrders : activeWorkOrders).filter(o => o.status === 'In Progress').map(item => ({
           ...item,
           _source: 'Active Work',
           client_name: getProductionClientName(item),
         }));
       case 'Design Library':
-        return designs.map(item => ({ ...item, _source: 'Design Library' }));
+        return (reportDesigns.length > 0 ? reportDesigns : designLibraryDesigns).map(item => ({ ...item, _source: 'Design Library' }));
       default:
         return [];
     }
@@ -1285,6 +1914,7 @@ export default function DesignerPage() {
   async function updateDesignStatus(id, status) {
     await supabase.from('designs').update({ status }).eq('id', id);
     fetchDesigns();
+    refreshSectionData({ force: true });
   }
 
   function handleSectionChange(section) {
@@ -1360,18 +1990,18 @@ export default function DesignerPage() {
   const displayName = profile?.username || 'Designer';
   const initials = getInitials(displayName);
 
-  // Dashboard computed metrics from real data
-  const activeProjects = designs.filter(d => d.status === 'In Progress').length;
-  const pendingApprovals = customerApprovalVersions.length;
-  const completedDesigns = designs.filter(d => d.status === 'Completed').length;
-  const myTaskCount = myTasks.length;
-  const newRequests = designs.filter(d => d.status === 'Pending').length;
-  const productionCount = productionOrders.length;
-  const totalDesigns = designs.length;
+  // Dashboard computed metrics from database counts
+  const activeProjects = counts.activeProjects;
+  const pendingApprovals = counts.pendingApprovals;
+  const completedDesigns = counts.completedDesigns;
+  const myTaskCount = counts.myTasks;
+  const newRequests = counts.newRequests;
+  const productionCount = counts.productionOrders;
+  const totalDesigns = counts.totalDesigns;
   const efficiencyRate = totalDesigns > 0 ? ((completedDesigns / totalDesigns) * 100).toFixed(1) : '0.0';
-  const highPriorityCount = designs.filter(d => d.priority === 'High').length;
-  const mediumPriorityCount = designs.filter(d => d.priority === 'Medium').length;
-  const lowPriorityCount = designs.filter(d => d.priority === 'Low').length;
+  const highPriorityCount = counts.highPriority;
+  const mediumPriorityCount = counts.mediumPriority;
+  const lowPriorityCount = counts.lowPriority;
 
   return (
     <div className="flex h-screen overflow-hidden text-slate-700 select-none">
@@ -1404,8 +2034,8 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'my-tasks-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-list-check w-4"></i> My Tasks</div>
-              {myTasks.length > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{myTasks.length}</span>
+              {counts.myTasks > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{counts.myTasks}</span>
               )}
             </button>
             <button 
@@ -1413,8 +2043,8 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'new-requests-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-file-circle-plus w-4"></i> New Design Requests</div>
-              {designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').length > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'Pending' || d.status === 'In Progress').length}</span>
+              {counts.newRequests > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{counts.newRequests}</span>
               )}
             </button>
             <button 
@@ -1423,8 +2053,8 @@ export default function DesignerPage() {
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-file-pen w-4"></i> Active Design Status</div>
               <div className="flex items-center gap-2">
-                {designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length > 0 && (
-                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length}</span>
+                {counts.activeProjects > 0 && (
+                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{counts.activeProjects}</span>
                 )}
                 {unreadDesignChatIds.size > 0 && (
                   <span className="w-2 h-2 rounded-full bg-red-500" title="Unread design chat"></span>
@@ -1436,8 +2066,8 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'customer-approval-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-user-check w-4"></i> Customer Approval</div>
-              {customerApprovalVersions.length > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{customerApprovalVersions.length}</span>
+              {counts.pendingApprovals > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{counts.pendingApprovals}</span>
               )}
             </button>
             <button 
@@ -1445,8 +2075,8 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'production-files-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-folder-open w-4"></i> Production Files</div>
-              {designs.filter(d => d.status === 'Completed').length > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.filter(d => d.status === 'Completed').length}</span>
+              {counts.completedDesigns > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{counts.completedDesigns}</span>
               )}
             </button>
             <button
@@ -1455,7 +2085,7 @@ export default function DesignerPage() {
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-print w-4"></i> Send to Production</div>
               <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                {productionOrders.length}
+                {counts.productionOrders}
               </span>
             </button>
             <button
@@ -1464,8 +2094,8 @@ export default function DesignerPage() {
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-industry w-4"></i> Active Work</div>
               <span className="flex items-center gap-2">
-                {productionOrders.filter(o => o.status === 'In Progress').length > 0 && (
-                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{productionOrders.filter(o => o.status === 'In Progress').length}</span>
+                {counts.activeWork > 0 && (
+                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{counts.activeWork}</span>
                 )}
                 {unreadProductionChatIds.size > 0 && (
                   <span className="w-2 h-2 rounded-full bg-red-500" title="Unread production chat"></span>
@@ -1477,8 +2107,8 @@ export default function DesignerPage() {
               className={`nav-item flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'design-library-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-book-open w-4"></i> Design Library</div>
-              {designs.length > 0 && (
-                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{designs.length}</span>
+              {counts.totalDesigns > 0 && (
+                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{counts.totalDesigns}</span>
               )}
             </button>
             <button
@@ -1746,7 +2376,7 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody className="text-slate-600 divide-y divide-slate-100">
-                      {designs.slice(0, 8).map((d) => (
+                      {recentDesigns.map((d) => (
                         <tr key={d.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => { setSelectedDesign(d); setShowDesignDetailModal(true); }}>
                           <td className="p-3 font-semibold text-blue-600">{d.orders?.order_no || '-'}</td>
                           <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
@@ -1757,7 +2387,7 @@ export default function DesignerPage() {
                           <td className="p-3 text-slate-400">{d.created_at ? new Date(d.created_at).toLocaleDateString() : '-'}</td>
                         </tr>
                       ))}
-                      {designs.length === 0 && (
+                      {recentDesigns.length === 0 && (
                         <tr>
                           <td colSpan={7} className="p-8 text-center text-slate-400">
                             <i className="fa-solid fa-inbox text-3xl block mb-2"></i>
@@ -1779,6 +2409,10 @@ export default function DesignerPage() {
                   <h1 className="text-xl font-bold text-slate-900">New Design Requests</h1>
                   <p className="text-xs text-slate-500">Manage incoming design requests from clients</p>
                 </div>
+                <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
+                  <i className="fa-solid fa-database text-blue-500"></i>
+                  <span>{newRequestsTotalCount}</span> requests
+                </span>
               </div>
 
               <div className="flex gap-4">
@@ -1804,7 +2438,7 @@ export default function DesignerPage() {
                 </select>
               </div>
 
-              {loading ? (
+              {newRequestsLoading ? (
                 <div className="flex justify-center py-20">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
                 </div>
@@ -1822,17 +2456,7 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {designs
-                        .filter(d => (d.status === 'Pending' || d.status === 'In Progress') && 
-                          (newRequestsFilter === 'all' || d.status === newRequestsFilter))
-                        .filter(d => {
-                          const matchesSearch = 
-                            (d.design_type?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
-                            (d.orders?.clients?.name?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
-                            (d.orders?.order_no?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase());
-                          return matchesSearch;
-                        })
-                        .map((d) => (
+                      {newRequestsList.map((d) => (
                         <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
                             {d.design_type || '-'}
@@ -1946,16 +2570,7 @@ export default function DesignerPage() {
                           </td>
                         </tr>
                       ))}
-                      {designs
-                        .filter(d => (d.status === 'Pending' || d.status === 'In Progress') && 
-                          (newRequestsFilter === 'all' || d.status === newRequestsFilter))
-                        .filter(d => {
-                          const matchesSearch = 
-                            (d.design_type?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
-                            (d.orders?.clients?.name?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase()) ||
-                            (d.orders?.order_no?.toLowerCase() || '').includes(newRequestsSearch.toLowerCase());
-                          return matchesSearch;
-                        }).length === 0 && (
+                      {newRequestsList.length === 0 && (
                         <tr>
                           <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                             No design requests found matching your criteria.
@@ -1964,6 +2579,14 @@ export default function DesignerPage() {
                       )}
                     </tbody>
                   </table>
+                  <Pagination
+                    currentPage={newRequestsPage}
+                    totalCount={newRequestsTotalCount}
+                    itemsPerPage={newRequestsPerPage}
+                    onPageChange={setNewRequestsPage}
+                    onItemsPerPageChange={setNewRequestsPerPage}
+                    itemName="requests"
+                  />
                 </div>
               )}
             </div>
@@ -1997,7 +2620,7 @@ export default function DesignerPage() {
                     </div>
                     <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
                       <i className="fa-solid fa-database text-blue-500"></i>
-                      <span>{designs.filter(d => d.status === 'In Progress' && d.assigned_designer_id === user?.id).length}</span> registered
+                      <span>{activeDesignsTotalCount}</span> registered
                     </span>
                   </div>
 
@@ -2029,81 +2652,76 @@ export default function DesignerPage() {
                         </select>
                       </div>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
-                            <th className="p-3 w-10">#</th>
-                            <th className="p-3">Order No.</th>
-                            <th className="p-3">Client</th>
-                            <th className="p-3">Lead / Project</th>
-                            <th className="p-3">Designer</th>
-                            <th className="p-3">Status</th>
-                            <th className="p-3">Priority</th>
-                            <th className="p-3 text-center w-32">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody className="text-slate-600 divide-y divide-slate-100">
-                          {designs
-                            .filter(d => 
-                              d.status === 'In Progress' && 
-                              d.assigned_designer_id === user?.id &&
-                              (activeDesignFilter === 'all' || d.priority === activeDesignFilter) &&
-                              (!adsSearchQuery || 
-                              d.orders?.order_no?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
-                              d.orders?.clients?.name?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
-                              d.design_type?.toLowerCase().includes(adsSearchQuery.toLowerCase()))
-                            )
-                            .map((d, index) => (
-                            <tr key={d.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => { setSelectedDesign(d); setShowDesignDetailModal(true); }}>
-                              <td className="p-3">{index + 1}</td>
-                              <td className="p-3 font-semibold text-blue-600">
-                                <span className="flex items-center gap-2">
-                                  {unreadDesignChatIds.has(d.id) && (
-                                    <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
-                                  )}
-                                  {d.orders?.order_no || '-'}
-                                </span>
-                              </td>
-                              <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
-                              <td className="p-3">{d.design_type || '-'}</td>
-                              <td className="p-3">{profile?.username || 'Designer'}</td>
-                              <td className="p-3">
-                                <span className={`status-badge ${d.status === 'Pending' ? 'status-pending' : d.status === 'In Progress' ? 'status-progress' : d.status === 'Completed' ? 'status-completed' : 'status-cancelled'}`}>
-                                  {d.status}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                <span className={`priority-badge ${d.priority === 'High' ? 'priority-high' : d.priority === 'Medium' ? 'priority-medium' : 'priority-low'}`}>
-                                  {d.priority}
-                                </span>
-                              </td>
-                              <td className="p-3 text-center">
-                                <button className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">
-                                  View
-                                </button>
-                              </td>
+                    {activeDesignsLoading ? (
+                      <div className="flex justify-center py-20">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
+                              <th className="p-3 w-10">#</th>
+                              <th className="p-3">Order No.</th>
+                              <th className="p-3">Client</th>
+                              <th className="p-3">Lead / Project</th>
+                              <th className="p-3">Designer</th>
+                              <th className="p-3">Status</th>
+                              <th className="p-3">Priority</th>
+                              <th className="p-3 text-center w-32">Action</th>
                             </tr>
-                          ))}
-                          {designs
-                            .filter(d => 
-                              d.status === 'In Progress' && 
-                              d.assigned_designer_id === user?.id &&
-                              (activeDesignFilter === 'all' || d.priority === activeDesignFilter) &&
-                              (!adsSearchQuery || 
-                              d.orders?.order_no?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
-                              d.orders?.clients?.name?.toLowerCase().includes(adsSearchQuery.toLowerCase()) ||
-                              d.design_type?.toLowerCase().includes(adsSearchQuery.toLowerCase()))
-                            ).length === 0 && (
-                            <tr>
-                              <td colSpan={8} className="p-8 text-center text-slate-400">
-                                No active design requests found matching your criteria.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody className="text-slate-600 divide-y divide-slate-100">
+                            {activeDesigns.map((d, index) => (
+                              <tr key={d.id} className="hover:bg-slate-50/80 transition cursor-pointer" onClick={() => { setSelectedDesign(d); setShowDesignDetailModal(true); }}>
+                                <td className="p-3">{(activeDesignsPage - 1) * activeDesignsPerPage + index + 1}</td>
+                                <td className="p-3 font-semibold text-blue-600">
+                                  <span className="flex items-center gap-2">
+                                    {unreadDesignChatIds.has(d.id) && (
+                                      <span className="w-2 h-2 rounded-full bg-red-500" title="Unread chat"></span>
+                                    )}
+                                    {d.orders?.order_no || '-'}
+                                  </span>
+                                </td>
+                                <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
+                                <td className="p-3">{d.design_type || '-'}</td>
+                                <td className="p-3">{d.assigned_designer?.username || profile?.username || 'Designer'}</td>
+                                <td className="p-3">
+                                  <span className={`status-badge ${d.status === 'Pending' ? 'status-pending' : d.status === 'In Progress' ? 'status-progress' : d.status === 'Completed' ? 'status-completed' : 'status-cancelled'}`}>
+                                    {d.status}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <span className={`priority-badge ${d.priority === 'High' ? 'priority-high' : d.priority === 'Medium' ? 'priority-medium' : 'priority-low'}`}>
+                                    {d.priority}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-center">
+                                  <button className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition">
+                                    View
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                            {activeDesigns.length === 0 && (
+                              <tr>
+                                <td colSpan={8} className="p-8 text-center text-slate-400">
+                                  No active design requests found matching your criteria.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                        <Pagination
+                          currentPage={activeDesignsPage}
+                          totalCount={activeDesignsTotalCount}
+                          itemsPerPage={activeDesignsPerPage}
+                          onPageChange={setActiveDesignsPage}
+                          onItemsPerPageChange={setActiveDesignsPerPage}
+                          itemName="projects"
+                        />
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -2218,6 +2836,10 @@ export default function DesignerPage() {
                   <h1 className="text-xl font-bold text-slate-900">My Tasks</h1>
                   <p className="text-xs text-slate-500">Your assigned design tasks and deadlines</p>
                 </div>
+                <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
+                  <i className="fa-solid fa-database text-blue-500"></i>
+                  <span>{myTasksTotalCount}</span> tasks
+                </span>
               </div>
 
               <div className="flex gap-4">
@@ -2244,88 +2866,86 @@ export default function DesignerPage() {
                 </select>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-left">
-                    <tr>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Design Type</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Client</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Priority</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Due Date</th>
-                      <th className="px-4 py-3 font-semibold text-slate-600">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {myTasks
-                      .filter(d => {
-                        const matchesSearch = 
-                          (d.design_type?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
-                          (d.orders?.clients?.name?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
-                          (d.orders?.order_no?.toLowerCase() || '').includes(myTasksSearch.toLowerCase());
-                        const matchesFilter = myTasksFilter === 'all' || d.status === myTasksFilter;
-                        return matchesSearch && matchesFilter;
-                      })
-                      .map((d) => (
-                      <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-800">
-                          {d.design_type || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {d.orders?.order_no || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {d.orders?.clients?.name || '-'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                              d.priority === 'High'
-                                ? 'bg-red-50 text-red-700'
-                                : d.priority === 'Medium'
-                                ? 'bg-yellow-50 text-yellow-700'
-                                : 'bg-green-50 text-green-700'
-                            }`}
-                          >
-                            {d.priority}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-50 text-purple-700">
-                            {d.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {d.required_date ? new Date(d.required_date).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <button 
-                            onClick={() => { setSelectedTask(d); setShowTaskModal(true); }}
-                            className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
-                          >
-                            View
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {myTasks.filter(d => {
-                      const matchesSearch = 
-                        (d.design_type?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
-                        (d.orders?.clients?.name?.toLowerCase() || '').includes(myTasksSearch.toLowerCase()) ||
-                        (d.orders?.order_no?.toLowerCase() || '').includes(myTasksSearch.toLowerCase());
-                      const matchesFilter = myTasksFilter === 'all' || d.status === myTasksFilter;
-                      return matchesSearch && matchesFilter;
-                    }).length === 0 && (
+              {myTasksLoading ? (
+                <div className="flex justify-center py-20">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-left">
                       <tr>
-                        <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
-                          No tasks found matching your criteria.
-                        </td>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Design Type</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Order</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Client</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Priority</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Status</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Due Date</th>
+                        <th className="px-4 py-3 font-semibold text-slate-600">Actions</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {myTasks.map((d) => (
+                        <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-800">
+                            {d.design_type || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {d.orders?.order_no || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {d.orders?.clients?.name || '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                                d.priority === 'High'
+                                  ? 'bg-red-50 text-red-700'
+                                  : d.priority === 'Medium'
+                                  ? 'bg-yellow-50 text-yellow-700'
+                                  : 'bg-green-50 text-green-700'
+                              }`}
+                            >
+                              {d.priority}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-50 text-purple-700">
+                              {d.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-600">
+                            {d.required_date ? new Date(d.required_date).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button 
+                              onClick={() => { setSelectedTask(d); setShowTaskModal(true); }}
+                              className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {myTasks.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                            No tasks found matching your criteria.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                  <Pagination
+                    currentPage={myTasksPage}
+                    totalCount={myTasksTotalCount}
+                    itemsPerPage={myTasksPerPage}
+                    onPageChange={setMyTasksPage}
+                    onItemsPerPageChange={setMyTasksPerPage}
+                    itemName="tasks"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -2338,7 +2958,7 @@ export default function DesignerPage() {
                 </div>
                 <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
                   <i className="fa-solid fa-database text-blue-500"></i>
-                  <span>{customerApprovalVersions.length}</span> versions
+                  <span>{customerApprovalTotalCount}</span> versions
                 </span>
               </div>
 
@@ -2362,48 +2982,30 @@ export default function DesignerPage() {
                     <i className="fa-solid fa-list text-slate-500"></i> Design Versions Awaiting Approval
                   </h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
-                        <th className="p-3 w-10">#</th>
-                        <th className="p-3">Order No.</th>
-                        <th className="p-3">Client</th>
-                        <th className="p-3">Design Type</th>
-                        <th className="p-3">Version</th>
-                        <th className="p-3">Status</th>
-                        <th className="p-3">Sent On</th>
-                        <th className="p-3">Sent By</th>
-                        <th className="p-3 text-center w-32">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-slate-600 divide-y divide-slate-100">
-                      {customerApprovalVersions
-                        .filter(version => {
-                          const matchesSearch = 
-                            (version.designs?.orders?.order_no?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
-                            (version.designs?.orders?.clients?.name?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
-                            (version.designs?.design_type?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase());
-                          return matchesSearch;
-                        })
-                        .length === 0 ? (
-                        <tr>
-                          <td colSpan={9} className="p-8 text-center text-slate-400">
-                            No design versions found matching your criteria.
-                          </td>
+                {customerApprovalLoading ? (
+                  <div className="flex justify-center py-20">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
+                          <th className="p-3 w-10">#</th>
+                          <th className="p-3">Order No.</th>
+                          <th className="p-3">Client</th>
+                          <th className="p-3">Design Type</th>
+                          <th className="p-3">Version</th>
+                          <th className="p-3">Status</th>
+                          <th className="p-3">Sent On</th>
+                          <th className="p-3">Sent By</th>
+                          <th className="p-3 text-center w-32">Action</th>
                         </tr>
-                      ) : (
-                        customerApprovalVersions
-                          .filter(version => {
-                            const matchesSearch = 
-                              (version.designs?.orders?.order_no?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
-                              (version.designs?.orders?.clients?.name?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase()) ||
-                              (version.designs?.design_type?.toLowerCase() || '').includes(customerApprovalSearch.toLowerCase());
-                            return matchesSearch;
-                          })
-                          .map((version, index) => (
+                      </thead>
+                      <tbody className="text-slate-600 divide-y divide-slate-100">
+                        {customerApprovalVersions.map((version, index) => (
                           <tr key={version.id} className="hover:bg-slate-50/80 transition">
-                            <td className="p-3">{index + 1}</td>
+                            <td className="p-3">{(customerApprovalPage - 1) * customerApprovalPerPage + index + 1}</td>
                             <td className="p-3 font-semibold text-blue-600">{version.designs?.orders?.order_no || '-'}</td>
                             <td className="p-3 font-bold text-slate-800">{version.designs?.orders?.clients?.name || '-'}</td>
                             <td className="p-3">{version.designs?.design_type || '-'}</td>
@@ -2429,11 +3031,26 @@ export default function DesignerPage() {
                               </button>
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        ))}
+                        {customerApprovalVersions.length === 0 && (
+                          <tr>
+                            <td colSpan={9} className="p-8 text-center text-slate-400">
+                              No design versions found matching your criteria.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                    <Pagination
+                      currentPage={customerApprovalPage}
+                      totalCount={customerApprovalTotalCount}
+                      itemsPerPage={customerApprovalPerPage}
+                      onPageChange={setCustomerApprovalPage}
+                      onItemsPerPageChange={setCustomerApprovalPerPage}
+                      itemName="versions"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2459,7 +3076,7 @@ export default function DesignerPage() {
                 </div>
                 <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
                   <i className="fa-solid fa-database text-blue-500"></i>
-                  <span>{designs.filter(d => d.status === 'Completed').length}</span> completed
+                  <span>{productionFilesTotalCount}</span> completed
                 </span>
               </div>
 
@@ -2483,49 +3100,29 @@ export default function DesignerPage() {
                     <i className="fa-solid fa-list text-slate-500"></i> Completed Designs
                   </h3>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
-                        <th className="p-3 w-10">#</th>
-                        <th className="p-3">Order No.</th>
-                        <th className="p-3">Client</th>
-                        <th className="p-3">Design Type</th>
-                        <th className="p-3">Priority</th>
-                        <th className="p-3">Assigned Designer</th>
-                        <th className="p-3">Completed Date</th>
-                        <th className="p-3 text-center w-32">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-slate-600 divide-y divide-slate-100">
-                      {designs
-                        .filter(d => d.status === 'Completed')
-                        .filter(d => {
-                          const matchesSearch = 
-                            (d.orders?.order_no?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
-                            (d.orders?.clients?.name?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
-                            (d.design_type?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase());
-                          return matchesSearch;
-                        })
-                        .length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="p-8 text-center text-slate-400">
-                            No completed designs found matching your criteria.
-                          </td>
+                {productionFilesLoading ? (
+                  <div className="flex justify-center py-20">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 text-slate-400 border-b border-slate-200 font-semibold uppercase tracking-wider text-[10px]">
+                          <th className="p-3 w-10">#</th>
+                          <th className="p-3">Order No.</th>
+                          <th className="p-3">Client</th>
+                          <th className="p-3">Design Type</th>
+                          <th className="p-3">Priority</th>
+                          <th className="p-3">Assigned Designer</th>
+                          <th className="p-3">Completed Date</th>
+                          <th className="p-3 text-center w-32">Action</th>
                         </tr>
-                      ) : (
-                        designs
-                          .filter(d => d.status === 'Completed')
-                          .filter(d => {
-                            const matchesSearch = 
-                              (d.orders?.order_no?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
-                              (d.orders?.clients?.name?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase()) ||
-                              (d.design_type?.toLowerCase() || '').includes(productionFilesSearch.toLowerCase());
-                            return matchesSearch;
-                          })
-                          .map((d, index) => (
+                      </thead>
+                      <tbody className="text-slate-600 divide-y divide-slate-100">
+                        {productionFiles.map((d, index) => (
                           <tr key={d.id} className="hover:bg-slate-50/80 transition">
-                            <td className="p-3">{index + 1}</td>
+                            <td className="p-3">{(productionFilesPage - 1) * productionFilesPerPage + index + 1}</td>
                             <td className="p-3 font-semibold text-blue-600">{d.orders?.order_no || '-'}</td>
                             <td className="p-3 font-bold text-slate-800">{d.orders?.clients?.name || '-'}</td>
                             <td className="p-3">{d.design_type || '-'}</td>
@@ -2549,11 +3146,26 @@ export default function DesignerPage() {
                               </button>
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        ))}
+                        {productionFiles.length === 0 && (
+                          <tr>
+                            <td colSpan={8} className="p-8 text-center text-slate-400">
+                              No completed designs found matching your criteria.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                    <Pagination
+                      currentPage={productionFilesPage}
+                      totalCount={productionFilesTotalCount}
+                      itemsPerPage={productionFilesPerPage}
+                      onPageChange={setProductionFilesPage}
+                      onItemsPerPageChange={setProductionFilesPerPage}
+                      itemName="completed designs"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2565,16 +3177,22 @@ export default function DesignerPage() {
                   <h1 className="text-xl font-bold text-slate-900">Send to Production</h1>
                   <p className="text-xs text-slate-500">Queue designs for production</p>
                 </div>
-                <button
-                  onClick={() => setShowProductionOrderModal(true)}
-                  className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                >
-                  <i className="fa-solid fa-plus"></i>
-                  New Production Order
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
+                    <i className="fa-solid fa-database text-blue-500"></i>
+                    <span>{sendProductionTotalCount}</span> orders
+                  </span>
+                  <button
+                    onClick={() => setShowProductionOrderModal(true)}
+                    className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <i className="fa-solid fa-plus"></i>
+                    New Production Order
+                  </button>
+                </div>
               </div>
 
-              {loading ? (
+              {sendProductionLoading ? (
                 <div className="flex justify-center py-20">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
                 </div>
@@ -2682,6 +3300,14 @@ export default function DesignerPage() {
                       ))}
                     </tbody>
                   </table>
+                  <Pagination
+                    currentPage={sendProductionPage}
+                    totalCount={sendProductionTotalCount}
+                    itemsPerPage={sendProductionPerPage}
+                    onPageChange={setSendProductionPage}
+                    onItemsPerPageChange={setSendProductionPerPage}
+                    itemName="production orders"
+                  />
                 </div>
               )}
 
@@ -2867,20 +3493,26 @@ export default function DesignerPage() {
                   <h1 className="text-xl font-bold text-slate-900">Active Work</h1>
                   <p className="text-xs text-slate-500">Production orders in progress with communication</p>
                 </div>
-                <button
-                  onClick={() => setShowProductionOrderModal(true)}
-                  className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                >
-                  <i className="fa-solid fa-plus"></i>
-                  New Production Order
-                </button>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
+                    <i className="fa-solid fa-database text-blue-500"></i>
+                    <span>{activeWorkTotalCount}</span> active orders
+                  </span>
+                  <button
+                    onClick={() => setShowProductionOrderModal(true)}
+                    className="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    <i className="fa-solid fa-plus"></i>
+                    New Production Order
+                  </button>
+                </div>
               </div>
 
-              {loading ? (
+              {activeWorkLoading ? (
                 <div className="flex justify-center py-20">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
                 </div>
-              ) : productionOrders.filter(o => o.status === 'In Progress').length === 0 ? (
+              ) : activeWorkOrders.length === 0 ? (
                 <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
                   <i className="fa-solid fa-industry text-4xl mb-4"></i>
                   <p className="text-sm">No active work</p>
@@ -2903,7 +3535,7 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {productionOrders.filter(o => o.status === 'In Progress').map((order) => (
+                      {activeWorkOrders.map((order) => (
                         <tr key={order.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
                             {order.task_type || '-'}
@@ -2964,19 +3596,20 @@ export default function DesignerPage() {
                               >
                                 <i className="fa-solid fa-eye"></i> Show
                               </button>
-                              {/* <button
-                                onClick={() => handleEditProductionOrder(order)}
-                                className="text-emerald-600 hover:text-emerald-800 transition-colors p-2 rounded-lg hover:bg-emerald-50"
-                                title="Edit"
-                              >
-                                <i className="fa-solid fa-pen"></i> Edit
-                              </button> */}
                             </div>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  <Pagination
+                    currentPage={activeWorkPage}
+                    totalCount={activeWorkTotalCount}
+                    itemsPerPage={activeWorkPerPage}
+                    onPageChange={setActiveWorkPage}
+                    onItemsPerPageChange={setActiveWorkPerPage}
+                    itemName="active work orders"
+                  />
                 </div>
               )}
 
@@ -3586,7 +4219,7 @@ export default function DesignerPage() {
                 </div>
                 <span className="text-[11px] font-semibold text-slate-700 bg-white px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm flex items-center gap-2">
                   <i className="fa-solid fa-database text-blue-500"></i>
-                  <span>{designs.length}</span> total designs
+                  <span>{designLibraryTotalCount}</span> total designs
                 </span>
               </div>
 
@@ -3614,7 +4247,7 @@ export default function DesignerPage() {
                 </select>
               </div>
 
-              {loading ? (
+              {designLibraryLoading ? (
                 <div className="flex justify-center py-20">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
                 </div>
@@ -3634,16 +4267,7 @@ export default function DesignerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {designs
-                        .filter(d => designLibraryFilter === 'all' || d.status === designLibraryFilter)
-                        .filter(d => {
-                          const matchesSearch = 
-                            (d.design_type?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
-                            (d.orders?.clients?.name?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
-                            (d.orders?.order_no?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase());
-                          return matchesSearch;
-                        })
-                        .map((d) => (
+                      {designLibraryDesigns.map((d) => (
                         <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50">
                           <td className="px-4 py-3 font-medium text-slate-800">
                             {d.design_type || '-'}
@@ -3761,15 +4385,7 @@ export default function DesignerPage() {
                           </td>
                         </tr>
                       ))}
-                      {designs
-                        .filter(d => designLibraryFilter === 'all' || d.status === designLibraryFilter)
-                        .filter(d => {
-                          const matchesSearch = 
-                            (d.design_type?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
-                            (d.orders?.clients?.name?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase()) ||
-                            (d.orders?.order_no?.toLowerCase() || '').includes(designLibrarySearch.toLowerCase());
-                          return matchesSearch;
-                        }).length === 0 && (
+                      {designLibraryDesigns.length === 0 && (
                         <tr>
                           <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                             No designs found matching your criteria.
@@ -3778,6 +4394,14 @@ export default function DesignerPage() {
                       )}
                     </tbody>
                   </table>
+                  <Pagination
+                    currentPage={designLibraryPage}
+                    totalCount={designLibraryTotalCount}
+                    itemsPerPage={designLibraryPerPage}
+                    onPageChange={setDesignLibraryPage}
+                    onItemsPerPageChange={setDesignLibraryPerPage}
+                    itemName="designs"
+                  />
                 </div>
               )}
             </div>
