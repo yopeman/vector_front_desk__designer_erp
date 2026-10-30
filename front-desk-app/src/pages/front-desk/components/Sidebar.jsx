@@ -118,15 +118,15 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
 
   // Determine which menu contains the current page
   const menuItems = [
-    { 
-      name: 'Dashboard', 
-      icon: 'fa-house', 
+    {
+      name: 'Dashboard',
+      icon: 'fa-house',
       active: false,
-      submenu: null 
+      submenu: null
     },
-    { 
-      name: 'CRM', 
-      icon: 'fa-users', 
+    {
+      name: 'CRM',
+      icon: 'fa-users',
       active: false,
       submenu: [
         { name: 'Leads', icon: 'fa-user-tag' },
@@ -134,68 +134,68 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
         { name: 'Site Visits', icon: 'fa-location-dot' },
         { name: 'Items', icon: 'fa-archive' },
         { name: 'Orders', icon: 'fa-box' },
-      ] 
+      ]
     },
-    { 
-      name: 'Design', 
-      icon: 'fa-pen-to-square', 
+    {
+      name: 'Design',
+      icon: 'fa-pen-to-square',
       active: false,
       submenu: [
         { name: 'Designs', icon: 'fa-file-code' },
         { name: 'Design Status', icon: 'fa-spinner' },
         { name: 'Design Library', icon: 'fa-book' },
-      ] 
+      ]
     },
-    { 
-      name: 'Sales', 
-      icon: 'fa-cart-shopping', 
+    {
+      name: 'Sales',
+      icon: 'fa-cart-shopping',
       active: false,
       submenu: [
         { name: 'Proforma Invoices', icon: 'fa-flask' },
         { name: 'Sales Invoices', icon: 'fa-file-invoice' },
         { name: 'Payments', icon: 'fa-credit-card' },
         { name: 'Sales Invoices Status', icon: 'fa-file-invoice-dollar' },
-      ] 
+      ]
     },
-    { 
-      name: 'Production', 
-      icon: 'fa-industry', 
+    {
+      name: 'Production',
+      icon: 'fa-industry',
       active: false,
       submenu: [
         { name: 'Job Orders', icon: 'fa-clipboard-list' },
         { name: 'Active Work', icon: 'fa-industry' },
         { name: 'Production Status', icon: 'fa-chart-line' },
-      ] 
+      ]
     },
-    { 
-      name: 'Logistics & Installation', 
-      icon: 'fa-truck', 
+    {
+      name: 'Logistics & Installation',
+      icon: 'fa-truck',
       active: false,
       submenu: [
         { name: 'Delivery', icon: 'fa-truck-fast' },
         { name: 'Installation', icon: 'fa-screwdriver-wrench' }
-      ] 
+      ]
     },
-    { 
-      name: 'Customer Care', 
-      icon: 'fa-headset', 
+    {
+      name: 'Customer Care',
+      icon: 'fa-headset',
       active: false,
       submenu: [
         { name: 'Feedback', icon: 'fa-comments' },
         { name: 'Complaints', icon: 'fa-triangle-exclamation' },
         { name: 'Warranty', icon: 'fa-shield-halved' }
-      ] 
+      ]
     },
-    { 
-      name: 'Reports', 
-      icon: 'fa-chart-bar', 
+    {
+      name: 'Reports',
+      icon: 'fa-chart-bar',
       active: false,
       submenu: [
         { name: 'Report', icon: 'fa-calendar-day' },
         { name: 'Daily Finance Report', icon: 'fa-coins' },
         { name: 'Weekly Finance Report', icon: 'fa-chart-line' },
         { name: 'Monthly Finance Report', icon: 'fa-calendar' }
-      ] 
+      ]
     },
     {
       name: 'AI Agent',
@@ -203,26 +203,26 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       active: false,
       submenu: null
     },
-    { 
-      name: 'Communication', 
-      icon: 'fa-comment', 
+    {
+      name: 'Communication',
+      icon: 'fa-comment',
       active: false,
       submenu: [
         { name: 'Messages', icon: 'fa-envelope' },
         { name: 'Notifications', icon: 'fa-bell' }
-      ] 
+      ]
     },
-    { 
-      name: 'Notes', 
-      icon: 'fa-sticky-note', 
+    {
+      name: 'Notes',
+      icon: 'fa-sticky-note',
       active: false,
-      submenu: null 
+      submenu: null
     },
-    { 
-      name: 'Settings', 
-      icon: 'fa-gear', 
+    {
+      name: 'Settings',
+      icon: 'fa-gear',
       active: false,
-      submenu: null 
+      submenu: null
     }
   ];
 
@@ -330,7 +330,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
         }}>
           {menuItems.map((item, index) => (
             <li key={index}>
-              <div 
+              <div
                 className="menu-item"
                 style={{
                   padding: '9px 18px',
@@ -389,10 +389,10 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                   <i className={`fa-solid fa-chevron-${expandedMenus[item.name] ? 'down' : 'right'}`} style={{ fontSize: '10px' }}></i>
                 )}
               </div>
-              
+
               {item.submenu && expandedMenus[item.name] && (
-                <ul 
-                  className="submenu-list" 
+                <ul
+                  className="submenu-list"
                   style={{
                     listStyle: 'none',
                     paddingLeft: '45px',
@@ -402,8 +402,8 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                   }}
                 >
                   {item.submenu.map((subItem, subIndex) => (
-                    <li 
-                      key={subIndex} 
+                    <li
+                      key={subIndex}
                       className="submenu-item"
                       style={{
                         padding: '7px 0',
@@ -431,11 +431,11 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
                       }}
                       onClick={() => handleSubItemClick(subItem)}
                     >
-                      <i className={`fa-solid ${subItem.icon}`} style={{ 
-                        width: '12px', 
-                        textAlign: 'center', 
+                      <i className={`fa-solid ${subItem.icon}`} style={{
+                        width: '12px',
+                        textAlign: 'center',
                         fontSize: '10px',
-                        opacity: 0.7 
+                        opacity: 0.7
                       }}></i>
                       <span>{subItem.name}</span>
                       {(subItem.name === 'Design Status' && hasUnreadDesignChat) || (subItem.name === 'Active Work' && hasUnreadProdChat) ? (
@@ -459,7 +459,7 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
         </ul>
       )}
 
-      <div 
+      <div
         onClick={() => setCollapsed(!collapsed)}
         style={{
           padding: '14px 18px',

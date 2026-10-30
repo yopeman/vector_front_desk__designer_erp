@@ -1989,6 +1989,9 @@ export default function DesignerPage() {
 
   const displayName = profile?.username || 'Designer';
   const initials = getInitials(displayName);
+  const loggedInUserId = user?.id || profile?.id || '';
+  const loggedInUserName = profile?.username || displayName || '';
+  const loggedInUserEmail = profile?.email || user?.email || '';
 
   // Dashboard computed metrics from database counts
   const activeProjects = counts.activeProjects;
@@ -2146,6 +2149,12 @@ export default function DesignerPage() {
               className={`flex items-center justify-between px-3 py-2.5 rounded w-full ${activeSection === 'notes-section' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
             >
               <div className="flex items-center gap-3"><i className="fa-solid fa-sticky-note w-4"></i> Notes</div>
+            </button>
+            <button 
+              onClick={() => window.location.href = `https://vectoradvert.com/erp/store/#/staff-login?id=${encodeURIComponent(loggedInUserId)}&name=${encodeURIComponent(loggedInUserName)}&email=${encodeURIComponent(loggedInUserEmail)}`}
+              className={`flex items-center justify-between px-3 py-2.5 rounded w-full text-slate-300 hover:bg-slate-800`}
+            >
+              <div className="flex items-center gap-3"><i className="fa-solid fa-boxes-stacked w-4"></i> Store Request</div>
             </button>
             <button 
               onClick={() => handleSectionChange('profile-settings-section')}
