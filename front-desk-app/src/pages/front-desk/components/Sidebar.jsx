@@ -3,10 +3,14 @@ import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../lib/auth';
 
 export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollapsed }) {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({});
   const [hasUnreadDesignChat, setHasUnreadDesignChat] = useState(false);
   const [hasUnreadProdChat, setHasUnreadProdChat] = useState(false);
+
+  const loggedInUserId = user?.id || profile?.id || '';
+  const loggedInUserName = profile?.username || user?.user_metadata?.name || '';
+  const loggedInUserEmail = profile?.email || user?.email || '';
 
   // Poll for unread design communications to show a red dot
   useEffect(() => {
@@ -219,6 +223,13 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
       submenu: null
     },
     {
+      name: 'Store Request',
+      icon: 'fa-boxes-stacked',
+      active: false,
+      submenu: null,
+      externalUrl: `https://vectoradvert.com/erp/store/#/staff-login?id=${encodeURIComponent(loggedInUserId)}&name=${encodeURIComponent(loggedInUserName)}&email=${encodeURIComponent(loggedInUserEmail)}`
+    },
+    {
       name: 'Settings',
       icon: 'fa-gear',
       active: false,
@@ -269,7 +280,9 @@ export default function Sidebar({ onMenuClick, currentPage, collapsed, setCollap
   };
 
   const handleSubItemClick = (subItem) => {
-    if (onMenuClick) {
+    if (subItem.externalUrl) {
+      window.location.href = subItem.externalUrl;
+    } else if (onMenuClick) {
       onMenuClick(subItem.name.toLowerCase());
     }
   };

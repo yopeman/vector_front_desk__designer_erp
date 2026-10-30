@@ -43,6 +43,7 @@ export default function TopHeader({ onToggleSidebar, onNavigate, menuItems: cust
     { name: 'Messages', icon: 'fa-envelope', path: 'messages' },
     { name: 'Notifications', icon: 'fa-bell', path: 'notifications' },
     { name: 'Notes', icon: 'fa-sticky-note', path: 'notes' },
+    { name: 'Store Request', icon: 'fa-boxes-stacked', path: 'store-request' },
     { name: 'Settings', icon: 'fa-gear', path: 'settings' },
   ];
 

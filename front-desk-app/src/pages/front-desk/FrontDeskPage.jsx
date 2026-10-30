@@ -39,7 +39,7 @@ import SettingsPage from './components/SettingsPage';
 import FloatingAssistant from './components/FloatingAssistant';
 
 export default function FrontDeskPage() {
-  const { user, isFrontDesk } = useAuth();
+  const { user, profile, isFrontDesk } = useAuth();
   const [currentPage, setCurrentPage] = useState(() => {
     // Check if accessing via public report URL
     if (window.location.hash === '#/frontdesk-public-report') {
@@ -54,6 +54,14 @@ export default function FrontDeskPage() {
   const { loading, data } = useDashboardData({ active: dashboardActive });
 
   const handleMenuClick = (page, orderId = null) => {
+    if (page === 'store-request' || page === 'store request') {
+      const loggedInUserId = user?.id || profile?.id || '';
+      const loggedInUserName = profile?.username || user?.user_metadata?.name || '';
+      const loggedInUserEmail = profile?.email || user?.email || '';
+      window.location.href = `https://vectoradvert.com/erp/store/#/staff-login?id=${encodeURIComponent(loggedInUserId)}&name=${encodeURIComponent(loggedInUserName)}&email=${encodeURIComponent(loggedInUserEmail)}`;
+      return;
+    }
+
     // Check if user is trying to navigate away from public reports without auth
     if (window.location.hash === '#/frontdesk-public-report' && page !== 'report') {
       if (!isFrontDesk) {
